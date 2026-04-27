@@ -1,0 +1,210 @@
+.circle-fifths-root {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.circle-fifths-root.interactive .key {
+  cursor: pointer;
+}
+
+.circle-fifths-root.interactive .key:hover,
+.circle-fifths-root.interactive .key.key--isInScale:hover .sector {
+  fill: var(--color-primary);
+}
+
+.circle-fifths-svg {
+  flex-shrink: 0;
+  will-change: contents;
+}
+
+.circle-fifths-children {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: -1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel--isRotating {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wheel--isRotating .name {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse highlight animation on rotation complete */
+@keyframes cf-sector-pulse {
+  0% {
+    filter: drop-shadow(0 0 0px var(--color-primary));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px var(--color-accent));
+  }
+  100% {
+    filter: drop-shadow(0 0 0px var(--color-primary));
+  }
+}
+
+.wheel--isRotating .key--major .sector,
+.wheel--isRotating .key--minor .sector {
+  animation: cf-sector-pulse 0.6s ease-out 0.4s;
+}
+
+/* Glow effect for selected sector */
+.key--selected .sector {
+  transition: filter 0.3s ease;
+}
+
+.key--selected .sector:hover {
+  filter: drop-shadow(0 0 8px var(--color-accent));
+}
+
+.sector {
+  fill: var(--color-neutral);
+  stroke: var(--color-base-content);
+}
+
+.badge {
+  fill: var(--color-base-content);
+  fill-opacity: 0.3;
+}
+
+.followPath {
+  fill: none;
+  stroke: none;
+}
+
+.arrow {
+  fill: var(--color-base-content);
+}
+
+.degreeLabels {
+  pointer-events: none;
+}
+
+.degreeLabel {
+  font-family: serif;
+  font-weight: bold;
+  fill: var(--color-base-100);
+  fill-opacity: 0.5;
+}
+
+.degreeTitle .degreeSection {
+  fill: var(--color-base-300);
+}
+
+.degreeTitle text {
+  fill: var(--color-base-100);
+}
+
+.degree text {
+  fill: var(--color-base-content);
+}
+
+.mode text {
+  fill: var(--color-base-100);
+}
+
+.modeSeparator {
+  stroke: var(--color-base-100);
+  stroke-width: 0.1;
+}
+
+.alterations text {
+  fill: var(--color-base-100);
+  fill-opacity: 0.5;
+}
+
+.alterations--selected > .alteration--selected {
+  fill: var(--color-base-100);
+}
+
+.dominants text {
+  fill: var(--color-base-100);
+  fill-opacity: 0.5;
+}
+
+.dominants--selected text {
+  fill: var(--color-base-100);
+}
+
+.dominant--isInScale .sector {
+  fill: var(--color-primary);
+}
+
+.key--isMainSection .sector {
+  fill: var(--color-base-300);
+}
+
+.key.key--isInScale .sector {
+  fill: var(--color-primary);
+}
+
+.key.key--selected {
+  pointer-events: auto;
+}
+
+.key.key--selected .name {
+  fill: var(--color-base-100);
+}
+
+.key.key--multiple {
+  pointer-events: all;
+}
+
+.key.key--multiple.key--selected .name {
+  fill: var(--color-base-100);
+  fill-opacity: 0.5;
+}
+
+.key.key--multiple.key--selected .name--selected {
+  fill: var(--color-base-100);
+  font-weight: bold;
+}
+
+.key--major.key--selected .sector {
+  fill: var(--color-primary);
+}
+
+.key--minor.key--selected .sector {
+  fill: var(--color-primary);
+}
+
+.key--diminished .sector {
+  fill: var(--color-base-300);
+}
+
+.key--diminished.key--selected .sector {
+  fill: var(--color-primary);
+}
+
+.key--suspended {
+  pointer-events: none;
+}
+
+.key--suspended .sector {
+  fill: var(--color-neutral);
+}
+
+.key--suspended.key--selected .sector {
+  fill: var(--color-primary);
+}
+
+.dominant.dominant--active .sector {
+  fill: var(--color-success);
+}
+
+.key.key--active .sector {
+  fill: var(--color-success);
+}

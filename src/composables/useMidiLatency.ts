@@ -1,0 +1,57 @@
+import { ref, onMounted, onUnmounted } from "vue";
+
+/**
+ * Measures MIDI latency and tracks highest recorded latency.
+ * Converts React useState + useRef + useEffect to Vue ref + onMounted/onUnmounted.
+ */
+export function useMidiLatency(filterDevice = "*") {
+  const currentLatency = ref<number>(0);
+  const highestLatency = ref<number>(0);
+  const highest = ref<number>(0);
+  const buffer = ref<number[]>([]);
+  const timeout = ref<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetHighest = () => {
+    highest.value = 0;
+    highestLatency.value = 0;
+  };
+
+  onMounted(() => {
+    const cleanup = window.midi?.onLatency((latency, device) => {
+      if (filterDevice === "*" || filterDevice === device) {
+        buffer.value.push(latency);
+
+        if (!timeout.value) {
+          timeout.value = setTimeout(() => {
+            let sum = 0;
+            for (let i = 0; i < buffer.value.length; i++) {
+              sum += buffer.value[i];
+              if (highest.value < buffer.value[i]) {
+                highest.value = buffer.value[i];
+              }
+            }
+            const average = sum / buffer.value.length;
+            buffer.value = [];
+
+            currentLatency.value = average;
+            highestLatency.value = highest.value;
+
+            timeout.value = null;
+          }, 0);
+        }
+      }
+    });
+
+    onUnmounted(() => {
+      if (cleanup) cleanup();
+      if (timeout.value) {
+        clearTimeout(timeout.value);
+        timeout.value = null;
+      }
+    });
+  });
+
+  return { currentLatency, highestLatency, resetHighest };
+}
+
+export default useMidiLatency;

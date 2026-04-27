@@ -1,0 +1,53 @@
+<template>
+  <div class="py-2.5">
+    <div v-if="label" :id="rangeLabelId" class="text-sm font-medium mb-1">
+      {{ label }}
+    </div>
+    <div v-if="description" class="text-xs text-base-content/80 mb-2">
+      {{ description }}
+    </div>
+    <div class="flex items-center gap-2">
+      <input
+        type="range"
+        class="range range-xs w-full"
+        :min="min"
+        :max="max"
+        :step="step"
+        :value="modelValue"
+        :disabled="disabled"
+        :aria-label="label ? undefined : String(modelValue)"
+        :aria-labelledby="label ? rangeLabelId : undefined"
+        @input="
+          $emit(
+            'update:modelValue',
+            Number(($event.target as HTMLInputElement).value),
+          )
+        "
+      />
+      <span class="badge badge-sm badge-ghost">{{ modelValue }}</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useId } from "vue";
+
+const id = useId();
+const rangeLabelId = `range-label-${id}`;
+
+interface Props {
+  modelValue: number;
+  label?: string;
+  description?: string;
+  min: number;
+  max: number;
+  step: number;
+  disabled?: boolean;
+}
+
+defineProps<Props>();
+
+defineEmits<{
+  "update:modelValue": [value: number];
+}>();
+</script>
