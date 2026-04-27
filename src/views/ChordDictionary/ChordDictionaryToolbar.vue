@@ -3,28 +3,32 @@
     class="chord-dictionary-toolbar flex items-center gap-2 p-2 border-b border-base-200 bg-base-100 flex-wrap"
   >
     <div v-if="!disableUpdate" class="relative inline-block">
-      <button
-        class="btn btn-sm btn-outline"
-        :aria-expanded="menuOpen"
-        @click="menuOpen = !menuOpen"
-      >
+      <button class="btn btn-sm btn-outline" @click="menuOpen = !menuOpen">
         {{ getGroupLabel(groupBy)
         }}{{ filterInKey ? t("chordDictionary.inKey") : "" }}
-        <Icon name="chevron-down" size="16" />
+        <svg
+          class="w-4 h-4 ml-1"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
       </button>
 
       <div
         v-show="menuOpen"
         class="absolute top-full left-0 z-50 mt-1 card bg-base-100 shadow-xl min-w-[250px]"
-        @keydown.escape="menuOpen = false"
       >
-        <ul role="menu" class="menu bg-base-100 w-full p-0">
+        <ul class="menu bg-base-100 w-full p-0">
           <li class="menu-title">
             <span>{{ t("chordDictionary.group") }}</span>
           </li>
           <li>
             <a
-              role="menuitem"
               :class="{ 'bg-primary/10 text-primary': groupBy === 'none' }"
               @click="
                 updateGroupBy('none');
@@ -36,7 +40,6 @@
           </li>
           <li>
             <a
-              role="menuitem"
               :class="{ 'bg-primary/10 text-primary': groupBy === 'quality' }"
               @click="
                 updateGroupBy('quality');
@@ -48,7 +51,6 @@
           </li>
           <li>
             <a
-              role="menuitem"
               :class="{ 'bg-primary/10 text-primary': groupBy === 'intervals' }"
               @click="
                 updateGroupBy('intervals');
@@ -64,7 +66,6 @@
           </li>
           <li>
             <a
-              role="menuitem"
               :class="{ 'bg-primary/10 text-primary': hideDisabled }"
               @click="
                 toggleHideDisabled();
@@ -76,7 +77,6 @@
           </li>
           <li>
             <a
-              role="menuitem"
               :class="{ 'bg-primary/10 text-primary': filterInKey }"
               @click="
                 toggleFilterInKey();
@@ -119,7 +119,6 @@
     <div class="flex-1"></div>
 
     <button
-      ref="settingsBtnRef"
       class="btn btn-sm btn-outline btn-circle"
       :aria-label="t('chordDictionary.openDictionarySettings')"
       @click="settingsOpen = true"
@@ -127,45 +126,45 @@
       <Icon name="settings" size="16" />
     </button>
 
-    <Transition name="modal">
+    <div
+      v-if="settingsOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      @click.self="settingsOpen = false"
+    >
       <div
-        v-if="settingsOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @click.self="settingsOpen = false"
+        class="card bg-base-100 shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden mx-4"
       >
         <div
-          ref="modalRef"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="settings-modal-title"
-          class="card bg-base-100 shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden mx-4"
-          @keydown.tab="handleModalTab"
-          @keydown.escape="settingsOpen = false"
+          class="card-title p-4 flex items-center justify-between border-b border-base-200"
         >
-          <div
-            class="card-title p-4 flex items-center justify-between border-b border-base-200"
+          <h2 class="text-lg font-bold">{{ t("chordDictionary.settings") }}</h2>
+          <button
+            class="btn btn-sm btn-ghost btn-circle"
+            @click="settingsOpen = false"
           >
-            <h2 id="settings-modal-title" class="text-lg font-bold">
-              {{ t("chordDictionary.settings") }}
-            </h2>
-            <button
-              class="btn btn-sm btn-ghost btn-circle"
-              @click="settingsOpen = false"
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <Icon name="x" size="16" />
-            </button>
-          </div>
-          <div class="overflow-auto max-h-[calc(90vh-73px)]">
-            <ChordDictionarySettings />
-          </div>
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="overflow-auto max-h-[calc(90vh-73px)]">
+          <ChordDictionarySettings />
         </div>
       </div>
-    </Transition>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
@@ -187,50 +186,6 @@ const settingsStore = useSettingsStore();
 
 const settingsOpen = ref(false);
 const menuOpen = ref(false);
-const settingsBtnRef = ref<HTMLButtonElement | null>(null);
-const modalRef = ref<HTMLDivElement | null>(null);
-
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    ),
-  ).filter((el) => el.offsetParent !== null);
-}
-
-function handleModalTab(e: KeyboardEvent) {
-  if (!modalRef.value) return;
-  const focusable = getFocusableElements(modalRef.value);
-  if (focusable.length === 0) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (e.shiftKey) {
-    if (document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    }
-  } else {
-    if (document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-}
-
-watch(settingsOpen, (open) => {
-  if (open) {
-    nextTick(() => {
-      if (modalRef.value) {
-        const focusable = getFocusableElements(modalRef.value);
-        if (focusable.length > 0) focusable[0].focus();
-      }
-    });
-  } else {
-    nextTick(() => {
-      settingsBtnRef.value?.focus();
-    });
-  }
-});
 
 const groupBy = computed(() => settingsStore.settings.chordDictionary.groupBy);
 const filterInKey = computed(
@@ -280,16 +235,3 @@ function handleChordSelect(chord: string | null) {
   }
 }
 </script>
-
-<style scoped>
-.modal-enter-active {
-  transition: opacity 0.3s ease;
-}
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>

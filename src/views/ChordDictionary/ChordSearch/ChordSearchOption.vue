@@ -9,7 +9,7 @@
       <span class="bg-success text-success-content px-1 rounded-l text-xs">{{
         parts[0]
       }}</span>
-      <span class="italic text-xs text-base-content/80">{{ parts[1] }}</span>
+      <span class="italic text-xs text-base-content/70">{{ parts[1] }}</span>
     </div>
   </li>
 </template>

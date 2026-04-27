@@ -1,17 +1,6 @@
 {
   "file": "file",
-  "welcome": {
-    "intro": "Connect your MIDI device and explore chords, learn music theory, and route MIDI messages.",
-    "featureDisplay": "Chord Display",
-    "featureDisplayHint": "See chords and notes in real-time as you play",
-    "featureLearn": "Music Theory",
-    "featureLearnHint": "Quiz yourself and explore the circle of fifths",
-    "featureRoute": "MIDI Routing",
-    "featureRouteHint": "Route MIDI messages between devices",
-    "featureIntegrate": "OBS Integration",
-    "featureIntegrateHint": "Use as an overlay in OBS or browser",
-    "getStarted": "Get Started"
-  },
+  "welcome": "Welcome to vue-i18n",
   "common": {
     "cancel": "Cancel",
     "add": "Add",
@@ -42,10 +31,10 @@
   "home": {
     "coreFeatures": "Core Features",
     "tools": "Tools",
-    "chordDisplayPreview": "See chords and notes in real-time as you play",
-    "chordQuizPreview": "Quiz yourself on chord recognition",
-    "circleOfFifthsPreview": "Explore key relationships and modes",
-    "chordDictionaryPreview": "Browse and search chord types",
+    "chordDisplayPreview": "Chord Display preview",
+    "chordQuizPreview": "Chord Quiz preview",
+    "circleOfFifthsPreview": "Circle of Fifths preview",
+    "chordDictionaryPreview": "Chord Dictionary preview",
     "settingsPreview": "Settings preview",
     "debuggerPreview": "Debugger preview"
   },
@@ -495,12 +484,6 @@
       "symbol": "Symbol (-, Δ, +, °...)",
       "preferred": "Preferred (in dictionary)"
     }
-  },
-  "routing": {
-    "howToUse": "How to use MIDI Routing",
-    "hint1": "Click an input device node to select a MIDI input source",
-    "hint2": "Click an output device node to select a MIDI output target",
-    "hint3": "Drag a connection from input to output to create a route"
   },
   "overlay": {
     "midiJar": "MIDI Jar",

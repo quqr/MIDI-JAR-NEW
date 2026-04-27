@@ -1,15 +1,7 @@
 <script setup lang="ts">
-import { useThemeStore, themes, addRecentTheme } from "@/stores/theme";
-import { useToast } from "@/composables/useToast";
+import { useThemeStore, themes } from "@/stores/theme";
 
 const themeStore = useThemeStore();
-const { show } = useToast();
-
-function handleThemeClick(themeName: string) {
-  themeStore.setTheme(themeName);
-  addRecentTheme(themeName);
-  show(themeName, "success");
-}
 </script>
 
 <template>
@@ -27,7 +19,7 @@ function handleThemeClick(themeName: string) {
         theme.name === themeStore.currentTheme ? '!outline-base-content' : ''
       "
       :data-set-theme="theme.name"
-      @click="handleThemeClick(theme.name)"
+      @click="themeStore.setTheme(theme.name)"
     >
       <div
         :data-theme="theme.name"

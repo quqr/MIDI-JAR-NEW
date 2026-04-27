@@ -410,19 +410,6 @@ function buildFlatKeys() {
 
 const classicKeys = computed(() => buildClassicKeys());
 const flatKeys = computed(() => buildFlatKeys());
-
-const liveDescription = computed(() => {
-  if (props.chord && props.chord.tonic) {
-    return `${props.chord.tonic}${props.chord.aliases[0] || ""}`;
-  }
-  if (props.midi.length > 0) {
-    const noteNames = props.midi
-      .map((m: number) => Note.fromMidi(m))
-      .join(", ");
-    return noteNames;
-  }
-  return "";
-});
 </script>
 
 <template>
@@ -545,8 +532,5 @@ const liveDescription = computed(() => {
         />
       </svg>
     </template>
-    <div class="sr-only" aria-live="polite" aria-atomic="true">
-      {{ liveDescription }}
-    </div>
   </div>
 </template>

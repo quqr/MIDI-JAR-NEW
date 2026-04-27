@@ -1,16 +1,15 @@
 <template>
   <div
     id="ChordQuiz"
-    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-page-x gap-2"
+    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-4 gap-2"
     style="
-      --font-size-main: clamp(2rem, 15dvh, 10vw);
-      --font-size-intervals: clamp(0.75rem, 2vw, 3dvh);
-      --font-size-badge-counter: clamp(0.75rem, 2dvh, 2vw);
+      --font-size-main: clamp(2rem, 15vh, 10vw);
+      --font-size-intervals: clamp(0.75rem, 2vw, 3vh);
+      --font-size-badge-counter: clamp(0.75rem, 2vh, 2vw);
       --font-size-badge-score: 20px;
       --chord-font-size: clamp(2rem, 15vh, 10vw);
     "
   >
-    <h1 class="sr-only">{{ $t("nav.chordQuiz") }}</h1>
     <div class="relative w-full flex-basis-0 flex-grow-0 flex-shrink-0">
       <div
         v-if="quizSettings.displayReaction"
@@ -28,7 +27,7 @@
 
     <div
       class="relative w-full overflow-hidden flex-shrink-0 flex flex-col justify-end items-center p-2"
-      style="height: min(20vw, 50dvh)"
+      style="height: min(20vw, 50vh)"
     >
       <div
         v-for="c in chordElements"
@@ -109,15 +108,26 @@
         />
       </div>
     </div>
-    <div
-      class="absolute bottom-4 right-4 z-10 opacity-60 hover:opacity-100 transition-opacity"
-    >
+    <div class="absolute bottom-4 right-4 z-10 opacity-60 hover:opacity-100 transition-opacity">
       <RouterLink
         to="/home"
         class="btn btn-sm btn-ghost btn-circle"
         :title="$t('nav.home')"
       >
-        <Icon name="home" size="20" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="size-5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          />
+        </svg>
       </RouterLink>
     </div>
   </div>
@@ -133,7 +143,6 @@ import { useSettingsStore } from "@/stores";
 import type { Game } from "@/composables/useQuiz/utils";
 import Reaction from "./Reaction/Reaction.vue";
 import GameList from "./GameList/GameList.vue";
-import Icon from "@/components/Icon/Icon.vue";
 
 const settingsStore = useSettingsStore();
 const quizSettings = computed(() => settingsStore.settings.chordQuiz);
@@ -148,7 +157,7 @@ const statusColors: Record<string, string> = {
   different: "text-error",
   subset: "text-warning",
   equal: "text-success",
-  superset: "text-accent",
+  superset: "text-orange-500",
 };
 
 interface ChordElement {

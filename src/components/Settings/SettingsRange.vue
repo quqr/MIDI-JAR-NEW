@@ -3,7 +3,7 @@
     <div v-if="label" :id="rangeLabelId" class="text-sm font-medium mb-1">
       {{ label }}
     </div>
-    <div v-if="description" class="text-xs text-base-content/80 mb-2">
+    <div v-if="description" class="text-xs text-base-content/60 mb-2">
       {{ description }}
     </div>
     <div class="flex items-center gap-2">
@@ -15,8 +15,7 @@
         :step="step"
         :value="modelValue"
         :disabled="disabled"
-        :aria-label="label ? undefined : String(modelValue)"
-        :aria-labelledby="label ? rangeLabelId : undefined"
+        :aria-labelledby="rangeLabelId"
         @input="
           $emit(
             'update:modelValue',

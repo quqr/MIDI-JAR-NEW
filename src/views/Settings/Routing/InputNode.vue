@@ -21,7 +21,7 @@
       />
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="h-4 w-4 text-base-content/80"
+        class="h-4 w-4 text-base-content/70"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -38,7 +38,7 @@
 
     <div
       class="mt-1 text-xs"
-      :class="hasError ? 'text-error' : 'text-base-content/80'"
+      :class="hasError ? 'text-error' : 'text-base-content/70'"
     >
       <span v-if="hasError">Error</span>
       <span v-else-if="isConnected && isDeviceOpened">Connected</span>

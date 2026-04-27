@@ -18,13 +18,13 @@
           @change="$emit('update:modelValue', option.value)"
         />
         <span class="text-sm">{{ option.label }}</span>
-        <span v-if="option.hint" class="text-xs text-base-content/80">
+        <span v-if="option.hint" class="text-xs text-base-content/60">
           {{ option.hint }}
         </span>
       </label>
     </div>
     <label v-if="description" class="label">
-      <span class="label-text-alt text-base-content/80">{{ description }}</span>
+      <span class="label-text-alt text-base-content/60">{{ description }}</span>
     </label>
   </div>
 </template>

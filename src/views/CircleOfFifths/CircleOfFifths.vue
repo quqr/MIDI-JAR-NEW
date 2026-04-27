@@ -1,8 +1,7 @@
 <template>
   <div
-    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-page-x sm:p-6 lg:p-8"
+    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-4 sm:p-6 lg:p-8"
   >
-    <h1 class="sr-only">{{ $t("nav.circleOfFifths") }}</h1>
     <CircleFifths
       :keySignature="keySignature"
       :chord="chords[0] as any"

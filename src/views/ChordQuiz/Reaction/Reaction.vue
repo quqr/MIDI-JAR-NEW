@@ -95,19 +95,19 @@ onBeforeUnmount(() => {
 }
 
 .text-rocher-danger {
-  color: oklch(var(--er));
+  color: var(--rocher-danger, #ac2426);
 }
 
 .text-rocher-warning {
-  color: oklch(var(--wa));
+  color: var(--rocher-warning, #d89845);
 }
 
 .text-rocher-success {
-  color: oklch(var(--su));
+  color: var(--rocher-success, #19a86c);
 }
 
 .text-rocher-primary {
-  color: oklch(var(--p));
+  color: var(--rocher-primary, #3567f0);
 }
 
 @keyframes disappear {

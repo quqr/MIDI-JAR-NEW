@@ -7,7 +7,7 @@
           MIDI Jar
           <span class="badge badge-primary">{{ `v${APP_VERSION}` }}</span>
         </h1>
-        <p class="text-base-content/80">
+        <p class="text-base-content/70">
           {{ t("settings.aboutSettings.byAuthor") }}
           <a
             href="https://ljas.fr"
@@ -23,7 +23,7 @@
 
     <div class="card bg-base-100 shadow-sm w-full">
       <div class="card-body p-6">
-        <p class="text-base-content/80">
+        <p class="text-base-content/70">
           {{ t("settings.aboutSettings.windowsNote") }}
           <a
             href="https://www.tobias-erichsen.de/software/loopmidi.html"

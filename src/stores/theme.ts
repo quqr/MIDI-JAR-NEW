@@ -3,8 +3,6 @@ import { computed, ref, watchEffect } from "vue";
 import { logger } from "@/utils/logger";
 
 const THEME_STORAGE_KEY = "midi-jar-theme";
-const RECENT_THEMES_KEY = "midi-jar-recent-themes";
-const MAX_RECENT_THEMES = 5;
 
 export interface ThemeInfo {
   name: string;
@@ -59,21 +57,6 @@ export function getThemes(): ThemeInfo[] {
 
 export function isDarkTheme(themeName: string): boolean {
   return darkThemeNames.includes(themeName);
-}
-
-export function getRecentThemes(): string[] {
-  const stored = localStorage.getItem(RECENT_THEMES_KEY);
-  return stored ? JSON.parse(stored) : ["light", "dark"];
-}
-
-export function addRecentTheme(themeName: string): void {
-  const recent = getRecentThemes();
-  const filtered = recent.filter((t) => t !== themeName);
-  filtered.unshift(themeName);
-  localStorage.setItem(
-    RECENT_THEMES_KEY,
-    JSON.stringify(filtered.slice(0, MAX_RECENT_THEMES)),
-  );
 }
 
 export const useThemeStore = defineStore("theme", () => {

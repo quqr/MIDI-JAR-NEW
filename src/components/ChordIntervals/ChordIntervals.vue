@@ -24,7 +24,7 @@
         }}</span>
       </template>
       <template v-else>
-        <span class="text-xs text-base-content/80">{{ interval }}</span>
+        <span class="text-xs text-base-content/70">{{ interval }}</span>
         <span class="text-xs text-base-content/50">{{
           OCTAVE_INTERVALS[index]
         }}</span>

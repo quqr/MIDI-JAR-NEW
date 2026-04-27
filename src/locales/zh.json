@@ -1,17 +1,6 @@
 {
   "file": "文件",
-  "welcome": {
-    "intro": "连接您的 MIDI 设备，探索和弦、学习乐理、路由 MIDI 消息。",
-    "featureDisplay": "和弦显示",
-    "featureDisplayHint": "弹奏时实时查看和弦和音符",
-    "featureLearn": "乐理学习",
-    "featureLearnHint": "通过和弦测验和五度圈学习",
-    "featureRoute": "MIDI 路由",
-    "featureRouteHint": "在设备之间路由 MIDI 消息",
-    "featureIntegrate": "OBS 集成",
-    "featureIntegrateHint": "作为 OBS 或浏览器中的覆盖层使用",
-    "getStarted": "开始使用"
-  },
+  "welcome": "欢迎使用vue-i18n",
   "common": {
     "cancel": "取消",
     "add": "添加",
@@ -42,10 +31,10 @@
   "home": {
     "coreFeatures": "核心功能",
     "tools": "工具",
-    "chordDisplayPreview": "弹奏时实时查看和弦和音符",
-    "chordQuizPreview": "通过和弦识别测验提升技能",
-    "circleOfFifthsPreview": "探索调性关系和调式",
-    "chordDictionaryPreview": "浏览和搜索和弦类型",
+    "chordDisplayPreview": "和弦显示预览",
+    "chordQuizPreview": "和弦测验预览",
+    "circleOfFifthsPreview": "五度圈预览",
+    "chordDictionaryPreview": "和弦词典预览",
     "settingsPreview": "设置预览",
     "debuggerPreview": "调试器预览"
   },
@@ -504,12 +493,6 @@
       "symbol": "符号 (-, Δ, +, °...)",
       "preferred": "首选 (词典中设置)"
     }
-  },
-  "routing": {
-    "howToUse": "如何使用 MIDI 路由",
-    "hint1": "点击输入设备节点选择 MIDI 输入源",
-    "hint2": "点击输出设备节点选择 MIDI 输出目标",
-    "hint3": "拖拽连接线从输入到输出创建路由路径"
   },
   "overlay": {
     "midiJar": "MIDI Jar",

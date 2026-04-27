@@ -3,10 +3,9 @@
     id="chordDisplay"
     class="relative w-full h-full flex flex-col bg-gradient-to-b from-base-200 to-base-100"
   >
-    <h1 class="sr-only">{{ $t("nav.chordDisplayWithId", { moduleId }) }}</h1>
     <div
       id="container"
-      class="flex flex-col lg:flex-row flex-1 items-center justify-center w-full gap-3 sm:gap-4 lg:gap-6 p-page-x sm:p-4 lg:p-6"
+      class="flex flex-col lg:flex-row flex-1 items-center justify-center w-full gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6"
     >
       <!-- 乐谱显示区域 -->
       <Notation
@@ -42,7 +41,8 @@
         <div
           v-if="displayName"
           id="name"
-          class="text-xs sm:text-sm md:text-base min-h-[2vh] px-3 sm:px-4 text-center font-medium opacity-90 leading-tight max-w-full lg:max-w-lg"
+          class="text-xs sm:text-sm md:text-base min-h-[2vh] px-3 sm:px-4 text-center font-medium opacity-90 leading-tight
+            max-w-full lg:max-w-lg"
         >
           {{ chords[0]?.name }}
         </div>
@@ -51,7 +51,8 @@
         <div
           v-if="displayIntervals"
           id="intervals"
-          class="font-medium transition-all tracking-wider sm:tracking-widest text-xs sm:text-sm md:text-base lg:text-lg"
+          class="font-medium transition-all tracking-wider sm:tracking-widest
+            text-xs sm:text-sm md:text-base lg:text-lg"
           style="font-size: clamp(0.75rem, 1.5vh, 1.25rem)"
         >
           <ChordIntervals
@@ -65,7 +66,10 @@
         <div
           v-if="displayAltChords"
           id="alternativeChords"
-          class="absolute z-20 flex flex-col gap-1 top-1 right-1 sm:top-2 sm:right-2 lg:top-0 lg:right-0 p-1.5 sm:p-2 lg:p-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl"
+          class="absolute z-20 flex flex-col gap-1
+            top-1 right-1 sm:top-2 sm:right-2 lg:top-0 lg:right-0
+            p-1.5 sm:p-2 lg:p-2
+            text-xl sm:text-2xl md:text-3xl lg:text-4xl"
           style="text-shadow: 0 0.05em 0.1em rgba(0, 0, 0, 0.6)"
         >
           <template v-for="(chord, index) in chords" :key="index">
@@ -81,13 +85,13 @@
     </div>
 
     <!-- 钢琴键盘区域 -->
-    <div
-      v-if="displayKeyboard"
-      class="flex-shrink-0 w-full px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4 lg:pb-6"
-    >
+    <div v-if="displayKeyboard" class="flex-shrink-0 w-full px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4 lg:pb-6">
       <PianoKeyboard
         id="keyboard"
-        class="w-full rounded-lg shadow-lg lg:shadow-xl transition-all duration-300 h-[20%] sm:h-[25%] lg:h-auto lg:max-h-[35%] xl:max-h-[40%] min-h-[70px] sm:min-h-[80px] lg:min-h-[100px]"
+        class="w-full rounded-lg shadow-lg lg:shadow-xl transition-all duration-300
+          h-[20%] sm:h-[25%] lg:h-auto
+          lg:max-h-[35%] xl:max-h-[40%]
+          min-h-[70px] sm:min-h-[80px] lg:min-h-[100px]"
         :sustained="sustainedMidiNotes as unknown as number[]"
         :played="playedMidiNotes as unknown as number[]"
         :midi="midiNotes as unknown as number[]"

@@ -1,7 +1,7 @@
 <template>
   <details class="group" open>
     <summary
-      class="flex items-center px-3 py-1.5 rounded-md cursor-pointer text-sm font-semibold text-base-content/80 hover:bg-base-200 list-none marker:content-['']"
+      class="flex items-center px-3 py-1.5 rounded-md cursor-pointer text-sm font-semibold text-base-content/70 hover:bg-base-200 list-none marker:content-['']"
     >
       <svg
         class="w-3 h-3 mr-2 transition-transform group-open:rotate-90"

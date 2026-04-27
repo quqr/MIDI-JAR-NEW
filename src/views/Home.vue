@@ -1,9 +1,10 @@
 <template>
   <div class="Home min-h-screen bg-base-200">
-    <div class="max-w-7xl mx-auto px-page-x sm:px-6 lg:px-8 py-page">
-      <h1 class="sr-only">{{ $t("nav.home") }}</h1>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <section class="mb-8">
-        <h2 class="text-xl font-semibold text-base-content/80 mb-4 px-1">
+        <h2
+          class="text-xl font-semibold text-base-content/80 mb-4 px-1"
+        >
           {{ $t("home.coreFeatures") }}
         </h2>
         <div
@@ -16,8 +17,7 @@
             :settings-to="`/settings/chords/${module.id}`"
             :thumbnail="thumbnailChordDisplay"
             :title="$t('nav.chordDisplayWithId', { moduleId: module.id })"
-            :description="$t('home.chordDisplayPreview')"
-            icon="piano"
+            icon="mdi-piano"
             :overlay-enabled="overlayEnabled"
             :overlay-url="getOverlayUrl(`/chords/${module.id}`)"
           />
@@ -26,8 +26,7 @@
             settings-to="/settings/quiz"
             :thumbnail="thumbnailChordQuiz"
             :title="$t('nav.chordQuiz')"
-            :description="$t('home.chordQuizPreview')"
-            icon="help-circle"
+            icon="mdi-help-circle-outline"
             :overlay-enabled="overlayEnabled"
             :overlay-url="getOverlayUrl('/quiz')"
           />
@@ -36,8 +35,7 @@
             settings-to="/settings/circle-of-fifths"
             :thumbnail="thumbnailCircleOfFifths"
             :title="$t('nav.circleOfFifths')"
-            :description="$t('home.circleOfFifthsPreview')"
-            icon="circle"
+            icon="mdi-circle-outline"
             :overlay-enabled="overlayEnabled"
             :overlay-url="getOverlayUrl('/circle-of-fifths')"
           />
@@ -46,8 +44,7 @@
             settings-to="/settings/chord-dictionary"
             :thumbnail="thumbnailChordDictionary"
             :title="$t('nav.chordDictionary')"
-            :description="$t('home.chordDictionaryPreview')"
-            icon="book"
+            icon="mdi-book-open-page-variant"
             :overlay-enabled="overlayEnabled"
             :overlay-url="getOverlayUrl('/chord-dictionary')"
           />
@@ -55,7 +52,9 @@
       </section>
 
       <section>
-        <h2 class="text-xl font-semibold text-base-content/80 mb-4 px-1">
+        <h2
+          class="text-xl font-semibold text-base-content/80 mb-4 px-1"
+        >
           {{ $t("home.tools") }}
         </h2>
         <div
@@ -66,14 +65,14 @@
             settings-to="/settings/routing"
             :thumbnail="thumbnailRouting"
             :title="$t('nav.routing')"
-            icon="swap"
+            icon="mdi-swap-horizontal"
           />
           <ModuleCard
             to="/settings/debug"
             settings-to="/settings/debug"
             :thumbnail="thumbnailDebugger"
             :title="$t('nav.debugger')"
-            icon="bug"
+            icon="mdi-bug"
           />
         </div>
       </section>

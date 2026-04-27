@@ -1,14 +1,13 @@
 <template>
-  <div class="drawer md:drawer-open">
+  <div class="drawer lg:drawer-open">
     <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content">
-      <h1 class="sr-only">{{ $t("settings.title") }}</h1>
       <div
-        class="md:hidden flex items-center gap-2 p-4 border-b border-base-200"
+        class="lg:hidden flex items-center gap-2 p-4 border-b border-base-200"
       >
         <label
           for="settings-drawer"
-          class="btn btn-ghost btn-sm btn-square md:hidden"
+          class="btn btn-ghost btn-sm btn-square lg:hidden"
         >
           <Icon name="menu" size="20" />
         </label>
@@ -27,7 +26,7 @@
         class="drawer-overlay"
         aria-label="Close menu"
       ></label>
-      <div class="bg-base-100 min-h-screen w-56">
+      <div class="bg-base-100 min-h-screen w-50">
         <ul
           class="menu w-full px-4 py-0"
           :aria-label="t('settings.navigation')"
@@ -35,11 +34,11 @@
           <li v-for="item in navItems" :key="item.to">
             <RouterLink
               :to="item.to"
-              class="rounded-lg text-sm font-medium truncate"
+              class="rounded-lg text-sm font-medium"
               :class="
                 isActive(item.to)
                   ? 'active bg-primary text-primary-content font-bold'
-                  : 'text-base-content/80'
+                  : 'text-base-content/70'
               "
             >
               {{ t(item.labelKey) }}
@@ -47,7 +46,7 @@
           </li>
         </ul>
         <div class="divider my-0"></div>
-        <div class="p-3 text-center text-sm text-base-content/80">
+        <div class="p-3 text-center text-sm text-base-content/70">
           <span>v{{ APP_VERSION }}</span>
         </div>
       </div>

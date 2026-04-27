@@ -73,7 +73,7 @@
           </div>
         </li>
         <li v-if="!settingsStore.settings.chordDictionary.disabled.length">
-          <span class="text-sm text-base-content/80">
+          <span class="text-sm text-base-content/60">
             {{ t("settings.chordDictionarySettings.noDisabledChords") }}
           </span>
         </li>
@@ -126,7 +126,7 @@
           </div>
         </li>
         <li v-if="!settingsStore.settings.chordDictionary.aliases.length">
-          <span class="text-sm text-base-content/80">
+          <span class="text-sm text-base-content/60">
             {{ t("settings.chordDictionarySettings.noPreferredAliases") }}
           </span>
         </li>

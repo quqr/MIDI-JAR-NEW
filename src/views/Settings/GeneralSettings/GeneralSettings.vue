@@ -27,7 +27,7 @@
 
     <template v-if="serverState.started && serverState.addresses.length">
       <div class="mb-4">
-        <span class="text-sm text-base-content/80 block mb-2">
+        <span class="text-sm text-base-content/70 block mb-2">
           {{ t("settings.generalSettings.accessThrough") }}
         </span>
         <div class="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@
       </div>
     </template>
 
-    <div class="max-w-5xl mx-auto px-page-x">
+    <div class="max-w-5xl mx-auto px-4">
       <SettingsCollapse
         :title="t('settings.generalSettings.language')"
         icon="translate"
@@ -63,7 +63,7 @@
         icon="palette"
         :default-open="false"
       >
-        <p class="text-sm text-base-content/80 mb-4">
+        <p class="text-sm text-base-content/70 mb-4">
           {{ t("settings.generalSettings.themeHint") }}
         </p>
         <ThemePicker />
@@ -132,13 +132,11 @@ import {
   SettingsToggle,
 } from "@/components/Settings";
 import ThemePicker from "@/components/ThemePicker.vue";
-import { useToast } from "@/composables/useToast";
 
 const { t, locale } = useI18n();
 const settingsStore = useSettingsStore();
 const serverStateStore = useServerStateStore();
 const serverState = serverStateStore.state;
-const { show } = useToast();
 
 const serverStatus = computed(() => {
   if (serverState.error)
@@ -164,11 +162,5 @@ const handleLanguageChange = (value: string | number) => {
 
 const toggleServer = (enabled: boolean) => {
   serverStateStore.enable(enabled);
-  show(
-    enabled
-      ? t("settings.generalSettings.enableHttpWs")
-      : t("settings.generalSettings.serverStopped"),
-    "success",
-  );
 };
 </script>

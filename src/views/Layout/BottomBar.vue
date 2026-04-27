@@ -1,9 +1,12 @@
 <template>
+
   <nav class="bottom-bar">
-    <div class="grid grid-cols-1 sm:grid-cols-2">
+    <grid class="grid grid-cols-2">
+      <!-- 快速调性切换工具栏 -->
       <QuickChangeKeyToolbar />
+      <!-- MIDI 延迟监控器 -->
       <LatencyMonitor />
-    </div>
+    </grid>
   </nav>
 </template>
 

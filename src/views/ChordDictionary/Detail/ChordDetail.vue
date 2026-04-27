@@ -34,7 +34,7 @@
       </h1>
 
       <div
-        class="text-center text-[min(24px,4vw)] font-normal leading-tight text-base-content/80"
+        class="text-center text-[min(24px,4vw)] font-normal leading-tight text-base-content/60"
       >
         {{ chord.name }}
       </div>
@@ -54,9 +54,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30" open>
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.intervals") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -75,9 +73,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30" open>
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.notation") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -98,9 +94,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30" open>
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.aliases") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -110,10 +104,8 @@
                   :key="index"
                   class="flex items-center justify-between px-3 py-2 hover:bg-base-200 rounded-md"
                   :class="{
-                    'border-l-[3px] border-l-warning bg-base-200':
-                      isPreferred(index),
-                    'border-l-[3px] border-l-info bg-base-200/50':
-                      isDefault(index) && !isPreferred(index),
+                    'border-l-[3px] border-l-warning bg-base-200': isPreferred(index),
+                    'border-l-[3px] border-l-info bg-base-200/50': isDefault(index) && !isPreferred(index),
                   }"
                 >
                   <div class="flex items-center gap-2">
@@ -140,9 +132,7 @@
                   <button
                     class="btn btn-sm btn-ghost btn-circle"
                     :class="
-                      isPreferred(index) || isDefault(index)
-                        ? 'text-warning'
-                        : ''
+                      isPreferred(index) || isDefault(index) ? 'text-warning' : ''
                     "
                     :title="
                       isPreferred(index)
@@ -154,9 +144,7 @@
                         ? t('chordDictionary.unsetAsPreferredAlias', { alias })
                         : t('chordDictionary.setAsPreferredAlias', { alias })
                     "
-                    @click="
-                      toggleAlias(isPreferred(index), chord.aliases[index])
-                    "
+                    @click="toggleAlias(isPreferred(index), chord.aliases[index])"
                   >
                     <Icon
                       :name="
@@ -164,9 +152,7 @@
                       "
                       size="16"
                       :class="
-                        isPreferred(index) || isDefault(index)
-                          ? 'fill-current'
-                          : ''
+                        isPreferred(index) || isDefault(index) ? 'fill-current' : ''
                       "
                     />
                   </button>
@@ -181,9 +167,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30">
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.otherInterpretations") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -207,9 +191,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30">
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.inversions") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -224,7 +206,7 @@
                     :chord="getSlashChord(index)"
                     class="text-3xl font-semibold"
                   />
-                  <div class="text-sm italic text-base-content/80">
+                  <div class="text-sm italic text-base-content/70">
                     {{
                       t("chordDictionary.inversionOn", {
                         interval: getInterval(index),
@@ -273,9 +255,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30">
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.simplified") }}
             </summary>
             <div class="collapse-content pt-0">
@@ -298,9 +278,7 @@
           class="flex-basis-[320px] flex-grow min-w-[280px] p-4 bg-base-200/50 rounded-lg"
         >
           <details class="collapse collapse-arrow bg-base-200/30">
-            <summary
-              class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide"
-            >
+            <summary class="collapse-title text-base font-semibold text-base-content/80 uppercase tracking-wide">
               {{ t("chordDictionary.extended") }}
             </summary>
             <div class="collapse-content pt-0">
