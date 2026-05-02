@@ -27,7 +27,10 @@
             : t("chordDictionary.emptyHelp")
         }}
       </p>
-      <div v-if="!chordName" class="flex flex-col gap-2 text-sm text-base-content/60">
+      <div
+        v-if="!chordName"
+        class="flex flex-col gap-2 text-sm text-base-content/60"
+      >
         <div class="flex items-center gap-2">
           <span class="badge badge-sm">1</span>
           <span>{{ t("chordDictionary.emptyHint1") }}</span>

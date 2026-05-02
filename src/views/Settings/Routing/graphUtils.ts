@@ -1,46 +1,53 @@
 import type { Node, Edge, MarkerType, Position } from "@vue-flow/core";
 import type { MidiInput, MidiOutput, MidiWire } from "@/types/midi";
 
-export const NODE_VERTICAL_SPACING = 32;
-export const NODE_WIDTH = 180;
-export const NODE_HEIGHT = 60;
-
 export function mapDevicesToNodes(
   inputs: MidiInput[],
   outputs: MidiOutput[],
-  viewportWidth: number,
 ): Node[] {
   const nodes: Node[] = [];
 
-  inputs.forEach((input, index) => {
-    const y = 20 + index * (NODE_HEIGHT + NODE_VERTICAL_SPACING);
+  inputs.forEach((input) => {
     nodes.push({
       id: `input-${input.name}`,
       type: "input",
-      position: { x: 20, y },
+      position: { x: 0, y: 0 },
       sourcePosition: "right" as Position,
       data: {
         label: input.name,
-        status: input.connected ? "Connected" : "Disconnected",
         device: input,
       },
     });
   });
 
-  outputs.forEach((output, index) => {
-    const y = 20 + index * (NODE_HEIGHT + NODE_VERTICAL_SPACING);
-    nodes.push({
-      id: `output-${output.name}`,
-      type: "output",
-      position: { x: viewportWidth - NODE_WIDTH - 20, y },
-      targetPosition: "left" as Position,
-      data: {
-        label: output.name,
-        type: output.type,
-        status: output.connected ? "Connected" : "Disconnected",
-        device: output,
-      },
-    });
+  outputs.forEach((output) => {
+    if (output.type === "internal") {
+      nodes.push({
+        id: `output-internal`,
+        type: "internal-output",
+        position: { x: 0, y: 0 },
+        targetPosition: "left" as Position,
+        data: {
+          label: "internal",
+          displayName: "Internal Modules",
+          type: "internal",
+          device: output,
+        },
+      });
+    } else {
+      nodes.push({
+        id: `output-${output.name}`,
+        type: "physical-output",
+        position: { x: 0, y: 0 },
+        targetPosition: "left" as Position,
+        data: {
+          label: output.name,
+          displayName: output.name,
+          type: "physical",
+          device: output,
+        },
+      });
+    }
   });
 
   return nodes;
@@ -50,23 +57,39 @@ export function mapWiresToEdges(
   wires: MidiWire[],
   onDelete: (wire: MidiWire) => void,
 ): Edge[] {
-  return wires.map((wire) => ({
-    id: `edge-${wire.route.input}-${wire.route.output}`,
-    source: `input-${wire.route.input}`,
-    target: `output-${wire.route.output}`,
-    type: "smoothstep",
-    animated: wire.connected,
-    markerEnd: {
-      type: "arrowclosed" as MarkerType,
-    },
-    style: {
-      stroke: wire.connected ? "hsl(var(--su))" : "hsl(var(--bc) / 0.4)",
-      strokeWidth: 2,
-    },
-    data: {
-      route: wire.route,
-      wire,
-      onDelete,
-    },
-  }));
+  const seen = new Set<string>();
+  const edges: Edge[] = [];
+
+  for (const wire of wires) {
+    const targetId =
+      wire.route.type === "internal"
+        ? "output-internal"
+        : `output-${wire.route.output}`;
+
+    const edgeId = `edge-${wire.route.input}-${targetId}`;
+    if (seen.has(edgeId)) continue;
+    seen.add(edgeId);
+
+    edges.push({
+      id: edgeId,
+      source: `input-${wire.route.input}`,
+      target: targetId,
+      type: "wire",
+      animated: wire.connected,
+      markerEnd: {
+        type: "arrowclosed" as MarkerType,
+        color: "hsl(var(--color-base-content) / 0.5)",
+      },
+      style: {
+        strokeWidth: wire.connected ? 4 : 2.5,
+      },
+      data: {
+        route: wire.route,
+        wire,
+        onDelete,
+      },
+    });
+  }
+
+  return edges;
 }

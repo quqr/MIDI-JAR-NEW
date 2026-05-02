@@ -36,7 +36,15 @@
     "circleOfFifthsPreview": "Circle of Fifths preview",
     "chordDictionaryPreview": "Chord Dictionary preview",
     "settingsPreview": "Settings preview",
-    "debuggerPreview": "Debugger preview"
+    "debuggerPreview": "Debugger preview",
+    "moduleDescriptions": {
+      "chordDisplay": "Visualize chords in real-time as you play",
+      "chordQuiz": "Test your ear with interactive chord recognition",
+      "circleOfFifths": "Explore key relationships and modes",
+      "chordDictionary": "Look up chord structures and voicings",
+      "routing": "Route MIDI messages between devices",
+      "debugger": "Monitor and debug MIDI messages"
+    }
   },
   "layout": {
     "midiJar": "MIDI Jar",
@@ -202,7 +210,9 @@
     "circleOf5th": "Circle of 5th",
     "chordQuiz": "Chord Quiz",
     "debugger": "Debugger",
-    "licenses": "Licenses",
+    "licenses": {
+      "title": "Licenses"
+    },
     "about": "About",
     "generalSettings": {
       "language": "Language",

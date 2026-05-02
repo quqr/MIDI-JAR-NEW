@@ -133,7 +133,7 @@ const routes: RouteRecordRaw[] = [
             path: "licenses",
             name: "settings-licenses",
             component: () => import("@/views/Settings/Licenses/Licenses.vue"),
-            meta: { title: "settings.licenses" },
+            meta: { title: "settings.licenses.title" },
           },
           {
             path: "about",

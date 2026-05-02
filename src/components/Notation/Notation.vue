@@ -33,15 +33,15 @@ const containerRef = ref<HTMLElement | null>(null);
 let renderer: Renderer | null = null;
 let resizeObserver: ResizeObserver | null = null;
 
-const PADDING_TOP = 20;
-const STAVE_HEIGHT = 60;
-const STAVE_GAP = 30;
-const TEXT_HEIGHT = 25;
-const BOTTOM_PADDING = 20;
-const KEY_SIGNATURE_WIDTH_PER_ALTERATION = 10;
-const NOTE_WIDTH = 100;
-const CLEF_WIDTH = 40;
-const SIDE_PADDING = 30;
+const PADDING_TOP = 10;
+const STAVE_HEIGHT = 120;
+const STAVE_GAP = 40;
+const TEXT_HEIGHT = 30;
+const BOTTOM_PADDING = 10;
+const KEY_SIGNATURE_WIDTH_PER_ALTERATION = 12;
+const NOTE_WIDTH = 120;
+const CLEF_WIDTH = 50;
+const SIDE_PADDING = 40;
 
 const notes = computed(() =>
   getTransposedNotes(
@@ -58,26 +58,35 @@ const getLayoutDimensions = (
   const isBothClefs = props.staffClef === "both";
   const staveCount = isBothClefs ? 2 : 1;
 
+  // Calculate required dimensions
   const totalStaveHeight =
     staveCount * STAVE_HEIGHT + (isBothClefs ? STAVE_GAP : 0);
   const requiredHeight =
     PADDING_TOP + TEXT_HEIGHT + totalStaveHeight + BOTTOM_PADDING;
 
+  // Calculate key signature width based on alterations
   const keySignatureWidth =
     KEY_SIGNATURE_WIDTH_PER_ALTERATION *
     Math.abs(props.keySignature.alteration);
+
+  // Calculate stave width ensuring minimum space for notes
   const staveWidth = Math.max(
-    NOTE_WIDTH,
+    NOTE_WIDTH, // Minimum width for note display
     containerWidth - CLEF_WIDTH - keySignatureWidth - SIDE_PADDING * 2,
   );
 
-  const scale = Math.min(
+  // Calculate scale with minimum constraints to prevent tiny notation
+  const scaleX =
     containerWidth /
-      (staveWidth + CLEF_WIDTH + keySignatureWidth + SIDE_PADDING * 2),
-    containerHeight / requiredHeight,
-    1.5,
-  );
+    Math.max(
+      staveWidth + CLEF_WIDTH + keySignatureWidth + SIDE_PADDING * 2,
+      containerWidth * 0.8,
+    );
+  const scaleY =
+    containerHeight / Math.max(requiredHeight, containerHeight * 0.6);
+  const scale = Math.min(scaleX, scaleY, 1.5); // Max scale factor of 1.5
 
+  // Apply scaling to dimensions
   const scaledStaveWidth = staveWidth * scale;
   const scaledStaveHeight = STAVE_HEIGHT * scale;
   const scaledGap = STAVE_GAP * scale;
@@ -85,6 +94,7 @@ const getLayoutDimensions = (
   const scaledTextHeight = TEXT_HEIGHT * scale;
   const scaledBottomPadding = BOTTOM_PADDING * scale;
 
+  // Calculate total dimensions
   const totalHeight =
     scaledPaddingTop +
     scaledTextHeight +
@@ -97,6 +107,7 @@ const getLayoutDimensions = (
     keySignatureWidth * scale +
     SIDE_PADDING * 2 * scale;
 
+  // Calculate Y positions for staves
   let trebleY: number;
   let bassY: number;
   let singleY: number;

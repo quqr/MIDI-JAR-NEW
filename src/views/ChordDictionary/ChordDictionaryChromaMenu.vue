@@ -1,7 +1,7 @@
 <template>
-  <div class="chord-dictionary-chroma-menu p-3">
+  <div class="chord-dictionary-chroma-menu p-4">
     <ul
-      class="menu bg-base-100 w-full rounded-lg"
+      class="menu bg-base-100"
       role="tablist"
       :aria-label="t('chordDictionary.chromaNavigation')"
     >

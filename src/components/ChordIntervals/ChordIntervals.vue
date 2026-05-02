@@ -1,21 +1,13 @@
 <template>
-  <div class="d-flex align-center gap-2 overflow-x-auto py-2">
+  <div class="flex items-center justify-center gap-2 overflow-x-auto py-2">
     <div
       v-for="(interval, index) in INTERVALS.BASE"
       :key="interval"
-      class="flex flex-col items-center justify-end rounded-md transition-all duration-200"
+      class="flex flex-col items-center justify-center rounded-md transition-all duration-200"
       :class="{
         'font-bold': activeAsMap[index] || targetAsMap[index],
         'bg-base-300':
           !activeAsMap[index] && !targetAsMap[index] && !playedMap[index],
-      }"
-      :style="{
-        width: '2.5rem',
-        fontSize: '0.75rem',
-        lineHeight: '1rem',
-        height: heightMap[playedMap[index]] || '50%',
-        backgroundColor: bgColors[index],
-        transition: 'height 200ms, background-color 200ms',
       }"
     >
       <template v-if="activeAsMap[index] || targetAsMap[index]">
@@ -60,14 +52,6 @@ const playedMap = computed(() => {
   return result.map((v: number) => Math.min(4, v));
 });
 
-const heightMap: Record<number, string> = {
-  0: "50%",
-  1: "60%",
-  2: "70%",
-  3: "80%",
-  4: "90%",
-};
-
 const OCTAVE_INTERVALS = INTERVALS.OCTAVE;
 
 const activeAsMap = computed(() =>
@@ -77,36 +61,4 @@ const activeAsMap = computed(() =>
 const targetAsMap = computed(() =>
   INTERVALS.BASE.map((i) => isIncludedAs(i, props.targets)),
 );
-
-const hasTargets = computed(() => props.targets && props.targets.length > 0);
-
-const bgColors = computed(() => {
-  return INTERVALS.BASE.map((_, index) => {
-    const activeAs = activeAsMap.value[index];
-    const targetAs = targetAsMap.value[index];
-    const isPlayed = playedMap.value[index];
-
-    let bgColor = "hsl(var(--n) / 0.5)";
-
-    if (activeAs || targetAs) {
-      if (hasTargets.value) {
-        if (targetAs && (activeAs || isPlayed)) {
-          bgColor = "hsl(var(--su))";
-        } else if (targetAs) {
-          bgColor = props.quizMode ? "hsl(var(--n) / 0.5)" : "hsl(var(--p))";
-        } else if (activeAs) {
-          bgColor = "hsl(var(--p))";
-        } else if (isPlayed) {
-          bgColor = "hsl(var(--er))";
-        }
-      } else {
-        bgColor = "hsl(var(--p))";
-      }
-    } else if (isPlayed) {
-      bgColor = hasTargets.value ? "hsl(var(--er))" : "hsl(var(--p))";
-    }
-
-    return bgColor;
-  });
-});
 </script>

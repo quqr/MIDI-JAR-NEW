@@ -17,6 +17,11 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
   const maxMessages = 200;
   const manager = MidiMessageManager.getInstance();
 
+  const listenerMap = new Map<
+    (message: number[], timestamp: number, device: string) => void,
+    MidiMessageListener
+  >();
+
   function addMessage(
     message: number[],
     timestamp: number,
@@ -38,14 +43,19 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
       addMessage(message, timestamp, device, namespace);
       onMessage(message, timestamp, device);
     };
+    listenerMap.set(onMessage, listener);
     manager.subscribe(namespace, listener);
   }
 
   function unsubscribeFromNamespace(
     namespace: string,
-    listener: MidiMessageListener,
+    onMessage: (message: number[], timestamp: number, device: string) => void,
   ): void {
-    manager.unsubscribe(namespace, listener);
+    const listener = listenerMap.get(onMessage);
+    if (listener) {
+      manager.unsubscribe(namespace, listener);
+      listenerMap.delete(onMessage);
+    }
   }
 
   function clearMessages(): void {

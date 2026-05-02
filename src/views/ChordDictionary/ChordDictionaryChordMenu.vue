@@ -1,7 +1,7 @@
 <template>
-  <div class="chord-dictionary-chord-menu h-full">
+  <div class="chord-dictionary-chord-menu p-4 max-h-full">
     <ul
-      class="menu bg-base-100 w-full rounded-lg p-0"
+      class="menu bg-base-100"
       role="navigation"
       :aria-label="t('chordDictionary.chordTypesNavigation')"
     >

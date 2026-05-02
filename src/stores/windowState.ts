@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { WindowState, defaultWindowState } from "@/types";
+import { isElectron, getElectronAPI } from "@/utils/electron";
 
 const STORAGE_KEY = "midi-jar-window-state";
 
@@ -31,10 +32,10 @@ function saveWindowState(state: WindowState) {
 export const useWindowStateStore = defineStore("windowState", () => {
   const windowState = ref<WindowState>(loadWindowState());
 
-  // Web 版本不需要 Electron 的 maximize/unmaximize/minimize/close 等功能
-  // 仅保留与 Web 相关的状态和动作
-
   function setAlwaysOnTop(flag: boolean): void {
+    if (isElectron()) {
+      getElectronAPI().window.setAlwaysOnTop(flag);
+    }
     windowState.value.alwaysOnTop = flag;
   }
 
@@ -54,6 +55,17 @@ export const useWindowStateStore = defineStore("windowState", () => {
     windowState.value = { ...windowState.value, ...updates };
   }
 
+  async function getWindowState(): Promise<WindowState | null> {
+    if (isElectron()) {
+      return await getElectronAPI().window.getWindowState();
+    }
+    return windowState.value;
+  }
+
+  async function setWindowState(updates: Partial<WindowState>): Promise<void> {
+    updateWindowState(updates);
+  }
+
   watch(
     windowState,
     (newState) => {
@@ -69,5 +81,7 @@ export const useWindowStateStore = defineStore("windowState", () => {
     dismissUpdate,
     navigate,
     updateWindowState,
+    getWindowState,
+    setWindowState,
   };
 });

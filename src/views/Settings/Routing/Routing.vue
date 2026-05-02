@@ -1,81 +1,37 @@
 <template>
-  <div class="flex flex-col h-full overflow-hidden">
-    <div class="flex-1 p-4 relative">
+  <div class="flex flex-col h-full">
+    <div class="flex-1 min-h-0 p-4">
       <MidiFlowGraph
         :inputs="inputs"
         :outputs="outputs"
         :wires="wires"
-        :on-add-route="addRoute"
-        :on-delete-route="deleteRoute"
+        :on-add-route="handleAddRoute"
+        :on-delete-route="handleDeleteRoute"
       />
-
-      <div
-        v-if="showHint"
-        class="absolute top-6 left-6 right-6 z-20"
-      >
-        <div class="alert alert-info shadow-lg">
+    </div>
+    <div
+      class="flex items-center justify-between p-2 border-t border-base-300 bg-base-100"
+    >
+      <div class="flex items-center gap-2">
+        <button class="btn btn-sm btn-outline" @click="handleRefresh">
           <svg
             xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
             fill="none"
             viewBox="0 0 24 24"
-            class="stroke-current shrink-0 w-6 h-6"
+            stroke="currentColor"
           >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
-          <div>
-            <h3 class="font-bold">{{ t("routing.howToUse") }}</h3>
-            <div class="text-xs mt-1 space-y-1">
-              <p>{{ t("routing.hint1") }}</p>
-              <p>{{ t("routing.hint2") }}</p>
-              <p>{{ t("routing.hint3") }}</p>
-            </div>
-          </div>
-          <button class="btn btn-sm btn-ghost" @click="dismissHint">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              class="size-4"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+          {{ t("settings.routingSettings.refreshDevices") }}
+        </button>
       </div>
-    </div>
-    <div
-      class="flex items-center justify-between p-2 border-t border-base-300 bg-base-100"
-    >
-      <button class="btn btn-sm btn-outline" @click="refreshDevices">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        {{ t("settings.routingSettings.refreshDevices") }}
-      </button>
-      <div class="divider divider-horizontal"></div>
-      <button class="btn btn-sm btn-error" @click="clearRoutes">
+      <button class="btn btn-sm btn-error" @click="handleClearAndRefresh">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="h-4 w-4"
@@ -97,36 +53,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
+import type { MidiWire } from "@/types/midi";
 import MidiFlowGraph from "./MidiFlowGraph.vue";
+import { logger } from "@/utils/logger";
 
 const { t } = useI18n();
 const routingStore = useMidiRoutingStore();
 
-const showHint = ref(true);
-const HINT_STORAGE_KEY = "midi-jar-routing-hint-dismissed";
+const { inputs, outputs, wires, addRoute, deleteRoute } = routingStore;
 
-onMounted(() => {
-  const dismissed = localStorage.getItem(HINT_STORAGE_KEY);
-  if (dismissed === "true") {
-    showHint.value = false;
-  }
-});
-
-function dismissHint() {
-  showHint.value = false;
-  localStorage.setItem(HINT_STORAGE_KEY, "true");
+function handleAddRoute(input: string, output: string, type: string) {
+  addRoute({
+    input,
+    output,
+    type: type as "physical" | "internal",
+    enabled: true,
+  });
 }
 
-const {
-  inputs,
-  outputs,
-  wires,
-  refreshDevices,
-  addRoute,
-  deleteRoute,
-  clearRoutes,
-} = routingStore;
+function handleDeleteRoute(wire: MidiWire) {
+  deleteRoute(wire.route);
+}
+
+async function handleRefresh() {
+  console.log("开始刷新 MIDI 设备列表...");
+  await routingStore.refreshDevices();
+  routingStore.createDefaultRoutes();
+  await routingStore.routeMidi();
+}
+
+async function handleClearAndRefresh() {
+  console.log("开始清除所有路由...");
+  await routingStore.clearRoutes();
+  await routingStore.refreshDevices();
+  routingStore.createDefaultRoutes();
+  await routingStore.routeMidi();
+}
 </script>

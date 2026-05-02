@@ -20,11 +20,6 @@
     >
       <Icon name="plus" size="16" />
     </button>
-    <ChordDisplayAddModal
-      :open="addModalOpen"
-      @save="handleSave"
-      @cancel="addModalOpen = false"
-    />
   </div>
 </template>
 

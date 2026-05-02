@@ -85,10 +85,10 @@ export const navItems: NavItem[] = [
   },
   { icon: "quiz", to: "/settings/quiz", labelKey: "settings.chordQuiz" },
   { icon: "bug", to: "/settings/debug", labelKey: "settings.debugger" },
-  {
-    icon: "copyright",
-    to: "/settings/licenses",
-    labelKey: "settings.licenses",
-  },
+  // {
+  //   icon: "copyright",
+  //   to: "/settings/licenses",
+  //   labelKey: "settings.licenses.title",
+  // },
   { icon: "info", to: "/settings/about", labelKey: "settings.about" },
 ];

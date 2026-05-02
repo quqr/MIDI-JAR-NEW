@@ -1,52 +1,54 @@
 <template>
-  <div class="drawer lg:drawer-open">
+  <div class="drawer max-h-full lg:drawer-open">
     <input id="settings-drawer" type="checkbox" class="drawer-toggle" />
-    <div class="drawer-content">
-      <div
-        class="lg:hidden flex items-center gap-2 p-4 border-b border-base-200"
-      >
+    <div class="drawer-content max-h-full flex flex-col">
+      <div class="navbar bg-base-300 w-full">
         <label
           for="settings-drawer"
-          class="btn btn-ghost btn-sm btn-square lg:hidden"
+          aria-label="open sidebar"
+          class="btn btn-square btn-ghost"
         >
           <Icon name="menu" size="20" />
         </label>
-        <span class="font-semibold">{{ $t("settings.title") }}</span>
+        <div class="px-4 font-semibold">{{ $t("settings.title") }}</div>
       </div>
-      <div class="p-6 max-w-7xl mx-auto">
+      <div class="max-h-full overflow-y-auto flex-1">
         <RouterView />
       </div>
     </div>
-    <div
-      class="drawer-side z-40"
-      style="scroll-behavior: smooth; scroll-padding-top: 5rem"
-    >
+    <div class="drawer-side max-h-full is-drawer-close:overflow-visible">
       <label
-        for="drawer"
+        for="settings-drawer"
         class="drawer-overlay"
         aria-label="Close menu"
       ></label>
-      <div class="bg-base-100 min-h-screen w-50">
+      <div
+        class="flex min-h-full flex-col bg-base-100 is-drawer-close:w-20 is-drawer-open:w-50"
+      >
         <ul
-          class="menu w-full px-4 py-0"
+          class="menu w-full grow px-4 py-4"
           :aria-label="t('settings.navigation')"
         >
           <li v-for="item in navItems" :key="item.to">
             <RouterLink
               :to="item.to"
-              class="rounded-lg text-sm font-medium"
+              class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
               :class="
                 isActive(item.to)
                   ? 'active bg-primary text-primary-content font-bold'
                   : 'text-base-content/70'
               "
+              :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
             >
-              {{ t(item.labelKey) }}
+              <Icon :name="item.icon" size="20" />
+              <span class="is-drawer-close:hidden">{{ t(item.labelKey) }}</span>
             </RouterLink>
           </li>
         </ul>
-        <div class="divider my-0"></div>
-        <div class="p-3 text-center text-sm text-base-content/70">
+        <div class="divider my-0 is-drawer-close:hidden"></div>
+        <div
+          class="p-3 text-center text-sm text-base-content/70 is-drawer-close:hidden"
+        >
           <span>v{{ APP_VERSION }}</span>
         </div>
       </div>

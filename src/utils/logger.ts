@@ -12,6 +12,7 @@ export interface LogEntry {
 class Logger {
   private logs = ref<LogEntry[]>([]);
   private nextId = 0;
+  private isIntercepting = false;
 
   private formatTimestamp(): string {
     const now = new Date();
@@ -65,6 +66,48 @@ class Logger {
       return this.logs.value;
     }
     return this.logs.value.filter((log) => log.type === type);
+  }
+
+  interceptConsole(): void {
+    if (this.isIntercepting) return;
+    this.isIntercepting = true;
+
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: console.info,
+    };
+
+    console.log = (...args: any[]) => {
+      originalConsole.log.apply(console, args);
+      this.addLog("info", args.map(this.formatArg).join(" "));
+    };
+
+    console.warn = (...args: any[]) => {
+      originalConsole.warn.apply(console, args);
+      this.addLog("warn", args.map(this.formatArg).join(" "));
+    };
+
+    console.error = (...args: any[]) => {
+      originalConsole.error.apply(console, args);
+      this.addLog("error", args.map(this.formatArg).join(" "));
+    };
+
+    console.info = (...args: any[]) => {
+      originalConsole.info.apply(console, args);
+      this.addLog("info", args.map(this.formatArg).join(" "));
+    };
+  }
+
+  private formatArg(arg: any): string {
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return arg.stack || arg.message;
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
   }
 }
 

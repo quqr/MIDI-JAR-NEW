@@ -36,7 +36,15 @@
     "circleOfFifthsPreview": "五度圈预览",
     "chordDictionaryPreview": "和弦词典预览",
     "settingsPreview": "设置预览",
-    "debuggerPreview": "调试器预览"
+    "debuggerPreview": "调试器预览",
+    "moduleDescriptions": {
+      "chordDisplay": "实时可视化显示您弹奏的和弦",
+      "chordQuiz": "通过交互式和弦识别测试您的听力",
+      "circleOfFifths": "探索调性关系和调式",
+      "chordDictionary": "查询和弦结构和排列",
+      "routing": "在设备之间路由MIDI消息",
+      "debugger": "监控和调试MIDI消息"
+    }
   },
   "layout": {
     "midiJar": "MIDI Jar",
@@ -205,7 +213,9 @@
     "circleOf5th": "五度圈",
     "chordQuiz": "和弦测验",
     "debugger": "调试器",
-    "licenses": "许可证",
+    "licenses": {
+      "title": "许可证"
+    },
     "about": "关于",
     "generalSettings": {
       "language": "语言",
@@ -226,12 +236,6 @@
     "routingSettings": {
       "refreshDevices": "刷新设备",
       "clearAll": "清除全部"
-    },
-    "routing": {
-      "howToUse": "如何使用 MIDI 路由",
-      "hint1": "1. 点击输入设备节点选择 MIDI 输入源",
-      "hint2": "2. 点击输出设备节点选择 MIDI 输出目标",
-      "hint3": "3. 拖拽连接线和弦创建路由路径"
     },
     "notationSettings": {
       "title": "记谱设置",

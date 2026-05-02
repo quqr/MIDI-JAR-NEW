@@ -1,91 +1,81 @@
-import jzz from "jzz";
 import { EventEmitter } from "./EventEmitter";
+import { logger } from "@/utils/logger";
+import jzz from "jzz";
 
-/**
- * MIDI 消息处理器类型
- * @param message - MIDI 消息字节数组
- * @param timestamp - 消息时间戳（毫秒）
- * @param device - 设备名称
- */
 export type MidiMessageHandler = (
   message: number[],
   timestamp: number,
   device: string,
 ) => void;
 
-/**
- * MIDI 输入设备事件接口声明
- * 支持 "message" 和 "latency" 两种事件
- */
 export declare interface MidiInputDevice {
   on(event: "message", listener: MidiMessageHandler): this;
   on(event: "latency", listener: (latency: number, name: string) => void): this;
 }
 
-/**
- * MIDI 输入设备类
- * 继承 EventEmitter，负责与系统 MIDI 输入设备建立连接
- * 接收 MIDI 消息并分发给已注册的处理器
- */
 export class MidiInputDevice extends EventEmitter {
-  // 设备名称
   name: string;
-  // 设备连接状态
   connected: boolean;
-  // JZZ MIDI 端口实例
   private port: any = null;
-  // 已注册的自定义消息处理器列表
+  private portType: "jzz" | "webmidi" | null = null;
   private handlers: MidiMessageHandler[] = [];
-  // 上次接收到消息的时间戳，用于计算延迟
   private lastMessageTime: number = 0;
 
-  /**
-   * 创建 MIDI 输入设备实例
-   * @param name - 设备名称
-   * @param connected - 初始连接状态，默认为 true
-   */
   constructor(name: string, connected: boolean = true) {
     super();
     this.name = name;
     this.connected = connected;
   }
 
-  /**
-   * 打开 MIDI 输入端口
-   * 使用 JZZ 库建立与物理设备的连接
-   * @returns 打开操作完成的 Promise
-   */
   async open(): Promise<void> {
-    // 如果端口已打开，直接返回
     if (this.port) return;
 
+    try {
+      await this.openViaJZZ(this.name);
+      return;
+    } catch (e) {
+      logger.warn(`MidiInputDevice: JZZ openMidiIn("${this.name}") 失败（${e}），尝试默认端口...`);
+    }
+
+    try {
+      await this.openViaJZZ();
+      return;
+    } catch (e) {
+      logger.warn(`MidiInputDevice: JZZ 默认端口也失败（${e}），尝试 Web MIDI API...`);
+    }
+
+    try {
+      await this.openViaWebMIDI(false);
+      return;
+    } catch (e) {
+      logger.warn(`MidiInputDevice: Web MIDI API (sysex) 失败（${e}），尝试无 sysex...`);
+    }
+
+    try {
+      await this.openViaWebMIDI(true);
+      return;
+    } catch (e) {
+      throw new Error(
+        `Cannot open MIDI input：${this.name}（所有方式均失败）`,
+      );
+    }
+  }
+
+  private openViaJZZ(name?: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      const self = this;
       jzz()
-        .openMidiIn(this.name)
-        // 打开失败的回调
-        .or(() => reject(new Error("Cannot open MIDI input")))
-        // 打开成功的回调
-        .and((port: any) => {
-          this.port = port;
-          this.connected = true;
+        .openMidiIn(name || undefined)
+        .or(function () {
+          reject(new Error(this._err ? this._err() : "Unknown JZZ error"));
+        })
+        .and(function () {
+          self.port = this;
+          self.portType = "jzz";
+          self.connected = true;
 
-          // 注册消息接收回调
-          this.port.connect((msg: any) => {
-            // 将 MIDI 消息转换为数组格式
-            const message = Array.from(msg) as number[];
-            const now = Date.now();
-            // 计算与上次消息的时间间隔（延迟）
-            const latency = now - this.lastMessageTime;
-            this.lastMessageTime = now;
-
-            // 触发延迟事件和消息事件
-            this.emit("latency", latency, this.name);
-            this.emit("message", message, now, this.name);
-
-            // 调用所有已注册的自定义处理器
-            for (const handler of this.handlers) {
-              handler(message, now, this.name);
-            }
+          self.port.connect(function (msg: any) {
+            self.handleMessage(Array.from(msg) as number[]);
           });
 
           resolve();
@@ -93,33 +83,70 @@ export class MidiInputDevice extends EventEmitter {
     });
   }
 
-  /**
-   * 关闭 MIDI 输入端口
-   * 释放设备资源并更新连接状态
-   */
-  close(): void {
-    if (this.port) {
-      this.port.close();
-      this.port = null;
-      this.connected = false;
+  private async openViaWebMIDI(noSysex: boolean): Promise<void> {
+    if (typeof navigator === "undefined" || !navigator.requestMIDIAccess) {
+      throw new Error("Web MIDI API 不可用");
+    }
+
+    const access = await navigator.requestMIDIAccess(noSysex ? {} : { sysex: true });
+
+    const inputs = Array.from(access.inputs.values());
+    const midiInput = inputs.find((input) => input.name === this.name) || null;
+
+    if (!midiInput) {
+      throw new Error(`设备 "${this.name}" 未找到`);
+    }
+
+    if (midiInput.state === "connected" && midiInput.connection !== "open") {
+      await midiInput.open();
+    }
+
+    const self = this;
+    midiInput.onmidimessage = function (event: MIDIMessageEvent) {
+      if (event.data) {
+        self.handleMessage(Array.from(event.data) as number[]);
+      }
+    };
+
+    this.port = midiInput;
+    this.portType = "webmidi";
+    this.connected = true;
+  }
+
+  private handleMessage(message: number[]): void {
+    const now = Date.now();
+    const latency = now - this.lastMessageTime;
+    this.lastMessageTime = now;
+
+    this.emit("latency", latency, this.name);
+    this.emit("message", message, now, this.name);
+
+    for (const handler of this.handlers) {
+      handler(message, now, this.name);
     }
   }
 
-  /**
-   * 注册消息处理器
-   * @param handler - 要注册的消息处理函数
-   */
+  close(): void {
+    if (!this.port) return;
+
+    if (this.portType === "webmidi") {
+      this.port.onmidimessage = null;
+      this.port.close();
+    } else {
+      this.port.close();
+    }
+
+    this.port = null;
+    this.portType = null;
+    this.connected = false;
+  }
+
   register(handler: MidiMessageHandler): void {
-    // 确保处理器有效且未重复注册
     if (handler && !this.handlers.includes(handler)) {
       this.handlers.push(handler);
     }
   }
 
-  /**
-   * 注销消息处理器
-   * @param handler - 要注销的消息处理函数
-   */
   unregister(handler: MidiMessageHandler): void {
     const index = this.handlers.indexOf(handler);
     if (index >= 0) {
@@ -127,10 +154,6 @@ export class MidiInputDevice extends EventEmitter {
     }
   }
 
-  /**
-   * 将设备信息转换为 API 格式
-   * @returns 设备信息对象
-   */
   toApi(): {
     name: string;
     opened: boolean;

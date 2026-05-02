@@ -2,7 +2,10 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { MidiRoute, MidiInput, MidiOutput, MidiWire } from "@/types/midi";
 import { MidiDeviceManager } from "@/midi/MidiDeviceManager";
+import { JZZEngine } from "@/midi/JZZEngine";
+import { MidiMessageManager } from "@/midi/MidiMessageManager";
 import { logger } from "@/utils/logger";
+import { log } from "console";
 
 const STORAGE_KEY = "midi-jar-routes";
 
@@ -35,27 +38,62 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   const routes = ref<MidiRoute[]>(loadRoutes());
   const error = ref<string | null>(null);
 
+  function createDefaultRoutes(): void {
+    if (routes.value.length > 0) return;
+    if (inputs.value.length === 0) return;
+
+    const firstInput = inputs.value[0].name;
+    routes.value.push({
+      input: firstInput,
+      output: "internal",
+      type: "internal",
+      enabled: true,
+    });
+    saveRoutes(routes.value);
+    logger.info(`已创建默认路由: ${firstInput} → internal`);
+  }
+
   async function initialize(): Promise<void> {
     if (initialized.value) return;
     try {
       await manager.initialize();
       await refreshDevices();
-      routeMidi();
+      createDefaultRoutes();
+      await routeMidi();
+
+      manager.setOnDeviceChange(async () => {
+        await refreshDevices();
+        createDefaultRoutes();
+        await routeMidi();
+      });
+
       initialized.value = true;
+      logger.info(
+        `MIDI 路由初始化完成: ${inputs.value.length} 输入, ${outputs.value.length} 输出, ${wires.value.length} 连线`,
+      );
     } catch (e: any) {
       error.value = e.message;
+      logger.error(`MIDI 初始化失败: ${e.message}`);
     }
   }
 
   async function refreshDevices(): Promise<void> {
+    await JZZEngine.getInstance().refresh();
     await manager.refreshDevices();
+    console.log(`已刷新 MIDI 设备列表: inputs: ${manager.getInputs().length}, outputs: ${manager.getOutputs().length}`);
     inputs.value = manager.getInputs() as MidiInput[];
     outputs.value = manager.getOutputs() as MidiOutput[];
   }
 
-  function routeMidi(): void {
-    manager.routeMidi(routes.value);
+  async function routeMidi(): Promise<void> {
+    await manager.routeMidi(routes.value);
     wires.value = manager.getWires() as MidiWire[];
+
+    const messageManager = MidiMessageManager.getInstance();
+    const namespaces = messageManager.getNamespaces();
+    logger.info(
+      `MIDI 路由已建立: ${wires.value.length} 连线, 消息命名空间: [${namespaces.join(", ")}]`,
+    );
   }
 
   async function addRoute(route: MidiRoute): Promise<void> {
@@ -138,6 +176,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     initialize,
     refreshDevices,
     routeMidi,
+    createDefaultRoutes,
     addRoute,
     deleteRoute,
     updateRoute,

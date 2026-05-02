@@ -1,15 +1,5 @@
 <template>
   <SettingsSection :on-reset="resetModule">
-    <template #actions>
-      <button
-        class="btn btn-sm btn-outline btn-error"
-        @click="handleDeleteModule"
-      >
-        <Icon name="trash" size="16" />
-        {{ t("common.delete") }}
-      </button>
-    </template>
-
     <div class="space-y-3">
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.chords')"

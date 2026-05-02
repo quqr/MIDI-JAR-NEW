@@ -1,4 +1,5 @@
 import { ref, onUnmounted } from "vue";
+import { JZZEngine } from "@/midi/JZZEngine";
 import jzz from "jzz";
 
 export function useMidiLearn(
@@ -30,19 +31,35 @@ export function useMidiLearn(
 
   async function startLearning() {
     if (isLearning.value) return;
-
     isLearning.value = true;
 
     try {
-      const midi = await jzz();
-      const inputs = midi.info().inputs;
-
-      if (inputs.length === 0) {
-        console.warn("No MIDI input devices available");
+      const engine = JZZEngine.getInstance();
+      if (!engine.isInitialized()) {
+        console.warn("JZZ engine not initialized");
+        isLearning.value = false;
         return;
       }
 
-      port.value = await midi.openMidiIn(inputs[0].name);
+      const jzzEngine = jzz();
+      const inputs = jzzEngine.info().inputs;
+
+      if (inputs.length === 0) {
+        console.warn("No MIDI input devices available");
+        isLearning.value = false;
+        return;
+      }
+
+      port.value = await new Promise((resolve, reject) => {
+        jzz()
+          .openMidiIn(inputs[0].name)
+          .or(function () {
+            reject(new Error(this._err ? this._err() : "Unknown JZZ error"));
+          })
+          .and(function () {
+            resolve(this);
+          });
+      });
       port.value.connect(handleMessage);
     } catch (err) {
       console.error("Failed to open MIDI input:", err);
@@ -54,6 +71,7 @@ export function useMidiLearn(
     isLearning.value = false;
     if (port.value) {
       port.value.disconnect(handleMessage);
+      port.value.close();
       port.value = null;
     }
   }

@@ -48,6 +48,7 @@ const { chords, pitchClasses, keySignature } = useNotes({
   key: key.value,
   midiChannel: 0,
   disabledChords: disabledChords.value,
+  namespace: "circle-of-fifths",
 });
 
 const handleKeyChange = (newKey: string) => {

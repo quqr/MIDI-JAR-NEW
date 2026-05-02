@@ -15,9 +15,6 @@ interface MidiMessageEvent {
 }
 
 interface Window {
-  electronApi?: {
-    sendMessage: (message: string) => void;
-  };
   midi?: {
     onLatency: (
       callback: (latency: number, device: string) => void,

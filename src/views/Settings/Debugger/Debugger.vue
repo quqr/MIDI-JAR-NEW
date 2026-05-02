@@ -32,7 +32,7 @@
       </label>
     </div>
 
-    <div class="flex-grow-1 p-2 overflow-auto" ref="logContainer">
+    <div class="flex flex-col p-2 overflow-auto max-h-full" ref="logContainer">
       <div
         v-for="log in filteredLogs"
         :key="log.id"
@@ -151,17 +151,5 @@ const clearLogs = () => {
   logger.clearLogs();
 };
 
-useMidiMessages(onMessages);
+useMidiMessages(onMessages, "debugger");
 </script>
-
-<style scoped>
-.log-entry {
-  font-family:
-    "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Courier New",
-    monospace;
-  font-size: 0.75rem;
-  line-height: 1.5;
-  padding: 2px 0;
-  letter-spacing: -0.01em;
-}
-</style>

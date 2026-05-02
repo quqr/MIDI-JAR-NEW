@@ -44,7 +44,7 @@
       </div>
     </template>
 
-    <div class="max-w-5xl mx-auto px-4">
+    <div class="max-w-full max-h-full mx-auto px-4">
       <SettingsCollapse
         :title="t('settings.generalSettings.language')"
         icon="translate"

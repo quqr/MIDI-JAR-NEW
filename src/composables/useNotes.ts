@@ -30,6 +30,7 @@ export interface UseNotesOptions {
   useSustain?: boolean;
   detectOnRelease?: boolean;
   disabledChords?: string[];
+  namespace?: string;
 }
 
 interface ChordInfo extends ReturnType<typeof Chord.getChord> {
@@ -82,6 +83,7 @@ export function useNotes({
   useSustain = true,
   detectOnRelease = true,
   disabledChords = undefined,
+  namespace = "debugger",
 }: UseNotesOptions = {}) {
   const keySignature = ref<KeySignatureConfig>(
     getKeySignature(key, accidentals === "sharp"),
@@ -306,7 +308,7 @@ export function useNotes({
     sustained.value = false;
   }
 
-  useMidiMessage(onMidiMessage);
+  useMidiMessage(onMidiMessage, namespace);
 
   return {
     notes: readonly(notes),

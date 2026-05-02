@@ -64,6 +64,10 @@ export class MidiMessageManager {
     return Array.from(this.outputs.keys());
   }
 
+  getListenerCount(namespace: string): number {
+    return this.listeners.get(namespace)?.size ?? 0;
+  }
+
   clearNamespace(namespace: string): void {
     this.listeners.delete(namespace);
   }

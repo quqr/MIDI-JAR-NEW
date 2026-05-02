@@ -108,7 +108,9 @@
         />
       </div>
     </div>
-    <div class="absolute bottom-4 right-4 z-10 opacity-60 hover:opacity-100 transition-opacity">
+    <div
+      class="absolute bottom-4 right-4 z-10 opacity-60 hover:opacity-100 transition-opacity"
+    >
       <RouterLink
         to="/home"
         class="btn btn-sm btn-ghost btn-circle"
@@ -146,7 +148,9 @@ import GameList from "./GameList/GameList.vue";
 
 const settingsStore = useSettingsStore();
 const quizSettings = computed(() => settingsStore.settings.chordQuiz);
-const { chords, pitchClasses } = useNotes();
+const { chords, pitchClasses, clearNotes } = useNotes({
+  namespace: "chord-quiz",
+});
 const { games, gameState } = useQuiz(
   pitchClasses.value.slice() as string[],
   chords.value as unknown as any,
@@ -237,7 +241,7 @@ const getStatusColor = () => {
 const handleKeyboard = (e: KeyboardEvent) => {
   if (e.code === "Space") {
     e.preventDefault();
-    pitchClasses.value = [];
+    clearNotes();
   }
 };
 

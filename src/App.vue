@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
-import TopBar from "@/views/Layout/TopBar.vue";
+import AppNavbar from "@/views/Layout/AppNavbar.vue";
 import BottomBar from "@/views/Layout/BottomBar.vue";
+import CustomCursor from "@/components/CustomCursor.vue";
 </script>
 
 <template>
-<div class="flex flex-col h-screen bg-base-200">
-  <TopBar class="flex-shrink-0 h-16" />
-  <main class="flex-1">
-    <RouterView />
-  </main>
-  <BottomBar class="flex-shrink-0 h-10" />
-</div>
+  <CustomCursor />
+  <div class="flex flex-col h-screen bg-base-300">
+    <AppNavbar />
+    <main class="flex-1 overflow-y-auto main-content scrollbar-thin">
+      <RouterView />
+    </main>
+    <BottomBar />
+  </div>
 </template>

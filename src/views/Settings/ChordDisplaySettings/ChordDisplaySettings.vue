@@ -1,10 +1,9 @@
 <template>
   <div>
-    <ChordDisplayList />
-    <RouterView />
+    <ChordDisplayModuleSettings />
   </div>
 </template>
 
 <script setup lang="ts">
-import ChordDisplayList from "./ChordDisplayList.vue";
+import ChordDisplayModuleSettings from "./ChordDisplayModuleSettings.vue";
 </script>
