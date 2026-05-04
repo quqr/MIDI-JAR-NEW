@@ -1,79 +1,79 @@
-export type MidiMessageListener = (
-  message: number[],
-  timestamp: number,
-  device: string,
-) => void;
+export class MidiMessageEvent extends Event {
+  message: number[];
+  timestamp: number;
+  device: string;
 
-export class MidiMessageManager {
-  private static instance: MidiMessageManager | null = null;
-  private listeners: Map<string, Set<MidiMessageListener>> = new Map();
-  private outputs: Map<string, any> = new Map();
-
-  private constructor() {}
-
-  static getInstance(): MidiMessageManager {
-    if (!MidiMessageManager.instance) {
-      MidiMessageManager.instance = new MidiMessageManager();
-    }
-    return MidiMessageManager.instance;
-  }
-
-  registerOutput(namespace: string, output: any): void {
-    this.outputs.set(namespace, output);
-
-    output.on(
-      "message",
-      (message: number[], timestamp: number, device: string) => {
-        this.distributeMessage(namespace, message, timestamp, device);
-      },
-    );
-  }
-
-  subscribe(namespace: string, listener: MidiMessageListener): void {
-    if (!this.listeners.has(namespace)) {
-      this.listeners.set(namespace, new Set());
-    }
-    this.listeners.get(namespace)!.add(listener);
-  }
-
-  unsubscribe(namespace: string, listener: MidiMessageListener): void {
-    const namespaceListeners = this.listeners.get(namespace);
-    if (namespaceListeners) {
-      namespaceListeners.delete(listener);
-      if (namespaceListeners.size === 0) {
-        this.listeners.delete(namespace);
-      }
-    }
-  }
-
-  private distributeMessage(
-    namespace: string,
+  constructor(
+    type: "message",
     message: number[],
     timestamp: number,
     device: string,
-  ): void {
-    const namespaceListeners = this.listeners.get(namespace);
-    if (namespaceListeners) {
-      for (const listener of namespaceListeners) {
-        listener(message, timestamp, device);
-      }
+  ) {
+    super(type);
+    this.message = message;
+    this.timestamp = timestamp;
+    this.device = device;
+  }
+}
+
+interface MidiMessageManager extends EventTarget {
+  addEventListener(
+    type: "message",
+    listener: (ev: MidiMessageEvent) => void,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: "message",
+    listener: (ev: MidiMessageEvent) => void,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  dispose(): void;
+}
+
+class MidiMessageManager extends EventTarget {
+  namespace: string;
+
+  constructor(namespace: string) {
+    super();
+    this.namespace = namespace;
+  }
+}
+
+export class InternalMidiMessages extends MidiMessageManager {
+  private offListener: (() => void) | null = null;
+
+  constructor(namespace: string) {
+    super(namespace);
+    if (typeof window !== "undefined" && window.electronAPI?.midi) {
+      this.offListener = window.electronAPI.midi.onMidiMessage(
+        this.namespace,
+        this.handleMessage.bind(this),
+      );
     }
   }
 
-  getNamespaces(): string[] {
-    return Array.from(this.outputs.keys());
+  private handleMessage(message: number[], timestamp: number, device: string) {
+    this.dispatchEvent(
+      new MidiMessageEvent("message", message, timestamp, device),
+    );
   }
 
-  getListenerCount(namespace: string): number {
-    return this.listeners.get(namespace)?.size ?? 0;
-  }
-
-  clearNamespace(namespace: string): void {
-    this.listeners.delete(namespace);
-  }
-
-  cleanup(): void {
-    this.listeners.clear();
-    this.outputs.clear();
+  public dispose() {
+    if (this.offListener) {
+      this.offListener();
+      this.offListener = null;
+    }
   }
 }
+
+export default MidiMessageManager;

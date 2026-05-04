@@ -25,14 +25,16 @@ export function useLayout() {
 
     for (const node of nodes) {
       const nodeData = node as any;
+      const isInput = node.id.startsWith("input-");
       g.setNode(node.id, {
         width: nodeData.dimensions?.width ?? NODE_WIDTH,
         height: nodeData.dimensions?.height ?? NODE_HEIGHT,
+        rank: isInput ? 0 : 1,
       });
     }
 
     for (const edge of edges) {
-      g.setEdge(edge.source, edge.target);
+      g.setEdge(edge.source, edge.target, { weight: 1 });
     }
 
     dagre.layout(g);

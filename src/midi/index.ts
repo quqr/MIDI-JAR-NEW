@@ -1,10 +1,7 @@
-export { JZZEngine } from "./JZZEngine";
 export { MidiInputDevice } from "./MidiInputDevice";
-export type { MidiMessageHandler as InputMidiMessageHandler } from "./MidiInputDevice";
+export type { ApiMidiInput } from "./MidiInputDevice";
 export { MidiOutputDevice } from "./MidiOutputDevice";
-export type { MidiMessageHandler as OutputMidiMessageHandler } from "./MidiOutputDevice";
-export { InternalOutput } from "./InternalOutput";
-export { MidiWire } from "./MidiWire";
+export type { ApiMidiOutput } from "./MidiOutputDevice";
 export { MidiDeviceManager } from "./MidiDeviceManager";
-export { MidiMessageManager } from "./MidiMessageManager";
-export type { MidiMessageListener } from "./MidiMessageManager";
+export { MidiMessageEvent, InternalMidiMessages } from "./MidiMessageManager";
+export type { default as MidiMessageManagerBase } from "./MidiMessageManager";

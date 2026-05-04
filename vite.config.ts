@@ -34,8 +34,7 @@ export default defineConfig(() => {
             if (id.includes("node_modules")) {
               if (/node_modules\/(vue|vue-router|pinia)\//.test(id))
                 return "vue";
-              if (/node_modules\/(tonal|@tonaljs)\//.test(id))
-                return "tonal";
+              if (/node_modules\/(tonal|@tonaljs)\//.test(id)) return "tonal";
               if (/node_modules\/vexflow\//.test(id)) return "vexflow";
               if (/node_modules\/@vue-flow\//.test(id)) return "vueflow";
             }
@@ -54,7 +53,7 @@ export default defineConfig(() => {
             build: {
               outDir: "dist-electron",
               rollupOptions: {
-                external: ["electron"],
+                external: ["electron", "@julusian/midi"],
               },
             },
           },

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { WindowState, defaultWindowState } from "@/types";
 import { isElectron, getElectronAPI } from "@/utils/electron";
+import { logger } from "@/utils/logger";
 
 const STORAGE_KEY = "midi-jar-window-state";
 
@@ -15,8 +16,8 @@ function loadWindowState(): WindowState {
         ...parsed,
       };
     }
-  } catch {
-    // ignore parse errors
+  } catch (e) {
+    logger.warn(`Failed to load window state: ${e}`);
   }
   return { ...defaultWindowState };
 }
@@ -24,8 +25,8 @@ function loadWindowState(): WindowState {
 function saveWindowState(state: WindowState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore write errors
+  } catch (e) {
+    logger.warn(`Failed to save window state: ${e}`);
   }
 }
 

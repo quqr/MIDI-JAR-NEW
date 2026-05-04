@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, computed } from "vue";
 import { Settings, defaultSettings } from "@/types";
 import { mergeDeep } from "@/helpers";
+import { logger } from "@/utils/logger";
 
 const STORAGE_KEY = "midi-jar-settings";
 
@@ -11,8 +12,8 @@ function loadSettings(): Settings {
     if (stored) {
       return mergeDeep(defaultSettings, JSON.parse(stored));
     }
-  } catch {
-    // ignore parse errors
+  } catch (e) {
+    logger.warn(`Failed to load settings: ${e}`);
   }
   return { ...defaultSettings };
 }
@@ -20,8 +21,8 @@ function loadSettings(): Settings {
 function saveSettings(settings: Settings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // ignore write errors
+  } catch (e) {
+    logger.warn(`Failed to save settings: ${e}`);
   }
 }
 
@@ -85,15 +86,10 @@ export const useSettingsStore = defineStore("settings", () => {
     );
   }
 
-  onMounted(() => {
-    inited.value = true;
-  });
-
-  // 初始化时如果 localStorage 没有数据，则写入默认值
   if (!localStorage.getItem(STORAGE_KEY)) {
     saveSettings(settings.value);
-    inited.value = true;
   }
+  inited.value = true;
 
   watch(
     settings,

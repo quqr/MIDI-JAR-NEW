@@ -1,78 +1,50 @@
 import { ref, onUnmounted } from "vue";
-import { JZZEngine } from "@/midi/JZZEngine";
-import jzz from "jzz";
+import {
+  InternalMidiMessages,
+  MidiMessageEvent,
+} from "@/midi/MidiMessageManager";
+
+const MIDI_CMD_NOTE_ON = 0x90;
+const MIDI_CHANNEL_ALL = 0;
 
 export function useMidiLearn(
+  midiManager: InternalMidiMessages | null,
   onLearn: (note: number) => void,
-  channel: number | null = null,
+  channel: number = MIDI_CHANNEL_ALL,
 ) {
   const isLearning = ref(false);
   const learnedNote = ref<number | null>(null);
-  const port = ref<any>(null);
 
-  const handleMessage = (msg: any) => {
+  function handleMessage(event: MidiMessageEvent) {
     if (!isLearning.value) return;
 
-    const data = Array.from(msg) as number[];
-    const status = data[0] as number;
-    const note = data[1] as number;
-    const velocity = data[2] as number;
+    const message = event.message;
+    const status = message[0] as number;
+    const note = message[1] as number;
+    const velocity = message[2] as number;
 
-    if ((status & 0xf0) === 0x90 && velocity > 0) {
-      const msgChannel = status & 0x0f;
-
-      if (channel === null || msgChannel === channel) {
+    if ((status & 0xf0) === MIDI_CMD_NOTE_ON && velocity > 0) {
+      const msgChannel = (status & 0x0f) + 1;
+      if (channel === MIDI_CHANNEL_ALL || msgChannel === channel) {
         learnedNote.value = note;
         onLearn(note);
         stopLearning();
       }
     }
-  };
+  }
 
-  async function startLearning() {
+  function startLearning() {
     if (isLearning.value) return;
+    if (!midiManager) return;
+
     isLearning.value = true;
-
-    try {
-      const engine = JZZEngine.getInstance();
-      if (!engine.isInitialized()) {
-        console.warn("JZZ engine not initialized");
-        isLearning.value = false;
-        return;
-      }
-
-      const jzzEngine = jzz();
-      const inputs = jzzEngine.info().inputs;
-
-      if (inputs.length === 0) {
-        console.warn("No MIDI input devices available");
-        isLearning.value = false;
-        return;
-      }
-
-      port.value = await new Promise((resolve, reject) => {
-        jzz()
-          .openMidiIn(inputs[0].name)
-          .or(function () {
-            reject(new Error(this._err ? this._err() : "Unknown JZZ error"));
-          })
-          .and(function () {
-            resolve(this);
-          });
-      });
-      port.value.connect(handleMessage);
-    } catch (err) {
-      console.error("Failed to open MIDI input:", err);
-      isLearning.value = false;
-    }
+    midiManager.addEventListener("message", handleMessage);
   }
 
   function stopLearning() {
     isLearning.value = false;
-    if (port.value) {
-      port.value.disconnect(handleMessage);
-      port.value.close();
-      port.value = null;
+    if (midiManager) {
+      midiManager.removeEventListener("message", handleMessage);
     }
   }
 

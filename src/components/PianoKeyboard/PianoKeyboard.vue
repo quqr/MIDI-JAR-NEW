@@ -211,30 +211,36 @@ function applyInfo() {
   highlightInfo(el, props.keyboard.keyInfo, props.chord);
 }
 
+const playedKey = computed(() => (props.played ?? []).join(","));
+const sustainedKey = computed(() => (props.sustained ?? []).join(","));
+const midiKey = computed(() => (props.midi ?? []).join(","));
+const targetsKey = computed(() => (props.targets ?? []).join(","));
+const chordKey = computed(() =>
+  props.chord ? `${props.chord.tonic}-${props.chord.aliases?.[0]}` : "",
+);
+const keyboardKey = computed(() =>
+  props.keyboard ? `${props.keyboard.skin}-${props.keyboard.label}` : "",
+);
+
 watch(
-  () => [
-    props.played,
-    props.sustained,
-    props.midi,
-    props.targets,
-    props.chord,
-    props.keyboard,
-    props.keySignature,
-    props.exactTargets,
+  [
+    playedKey,
+    sustainedKey,
+    midiKey,
+    targetsKey,
+    chordKey,
+    keyboardKey,
+    () => props.keySignature?.tonic,
+    () => props.exactTargets,
   ],
   () => {
     applyHighlights();
   },
-  { deep: true },
 );
 
-watch(
-  () => [props.chord, props.keyboard],
-  () => {
-    applyInfo();
-  },
-  { deep: true },
-);
+watch([chordKey, keyboardKey], () => {
+  applyInfo();
+});
 
 onMounted(() => {
   applyHighlights();

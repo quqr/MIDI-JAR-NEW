@@ -56,7 +56,8 @@ export type IconName =
   | "angle-right"
   | "midi-error"
   | "pads"
-  | "exclamation";
+  | "exclamation"
+  | "cursor";
 
 export interface NavItem {
   icon: IconName;
@@ -66,6 +67,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { icon: "window", to: "/settings/general", labelKey: "settings.general" },
+  { icon: "cursor", to: "/settings/cursor", labelKey: "settings.cursor" },
   { icon: "routing", to: "/settings/routing", labelKey: "settings.routing" },
   {
     icon: "music",

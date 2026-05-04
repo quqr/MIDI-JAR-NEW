@@ -12,6 +12,7 @@
         @dblclick="handleDragAreaDblClick"
       ></div>
     </div>
+      <QuickChangeKeyToolbar />
 
     <div class="app-navbar__actions">
       <RouterLink
@@ -49,7 +50,15 @@
           :title="$t('layout.minimize')"
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
-            <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
+            <line
+              x1="1"
+              y1="6"
+              x2="11"
+              y2="6"
+              stroke="currentColor"
+              stroke-width="1"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
         <button
@@ -58,13 +67,44 @@
           :title="isMaximized ? $t('layout.unmaximize') : $t('layout.maximize')"
         >
           <svg v-if="!isMaximized" width="12" height="12" viewBox="0 0 12 12">
-            <rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1" />
+            <rect
+              x="1.5"
+              y="1.5"
+              width="9"
+              height="9"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
           </svg>
           <svg v-else width="12" height="12" viewBox="0 0 12 12">
-            <rect x="3.5" y="3.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1" />
-            <path d="M1.5 4.5V1.5h3" fill="none" stroke="currentColor" stroke-width="1" />
-            <path d="M1.5 11.5V8.5" fill="none" stroke="currentColor" stroke-width="1" />
-            <path d="M8.5 1.5h1.5v1.5" fill="none" stroke="currentColor" stroke-width="1" />
+            <rect
+              x="3.5"
+              y="3.5"
+              width="7"
+              height="7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+            <path
+              d="M1.5 4.5V1.5h3"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+            <path
+              d="M1.5 11.5V8.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+            <path
+              d="M8.5 1.5h1.5v1.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
           </svg>
         </button>
         <button
@@ -73,12 +113,29 @@
           :title="$t('common.close')"
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
-            <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
-            <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
+            <line
+              x1="2"
+              y1="2"
+              x2="10"
+              y2="10"
+              stroke="currentColor"
+              stroke-width="1"
+              stroke-linecap="round"
+            />
+            <line
+              x1="10"
+              y1="2"
+              x2="2"
+              y2="10"
+              stroke="currentColor"
+              stroke-width="1"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
       </div>
     </div>
+
   </div>
 
   <div
@@ -86,7 +143,7 @@
     class="md:hidden shadow-md"
     style="-webkit-app-region: no-drag"
   >
-    <ul class="menu menu-vertical px-2 gap-1">
+    <ul class="menu menu-vertical p-3 gap-2">
       <li v-for="item in navItems" :key="item.path">
         <RouterLink
           :to="item.path"
@@ -107,18 +164,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import AppBreadcrumb from "./AppBreadcrumb.vue";
 import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
+import { logger } from "@/utils/logger";
+import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 
 const route = useRoute();
 
 const mobileMenuOpen = ref(false);
 const isMaximized = ref(false);
 const isMac = ref(false);
-
-let removeMaximizedListener: (() => void) | null = null;
 
 const navItems = [
   { path: "/home", label: "nav.home", icon: "home" },
@@ -182,17 +239,8 @@ onMounted(async () => {
     api.window.onMaximizedChanged((maximized: boolean) => {
       isMaximized.value = maximized;
     });
-
-    removeMaximizedListener = () => {};
   } catch (e) {
-    console.error("[AppNavbar] init failed:", e);
-  }
-});
-
-onUnmounted(() => {
-  if (removeMaximizedListener) {
-    removeMaximizedListener();
-    removeMaximizedListener = null;
+    logger.error("[AppNavbar] init failed: " + e);
   }
 });
 </script>
@@ -255,7 +303,9 @@ onUnmounted(() => {
   height: 32px;
   border-radius: 8px;
   color: oklch(var(--bc) / 0.7);
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .app-navbar__action-btn:hover {
@@ -285,7 +335,9 @@ onUnmounted(() => {
   background: transparent;
   color: oklch(var(--bc) / 0.7);
   cursor: pointer;
-  transition: background-color 0.12s, color 0.12s;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
   border-radius: 4px;
 }
 

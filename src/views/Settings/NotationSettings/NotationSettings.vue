@@ -49,6 +49,43 @@
         "
       />
     </SettingsCollapse>
+
+    <SettingsCollapse
+      :title="t('settings.notationSettings.displayOptions')"
+      icon="eye"
+      :default-open="false"
+    >
+      <SettingsToggle
+        :model-value="displayConfig.clef"
+        :label="t('settings.notationSettings.showClef')"
+        :description="t('settings.notationSettings.showClefHint')"
+        @update:model-value="updateDisplay('clef', $event)"
+      />
+      <SettingsToggle
+        :model-value="displayConfig.keySignature"
+        :label="t('settings.notationSettings.showKeySignature')"
+        :description="t('settings.notationSettings.showKeySignatureHint')"
+        @update:model-value="updateDisplay('keySignature', $event)"
+      />
+      <SettingsToggle
+        :model-value="displayConfig.keySignatureText"
+        :label="t('settings.notationSettings.showKeySignatureText')"
+        :description="t('settings.notationSettings.showKeySignatureTextHint')"
+        @update:model-value="updateDisplay('keySignatureText', $event)"
+      />
+      <SettingsToggle
+        :model-value="displayConfig.barlines"
+        :label="t('settings.notationSettings.showBarlines')"
+        :description="t('settings.notationSettings.showBarlinesHint')"
+        @update:model-value="updateDisplay('barlines', $event)"
+      />
+      <SettingsToggle
+        :model-value="displayConfig.noteNames"
+        :label="t('settings.notationSettings.showNoteNames')"
+        :description="t('settings.notationSettings.showNoteNamesHint')"
+        @update:model-value="updateDisplay('noteNames', $event)"
+      />
+    </SettingsCollapse>
   </SettingsSection>
 </template>
 
@@ -61,8 +98,10 @@ import {
   SettingsCollapse,
   SettingsSelect,
   SettingsRange,
+  SettingsToggle,
   SettingsSection,
 } from "@/components/Settings";
+import { mergeDisplayConfig } from "@/components/Notation/utils";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
@@ -77,4 +116,16 @@ const staffClefOptions = computed(() => [
   { label: t("settings.notationSettings.bass"), value: "bass" },
   { label: t("settings.notationSettings.treble"), value: "treble" },
 ]);
+
+const displayConfig = computed(() =>
+  mergeDisplayConfig(settingsStore.settings.notation.display),
+);
+
+function updateDisplay(key: string, value: boolean) {
+  const current: Record<string, boolean> = {
+    ...settingsStore.settings.notation.display,
+  };
+  current[key] = value;
+  settingsStore.updateSetting("notation.display", current);
+}
 </script>

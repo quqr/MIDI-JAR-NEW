@@ -1,6 +1,16 @@
 import { Voice, StaveNote } from "vexflow";
 import { Note } from "tonal";
 import { getNoteInKeySignature } from "@/helpers";
+import type {
+  NotationDisplayConfig,
+  NotationLayoutConfig,
+  NotationStyleConfig,
+} from "./types";
+import {
+  defaultDisplayConfig,
+  defaultLayoutConfig,
+  defaultStyleConfig,
+} from "./types";
 
 const NOTE_REGEX = /([a-g])(b|#)?(\d+)/i;
 const NOTE_C4_MIDI = Note.midi("C4") as number;
@@ -9,6 +19,7 @@ type VexNote = {
   key: string;
   accidental: string | null;
   clef: "treble" | "bass";
+  midi: number;
 };
 
 export const noteToVex = (note: string): VexNote | null => {
@@ -20,6 +31,7 @@ export const noteToVex = (note: string): VexNote | null => {
       key: `${match[1]}${match[2] || ""}/${match[3]}`.toLowerCase(),
       accidental: match[2] || null,
       clef: midi >= NOTE_C4_MIDI ? "treble" : "bass",
+      midi,
     };
   }
   return null;
@@ -32,9 +44,12 @@ export const getVoice = (
 ) => {
   const voice = new Voice();
 
-  const voiceNotes = notes
+  let voiceNotes = notes
     .map(noteToVex)
-    .filter((vn) => vn && (!filterClef || vn.clef === clef)) as VexNote[];
+    .filter((vn): vn is VexNote => vn !== null && (!filterClef || vn.clef === clef));
+
+  voiceNotes = deduplicateVexNotes(voiceNotes);
+  voiceNotes = sortVexNotes(voiceNotes);
 
   if (voiceNotes.length) {
     const staveNote = new StaveNote({
@@ -51,6 +66,19 @@ export const getVoice = (
   return null;
 };
 
+function deduplicateVexNotes(notes: VexNote[]): VexNote[] {
+  const seen = new Set<string>();
+  return notes.filter((vn) => {
+    if (seen.has(vn.key)) return false;
+    seen.add(vn.key);
+    return true;
+  });
+}
+
+function sortVexNotes(notes: VexNote[]): VexNote[] {
+  return [...notes].sort((a, b) => a.midi - b.midi);
+}
+
 export const getTransposedNotes = (
   midiNotes: number[],
   keySignatureNotes: readonly string[],
@@ -61,3 +89,21 @@ export const getTransposedNotes = (
     .filter((m) => typeof m === "string")
     .map((n) => getNoteInKeySignature(n, keySignatureNotes));
 };
+
+export function mergeDisplayConfig(
+  partial?: Partial<NotationDisplayConfig>,
+): NotationDisplayConfig {
+  return { ...defaultDisplayConfig, ...partial };
+}
+
+export function mergeLayoutConfig(
+  partial?: Partial<NotationLayoutConfig>,
+): NotationLayoutConfig {
+  return { ...defaultLayoutConfig, ...partial };
+}
+
+export function mergeStyleConfig(
+  partial?: Partial<NotationStyleConfig>,
+): NotationStyleConfig {
+  return { ...defaultStyleConfig, ...partial };
+}

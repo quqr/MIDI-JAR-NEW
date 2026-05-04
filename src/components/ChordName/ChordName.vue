@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="displaySymbol"
-    class="d-inline-flex align-end"
+    class="d-inline-flex  align-end"
     style="height: 1.5em; line-height: 1.5em; vertical-align: bottom"
   >
     <span class="font-weight-bold">{{

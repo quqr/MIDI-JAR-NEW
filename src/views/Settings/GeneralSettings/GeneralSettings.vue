@@ -1,50 +1,6 @@
 <template>
-  <div>
-    <div
-      :class="[
-        'alert mb-6',
-        serverState.error
-          ? 'alert-error'
-          : serverState.started
-            ? 'alert-success'
-            : 'alert-info',
-      ]"
-    >
-      <div class="flex items-center gap-2">
-        <div
-          :class="[
-            'w-2 h-2 rounded-full',
-            serverState.error
-              ? 'bg-error'
-              : serverState.started
-                ? 'bg-success'
-                : 'bg-base-300',
-          ]"
-        />
-        <span class="text-sm font-medium">{{ serverStatus }}</span>
-      </div>
-    </div>
-
-    <template v-if="serverState.started && serverState.addresses.length">
-      <div class="mb-4">
-        <span class="text-sm text-base-content/70 block mb-2">
-          {{ t("settings.generalSettings.accessThrough") }}
-        </span>
-        <div class="flex flex-wrap gap-2">
-          <a
-            v-for="address in serverState.addresses"
-            :key="address"
-            :href="`http://${address}:${serverState.port}/`"
-            target="_blank"
-            class="badge badge-outline badge-sm hover:badge-primary"
-          >
-            {{ address }}:{{ serverState.port }}
-          </a>
-        </div>
-      </div>
-    </template>
-
-    <div class="max-w-full max-h-full mx-auto px-4">
+  <SettingsSection :on-reset="handleReset">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.generalSettings.language')"
         icon="translate"
@@ -118,11 +74,10 @@
         </div>
       </SettingsCollapse>
     </div>
-  </div>
+  </SettingsSection>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
 import { useServerStateStore } from "@/stores/serverState";
@@ -130,6 +85,7 @@ import {
   SettingsCollapse,
   SettingsSelect,
   SettingsToggle,
+  SettingsSection,
 } from "@/components/Settings";
 import ThemePicker from "@/components/ThemePicker.vue";
 
@@ -137,18 +93,6 @@ const { t, locale } = useI18n();
 const settingsStore = useSettingsStore();
 const serverStateStore = useServerStateStore();
 const serverState = serverStateStore.state;
-
-const serverStatus = computed(() => {
-  if (serverState.error)
-    return t("settings.generalSettings.serverErrored", {
-      error: serverState.error,
-    });
-  if (serverState.started)
-    return t("settings.generalSettings.serverRunning", {
-      port: serverState.port,
-    });
-  return t("settings.generalSettings.serverStopped");
-});
 
 const languageOptions = [
   { label: "English", value: "en" },
@@ -162,5 +106,10 @@ const handleLanguageChange = (value: string | number) => {
 
 const toggleServer = (enabled: boolean) => {
   serverStateStore.enable(enabled);
+};
+
+const handleReset = () => {
+  settingsStore.resetSetting("general");
+  settingsStore.resetSetting("server");
 };
 </script>

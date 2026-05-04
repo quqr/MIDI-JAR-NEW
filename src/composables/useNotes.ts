@@ -23,13 +23,13 @@ const MIDI_CC_SUSTAIN = 0x40;
 const midiSortCompareFn = (a: number, b: number) => a - b;
 
 export interface UseNotesOptions {
-  accidentals?: "flat" | "sharp";
-  key?: string;
+  accidentals?: "flat" | "sharp" | (() => "flat" | "sharp");
+  key?: string | (() => string);
   midiChannel?: number;
-  allowOmissions?: boolean;
-  useSustain?: boolean;
-  detectOnRelease?: boolean;
-  disabledChords?: string[];
+  allowOmissions?: boolean | (() => boolean);
+  useSustain?: boolean | (() => boolean);
+  detectOnRelease?: boolean | (() => boolean);
+  disabledChords?: string[] | (() => string[]);
   namespace?: string;
 }
 
@@ -85,8 +85,29 @@ export function useNotes({
   disabledChords = undefined,
   namespace = "debugger",
 }: UseNotesOptions = {}) {
+  const resolve = <T>(v: T | (() => T)): T =>
+    typeof v === "function" ? (v as () => T)() : v;
+
+  const keyGetter = typeof key === "function" ? key : () => key;
+  const accidentalsGetter =
+    typeof accidentals === "function" ? accidentals : () => accidentals;
+  const allowOmissionsGetter =
+    typeof allowOmissions === "function"
+      ? allowOmissions
+      : () => allowOmissions;
+  const useSustainGetter =
+    typeof useSustain === "function" ? useSustain : () => useSustain;
+  const detectOnReleaseGetter =
+    typeof detectOnRelease === "function"
+      ? detectOnRelease
+      : () => detectOnRelease;
+  const disabledChordsGetter =
+    typeof disabledChords === "function"
+      ? disabledChords
+      : () => disabledChords;
+
   const keySignature = ref<KeySignatureConfig>(
-    getKeySignature(key, accidentals === "sharp"),
+    getKeySignature(resolve(key), resolve(accidentals) === "sharp"),
   );
   const sustainedMidiNotes = ref<number[]>([]);
   const playedMidiNotes = ref<number[]>([]);
@@ -97,10 +118,10 @@ export function useNotes({
   const sustained = ref(false);
   const params = ref<InternalParams>({
     keySignature: keySignature.value,
-    allowOmissions,
-    useSustain,
-    detectOnRelease,
-    disabledChords,
+    allowOmissions: resolve(allowOmissions),
+    useSustain: resolve(useSustain),
+    detectOnRelease: resolve(detectOnRelease),
+    disabledChords: resolve(disabledChords),
   });
 
   const keySignatureNotes = () => keySignature.value.notes;
@@ -108,7 +129,16 @@ export function useNotes({
   const fromMidi = (m: number) =>
     getNoteInKeySignature(Note.fromMidi(m), keySignatureNotes());
 
-  function updateFromMidi() {
+  function recomputeChords(currentNotes: string[]) {
+    return getChords(
+      currentNotes,
+      keySignatureNotes(),
+      params.value.allowOmissions,
+      params.value.disabledChords,
+    );
+  }
+
+  function recomputeFromMidiNotes() {
     const currentMidiNotes = [
       ...sustainedMidiNotes.value,
       ...playedMidiNotes.value,
@@ -116,12 +146,7 @@ export function useNotes({
     currentMidiNotes.sort(midiSortCompareFn);
     const currentNotes = currentMidiNotes.map(fromMidi);
     const currentPitchClasses = currentNotes.map(Note.pitchClass);
-    const currentChords = getChords(
-      currentNotes,
-      keySignatureNotes(),
-      params.value.allowOmissions,
-      params.value.disabledChords,
-    );
+    const currentChords = recomputeChords(currentNotes);
 
     midiNotes.value = currentMidiNotes;
     notes.value = currentNotes;
@@ -130,53 +155,22 @@ export function useNotes({
   }
 
   function handleNoteOn(midi: number) {
-    const newPlayedMidiNotes = [...playedMidiNotes.value, midi];
-    const newSustainedMidiNotes = sustainedMidiNotes.value.filter(
+    playedMidiNotes.value = [...playedMidiNotes.value, midi];
+    sustainedMidiNotes.value = sustainedMidiNotes.value.filter(
       (m) => m !== midi,
     );
-    const newMidiNotes = [...newSustainedMidiNotes, ...newPlayedMidiNotes];
-    newMidiNotes.sort(midiSortCompareFn);
-    const newNotes = newMidiNotes.map(fromMidi);
-    const newPitchClasses = newNotes.map(Note.pitchClass);
-    const newChords = getChords(
-      newNotes,
-      keySignatureNotes(),
-      params.value.allowOmissions,
-      params.value.disabledChords,
-    );
-
-    sustainedMidiNotes.value = newSustainedMidiNotes;
-    playedMidiNotes.value = newPlayedMidiNotes;
-    midiNotes.value = newMidiNotes;
-    notes.value = newNotes;
-    pitchClasses.value = newPitchClasses;
-    chords.value = newChords;
+    recomputeFromMidiNotes();
   }
 
   function handleNoteOff(midi: number) {
-    const newPlayedMidiNotes = playedMidiNotes.value.filter((m) => m !== midi);
-    const newSustainedMidiNotes = sustained.value
-      ? [...sustainedMidiNotes.value, midi]
-      : sustainedMidiNotes.value;
-    const newMidiNotes = [...newSustainedMidiNotes, ...newPlayedMidiNotes];
-    newMidiNotes.sort(midiSortCompareFn);
-    const newNotes = newMidiNotes.map(fromMidi);
-    const newPitchClasses = newNotes.map(Note.pitchClass);
-    const newChords = params.value.detectOnRelease
-      ? getChords(
-          newNotes,
-          keySignatureNotes(),
-          params.value.allowOmissions,
-          params.value.disabledChords,
-        )
-      : chords.value;
-
-    sustainedMidiNotes.value = newSustainedMidiNotes;
-    playedMidiNotes.value = newPlayedMidiNotes;
-    midiNotes.value = newMidiNotes;
-    notes.value = newNotes;
-    pitchClasses.value = newPitchClasses;
-    chords.value = newChords;
+    playedMidiNotes.value = playedMidiNotes.value.filter((m) => m !== midi);
+    if (sustained.value) {
+      sustainedMidiNotes.value = [...sustainedMidiNotes.value, midi];
+    }
+    recomputeFromMidiNotes();
+    if (params.value.detectOnRelease) {
+      chords.value = recomputeChords(notes.value);
+    }
   }
 
   function handleSustainOn() {
@@ -189,7 +183,7 @@ export function useNotes({
     if (!params.value.useSustain) return;
     sustained.value = false;
     sustainedMidiNotes.value = [];
-    updateFromMidi();
+    recomputeFromMidiNotes();
   }
 
   const onMidiMessage = (message: number[]) => {
@@ -228,75 +222,44 @@ export function useNotes({
     }
   };
 
-  watch([() => accidentals, () => key], () => {
-    keySignature.value = getKeySignature(key, accidentals === "sharp");
+  watch([accidentalsGetter, keyGetter], () => {
+    const currentAccidentals = resolve(accidentals);
+    const currentKey = resolve(key);
+    keySignature.value = getKeySignature(
+      currentKey,
+      currentAccidentals === "sharp",
+    );
     params.value.keySignature = keySignature.value;
     const newNotes = midiNotes.value.map((m: number) =>
       getNoteInKeySignature(Note.fromMidi(m), keySignature.value.notes),
     );
     notes.value = newNotes;
     pitchClasses.value = newNotes.map(Note.pitchClass);
-    chords.value = getChords(
-      newNotes,
-      keySignature.value.notes,
-      params.value.allowOmissions,
-      params.value.disabledChords,
-    );
+    chords.value = recomputeChords(newNotes);
   });
 
-  watch(
-    () => allowOmissions,
-    (newValue) => {
-      params.value.allowOmissions = newValue;
-      chords.value = getChords(
-        notes.value,
-        keySignatureNotes(),
-        newValue,
-        params.value.disabledChords,
-      );
-    },
-  );
+  watch(allowOmissionsGetter, (newValue) => {
+    params.value.allowOmissions = newValue;
+    chords.value = recomputeChords(notes.value);
+  });
 
-  watch(
-    () => disabledChords,
-    (newValue) => {
-      params.value.disabledChords = newValue;
-      chords.value = getChords(
-        notes.value,
-        keySignatureNotes(),
-        params.value.allowOmissions,
-        newValue,
-      );
-    },
-  );
+  watch(disabledChordsGetter, (newValue) => {
+    params.value.disabledChords = newValue;
+    chords.value = recomputeChords(notes.value);
+  });
 
-  watch(
-    () => useSustain,
-    (newValue) => {
-      params.value.useSustain = newValue;
-      if (!newValue) {
-        midiNotes.value = [...playedMidiNotes.value];
-        midiNotes.value.sort(midiSortCompareFn);
-        notes.value = midiNotes.value.map(fromMidi);
-        pitchClasses.value = notes.value.map(Note.pitchClass);
-        chords.value = getChords(
-          notes.value,
-          keySignatureNotes(),
-          params.value.allowOmissions,
-          params.value.disabledChords,
-        );
-        sustainedMidiNotes.value = [];
-        sustained.value = false;
-      }
-    },
-  );
+  watch(useSustainGetter, (newValue) => {
+    params.value.useSustain = newValue;
+    if (!newValue) {
+      sustainedMidiNotes.value = [];
+      sustained.value = false;
+      recomputeFromMidiNotes();
+    }
+  });
 
-  watch(
-    () => detectOnRelease,
-    (newValue) => {
-      params.value.detectOnRelease = newValue;
-    },
-  );
+  watch(detectOnReleaseGetter, (newValue) => {
+    params.value.detectOnRelease = newValue;
+  });
 
   function clearNotes() {
     playedMidiNotes.value = [];

@@ -75,7 +75,8 @@ type IconName =
   | "angle-right"
   | "midi-error"
   | "pads"
-  | "exclamation";
+  | "exclamation"
+  | "cursor";
 
 const props = withDefaults(
   defineProps<{
@@ -178,6 +179,7 @@ const iconPath = computed((): string => {
     pads: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
     exclamation:
       "M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+    cursor: "M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z",
   };
   return paths[props.name] || paths.home;
 });

@@ -36,11 +36,63 @@ export interface ElectronAPI {
     ) => Promise<Electron.SaveDialogReturnValue>;
   };
   midi: {
-    getInputs: () => Promise<string[]>;
-    getOutputs: () => Promise<string[]>;
-    onDeviceConnected: (callback: (deviceName: string) => void) => () => void;
-    onDeviceDisconnected: (
-      callback: (deviceName: string) => void,
+    refreshDevices: () => void;
+    clearRoutes: () => void;
+    addRoute: (route: {
+      input: string;
+      output: string;
+      type: "physical" | "internal";
+      enabled: boolean;
+    }) => void;
+    deleteRoute: (route: {
+      input: string;
+      output: string;
+      type: "physical" | "internal";
+      enabled: boolean;
+    }) => void;
+    getInputs: () => void;
+    onInputs: (
+      callback: (
+        inputs: {
+          name: string;
+          opened: boolean;
+          connected: boolean;
+          error: boolean;
+        }[],
+      ) => void,
+    ) => () => void;
+    getOutputs: () => void;
+    onOutputs: (
+      callback: (
+        outputs: {
+          name: string;
+          type: string;
+          opened: boolean;
+          connected: boolean;
+          error: boolean;
+        }[],
+      ) => void,
+    ) => () => void;
+    getWires: () => void;
+    onWires: (
+      callback: (
+        wires: {
+          route: {
+            input: string;
+            output: string;
+            type: "physical" | "internal";
+            enabled: boolean;
+          };
+          connected: boolean;
+        }[],
+      ) => void,
+    ) => () => void;
+    onLatency: (
+      callback: (latency: number, device: string) => void,
+    ) => () => void;
+    onMidiMessage: (
+      namespace: string,
+      callback: (message: number[], timestamp: number, device: string) => void,
     ) => () => void;
   };
 }

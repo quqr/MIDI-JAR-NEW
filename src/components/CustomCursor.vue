@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, nextTick, watch } from "vue";
+import { onMounted, onUnmounted, ref, nextTick, watch, computed } from "vue";
 import { useRoute } from "vue-router";
+import { useSettingsStore } from "@/stores/settings";
 
 const route = useRoute();
+const settingsStore = useSettingsStore();
 const innerPointer = ref<HTMLElement>();
 const outerPointer = ref<HTMLElement>();
 
@@ -12,10 +14,28 @@ let halfElementWidth2 = 21;
 
 const isHoverState = ref(false);
 
+const hoveredRect = ref<{
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  borderRadius: string;
+} | null>(null);
+
+const cursorSettings = computed(() => settingsStore.settings.cursor);
+
+function resolveColor(source: "custom" | "theme", value: string): string {
+  if (source === "theme") {
+    return `var(--color-${value})`;
+  }
+  return value;
+}
+
 const INTERACTIVE_SELECTOR = [
   "a[href]",
   "button",
   "input",
+  "select",
   "summary",
   '[role="button"]',
   '[role="link"]',
@@ -53,12 +73,7 @@ function getVueFlowZoom(target: HTMLElement): number {
 function resetHoverState() {
   isHovering = false;
   isHoverState.value = false;
-
-  if (outerPointer.value) {
-    outerPointer.value.style.removeProperty("width");
-    outerPointer.value.style.removeProperty("height");
-    outerPointer.value.style.removeProperty("border-radius");
-  }
+  hoveredRect.value = null;
 }
 
 function setPosition(x: number, y: number, zoom: number = 1) {
@@ -80,20 +95,27 @@ const handleMouseMove = (e: MouseEvent) => {
 
 const handleMouseOver = (event: MouseEvent) => {
   const target = findInteractiveTarget(event.target as HTMLElement);
+  if (!target) return;
 
-  if (target) {
-    isHovering = true;
-    isHoverState.value = true;
+  const mode = cursorSettings.value.hoverMode;
+  if (mode === "none") return;
 
-    const rect = target.getBoundingClientRect();
-    const style = window.getComputedStyle(target);
+  isHovering = true;
+  isHoverState.value = true;
 
-    if (outerPointer.value) {
-      outerPointer.value.style.width = `${rect.width}px`;
-      outerPointer.value.style.height = `${rect.height}px`;
-      outerPointer.value.style.borderRadius = style.borderRadius;
-      outerPointer.value.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
-    }
+  const rect = target.getBoundingClientRect();
+  const style = window.getComputedStyle(target);
+
+  hoveredRect.value = {
+    width: rect.width,
+    height: rect.height,
+    left: rect.left,
+    top: rect.top,
+    borderRadius: style.borderRadius,
+  };
+
+  if (outerPointer.value) {
+    outerPointer.value.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
   }
 };
 
@@ -109,12 +131,101 @@ const handleMouseOut = (event: MouseEvent) => {
   }
 };
 
+function registerListeners() {
+  if (window.matchMedia("(pointer:fine)").matches) {
+    document.body.style.cursor = "none";
+    document.body.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseover", handleMouseOver);
+    window.addEventListener("mouseout", handleMouseOut);
+  }
+}
+
+function unregisterListeners() {
+  document.body.style.cursor = "default";
+  document.body.removeEventListener("mousemove", handleMouseMove);
+  window.removeEventListener("mouseover", handleMouseOver);
+  window.removeEventListener("mouseout", handleMouseOut);
+}
+
 watch(
   () => route.path,
   () => {
     resetHoverState();
   },
 );
+
+watch(
+  () => cursorSettings.value.enabled,
+  (enabled) => {
+    if (enabled) {
+      registerListeners();
+    } else {
+      unregisterListeners();
+      resetHoverState();
+    }
+  },
+);
+
+watch(
+  () => [cursorSettings.value.innerSize, cursorSettings.value.outerSize],
+  async () => {
+    await nextTick();
+    if (innerPointer.value) {
+      halfElementWidth = innerPointer.value.offsetWidth / 2;
+    }
+    if (outerPointer.value) {
+      halfElementWidth2 = outerPointer.value.offsetWidth / 2;
+    }
+  },
+);
+
+const transitionStyle = computed(
+  () =>
+    `width ${cursorSettings.value.transitionDuration}ms ease-out, height ${cursorSettings.value.transitionDuration}ms ease-out, transform ${cursorSettings.value.transitionDuration}ms ease-out, background-color ${cursorSettings.value.transitionDuration}ms ease-out, box-shadow ${cursorSettings.value.transitionDuration}ms ease-out, border-radius ${cursorSettings.value.transitionDuration}ms ease-out`,
+);
+
+const innerPointerStyle = computed(() => {
+  const s = cursorSettings.value;
+  return {
+    width: `${s.innerSize}px`,
+    height: `${s.innerSize}px`,
+    backgroundColor: resolveColor(s.innerColorSource, s.innerColor),
+    mixBlendMode: s.blendMode,
+  };
+});
+
+const outerPointerStyle = computed(() => {
+  const s = cursorSettings.value;
+  const hover = hoveredRect.value;
+  const isHover = isHoverState.value && hover !== null && s.hoverMode !== "none";
+
+  if (isHover) {
+    const isCover = s.hoverMode === "cover";
+    return {
+      width: `${hover.width}px`,
+      height: `${hover.height}px`,
+      borderRadius: hover.borderRadius || "50%",
+      backgroundColor: isCover
+        ? resolveColor(s.outerColorSource, s.outerColor)
+        : "transparent",
+      mixBlendMode: s.blendMode,
+      boxShadow: isCover
+        ? "none"
+        : `inset 0 0 0 2px ${resolveColor(s.hoverRingColorSource, s.hoverRingColor)}`,
+      transition: transitionStyle.value,
+    };
+  }
+
+  return {
+    width: `${s.outerSize}px`,
+    height: `${s.outerSize}px`,
+    borderRadius: "50%",
+    backgroundColor: resolveColor(s.outerColorSource, s.outerColor),
+    mixBlendMode: s.blendMode,
+    boxShadow: "none",
+    transition: transitionStyle.value,
+  };
+});
 
 onMounted(async () => {
   await nextTick();
@@ -126,47 +237,29 @@ onMounted(async () => {
     halfElementWidth2 = outerPointer.value.offsetWidth / 2;
   }
 
-  if (window.matchMedia("(pointer:fine)").matches) {
-    document.body.style.cursor = "none";
-    document.body.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseover", handleMouseOver);
-    window.addEventListener("mouseout", handleMouseOut);
+  if (cursorSettings.value.enabled) {
+    registerListeners();
   }
 });
 
 onUnmounted(() => {
-  document.body.style.cursor = "default";
-  document.body.removeEventListener("mousemove", handleMouseMove);
-  window.removeEventListener("mouseover", handleMouseOver);
-  window.removeEventListener("mouseout", handleMouseOut);
+  unregisterListeners();
 });
 </script>
 
 <template>
   <Teleport to="body">
     <div
+      v-if="cursorSettings.enabled"
       ref="innerPointer"
-      class="fixed top-0 left-0 w-3 h-3 rounded-full bg-primary pointer-events-none z-[99999] [mix-blend-mode:exclusion] will-change-transform"
+      class="fixed top-0 left-0 rounded-full pointer-events-none z-[99999] will-change-transform"
+      :style="innerPointerStyle"
     />
     <div
+      v-if="cursorSettings.enabled"
       ref="outerPointer"
-      class="cursor-outer fixed top-0 left-0 w-[42px] h-[42px] rounded-full pointer-events-none z-[99999] [mix-blend-mode:exclusion] will-change-transform"
-      :class="{
-        'bg-transparent ring-2 ring-primary': isHoverState,
-        'bg-white': !isHoverState,
-      }"
+      class="fixed top-0 left-0 rounded-full pointer-events-none z-[99999] will-change-transform"
+      :style="outerPointerStyle"
     />
   </Teleport>
 </template>
-
-<style>
-.cursor-outer {
-  transition:
-    width 0.1s ease-out,
-    height 0.1s ease-out,
-    
-    transform 0.1s ease-out,
-    background-color 0.1s ease-out,
-    box-shadow 0.1s ease-out;
-}
-</style>

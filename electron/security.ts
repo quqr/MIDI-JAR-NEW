@@ -17,8 +17,13 @@ const ALLOWED_CHANNELS = new Set([
   "file:save-dialog",
   "file:read",
   "file:write",
-  "midi:get-inputs",
-  "midi:get-outputs",
+  "midi:refreshDevices",
+  "midi:clearRoutes",
+  "midi:addRoute",
+  "midi:deleteRoute",
+  "midi:getInputs",
+  "midi:getOutputs",
+  "midi:getWires",
 ]);
 
 export function validateChannel(channel: string): boolean {

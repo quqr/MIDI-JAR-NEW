@@ -1,4 +1,5 @@
-// 事件监听器类型定义，接受任意数量参数
+import { logger } from "@/utils/logger";
+
 type EventListener = (...args: any[]) => void;
 
 /**
@@ -52,7 +53,7 @@ export class EventEmitter {
           listener(...args);
         } catch (e) {
           // 捕获单个监听器的错误，避免影响其他监听器
-          console.error(`Error in event listener for "${event}":`, e);
+          logger.error(`Error in event listener for "${event}": ` + e);
         }
       });
       return true;

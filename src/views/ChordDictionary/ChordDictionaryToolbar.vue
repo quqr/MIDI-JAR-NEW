@@ -1,6 +1,6 @@
 <template>
   <div
-    class="chord-dictionary-toolbar flex items-center gap-2 p-2 border-b border-base-200 bg-base-100 flex-wrap"
+    class="chord-dictionary-toolbar flex items-center gap-2 p-3 border-b border-base-200 bg-base-100 flex-wrap"
   >
     <div v-if="!disableUpdate" class="relative inline-block">
       <button class="btn btn-sm btn-outline" @click="menuOpen = !menuOpen">
@@ -21,7 +21,7 @@
 
       <div
         v-show="menuOpen"
-        class="absolute top-full left-0 z-50 mt-1 card bg-base-100 shadow-xl min-w-[250px]"
+        class="absolute top-full left-0 z-50 mt-1 card bg-base-100 shadow-md min-w-[250px]"
       >
         <ul class="menu bg-base-100 w-full p-0">
           <li class="menu-title">
@@ -118,48 +118,17 @@
 
     <div class="flex-1"></div>
 
-    <button
-      class="btn btn-sm btn-outline btn-circle"
+    <SettingsButton
       :aria-label="t('chordDictionary.openDictionarySettings')"
       @click="settingsOpen = true"
-    >
-      <Icon name="settings" size="16" />
-    </button>
+    />
 
-    <div
-      v-if="settingsOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      @click.self="settingsOpen = false"
+    <SettingsModal
+      v-model="settingsOpen"
+      :title="t('chordDictionary.settings')"
     >
-      <div
-        class="card bg-base-100 shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden mx-4"
-      >
-        <div
-          class="card-title p-4 flex items-center justify-between border-b border-base-200"
-        >
-          <h2 class="text-lg font-bold">{{ t("chordDictionary.settings") }}</h2>
-          <button
-            class="btn btn-sm btn-ghost btn-circle"
-            @click="settingsOpen = false"
-          >
-            <svg
-              class="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="overflow-auto max-h-[calc(90vh-73px)]">
-          <ChordDictionarySettings />
-        </div>
-      </div>
-    </div>
+      <ChordDictionarySettings />
+    </SettingsModal>
   </div>
 </template>
 
@@ -168,7 +137,8 @@ import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
-import Icon from "@/components/Icon/Icon.vue";
+import { SettingsButton } from "@/components/SettingsButton";
+import { SettingsModal } from "@/components/SettingsModal";
 import ChordSearch from "./ChordSearch/ChordSearch.vue";
 import ChordDictionarySettings from "../Settings/ChordDictionarySettings/ChordDictionarySettings.vue";
 

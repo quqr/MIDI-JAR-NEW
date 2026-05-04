@@ -1,5 +1,5 @@
 <template>
-  <div class="chord-dictionary-chroma-menu p-4">
+  <div class="chord-dictionary-chroma-menu p-4 max-h-[60vh] overflow-y-auto">
     <ul
       class="menu bg-base-100"
       role="tablist"
@@ -7,7 +7,7 @@
     >
       <li v-for="note in notesList" :key="note">
         <a
-          class="rounded-md"
+          class="rounded-lg"
           role="tab"
           :aria-selected="selected === getChroma(note)"
           :class="{

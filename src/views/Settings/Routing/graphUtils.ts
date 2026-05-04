@@ -1,17 +1,23 @@
 import type { Node, Edge, MarkerType, Position } from "@vue-flow/core";
-import type { MidiInput, MidiOutput, MidiWire } from "@/types/midi";
+import type { MidiInput, MidiOutput, MidiRoute, MidiWire } from "@/stores/midiRouting";
 
 export function mapDevicesToNodes(
   inputs: MidiInput[],
   outputs: MidiOutput[],
+  savedPositions?: Record<string, { x: number; y: number }>,
 ): Node[] {
   const nodes: Node[] = [];
+  const verticalGap = 80;
+  const positions = savedPositions ?? {};
+  const inputX = 50;
+  const outputX = 500;
 
-  inputs.forEach((input) => {
+  inputs.forEach((input, index) => {
+    const id = `input-${input.name}`;
     nodes.push({
-      id: `input-${input.name}`,
+      id,
       type: "input",
-      position: { x: 0, y: 0 },
+      position: positions[id] ?? { x: inputX, y: index * verticalGap + 40 },
       sourcePosition: "right" as Position,
       data: {
         label: input.name,
@@ -20,12 +26,13 @@ export function mapDevicesToNodes(
     });
   });
 
-  outputs.forEach((output) => {
+  outputs.forEach((output, index) => {
     if (output.type === "internal") {
+      const id = `output-internal`;
       nodes.push({
-        id: `output-internal`,
+        id,
         type: "internal-output",
-        position: { x: 0, y: 0 },
+        position: positions[id] ?? { x: outputX, y: index * verticalGap + 40 },
         targetPosition: "left" as Position,
         data: {
           label: "internal",
@@ -35,10 +42,11 @@ export function mapDevicesToNodes(
         },
       });
     } else {
+      const id = `output-${output.name}`;
       nodes.push({
-        id: `output-${output.name}`,
+        id,
         type: "physical-output",
-        position: { x: 0, y: 0 },
+        position: positions[id] ?? { x: outputX, y: index * verticalGap + 40 },
         targetPosition: "left" as Position,
         data: {
           label: output.name,
@@ -53,40 +61,46 @@ export function mapDevicesToNodes(
   return nodes;
 }
 
-export function mapWiresToEdges(
+export function mapRoutesToEdges(
+  routes: MidiRoute[],
   wires: MidiWire[],
-  onDelete: (wire: MidiWire) => void,
 ): Edge[] {
   const seen = new Set<string>();
   const edges: Edge[] = [];
 
-  for (const wire of wires) {
+  for (const route of routes) {
     const targetId =
-      wire.route.type === "internal"
+      route.type === "internal"
         ? "output-internal"
-        : `output-${wire.route.output}`;
+        : `output-${route.output}`;
 
-    const edgeId = `edge-${wire.route.input}-${targetId}`;
+    const edgeId = `edge-${route.input}-${targetId}`;
     if (seen.has(edgeId)) continue;
     seen.add(edgeId);
 
+    const wire = wires.find(
+      (w) =>
+        w.route.input === route.input &&
+        w.route.output === route.output &&
+        w.route.type === route.type,
+    );
+    const connected = wire?.connected ?? false;
+
     edges.push({
       id: edgeId,
-      source: `input-${wire.route.input}`,
+      source: `input-${route.input}`,
       target: targetId,
       type: "wire",
-      animated: wire.connected,
+      animated: connected,
       markerEnd: {
         type: "arrowclosed" as MarkerType,
         color: "hsl(var(--color-base-content) / 0.5)",
       },
       style: {
-        strokeWidth: wire.connected ? 4 : 2.5,
+        strokeWidth: connected ? 4 : 2.5,
       },
       data: {
-        route: wire.route,
-        wire,
-        onDelete,
+        route,
       },
     });
   }

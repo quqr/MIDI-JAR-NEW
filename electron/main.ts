@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { IPC_CHANNELS } from "./ipc";
 import { setupApplicationMenu } from "./menu";
 import { secureHandle, secureOn } from "./security";
-import jzz from "jzz";
+import * as midi from "./midi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -167,7 +167,7 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow(windowOptions);
-mainWindow.webContents.openDevTools();  
+  mainWindow.webContents.openDevTools();
   if (savedState.isMaximized) {
     mainWindow.maximize();
   }
@@ -347,38 +347,87 @@ secureHandle(
   },
 );
 
-let midiEngine: any = null;
-
-function getMidiEngine(): any {
-  if (!midiEngine) {
-    midiEngine = jzz();
-  }
-  return midiEngine;
+function sendToAll(channel: string, ...args: unknown[]) {
+  const windows = BrowserWindow.getAllWindows();
+  windows.forEach((window) => {
+    window.webContents.send(channel, ...args);
+  });
 }
 
-secureHandle(IPC_CHANNELS.MIDI.GET_INPUTS, async () => {
-  try {
-    const engine = await getMidiEngine();
-    const info = engine.info();
-    return info.inputs.map((i: any) => i.name);
-  } catch {
-    return [];
-  }
+secureOn(IPC_CHANNELS.MIDI.REFRESH_DEVICES, () => {
+  midi.refreshDevices(true);
 });
 
-secureHandle(IPC_CHANNELS.MIDI.GET_OUTPUTS, async () => {
-  try {
-    const engine = await getMidiEngine();
-    const info = engine.info();
-    return info.outputs.map((o: any) => o.name);
-  } catch {
-    return [];
-  }
+secureOn(IPC_CHANNELS.MIDI.CLEAR_ROUTES, () => {
+  midi.clearRoutes();
+});
+
+secureOn(IPC_CHANNELS.MIDI.ADD_ROUTE, (_event, route) => {
+  midi.addRoute(route);
+});
+
+secureOn(IPC_CHANNELS.MIDI.DELETE_ROUTE, (_event, route) => {
+  midi.deleteRoute(route);
+});
+
+secureOn(IPC_CHANNELS.MIDI.GET_INPUTS, (event) => {
+  const inputs = midi.getInputs();
+  event.reply(IPC_CHANNELS.MIDI.ON_INPUTS, inputs);
+});
+
+secureOn(IPC_CHANNELS.MIDI.GET_OUTPUTS, (event) => {
+  const outputs = midi.getOutputs();
+  event.reply(IPC_CHANNELS.MIDI.ON_OUTPUTS, outputs);
+});
+
+secureOn(IPC_CHANNELS.MIDI.GET_WIRES, (event) => {
+  const wires = midi.getWires();
+  event.reply(IPC_CHANNELS.MIDI.ON_WIRES, wires);
+});
+
+midi.manager.addListener("refreshed", () => {
+  sendToAll(IPC_CHANNELS.MIDI.ON_INPUTS, midi.getInputs());
+  sendToAll(IPC_CHANNELS.MIDI.ON_OUTPUTS, midi.getOutputs());
+  sendToAll(IPC_CHANNELS.MIDI.ON_WIRES, midi.getWires());
+});
+
+midi.manager.addListener(
+  "midi",
+  (namespace: string, message: number[], timestamp: number, device: string) => {
+    sendToAll(
+      `${IPC_CHANNELS.MIDI.ON_MIDI_MESSAGE}:*`,
+      message,
+      timestamp,
+      device,
+    );
+    sendToAll(
+      `${IPC_CHANNELS.MIDI.ON_MIDI_MESSAGE}:${namespace}`,
+      message,
+      timestamp,
+      device,
+    );
+    if (namespace === "internal") {
+      const moduleOutputs = midi.getModuleOutputs();
+      for (const mod of moduleOutputs) {
+        sendToAll(
+          `${IPC_CHANNELS.MIDI.ON_MIDI_MESSAGE}:${mod}`,
+          message,
+          timestamp,
+          device,
+        );
+      }
+    }
+  },
+);
+
+midi.manager.addListener("activity", (latency: number, device: string) => {
+  sendToAll(IPC_CHANNELS.MIDI.ON_ACTIVITY, latency, device);
 });
 
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  midi.startRefreshLoop();
 
   if (mainWindow) {
     setupApplicationMenu(mainWindow);
@@ -401,6 +450,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   const state = getWindowState();
   if (state) saveWindowState(state);
+  midi.stopRefreshLoop();
   if (mainWindow) {
     mainWindow.webContents.send(IPC_CHANNELS.APP.ON_BEFORE_QUIT);
   }

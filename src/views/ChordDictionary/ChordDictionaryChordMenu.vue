@@ -1,5 +1,5 @@
 <template>
-  <div class="chord-dictionary-chord-menu p-4 max-h-full">
+  <div class="chord-dictionary-chord-menu p-4 max-h-[60vh] overflow-y-auto">
     <ul
       class="menu bg-base-100"
       role="navigation"

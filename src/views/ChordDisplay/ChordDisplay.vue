@@ -1,114 +1,76 @@
 <template>
-  <div
-    id="chordDisplay"
-    class="max-w-full h-full flex flex-col gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4"
-  >
-    <div
-      class="flex flex-col bg-primary rounded-lg p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4"
-    >
-      <!-- 乐谱显示区域 -->
-      <div
-        v-if="displayNotation"
-        class="w-full min-h-[180px] sm:min-h-[200px] md:min-h-[220px]"
-      >
-        <Notation
-          id="notation"
-          class="w-full items-center"
-          :midiNotes="midiNotes as number[]"
-          :keySignature="keySignature"
-          :staffClef="staffClef"
-          :staffTranspose="staffTranspose"
-        />
+  <div id="chordDisplay" class="grid grid-rows-[5fr_3fr] h-full w-full gap-3">
+    <div class="grid grid-cols-[1fr_2fr] bg-primary h-full w-full rounded-lg p-2 ">
+
+      <div v-if="displayNotation" class="min-h-full w-full flex items-center justify-center">
+        <Notation id="notation" class="items-center justify-center " :midiNotes="midiNotes as number[]"
+          :keySignature="keySignature" :staffClef="staffClef" :staffTranspose="staffTranspose"
+          :display="notationDisplay" />
       </div>
 
-      <!-- 和弦信息展示区域 -->
-      <div class="card bg-base-100 shadow-sm p-2 sm:p-3 md:p-4">
-        <!-- 和弦名称 -->
-        <div
-          v-if="displayChord"
-          id="chord"
-          class="text-base sm:text-lg md:text-xl font-semibold"
-        >
-          <ChordNameLink
-            :chord="chords[0] as any"
-            :notation="chordNotation"
-            :highlightAlterations="highlightAlterations"
-          />
-        </div>
+      <div class="grid grid-rows-[5fr_1fr_1fr_5fr] gap-3 min-h-full w-full items-center justify-items-center">
 
-        <!-- 和弦详细名称 -->
-        <div
-          v-if="displayName"
-          id="name"
-          class="text-sm sm:text-base text-base-content/70 mt-1 sm:mt-2"
-        >
+        <div v-if="displayChord" id="chord" class="min-h-[40px] w-full flex items-center justify-center">
+          <ChordNameLink :chord="chords[0] as any" class="items-center justify-center" :notation="chordNotation"
+            :highlightAlterations="highlightAlterations" />
+        </div>
+        <div v-if="displayName" id="name" class="min-h-[40px] w-full flex items-center justify-center">
           {{ chords[0]?.name }}
         </div>
-
-        <!-- 音程显示 -->
-        <div v-if="displayIntervals" id="intervals" class="mt-2 sm:mt-3">
-          <ChordIntervals
-            :intervals="chords[0]?.intervals as unknown as string[]"
-            :pitchClasses="pitchClasses as unknown as string[]"
-            :tonic="chords[0]?.tonic"
-          />
-        </div>
-
-        <!-- 替代和弦 -->
-        <div
-          v-if="displayAltChords"
-          class="flex flex-wrap gap-1 sm:gap-2 mt-2 sm:mt-3"
-        >
+        <div v-if="displayAltChords" class="min-h-[40px] w-full flex items-center justify-center">
           <template v-for="(chord, index) in chords" :key="index">
-            <ChordNameLink
-              v-if="index > 0"
-              :chord="chord as any"
-              :notation="chordNotation"
-              :highlightAlterations="highlightAlterations"
-            />
+            <span v-if="index > 0" class="inline-flex  ">
+              <ChordNameLink :chord="chord as any" class="items-center justify-center" :notation="chordNotation"
+                :highlightAlterations="highlightAlterations" />
+            </span>
           </template>
+        </div>
+        <div v-if="displayIntervals" id="intervals" class="min-h-[40px] w-full flex items-center justify-center">
+          <ChordIntervals :intervals="chords[0]?.intervals as unknown as string[]"
+            :pitchClasses="pitchClasses as unknown as string[]" :tonic="chords[0]?.tonic" />
         </div>
       </div>
     </div>
-
-    <!-- 钢琴键盘区域 -->
-    <div
-      v-if="displayKeyboard"
-      class="flex bg-secondary rounded-lg p-2 sm:p-3 md:p-4 flex-shrink-0"
-    >
-      <PianoKeyboard
-        id="keyboard"
-        class="w-full h-full"
-        :sustained="sustainedMidiNotes as unknown as number[]"
-        :played="playedMidiNotes as unknown as number[]"
-        :midi="midiNotes as unknown as number[]"
-        :chord="chords[0] as any"
-        :keySignature="keySignature as unknown as KeySignatureConfig"
-        :keyboard="keyboard"
-      />
+    <div v-if="displayKeyboard" w-full class="flex bg-secondary min-h-full min-w-full rounded-lg p-2">
+      <PianoKeyboard id="keyboard" class="w-full h-full" :sustained="sustainedMidiNotes as unknown as number[]"
+        :played="playedMidiNotes as unknown as number[]" :midi="midiNotes as unknown as number[]"
+        :chord="chords[0] as any" :keySignature="keySignature as unknown as KeySignatureConfig" :keyboard="keyboard" />
     </div>
+
+    <SettingsModal v-model="settingsOpen" :title="t('chordDisplay.settings')">
+      <ChordDisplayModuleSettings :module-id="moduleId" />
+    </SettingsModal>
+  </div>
+  <div class="absolute top-10 right-4 z-10">
+    <SettingsButton :aria-label="t('chordDisplay.openSettings')" @click="settingsOpen = true" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { PianoKeyboard } from "@/components/PianoKeyboard/";
 import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";
 import { ChordIntervals } from "@/components/ChordIntervals/";
+import { SettingsButton } from "@/components/SettingsButton/";
+import { SettingsModal } from "@/components/SettingsModal/";
 import { useNotes } from "@/composables/";
 import { useSettingsStore } from "@/stores";
-import { useMidiRoutingStore } from "@/stores/midiRouting";
+import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
 import type { StaffClef } from "@/components/Notation/types";
 import type { KeySignatureConfig } from "@/helpers";
+import { Splitpanes, Pane } from 'splitpanes'
+import 'splitpanes/dist/splitpanes.css'
+
+const { t } = useI18n();
+const settingsOpen = ref(false);
 
 const props = defineProps<{
   moduleId: string;
 }>();
 
 const settingsStore = useSettingsStore();
-const routingStore = useMidiRoutingStore();
-routingStore.addChordDisplayOutput(props.moduleId);
 
 const moduleSettings = computed(() => {
   return settingsStore.settings.chordDisplay.find(
@@ -116,13 +78,14 @@ const moduleSettings = computed(() => {
   );
 });
 
-const accidentals = computed(() => settingsStore.settings.notation.accidentals);
-const key = computed(() => settingsStore.settings.notation.key);
 const staffClef = computed<StaffClef>(
   () => settingsStore.settings.notation.staffClef,
 );
 const staffTranspose = computed(
   () => settingsStore.settings.notation.staffTranspose,
+);
+const notationDisplay = computed(
+  () => settingsStore.settings.notation.display,
 );
 
 const {
@@ -133,8 +96,8 @@ const {
   chords,
   keySignature,
 } = useNotes({
-  accidentals: accidentals.value,
-  key: key.value,
+  accidentals: () => settingsStore.settings.notation.accidentals,
+  key: () => settingsStore.settings.notation.key,
   midiChannel: 0,
   allowOmissions: moduleSettings.value?.allowOmissions ?? false,
   useSustain: moduleSettings.value?.useSustain ?? true,

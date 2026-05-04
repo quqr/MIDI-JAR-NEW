@@ -10,21 +10,33 @@ export type Reaction = {
 };
 
 export const getReactions = (
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: (
+    key: string,
+    named?: Record<string, unknown>,
+    options?: { returnObjects?: boolean },
+  ) => string,
 ): { [key in STATUSES]?: string[] } => {
   return {
-    [STATUSES.different]: t("chordQuiz.reactions.different", {
-      returnObjects: true,
-    }) as unknown as string[],
-    [STATUSES.subset]: t("chordQuiz.reactions.subset", {
-      returnObjects: true,
-    }) as unknown as string[],
-    [STATUSES.equal]: t("chordQuiz.reactions.equal", {
-      returnObjects: true,
-    }) as unknown as string[],
-    [STATUSES.superset]: t("chordQuiz.reactions.superset", {
-      returnObjects: true,
-    }) as unknown as string[],
+    [STATUSES.different]: t(
+      "chordQuiz.reactions.different",
+      {},
+      { returnObjects: true },
+    ) as unknown as string[],
+    [STATUSES.subset]: t(
+      "chordQuiz.reactions.subset",
+      {},
+      { returnObjects: true },
+    ) as unknown as string[],
+    [STATUSES.equal]: t(
+      "chordQuiz.reactions.equal",
+      {},
+      { returnObjects: true },
+    ) as unknown as string[],
+    [STATUSES.superset]: t(
+      "chordQuiz.reactions.superset",
+      {},
+      { returnObjects: true },
+    ) as unknown as string[],
   };
 };
 

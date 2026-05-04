@@ -87,6 +87,7 @@
                 :key-signature="keySignature"
                 :staff-clef="staffClef"
                 :staff-transpose="staffTranspose"
+                :display="notationDisplay"
               />
             </div>
           </details>
@@ -260,6 +261,7 @@
                   :key-signature="keySignature"
                   :staff-clef="staffClef"
                   :staff-transpose="staffTranspose"
+                  :display="notationDisplay"
                 />
               </div>
             </div>
@@ -420,6 +422,9 @@ const preferredAlias = computed(() => {
 const staffClef = computed(() => settingsStore.settings.notation.staffClef);
 const staffTranspose = computed(
   () => settingsStore.settings.notation.staffTranspose,
+);
+const notationDisplay = computed(
+  () => settingsStore.settings.notation.display,
 );
 
 const midi = computed(() => getChordInversion(chord.value!, 0));

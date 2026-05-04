@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import {
-  MidiMessageManager,
-  MidiMessageListener,
+  InternalMidiMessages,
+  MidiMessageEvent,
 } from "@/midi/MidiMessageManager";
 
 export type MidiMessageEntry = {
@@ -15,11 +15,12 @@ export type MidiMessageEntry = {
 export const useMidiMessagesStore = defineStore("midiMessages", () => {
   const messages = ref<MidiMessageEntry[]>([]);
   const maxMessages = 200;
-  const manager = MidiMessageManager.getInstance();
+
+  const managerMap = new Map<string, InternalMidiMessages>();
 
   const listenerMap = new Map<
     (message: number[], timestamp: number, device: string) => void,
-    MidiMessageListener
+    (ev: MidiMessageEvent) => void
   >();
 
   function addMessage(
@@ -35,16 +36,26 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     }
   }
 
+  function getManager(namespace: string): InternalMidiMessages {
+    let manager = managerMap.get(namespace);
+    if (!manager) {
+      manager = new InternalMidiMessages(namespace);
+      managerMap.set(namespace, manager);
+    }
+    return manager;
+  }
+
   function subscribeToNamespace(
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
   ): void {
-    const listener: MidiMessageListener = (message, timestamp, device) => {
-      addMessage(message, timestamp, device, namespace);
-      onMessage(message, timestamp, device);
+    const listener = (ev: MidiMessageEvent) => {
+      addMessage(ev.message, ev.timestamp, ev.device, namespace);
+      onMessage(ev.message, ev.timestamp, ev.device);
     };
     listenerMap.set(onMessage, listener);
-    manager.subscribe(namespace, listener);
+    const manager = getManager(namespace);
+    manager.addEventListener("message", listener);
   }
 
   function unsubscribeFromNamespace(
@@ -53,7 +64,10 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
   ): void {
     const listener = listenerMap.get(onMessage);
     if (listener) {
-      manager.unsubscribe(namespace, listener);
+      const manager = managerMap.get(namespace);
+      if (manager) {
+        manager.removeEventListener("message", listener);
+      }
       listenerMap.delete(onMessage);
     }
   }

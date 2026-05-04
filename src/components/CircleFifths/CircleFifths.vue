@@ -286,10 +286,10 @@ const handleTransitionEnd = (e: TransitionEvent) => {
 const resize = () => {
   if (svgRef.value) {
     const s = Math.min(
-      svgRef.value.parentElement?.clientHeight || 100,
-      svgRef.value.parentElement?.clientWidth || 100,
+      (svgRef.value.parentElement?.clientHeight || 100) - 16,
+      (svgRef.value.parentElement?.clientWidth || 100) - 16,
     );
-    size.value = s;
+    size.value = Math.max(s, 200);
   }
 };
 
@@ -318,7 +318,7 @@ const debouncedRotation = debounce(
 
 onMounted(() => {
   window.addEventListener("resize", debouncedResize);
-  setTimeout(resize, 0);
+  requestAnimationFrame(resize);
 });
 
 onUnmounted(() => {

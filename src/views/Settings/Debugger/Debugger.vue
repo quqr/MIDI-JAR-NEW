@@ -137,14 +137,13 @@ const filteredLogs = computed(() => {
 });
 
 watch(
-  filteredLogs,
+  () => filteredLogs.value.length,
   async () => {
     if (autoScroll.value && logContainer.value) {
       await nextTick();
       logContainer.value.scrollTop = logContainer.value.scrollHeight;
     }
   },
-  { deep: true },
 );
 
 const clearLogs = () => {

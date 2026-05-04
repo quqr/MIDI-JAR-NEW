@@ -5,5 +5,6 @@ export { default as SettingsRange } from "./SettingsRange.vue";
 export { default as SettingsTextInput } from "./SettingsTextInput.vue";
 export { default as SettingsSection } from "./SettingsSection.vue";
 export { default as SettingsColorPicker } from "./SettingsColorPicker.vue";
+export { default as SettingsThemeColorPicker } from "./SettingsThemeColorPicker.vue";
 export { default as SettingsRadioGroup } from "./SettingsRadioGroup.vue";
 export { default as ThemePicker } from "../ThemePicker.vue";

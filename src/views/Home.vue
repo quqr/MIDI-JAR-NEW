@@ -1,9 +1,9 @@
 <template>
   <div>
     <main>
-      <section class="space-y-6 p-4">
+      <section class="space-y-4 p-4">
         <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr"
         >
           <ModuleCard
             v-for="module in settingsStore.settings.chordDisplay"

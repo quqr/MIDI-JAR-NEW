@@ -20,6 +20,7 @@ const routes: RouteRecordRaw[] = [
         name: "chord-display",
         component: () => import("@/views/ChordDisplay/ChordDisplay.vue"),
         meta: { title: "nav.chordDisplayWithId", icon: "piano" },
+        props: true,
       },
       {
         path: "circle-of-fifths",
@@ -66,6 +67,13 @@ const routes: RouteRecordRaw[] = [
             component: () =>
               import("@/views/Settings/GeneralSettings/GeneralSettings.vue"),
             meta: { title: "settings.general" },
+          },
+          {
+            path: "cursor",
+            name: "settings-cursor",
+            component: () =>
+              import("@/views/Settings/CursorSettings/CursorSettings.vue"),
+            meta: { title: "settings.cursor" },
           },
           {
             path: "routing",

@@ -1,6 +1,6 @@
 <template>
   <SettingsSection :on-reset="resetModule">
-    <div class="space-y-3">
+    <div class="space-y-3 w-full h-full">
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.chords')"
         icon="music-note"
@@ -265,11 +265,10 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
 import { defaultChordDisplaySettings, ChordDisplaySettings } from "@/types";
-import Icon from "@/components/Icon/Icon.vue";
 import {
   SettingsCollapse,
   SettingsToggle,
@@ -282,11 +281,18 @@ import {
 import { fields } from "./utils";
 
 const { t } = useI18n();
-const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
 
-const moduleId = computed(() => route.params.moduleId as string);
+const props = withDefaults(
+  defineProps<{
+    moduleId?: string;
+  }>(),
+  {},
+);
+
+const routeModuleId = computed(() => route.params.moduleId as string);
+const moduleId = computed(() => props.moduleId || routeModuleId.value);
 
 const moduleSettings = computed<ChordDisplaySettings>(() => {
   const mod = settingsStore.settings.chordDisplay.find(
@@ -364,10 +370,5 @@ function resetModule() {
     updated[index] = { ...defaultChordDisplaySettings, id: moduleId.value };
     settingsStore.settings.chordDisplay = updated;
   }
-}
-
-function handleDeleteModule() {
-  settingsStore.removeChordDisplayModule(moduleId.value);
-  router.push("/settings/chords");
 }
 </script>

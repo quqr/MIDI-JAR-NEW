@@ -1,4 +1,5 @@
 import type { MidiRoute } from "./midi";
+import type { NotationDisplayConfig } from "@/components/Notation/types";
 
 export type { MidiRoute } from "./midi";
 export interface MessageEventData {
@@ -170,11 +171,27 @@ export type NotationSettings = {
   accidentals: "flat" | "sharp";
   staffClef: "both" | "bass" | "treble";
   staffTranspose: number;
+  display: Partial<NotationDisplayConfig>;
 };
 
 export type ServerSettings = {
   enabled: boolean;
   port: number;
+};
+
+export type CursorSettings = {
+  enabled: boolean;
+  innerSize: number;
+  outerSize: number;
+  innerColorSource: "custom" | "theme";
+  innerColor: string;
+  outerColorSource: "custom" | "theme";
+  outerColor: string;
+  hoverRingColorSource: "custom" | "theme";
+  hoverRingColor: string;
+  blendMode: "normal" | "exclusion" | "difference" | "multiply" | "screen";
+  transitionDuration: number;
+  hoverMode: "cover" | "border" | "none";
 };
 
 export type GeneralSettings = {
@@ -186,6 +203,7 @@ export type GeneralSettings = {
 export type Settings = {
   general: GeneralSettings;
   midiRoutes: MidiRoute[];
+  cursor: CursorSettings;
   chordDisplay: ChordDisplaySettings[];
   chordQuiz: ChordQuizSettings;
   circleOfFifths: CircleOfFifthsSettings;
@@ -232,10 +250,10 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
   highlightAlterations: false,
   displayKeyboard: true,
   displayChord: true,
-  displayName: false,
-  displayNotation: false,
+  displayName: true,
+  displayNotation: true,
   displayAltChords: true,
-  displayIntervals: false,
+  displayIntervals: true,
   keyboard: defaultKeyboardSettings,
 };
 
@@ -257,19 +275,19 @@ export const defaultCircleOfFifthsSettings: CircleOfFifthsSettings = {
   displayMajor: true,
   displayMinor: true,
   displayDiminished: true,
-  displayDominants: false,
-  displaySuspended: false,
+  displayDominants: true,
+  displaySuspended: true,
   displayAlterations: true,
-  displayModes: false,
-  displayDegrees: false,
-  displayDegreeLabels: false,
+  displayModes: true,
+  displayDegrees: true,
+  displayDegreeLabels: true,
 };
 
 export const defaultChordDictionarySettings: ChordDictionarySettings = {
   interactive: "play",
   hideDisabled: false,
-  filterInKey: false,
-  groupBy: "none",
+  filterInKey: true,
+  groupBy: "quality",
   defaultNotation: "short",
   disabled: [],
   aliases: [["maj", ""]],
@@ -280,11 +298,27 @@ export const defaultNotationSettings: NotationSettings = {
   accidentals: "flat",
   staffClef: "both",
   staffTranspose: 0,
+  display: {},
 };
 
 export const defaultServerSettings: ServerSettings = {
   enabled: true,
   port: 25011,
+};
+
+export const defaultCursorSettings: CursorSettings = {
+  enabled: true,
+  innerSize: 12,
+  outerSize: 42,
+  innerColorSource: "custom",
+  innerColor: "#ffffff",
+  outerColorSource: "custom",
+  outerColor: "#ffffff",
+  hoverRingColorSource: "custom",
+  hoverRingColor: "#ffffff",
+  blendMode: "exclusion",
+  transitionDuration: 100,
+  hoverMode: "border",
 };
 
 export const defaultGeneralSettings: GeneralSettings = {
@@ -296,6 +330,7 @@ export const defaultGeneralSettings: GeneralSettings = {
 export const defaultSettings: Settings = {
   general: defaultGeneralSettings,
   midiRoutes: [],
+  cursor: defaultCursorSettings,
   chordDisplay: [defaultChordDisplaySettings],
   chordQuiz: defaultChordQuizSettings,
   circleOfFifths: defaultCircleOfFifthsSettings,

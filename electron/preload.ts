@@ -61,25 +61,53 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke(IPC_CHANNELS.FILE_SYSTEM.SAVE_FILE_DIALOG, options),
   },
   midi: {
-    getInputs: () => ipcRenderer.invoke(IPC_CHANNELS.MIDI.GET_INPUTS),
-    getOutputs: () => ipcRenderer.invoke(IPC_CHANNELS.MIDI.GET_OUTPUTS),
-    onDeviceConnected: (callback: (deviceName: string) => void) => {
-      const listener = (_event: any, name: string) => callback(name);
-      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_DEVICE_CONNECTED, listener);
+    refreshDevices: () => ipcRenderer.send(IPC_CHANNELS.MIDI.REFRESH_DEVICES),
+    clearRoutes: () => ipcRenderer.send(IPC_CHANNELS.MIDI.CLEAR_ROUTES),
+    addRoute: (route: any) =>
+      ipcRenderer.send(IPC_CHANNELS.MIDI.ADD_ROUTE, route),
+    deleteRoute: (route: any) =>
+      ipcRenderer.send(IPC_CHANNELS.MIDI.DELETE_ROUTE, route),
+    getInputs: () => ipcRenderer.send(IPC_CHANNELS.MIDI.GET_INPUTS),
+    onInputs: (callback: (inputs: any[]) => void) => {
+      const listener = (_event: any, inputs: any[]) => callback(inputs);
+      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_INPUTS, listener);
       return () =>
-        ipcRenderer.removeListener(
-          IPC_CHANNELS.MIDI.ON_DEVICE_CONNECTED,
-          listener,
-        );
+        ipcRenderer.removeListener(IPC_CHANNELS.MIDI.ON_INPUTS, listener);
     },
-    onDeviceDisconnected: (callback: (deviceName: string) => void) => {
-      const listener = (_event: any, name: string) => callback(name);
-      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_DEVICE_DISCONNECTED, listener);
+    getOutputs: () => ipcRenderer.send(IPC_CHANNELS.MIDI.GET_OUTPUTS),
+    onOutputs: (callback: (outputs: any[]) => void) => {
+      const listener = (_event: any, outputs: any[]) => callback(outputs);
+      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_OUTPUTS, listener);
       return () =>
-        ipcRenderer.removeListener(
-          IPC_CHANNELS.MIDI.ON_DEVICE_DISCONNECTED,
-          listener,
-        );
+        ipcRenderer.removeListener(IPC_CHANNELS.MIDI.ON_OUTPUTS, listener);
+    },
+    getWires: () => ipcRenderer.send(IPC_CHANNELS.MIDI.GET_WIRES),
+    onWires: (callback: (wires: any[]) => void) => {
+      const listener = (_event: any, wires: any[]) => callback(wires);
+      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_WIRES, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.MIDI.ON_WIRES, listener);
+    },
+    onLatency: (callback: (latency: number, device: string) => void) => {
+      const listener = (_event: any, latency: number, device: string) =>
+        callback(latency, device);
+      ipcRenderer.on(IPC_CHANNELS.MIDI.ON_ACTIVITY, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.MIDI.ON_ACTIVITY, listener);
+    },
+    onMidiMessage: (
+      namespace: string,
+      callback: (message: number[], timestamp: number, device: string) => void,
+    ) => {
+      const channel = `${IPC_CHANNELS.MIDI.ON_MIDI_MESSAGE}:${namespace}`;
+      const listener = (
+        _event: any,
+        message: number[],
+        timestamp: number,
+        device: string,
+      ) => callback(message, timestamp, device);
+      ipcRenderer.on(channel, listener);
+      return () => ipcRenderer.removeListener(channel, listener);
     },
   },
 });

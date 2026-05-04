@@ -13,6 +13,7 @@ class Logger {
   private logs = ref<LogEntry[]>([]);
   private nextId = 0;
   private isIntercepting = false;
+  private maxLogs = 500;
 
   private formatTimestamp(): string {
     const now = new Date();
@@ -31,6 +32,9 @@ class Logger {
       type,
       message,
     });
+    if (this.logs.value.length > this.maxLogs) {
+      this.logs.value = this.logs.value.slice(-this.maxLogs);
+    }
   }
 
   info(message: string): void {

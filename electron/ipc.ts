@@ -25,10 +25,18 @@ export const IPC_CHANNELS = {
     SAVE_FILE_DIALOG: "file:save-dialog",
   },
   MIDI: {
-    GET_INPUTS: "midi:get-inputs",
-    GET_OUTPUTS: "midi:get-outputs",
-    ON_DEVICE_CONNECTED: "midi:on-device-connected",
-    ON_DEVICE_DISCONNECTED: "midi:on-device-disconnected",
+    REFRESH_DEVICES: "midi:refreshDevices",
+    CLEAR_ROUTES: "midi:clearRoutes",
+    ADD_ROUTE: "midi:addRoute",
+    DELETE_ROUTE: "midi:deleteRoute",
+    GET_INPUTS: "midi:getInputs",
+    ON_INPUTS: "midi:inputs",
+    GET_OUTPUTS: "midi:getOutputs",
+    ON_OUTPUTS: "midi:outputs",
+    GET_WIRES: "midi:getWires",
+    ON_WIRES: "midi:wires",
+    ON_MIDI_MESSAGE: "midi:message",
+    ON_ACTIVITY: "midi:activity",
   },
 } as const;
 

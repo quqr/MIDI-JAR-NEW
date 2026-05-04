@@ -20,21 +20,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { Note } from "tonal";
 import { useMidiLearn } from "@/composables/useMidiLearn";
+import { InternalMidiMessages } from "@/midi/MidiMessageManager";
 
 export interface InputNoteProps {
   modelValue: string | null;
   withOctave?: boolean;
   learn?: boolean;
+  namespace?: string;
 }
 
 const props = withDefaults(defineProps<InputNoteProps>(), {
   modelValue: null,
   withOctave: false,
   learn: false,
+  namespace: "input-note",
 });
 
 const emit = defineEmits<{
@@ -83,6 +86,10 @@ const handleChange = (value: string) => {
   emit("update:modelValue", value);
 };
 
+const midiManager = props.learn
+  ? new InternalMidiMessages(props.namespace)
+  : null;
+
 const handleLearn = (midi: number) => {
   const inputNote = Note.fromMidi(midi);
   const note = Note.get(inputNote);
@@ -94,7 +101,13 @@ const handleLearn = (midi: number) => {
   learning.value = false;
 };
 
-const { startLearning, stopLearning } = useMidiLearn(handleLearn);
+const { startLearning, stopLearning } = useMidiLearn(midiManager, handleLearn);
+
+onUnmounted(() => {
+  if (midiManager) {
+    midiManager.dispose();
+  }
+});
 
 watch(learning, async (val) => {
   if (val) {

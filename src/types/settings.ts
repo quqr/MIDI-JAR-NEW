@@ -76,16 +76,34 @@ export type ChordDictionarySettings = {
   aliases: Array<[key: string, value: string]>;
 };
 
+import type { NotationDisplayConfig } from "@/components/Notation/types";
+
 export type NotationSettings = {
   key: string;
   accidentals: "flat" | "sharp";
   staffClef: "both" | "bass" | "treble";
   staffTranspose: number;
+  display: Partial<NotationDisplayConfig>;
 };
 
 export type ServerSettings = {
   enabled: boolean;
   port: number;
+};
+
+export type CursorSettings = {
+  enabled: boolean;
+  innerSize: number;
+  outerSize: number;
+  innerColorSource: "custom" | "theme";
+  innerColor: string;
+  outerColorSource: "custom" | "theme";
+  outerColor: string;
+  hoverRingColorSource: "custom" | "theme";
+  hoverRingColor: string;
+  blendMode: "normal" | "exclusion" | "difference" | "multiply" | "screen";
+  transitionDuration: number;
+  hoverMode: "cover" | "border" | "none";
 };
 
 export type GeneralSettings = {
@@ -96,6 +114,7 @@ export type GeneralSettings = {
 
 export type Settings = {
   general: GeneralSettings;
+  cursor: CursorSettings;
   chordDisplay: ChordDisplaySettings[];
   chordQuiz: ChordQuizSettings;
   circleOfFifths: CircleOfFifthsSettings;

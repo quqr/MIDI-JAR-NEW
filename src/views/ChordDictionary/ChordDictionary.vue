@@ -9,35 +9,29 @@
   >
     <ChordDictionaryToolbar :disable-update="disableUpdate" />
 
-    <div class="flex flex-row">
-      <div class="">
-        <ChordDictionaryChromaMenu
-          v-bind="chromaMenuProps"
-          @select="handleChromaChange"
-        />
-      </div>
-
-      <div class="">
-        <ChordDictionaryChordMenu
-          v-bind="chordMenuProps"
-          @select="handleChordTypeChange"
-        />
-      </div>
-
-      <div class="">
-        <div v-show="activeTab === 'chroma'" class="">
+    <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div class="flex flex-row flex-1 min-h-0 overflow-hidden">
+        <div
+          class="w-48 flex-shrink-0 overflow-y-auto border-r border-base-200"
+        >
           <ChordDictionaryChromaMenu
             v-bind="chromaMenuProps"
             @select="handleChromaChange"
           />
         </div>
-        <div v-show="activeTab === 'chords'" class="">
+
+        <div
+          class="w-56 flex-shrink-0 overflow-y-auto border-r border-base-200"
+        >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"
             @select="handleChordTypeChange"
           />
         </div>
-        <RouterView />
+
+        <div class="flex-1 min-h-0 overflow-y-auto">
+          <RouterView />
+        </div>
       </div>
     </div>
   </ChordDictionaryModuleProvider>
@@ -68,8 +62,6 @@ const settingsStore = useSettingsStore();
 const router = useRouter();
 const route = useRoute();
 
-const { key, accidentals } = settingsStore.settings.notation;
-
 const {
   chords,
   midiNotes,
@@ -78,8 +70,8 @@ const {
   pitchClasses,
   keySignature,
 } = useNotes({
-  key,
-  accidentals,
+  key: () => settingsStore.settings.notation.key,
+  accidentals: () => settingsStore.settings.notation.accidentals,
   midiChannel: 0,
   useSustain: true,
   detectOnRelease: false,
@@ -96,7 +88,6 @@ const pitchClassesArray = computed(() => pitchClasses.value.slice());
 
 const chroma = ref<number | null>(null);
 const chordType = ref<string | null>(null);
-const activeTab = ref<"chroma" | "chords" | "detail">("detail");
 
 const chromaMenuProps = computed(() => ({
   keySignature: keySignature.value,

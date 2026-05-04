@@ -1,7 +1,7 @@
 <template>
   <div
     id="ChordQuiz"
-    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-4 gap-2"
+    class="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden p-4 gap-3"
     style="
       --font-size-main: clamp(2rem, 15vh, 10vw);
       --font-size-intervals: clamp(0.75rem, 2vw, 3vh);
@@ -26,7 +26,7 @@
     </div>
 
     <div
-      class="relative w-full overflow-hidden flex-shrink-0 flex flex-col justify-end items-center p-2"
+      class="relative w-full overflow-hidden flex-shrink-0 flex flex-col justify-end items-center p-3"
       style="height: min(20vw, 50vh)"
     >
       <div
@@ -82,7 +82,7 @@
     </div>
 
     <div
-      class="flex flex-col items-center justify-center gap-1 p-2 flex-basis-0 flex-grow flex-shrink"
+      class="flex flex-col items-center justify-center gap-3 p-3 flex-basis-0 flex-grow flex-shrink"
     >
       <span
         class="badge badge-lg font-bold px-2 py-1 bg-base-200 text-base-content"
@@ -108,6 +108,12 @@
         />
       </div>
     </div>
+    <div class="absolute top-4 right-4 z-10">
+      <SettingsButton
+        :aria-label="t('chordQuiz.openSettings')"
+        @click="settingsOpen = true"
+      />
+    </div>
     <div
       class="absolute bottom-4 right-4 z-10 opacity-60 hover:opacity-100 transition-opacity"
     >
@@ -132,23 +138,36 @@
         </svg>
       </RouterLink>
     </div>
+
+    <SettingsModal v-model="settingsOpen" :title="t('chordQuiz.settings')">
+      <ChordQuizSettings />
+    </SettingsModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { ChordIntervals } from "@/components/ChordIntervals/";
 import { ChordName } from "@/components/ChordName/";
+import { SettingsButton } from "@/components/SettingsButton/";
+import { SettingsModal } from "@/components/SettingsModal/";
 import { useQuiz, useNotes, STATUSES } from "@/composables/";
 import { useSettingsStore } from "@/stores";
+import ChordQuizSettings from "@/views/Settings/ChordQuizSettings/ChordQuizSettings.vue";
 import type { Game } from "@/composables/useQuiz/utils";
 import Reaction from "./Reaction/Reaction.vue";
 import GameList from "./GameList/GameList.vue";
 
+const { t } = useI18n();
+const settingsOpen = ref(false);
+
 const settingsStore = useSettingsStore();
 const quizSettings = computed(() => settingsStore.settings.chordQuiz);
 const { chords, pitchClasses, clearNotes } = useNotes({
+  key: () => settingsStore.settings.notation.key,
+  accidentals: () => settingsStore.settings.notation.accidentals,
   namespace: "chord-quiz",
 });
 const { games, gameState } = useQuiz(
@@ -234,7 +253,7 @@ const chordElementStyle = (c: { type: string }) => {
 };
 
 const getStatusColor = () => {
-  const statusKey = `status--${STATUSES[gameState.value.status]}`;
+  const statusKey = STATUSES[gameState.value.status];
   return statusColors[statusKey] || "var(--fallback-color, #999)";
 };
 

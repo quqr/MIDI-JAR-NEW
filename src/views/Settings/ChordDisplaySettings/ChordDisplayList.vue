@@ -25,15 +25,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
 import Icon from "@/components/Icon/Icon.vue";
-import ChordDisplayAddModal from "./ChordDisplayAddModal.vue";
-import { addModule } from "./utils";
 
 const { t } = useI18n();
-const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
 
@@ -45,15 +42,4 @@ const moduleIds = computed(() =>
 const currentRoute = computed(
   () => `/settings/chords/${route.params.moduleId}`,
 );
-
-const handleSave = async (name: string) => {
-  try {
-    const newModules = addModule(name, settingsStore.settings.chordDisplay);
-    settingsStore.settings.chordDisplay = newModules;
-    addModalOpen.value = false;
-    router.push(`./${name}`);
-  } catch (err) {
-    throw err;
-  }
-};
 </script>

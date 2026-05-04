@@ -1,13 +1,38 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { MidiRoute, MidiInput, MidiOutput, MidiWire } from "@/types/midi";
-import { MidiDeviceManager } from "@/midi/MidiDeviceManager";
-import { JZZEngine } from "@/midi/JZZEngine";
-import { MidiMessageManager } from "@/midi/MidiMessageManager";
+import { isElectron } from "@/utils/electron";
 import { logger } from "@/utils/logger";
-import { log } from "console";
+
+export interface MidiRoute {
+  input: string;
+  output: string;
+  type: "physical" | "internal";
+  enabled: boolean;
+}
+
+export interface MidiInput {
+  name: string;
+  opened: boolean;
+  connected: boolean;
+  error: boolean;
+}
+
+export interface MidiOutput {
+  name: string;
+  type: string;
+  opened: boolean;
+  connected: boolean;
+  error: boolean;
+}
+
+export interface MidiWire {
+  route: MidiRoute;
+  connected: boolean;
+}
 
 const STORAGE_KEY = "midi-jar-routes";
+const NODE_POSITIONS_KEY = "midi-jar-node-positions";
+const VIEWPORT_KEY = "midi-jar-viewport";
 
 function loadRoutes(): MidiRoute[] {
   try {
@@ -16,7 +41,7 @@ function loadRoutes(): MidiRoute[] {
       return JSON.parse(stored);
     }
   } catch (e) {
-    console.warn("Failed to load MIDI routes from localStorage:", e);
+    logger.warn("Failed to load MIDI routes from localStorage: " + e);
   }
   return [];
 }
@@ -25,18 +50,69 @@ function saveRoutes(routes: MidiRoute[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
   } catch (e) {
-    console.warn("Failed to save MIDI routes to localStorage:", e);
+    logger.warn("Failed to save MIDI routes to localStorage: " + e);
+  }
+}
+
+function loadNodePositions(): Record<string, { x: number; y: number }> {
+  try {
+    const stored = localStorage.getItem(NODE_POSITIONS_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    logger.warn("Failed to load node positions from localStorage: " + e);
+  }
+  return {};
+}
+
+function saveNodePositions(positions: Record<string, { x: number; y: number }>) {
+  try {
+    localStorage.setItem(NODE_POSITIONS_KEY, JSON.stringify(positions));
+  } catch (e) {
+    logger.warn("Failed to save node positions to localStorage: " + e);
+  }
+}
+
+interface FlowViewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+function loadViewport(): FlowViewport | null {
+  try {
+    const stored = localStorage.getItem(VIEWPORT_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    logger.warn("Failed to load viewport from localStorage: " + e);
+  }
+  return null;
+}
+
+function saveViewport(viewport: FlowViewport) {
+  try {
+    localStorage.setItem(VIEWPORT_KEY, JSON.stringify(viewport));
+  } catch (e) {
+    logger.warn("Failed to save viewport to localStorage: " + e);
   }
 }
 
 export const useMidiRoutingStore = defineStore("midiRouting", () => {
-  const manager = new MidiDeviceManager();
   const initialized = ref(false);
   const inputs = ref<MidiInput[]>([]);
   const outputs = ref<MidiOutput[]>([]);
   const wires = ref<MidiWire[]>([]);
   const routes = ref<MidiRoute[]>(loadRoutes());
+  const nodePositions = ref<Record<string, { x: number; y: number }>>(loadNodePositions());
+  const viewport = ref<FlowViewport | null>(loadViewport());
   const error = ref<string | null>(null);
+
+  let offInputs: (() => void) | null = null;
+  let offOutputs: (() => void) | null = null;
+  let offWires: (() => void) | null = null;
 
   function createDefaultRoutes(): void {
     if (routes.value.length > 0) return;
@@ -50,22 +126,46 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
       enabled: true,
     });
     saveRoutes(routes.value);
+    syncRoutesToMain();
     logger.info(`已创建默认路由: ${firstInput} → internal`);
+  }
+
+  function syncRoutesToMain() {
+    if (!isElectron()) return;
+    window.electronAPI.midi.clearRoutes();
+    for (const route of routes.value) {
+      window.electronAPI.midi.addRoute({
+        input: route.input,
+        output: route.output,
+        type: route.type,
+        enabled: route.enabled,
+      });
+    }
   }
 
   async function initialize(): Promise<void> {
     if (initialized.value) return;
-    try {
-      await manager.initialize();
-      await refreshDevices();
-      createDefaultRoutes();
-      await routeMidi();
 
-      manager.setOnDeviceChange(async () => {
-        await refreshDevices();
-        createDefaultRoutes();
-        await routeMidi();
-      });
+    try {
+      if (isElectron()) {
+        window.electronAPI.midi.getInputs();
+        window.electronAPI.midi.getOutputs();
+        window.electronAPI.midi.getWires();
+
+        offInputs = window.electronAPI.midi.onInputs((data: MidiInput[]) => {
+          inputs.value = data;
+        });
+
+        offOutputs = window.electronAPI.midi.onOutputs((data: MidiOutput[]) => {
+          outputs.value = data;
+        });
+
+        offWires = window.electronAPI.midi.onWires((data: MidiWire[]) => {
+          wires.value = data;
+        });
+      }
+
+      createDefaultRoutes();
 
       initialized.value = true;
       logger.info(
@@ -78,22 +178,10 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   }
 
   async function refreshDevices(): Promise<void> {
-    await JZZEngine.getInstance().refresh();
-    await manager.refreshDevices();
-    console.log(`已刷新 MIDI 设备列表: inputs: ${manager.getInputs().length}, outputs: ${manager.getOutputs().length}`);
-    inputs.value = manager.getInputs() as MidiInput[];
-    outputs.value = manager.getOutputs() as MidiOutput[];
-  }
-
-  async function routeMidi(): Promise<void> {
-    await manager.routeMidi(routes.value);
-    wires.value = manager.getWires() as MidiWire[];
-
-    const messageManager = MidiMessageManager.getInstance();
-    const namespaces = messageManager.getNamespaces();
-    logger.info(
-      `MIDI 路由已建立: ${wires.value.length} 连线, 消息命名空间: [${namespaces.join(", ")}]`,
-    );
+    if (isElectron()) {
+      window.electronAPI.midi.refreshDevices();
+      console.log(`${inputs.value} 输入, ${outputs.value} 输出, ${wires.value.length} 连线`);
+    }
   }
 
   async function addRoute(route: MidiRoute): Promise<void> {
@@ -109,7 +197,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         { ...route, enabled: route.enabled ?? true },
       ];
       saveRoutes(routes.value);
-      routeMidi();
+      syncRoutesToMain();
       logger.success(
         `路由已创建: ${route.input} → ${route.output} (${route.type})`,
       );
@@ -126,7 +214,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         ),
     );
     saveRoutes(routes.value);
-    routeMidi();
+    syncRoutesToMain();
     logger.warn(`路由已删除: ${route.input} → ${route.output} (${route.type})`);
   }
 
@@ -142,21 +230,38 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         : r,
     );
     saveRoutes(routes.value);
-    routeMidi();
+    syncRoutesToMain();
   }
 
   async function clearRoutes(): Promise<void> {
     routes.value = [];
     saveRoutes([]);
-    routeMidi();
+    if (isElectron()) {
+      window.electronAPI.midi.clearRoutes();
+    }
   }
 
-  function getOutputByName(name: string) {
-    return manager.getOutputByName(name);
+  function setNodePosition(nodeId: string, position: { x: number; y: number }) {
+    nodePositions.value = {
+      ...nodePositions.value,
+      [nodeId]: position,
+    };
+    saveNodePositions(nodePositions.value);
   }
 
-  function addChordDisplayOutput(moduleId: string) {
-    manager.addChordDisplayOutput(moduleId);
+  function clearNodePositions() {
+    nodePositions.value = {};
+    saveNodePositions({});
+  }
+
+  function setViewport(vp: FlowViewport) {
+    viewport.value = vp;
+    saveViewport(vp);
+  }
+
+  function clearViewport() {
+    viewport.value = null;
+    localStorage.removeItem(VIEWPORT_KEY);
   }
 
   const physicalOutputs = computed(() =>
@@ -166,24 +271,43 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     outputs.value.filter((o) => o.type === "internal"),
   );
 
+  function cleanup() {
+    if (offInputs) {
+      offInputs();
+      offInputs = null;
+    }
+    if (offOutputs) {
+      offOutputs();
+      offOutputs = null;
+    }
+    if (offWires) {
+      offWires();
+      offWires = null;
+    }
+  }
+
   return {
     initialized,
     inputs,
     outputs,
     wires,
     routes,
+    nodePositions,
+    viewport,
     error,
     initialize,
     refreshDevices,
-    routeMidi,
     createDefaultRoutes,
     addRoute,
     deleteRoute,
     updateRoute,
     clearRoutes,
-    getOutputByName,
-    addChordDisplayOutput,
+    setNodePosition,
+    clearNodePositions,
+    setViewport,
+    clearViewport,
     physicalOutputs,
     internalOutputs,
+    cleanup,
   };
 });

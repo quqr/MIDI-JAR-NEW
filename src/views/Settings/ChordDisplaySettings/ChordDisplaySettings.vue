@@ -1,7 +1,5 @@
 <template>
-  <div>
     <ChordDisplayModuleSettings />
-  </div>
 </template>
 
 <script setup lang="ts">

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, reactive } from "vue";
+import { provide, reactive, watch } from "vue";
 import type { KeySignatureConfig } from "@/helpers";
 
 interface ChordDictionaryModuleContext {
@@ -42,6 +42,43 @@ const contextValue: ChordDictionaryModuleContext = reactive({
   pitchClasses: props.pitchClasses,
   disableUpdate: props.disableUpdate,
 }) as ChordDictionaryModuleContext;
+
+watch(
+  () => props.keySignature,
+  (v) => {
+    if (v) contextValue.keySignature = v;
+  },
+);
+watch(
+  () => props.midiNotes,
+  (v) => {
+    contextValue.midiNotes = v;
+  },
+);
+watch(
+  () => props.playedMidiNotes,
+  (v) => {
+    contextValue.playedMidiNotes = v;
+  },
+);
+watch(
+  () => props.sustainedMidiNotes,
+  (v) => {
+    contextValue.sustainedMidiNotes = v;
+  },
+);
+watch(
+  () => props.pitchClasses,
+  (v) => {
+    contextValue.pitchClasses = v;
+  },
+);
+watch(
+  () => props.disableUpdate,
+  (v) => {
+    contextValue.disableUpdate = v;
+  },
+);
 
 provide("chordDictionaryModule", contextValue);
 </script>

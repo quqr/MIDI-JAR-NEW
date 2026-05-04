@@ -73,6 +73,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { logger } from "@/utils/logger";
 
 const { t } = useI18n();
 
@@ -109,7 +110,7 @@ onMounted(async () => {
     const res = await fetch("/licenses.json");
     packages.value = await res.json();
   } catch (e) {
-    console.error("Failed to load licenses:", e);
+    logger.error("Failed to load licenses: " + e);
   } finally {
     loading.value = false;
   }

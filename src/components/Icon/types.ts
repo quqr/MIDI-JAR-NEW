@@ -56,4 +56,5 @@ export type IconName =
   | "angle-right"
   | "midi-error"
   | "pads"
-  | "exclamation";
+  | "exclamation"
+  | "cursor";

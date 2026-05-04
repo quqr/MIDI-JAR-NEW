@@ -1,6 +1,8 @@
 <template>
-  <div class="midi-flow-container">
+  <div class="midi-flow-container h-full w-full">
     <VueFlow
+      v-model:nodes="flowNodes"
+      :edges="flowEdges"
       :connection-radius="40"
       :min-zoom="0.3"
       :max-zoom="2"
@@ -9,8 +11,9 @@
       :connect-on-click="false"
       class="midi-flow"
       @connect="handleConnect"
+      @edge-click="handleEdgeClick"
       @node-drag="onNodeDrag"
-      @node-drag-stop="onNodeDragStop"
+      @node-drag-stop="onDragStop"
     >
       <template #node-input="inputNodeProps">
         <InputNode v-bind="inputNodeProps" />
@@ -35,93 +38,76 @@
 
       <Controls position="top-right">
         <template #top-actions>
-          <ControlButton title="Auto Layout" @click="handleAutoLayout">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="w-5 h-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zm0 9.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zm0 9.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z"
-              />
-            </svg>
-          </ControlButton>
+          <ControlButton title="Auto Layout" @click="handleAutoLayout"></ControlButton>
         </template>
       </Controls>
-
-      <MiniMap
-        :node-color="miniMapNodeColor"
-        :mask-color="'hsl(var(--color-base-content) / 0.08)'"
-      />
-
-      <template v-if="helperLines.length > 0">
-        <svg class="helper-lines">
-          <line
-            v-for="(line, index) in helperLines"
-            :key="index"
-            :x1="line.type === 'vertical' ? line.position : 0"
-            :y1="line.type === 'horizontal' ? line.position : 0"
-            :x2="line.type === 'vertical' ? line.position : width"
-            :y2="line.type === 'horizontal' ? line.position : height"
-            :stroke="'hsl(var(--color-error))'"
-            :stroke-width="1"
-            :stroke-dasharray="'4 4'"
-          />
-        </svg>
-      </template>
     </VueFlow>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { ref, shallowRef, computed, watch, nextTick, onMounted } from "vue";
 import { VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
 import { Controls, ControlButton } from "@vue-flow/controls";
-import { MiniMap } from "@vue-flow/minimap";
-import type { Connection } from "@vue-flow/core";
+import type { Connection, EdgeMouseEvent, Node, Edge, MarkerType } from "@vue-flow/core";
 
 import InputNode from "./InputNode.vue";
 import OutputNode from "./OutputNode.vue";
 import Wire from "./Wire.vue";
-import { mapDevicesToNodes, mapWiresToEdges } from "./graphUtils";
+import { mapDevicesToNodes, mapRoutesToEdges } from "./graphUtils";
 import { useLayout } from "./useLayout";
 import { useHelperLines } from "./useHelperLines";
 
-import type { MidiInput, MidiOutput, MidiWire } from "@/types/midi";
+import type { MidiInput, MidiOutput, MidiRoute, MidiWire } from "@/stores/midiRouting";
+import { useMidiRoutingStore } from "@/stores/midiRouting";
 
 const props = defineProps<{
   inputs: MidiInput[];
   outputs: MidiOutput[];
+  routes: MidiRoute[];
   wires: MidiWire[];
   onAddRoute: (input: string, output: string, type: string) => void;
-  onDeleteRoute: (wire: MidiWire) => void;
+  onDeleteRoute: (route: MidiRoute) => void;
 }>();
 
-const { fitView, setNodes, setEdges } = useVueFlow();
+const routingStore = useMidiRoutingStore();
+const { fitView, getViewport, setViewport } = useVueFlow();
 const { layout } = useLayout();
-const { helperLines, onNodeDrag, onNodeDragStop } = useHelperLines();
+const { onNodeDrag } = useHelperLines();
 
-const width = ref(2000);
-const height = ref(2000);
+const flowNodes = ref<Node[]>([]);
+const flowEdges = shallowRef<Edge[]>([]);
+
+function addFlowEdge(edge: Edge) {
+  flowEdges.value = [...flowEdges.value, edge];
+}
+
+function removeFlowEdge(edgeId: string) {
+  flowEdges.value = flowEdges.value.filter((e) => e.id !== edgeId);
+}
 
 const computedNodes = computed(() =>
-  mapDevicesToNodes(props.inputs, props.outputs),
+  mapDevicesToNodes(props.inputs, props.outputs, routingStore.nodePositions),
 );
 const computedEdges = computed(() =>
-  mapWiresToEdges(props.wires, props.onDeleteRoute),
+  mapRoutesToEdges(props.routes, props.wires),
 );
+
+function persistViewport() {
+  const vp = getViewport();
+  routingStore.setViewport({ x: vp.x, y: vp.y, zoom: vp.zoom });
+}
 
 function handleAutoLayout() {
   const laidOutNodes = layout(computedNodes.value, computedEdges.value, "LR");
-  setNodes(laidOutNodes);
+  flowNodes.value = laidOutNodes;
+  for (const node of laidOutNodes) {
+    routingStore.setNodePosition(node.id, { ...node.position });
+  }
   nextTick(() => {
     fitView({ padding: 0.2, duration: 300 });
+    nextTick(() => persistViewport());
   });
 }
 
@@ -141,60 +127,85 @@ function handleConnect(connection: Connection) {
   }
 
   props.onAddRoute(inputName, outputName, type);
-}
 
-function miniMapNodeColor(node: { data?: { type?: string } }) {
-  if (node.data?.type === "internal") return "hsl(var(--color-secondary))";
-  if (node.data?.type === "physical") return "hsl(var(--color-neutral))";
-  return "hsl(var(--color-primary))";
-}
+  const route: MidiRoute = { input: inputName, output: outputName, type: type as "physical" | "internal", enabled: true };
+  const edgeId = `edge-${connection.source}-${targetId}`;
 
-watch(
-  [computedNodes, computedEdges],
-  ([newNodes, newEdges]) => {
-    setNodes(newNodes);
-    setEdges(newEdges);
-    nextTick(() => {
-      handleAutoLayout();
+  const exists = flowEdges.value.some((e) => e.id === edgeId);
+  if (!exists) {
+    addFlowEdge({
+      id: edgeId,
+      source: connection.source ?? "",
+      target: targetId,
+      type: "wire",
+      animated: false,
+      markerEnd: {
+        type: "arrowclosed" as MarkerType,
+        color: "hsl(var(--color-base-content) / 0.5)",
+      },
+      style: { strokeWidth: 2.5 },
+      data: { route },
     });
-  },
-  { deep: true },
-);
+  }
+}
+
+function handleEdgeClick(edgeMouseEvent: EdgeMouseEvent) {
+  const route = edgeMouseEvent.edge.data?.route as MidiRoute | undefined;
+  if (route) {
+    props.onDeleteRoute(route);
+    removeFlowEdge(edgeMouseEvent.edge.id);
+  }
+}
+
+function onDragStop({ nodes: draggedNodes }: { nodes: Node[] }) {
+  for (const node of draggedNodes) {
+    routingStore.setNodePosition(node.id, { ...node.position });
+  }
+  persistViewport();
+}
+
+watch(computedNodes, (newNodes) => {
+  const existingMap = new Map(flowNodes.value.map((n) => [n.id, n]));
+  flowNodes.value = newNodes.map((node) => {
+    const existing = existingMap.get(node.id);
+    if (existing) {
+      return { ...node, position: existing.position };
+    }
+    return node;
+  });
+});
+
+watch(computedEdges, (newEdges) => {
+  const existingMap = new Map(flowEdges.value.map((e) => [e.id, e]));
+  flowEdges.value = newEdges.map((edge) => {
+    const existing = existingMap.get(edge.id);
+    if (existing) {
+      return { ...edge, animated: existing.animated, style: existing.style };
+    }
+    return edge;
+  });
+});
 
 onMounted(() => {
-  setNodes(computedNodes.value);
-  setEdges(computedEdges.value);
+  const hasSavedPositions = Object.keys(routingStore.nodePositions).length > 0;
+  flowNodes.value = computedNodes.value;
+  flowEdges.value = computedEdges.value;
   nextTick(() => {
-    if (computedNodes.value.length > 0) {
-      handleAutoLayout();
+    if (flowNodes.value.length > 0) {
+      if (hasSavedPositions) {
+        const savedViewport = routingStore.viewport;
+        if (savedViewport) {
+          setViewport(savedViewport, { duration: 300 });
+        } else {
+          fitView({ padding: 0.2, duration: 300 });
+        }
+      } else {
+        handleAutoLayout();
+      }
     }
   });
 });
 </script>
-
-<style scoped>
-.midi-flow-container {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid hsl(var(--color-base-content) / 0.1);
-}
-
-.midi-flow {
-  background: hsl(var(--color-base-200));
-}
-
-.helper-lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-</style>
 
 <style>
 @import "@vue-flow/core/dist/style.css";
@@ -202,21 +213,11 @@ onMounted(() => {
 @import "@vue-flow/controls/dist/style.css";
 @import "@vue-flow/minimap/dist/style.css";
 
-.vue-flow .vue-flow__handle {
-  width: 14px;
-  height: 14px;
-  border: 3px solid hsl(var(--color-base-100));
-  z-index: 10;
-  transition: all 0.15s ease;
+
+.vue-flow__handle {
+    height:24px;
+    width:8px;
+    border-radius:4px
 }
 
-.vue-flow .vue-flow__handle:hover {
-  width: 18px;
-  height: 18px;
-  box-shadow: 0 0 8px hsl(var(--color-primary) / 0.6);
-}
-
-.vue-flow .vue-flow__node {
-  overflow: visible !important;
-}
 </style>

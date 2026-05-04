@@ -1,7 +1,7 @@
 <template>
   <label
     class="swap swap-rotate btn btn-ghost btn-sm btn-circle transition-all duration-200 hover:bg-base-200"
-    aria-label="Toggle theme"
+    :aria-label="t('settings.generalSettings.toggleTheme')"
   >
     <input
       type="checkbox"
@@ -30,6 +30,8 @@
 
 <script setup lang="ts">
 import { useThemeStore } from "@/stores/theme";
+import { useI18n } from "vue-i18n";
 
 const themeStore = useThemeStore();
+const { t } = useI18n();
 </script>
