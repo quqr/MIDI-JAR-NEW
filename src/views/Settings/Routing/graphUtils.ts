@@ -9,8 +9,8 @@ export function mapDevicesToNodes(
   const nodes: Node[] = [];
   const verticalGap = 80;
   const positions = savedPositions ?? {};
-  const inputX = 50;
-  const outputX = 500;
+  const inputX = 500;
+  const outputX = 50;
 
   inputs.forEach((input, index) => {
     const id = `input-${input.name}`;
@@ -18,7 +18,7 @@ export function mapDevicesToNodes(
       id,
       type: "input",
       position: positions[id] ?? { x: inputX, y: index * verticalGap + 40 },
-      sourcePosition: "right" as Position,
+      sourcePosition: "left" as Position,
       data: {
         label: input.name,
         device: input,
@@ -33,7 +33,7 @@ export function mapDevicesToNodes(
         id,
         type: "internal-output",
         position: positions[id] ?? { x: outputX, y: index * verticalGap + 40 },
-        targetPosition: "left" as Position,
+        targetPosition: "right" as Position,
         data: {
           label: "internal",
           displayName: "Internal Modules",
@@ -47,7 +47,7 @@ export function mapDevicesToNodes(
         id,
         type: "physical-output",
         position: positions[id] ?? { x: outputX, y: index * verticalGap + 40 },
-        targetPosition: "left" as Position,
+        targetPosition: "right" as Position,
         data: {
           label: output.name,
           displayName: output.name,

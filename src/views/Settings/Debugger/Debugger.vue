@@ -21,7 +21,9 @@
       >
         {{ filter.label }}
       </button>
-
+      <button class="btn btn-sm btn-outline btn-error" @click="clearLogs">
+        {{ t("settings.debuggerSettings.clearMessages") }}
+      </button>
       <div class="divider divider-horizontal mx-1"></div>
 
       <label class="cursor-pointer flex items-center gap-2">
@@ -32,7 +34,7 @@
       </label>
     </div>
 
-    <div class="flex flex-col p-2 overflow-auto max-h-full" ref="logContainer">
+    <div class="flex flex-col p-2 overflow-auto min-h-full" ref="logContainer">
       <div
         v-for="log in filteredLogs"
         :key="log.id"
@@ -47,12 +49,7 @@
       </div>
     </div>
 
-    <div class="flex items-center border-t px-2 py-1 gap-2">
-      <button class="btn btn-sm btn-outline btn-error" @click="clearLogs">
-        <Icon name="trash" size="16" class="mr-1" />
-        {{ t("settings.debuggerSettings.clearMessages") }}
-      </button>
-    </div>
+
   </div>
 </template>
 

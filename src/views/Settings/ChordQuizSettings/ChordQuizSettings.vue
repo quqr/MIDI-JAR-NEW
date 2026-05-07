@@ -64,7 +64,7 @@
     <SettingsCollapse
       :title="t('settings.chordQuizSettings.displayOptions')"
       icon="eye"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsSelect
         :model-value="settingsStore.settings.chordQuiz.chordNotation"

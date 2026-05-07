@@ -47,7 +47,7 @@
     <SettingsCollapse
       :title="t('settings.chordDictionarySettings.disabledChords')"
       icon="cross"
-      :default-open="false"
+      :default-open="true"
     >
       <ul class="space-y-2">
         <li
@@ -83,7 +83,7 @@
     <SettingsCollapse
       :title="t('settings.chordDictionarySettings.preferredNotation')"
       icon="book"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsSelect
         :model-value="settingsStore.settings.chordDictionary.defaultNotation"

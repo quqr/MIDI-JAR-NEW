@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, screen, dialog } from "electron";
+import { app, BrowserWindow, Tray, Menu, screen, dialog, shell } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
@@ -343,6 +343,17 @@ secureHandle(
       return { success: true };
     } catch (error) {
       return { success: false, error: (error as Error).message };
+    }
+  },
+);
+
+secureHandle(
+  IPC_CHANNELS.SHELL.OPEN_EXTERNAL,
+  async (_event, url: string) => {
+    try {
+      await shell.openExternal(url);
+    } catch (error) {
+      console.error(`Failed to open URL: ${url}`, error);
     }
   },
 );

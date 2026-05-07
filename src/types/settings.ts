@@ -76,7 +76,7 @@ export type ChordDictionarySettings = {
   aliases: Array<[key: string, value: string]>;
 };
 
-import type { NotationDisplayConfig } from "@/components/Notation/types";
+import type { NotationDisplayConfig, NotationLayoutConfig, NotationStyleConfig } from "@/components/Notation/types";
 
 export type NotationSettings = {
   key: string;
@@ -84,6 +84,8 @@ export type NotationSettings = {
   staffClef: "both" | "bass" | "treble";
   staffTranspose: number;
   display: Partial<NotationDisplayConfig>;
+  layout: Partial<NotationLayoutConfig>;
+  style: Partial<NotationStyleConfig>;
 };
 
 export type ServerSettings = {

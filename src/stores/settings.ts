@@ -62,9 +62,10 @@ export const useSettingsStore = defineStore("settings", () => {
   }
 
   function resetSetting(key: keyof Settings): Promise<void> {
-    const cloned = { ...defaultSettings, ...settings.value };
-    delete cloned[key];
-    settings.value = mergeDeep({ ...defaultSettings }, cloned);
+    settings.value = {
+      ...settings.value,
+      [key]: JSON.parse(JSON.stringify(defaultSettings[key])),
+    };
     return Promise.resolve();
   }
 

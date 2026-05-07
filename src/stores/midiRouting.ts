@@ -113,6 +113,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   let offInputs: (() => void) | null = null;
   let offOutputs: (() => void) | null = null;
   let offWires: (() => void) | null = null;
+  let pollingTimer: ReturnType<typeof setInterval> | null = null;
 
   function createDefaultRoutes(): void {
     if (routes.value.length > 0) return;
@@ -180,7 +181,25 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   async function refreshDevices(): Promise<void> {
     if (isElectron()) {
       window.electronAPI.midi.refreshDevices();
-      console.log(`${inputs.value} 输入, ${outputs.value} 输出, ${wires.value.length} 连线`);
+      window.electronAPI.midi.getInputs();
+      window.electronAPI.midi.getOutputs();
+      window.electronAPI.midi.getWires();
+    }
+  }
+
+  function startPolling(intervalMs: number = 3000): void {
+    if (pollingTimer) return;
+    pollingTimer = setInterval(() => {
+      refreshDevices();
+    }, intervalMs);
+    logger.info(`MIDI 轮询已启动 (间隔 ${intervalMs}ms)`);
+  }
+
+  function stopPolling(): void {
+    if (pollingTimer) {
+      clearInterval(pollingTimer);
+      pollingTimer = null;
+      logger.info("MIDI 轮询已停止");
     }
   }
 
@@ -272,6 +291,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   );
 
   function cleanup() {
+    stopPolling();
     if (offInputs) {
       offInputs();
       offInputs = null;
@@ -297,6 +317,8 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     error,
     initialize,
     refreshDevices,
+    startPolling,
+    stopPolling,
     createDefaultRoutes,
     addRoute,
     deleteRoute,

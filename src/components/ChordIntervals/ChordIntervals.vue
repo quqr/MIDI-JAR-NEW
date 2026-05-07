@@ -6,18 +6,18 @@
       class="flex flex-col items-center justify-center rounded-md transition-all duration-200"
       :class="{
         'font-bold': activeAsMap[index] || targetAsMap[index],
-        'bg-base-300':
-          !activeAsMap[index] && !targetAsMap[index] && !playedMap[index],
+        '':
+          (activeAsMap[index] || targetAsMap[index] || playedMap[index]),
       }"
     >
       <template v-if="activeAsMap[index] || targetAsMap[index]">
-        <span class="text-xs font-semibold text-white">{{
+        <span class="text-xs font-semibold text-accent">{{
           activeAsMap[index] || targetAsMap[index]
         }}</span>
       </template>
       <template v-else>
-        <span class="text-xs text-base-content/70">{{ interval }}</span>
-        <span class="text-xs text-base-content/50">{{
+        <span class="text-xs text-content">{{ interval }}</span>
+        <span class="text-xs text-content">{{
           OCTAVE_INTERVALS[index]
         }}</span>
       </template>

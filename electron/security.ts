@@ -24,6 +24,7 @@ const ALLOWED_CHANNELS = new Set([
   "midi:getInputs",
   "midi:getOutputs",
   "midi:getWires",
+  "shell:open-external",
 ]);
 
 export function validateChannel(channel: string): boolean {

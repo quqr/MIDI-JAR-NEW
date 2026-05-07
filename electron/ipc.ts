@@ -38,6 +38,9 @@ export const IPC_CHANNELS = {
     ON_MIDI_MESSAGE: "midi:message",
     ON_ACTIVITY: "midi:activity",
   },
+  SHELL: {
+    OPEN_EXTERNAL: "shell:open-external",
+  },
 } as const;
 
 export type IPCChannels = typeof IPC_CHANNELS;

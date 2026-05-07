@@ -1,5 +1,5 @@
 import type { MidiRoute } from "./midi";
-import type { NotationDisplayConfig } from "@/components/Notation/types";
+import type { NotationDisplayConfig, NotationLayoutConfig, NotationStyleConfig } from "@/components/Notation/types";
 
 export type { MidiRoute } from "./midi";
 export interface MessageEventData {
@@ -172,6 +172,8 @@ export type NotationSettings = {
   staffClef: "both" | "bass" | "treble";
   staffTranspose: number;
   display: Partial<NotationDisplayConfig>;
+  layout: Partial<NotationLayoutConfig>;
+  style: Partial<NotationStyleConfig>;
 };
 
 export type ServerSettings = {
@@ -299,6 +301,8 @@ export const defaultNotationSettings: NotationSettings = {
   staffClef: "both",
   staffTranspose: 0,
   display: {},
+  layout: {},
+  style: {},
 };
 
 export const defaultServerSettings: ServerSettings = {
@@ -310,12 +314,12 @@ export const defaultCursorSettings: CursorSettings = {
   enabled: true,
   innerSize: 12,
   outerSize: 42,
-  innerColorSource: "custom",
-  innerColor: "#ffffff",
-  outerColorSource: "custom",
-  outerColor: "#ffffff",
-  hoverRingColorSource: "custom",
-  hoverRingColor: "#ffffff",
+  innerColorSource: "theme",
+  innerColor: "primary",
+  outerColorSource: "theme",
+  outerColor: "primary",
+  hoverRingColorSource: "theme",
+  hoverRingColor: "primary",
   blendMode: "exclusion",
   transitionDuration: 100,
   hoverMode: "border",

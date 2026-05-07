@@ -17,7 +17,7 @@
       <SettingsCollapse
         :title="t('settings.generalSettings.theme')"
         icon="palette"
-        :default-open="false"
+        :default-open="true"
       >
         <p class="text-sm text-base-content/70 mb-4">
           {{ t("settings.generalSettings.themeHint") }}
@@ -28,7 +28,7 @@
       <SettingsCollapse
         :title="t('settings.generalSettings.startup')"
         icon="power"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsToggle
           :model-value="settingsStore.settings.general.launchAtStartup"
@@ -49,7 +49,7 @@
       <SettingsCollapse
         :title="t('settings.generalSettings.overlayServer')"
         icon="server"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsToggle
           :model-value="serverState.started"

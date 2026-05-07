@@ -18,7 +18,7 @@
     <SettingsCollapse
       :title="t('settings.cursorSettings.hoverSettings')"
       icon="visible"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsSelect
         :model-value="settingsStore.settings.cursor.hoverMode"
@@ -34,7 +34,7 @@
     <SettingsCollapse
       :title="t('settings.cursorSettings.sizeSettings')"
       icon="maximize"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsRange
         :model-value="settingsStore.settings.cursor.innerSize"
@@ -63,7 +63,7 @@
     <SettingsCollapse
       :title="t('settings.cursorSettings.colorSettings')"
       icon="palette"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsSelect
         :model-value="settingsStore.settings.cursor.innerColorSource"
@@ -147,7 +147,7 @@
     <SettingsCollapse
       :title="t('settings.cursorSettings.advancedSettings')"
       icon="cog"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsSelect
         :model-value="settingsStore.settings.cursor.blendMode"

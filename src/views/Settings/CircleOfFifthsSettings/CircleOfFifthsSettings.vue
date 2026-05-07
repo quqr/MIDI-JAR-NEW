@@ -76,7 +76,7 @@
     <SettingsCollapse
       :title="t('settings.circleOfFifthsSettings.advancedOptions')"
       icon="sliders"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsToggle
         :model-value="settingsStore.settings.circleOfFifths.displayAlterations"

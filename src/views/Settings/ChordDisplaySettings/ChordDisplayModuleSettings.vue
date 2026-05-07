@@ -62,7 +62,7 @@
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.additionalInfo')"
         icon="info"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsToggle
           :model-value="moduleSettings.displayNotation"
@@ -81,7 +81,7 @@
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.keyboard')"
         icon="keyboard"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsToggle
           :model-value="moduleSettings.displayKeyboard"
@@ -154,7 +154,7 @@
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.keyboardSkin')"
         icon="palette"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsSelect
           :model-value="moduleSettings.keyboard.skin"
@@ -221,7 +221,7 @@
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.keyboardColors')"
         icon="palette"
-        :default-open="false"
+        :default-open="true"
       >
         <SettingsColorPicker
           :model-value="moduleSettings.keyboard.colors.black"
@@ -259,6 +259,10 @@
           "
         />
       </SettingsCollapse>
+
+      <NotationLayoutSettings />
+
+      <NotationStyleSettings />
     </div>
   </SettingsSection>
 </template>
@@ -279,6 +283,8 @@ import {
   SettingsSection,
 } from "@/components/Settings";
 import { fields } from "./utils";
+import NotationLayoutSettings from "@/components/Notation/NotationLayoutSettings.vue";
+import NotationStyleSettings from "@/components/Notation/NotationStyleSettings.vue";
 
 const { t } = useI18n();
 const route = useRoute();

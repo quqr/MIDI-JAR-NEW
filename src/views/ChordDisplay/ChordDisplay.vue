@@ -1,37 +1,44 @@
 <template>
-  <div id="chordDisplay" class="grid grid-rows-[5fr_3fr] h-full w-full gap-3">
-    <div class="grid grid-cols-[1fr_2fr] bg-primary h-full w-full rounded-lg p-2 ">
+  <div id="chordDisplay" class="relative h-full w-full flex flex-col gap-3">
+    <div class="flex-1  rounded-lg p-3 relative">
+      <div class="flex h-full w-full gap-3">
+        <div v-if="displayNotation" class="flex-1 flex items-center justify-center">
+          <Notation id="notation" class="items-center justify-center" :midiNotes="midiNotes as number[]"
+            :keySignature="keySignature" :staffClef="staffClef" :staffTranspose="staffTranspose"
+            :display="notationDisplay" :layout="notationLayout" :style="notationStyle" />
+        </div>
 
-      <div v-if="displayNotation" class="min-h-full w-full flex items-center justify-center">
-        <Notation id="notation" class="items-center justify-center " :midiNotes="midiNotes as number[]"
-          :keySignature="keySignature" :staffClef="staffClef" :staffTranspose="staffTranspose"
-          :display="notationDisplay" />
+        <div class="flex-1 flex flex-col gap-20 items-center justify-center">
+          <div v-if="displayChord" id="chord" class="w-full flex items-center justify-center text-5xl font-bold">
+            <ChordNameLink :chord="chords[0] as any" 
+            class="items-center justify-center" 
+            :notation="chordNotation"
+            :highlightAlterations="highlightAlterations" />
+          </div>
+          <div v-if="displayName" id="name" class="w-full text-center text-xl font-semibold">
+            {{ chords[0]?.name }}
+          </div>
+          <div v-if="displayIntervals" id="intervals" class="w-full flex items-center justify-center">
+            <ChordIntervals :intervals="chords[0]?.intervals as unknown as string[]"
+              :pitchClasses="pitchClasses as unknown as string[]" :tonic="chords[0]?.tonic" />
+          </div>
+        </div>
       </div>
 
-      <div class="grid grid-rows-[5fr_1fr_1fr_5fr] gap-3 min-h-full w-full items-center justify-items-center">
-
-        <div v-if="displayChord" id="chord" class="min-h-[40px] w-full flex items-center justify-center">
-          <ChordNameLink :chord="chords[0] as any" class="items-center justify-center" :notation="chordNotation"
-            :highlightAlterations="highlightAlterations" />
-        </div>
-        <div v-if="displayName" id="name" class="min-h-[40px] w-full flex items-center justify-center">
-          {{ chords[0]?.name }}
-        </div>
-        <div v-if="displayAltChords" class="min-h-[40px] w-full flex items-center justify-center">
+      <div class="absolute top-2 right-2 z-10 flex flex-col gap-2 items-end">
+        <SettingsButton :aria-label="t('chordDisplay.openSettings')" @click="settingsOpen = true" />
+        <div v-if="displayAltChords" class="flex flex-col gap-2 items-end rounded-lg p-2 backdrop-blur-sm">
           <template v-for="(chord, index) in chords" :key="index">
-            <span v-if="index > 0" class="inline-flex  ">
-              <ChordNameLink :chord="chord as any" class="items-center justify-center" :notation="chordNotation"
+            <span v-if="index > 0" class="inline-flex">
+              <ChordNameLink :chord="chord as any" class="items-center justify-center text-lg" :notation="chordNotation"
                 :highlightAlterations="highlightAlterations" />
             </span>
           </template>
         </div>
-        <div v-if="displayIntervals" id="intervals" class="min-h-[40px] w-full flex items-center justify-center">
-          <ChordIntervals :intervals="chords[0]?.intervals as unknown as string[]"
-            :pitchClasses="pitchClasses as unknown as string[]" :tonic="chords[0]?.tonic" />
-        </div>
       </div>
     </div>
-    <div v-if="displayKeyboard" w-full class="flex bg-secondary min-h-full min-w-full rounded-lg p-2">
+
+    <div v-if="displayKeyboard" class="flex-shrink-0  rounded-lg p-2" style="min-height: 200px;">
       <PianoKeyboard id="keyboard" class="w-full h-full" :sustained="sustainedMidiNotes as unknown as number[]"
         :played="playedMidiNotes as unknown as number[]" :midi="midiNotes as unknown as number[]"
         :chord="chords[0] as any" :keySignature="keySignature as unknown as KeySignatureConfig" :keyboard="keyboard" />
@@ -40,9 +47,6 @@
     <SettingsModal v-model="settingsOpen" :title="t('chordDisplay.settings')">
       <ChordDisplayModuleSettings :module-id="moduleId" />
     </SettingsModal>
-  </div>
-  <div class="absolute top-10 right-4 z-10">
-    <SettingsButton :aria-label="t('chordDisplay.openSettings')" @click="settingsOpen = true" />
   </div>
 </template>
 
@@ -57,11 +61,11 @@ import { SettingsButton } from "@/components/SettingsButton/";
 import { SettingsModal } from "@/components/SettingsModal/";
 import { useNotes } from "@/composables/";
 import { useSettingsStore } from "@/stores";
+import { mergeDisplayConfig, mergeLayoutConfig, mergeStyleConfig } from "@/components/Notation/utils";
 import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
 import type { StaffClef } from "@/components/Notation/types";
 import type { KeySignatureConfig } from "@/helpers";
-import { Splitpanes, Pane } from 'splitpanes'
-import 'splitpanes/dist/splitpanes.css'
+
 
 const { t } = useI18n();
 const settingsOpen = ref(false);
@@ -85,7 +89,15 @@ const staffTranspose = computed(
   () => settingsStore.settings.notation.staffTranspose,
 );
 const notationDisplay = computed(
-  () => settingsStore.settings.notation.display,
+  () => mergeDisplayConfig(settingsStore.settings.notation.display),
+);
+// Previously only display was passed to Notation; now layout and style are also
+// merged from global notation settings so all configurable parameters take effect.
+const notationLayout = computed(
+  () => mergeLayoutConfig(settingsStore.settings.notation.layout),
+);
+const notationStyle = computed(
+  () => mergeStyleConfig(settingsStore.settings.notation.style),
 );
 
 const {

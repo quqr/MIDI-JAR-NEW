@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, shell } from "electron";
 import { IPC_CHANNELS } from "./ipc";
 
 // IMPORTANT: Keep this preload script minimal.
@@ -109,5 +109,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.on(channel, listener);
       return () => ipcRenderer.removeListener(channel, listener);
     },
+  },
+  shell: {
+    openExternal: (url: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
   },
 });

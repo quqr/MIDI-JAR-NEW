@@ -53,7 +53,7 @@
     <SettingsCollapse
       :title="t('settings.notationSettings.displayOptions')"
       icon="eye"
-      :default-open="false"
+      :default-open="true"
     >
       <SettingsToggle
         :model-value="displayConfig.clef"
@@ -85,7 +85,17 @@
         :description="t('settings.notationSettings.showNoteNamesHint')"
         @update:model-value="updateDisplay('noteNames', $event)"
       />
+      <SettingsToggle
+        :model-value="displayConfig.staffLines"
+        :label="t('settings.notationSettings.showStaffLines')"
+        :description="t('settings.notationSettings.showStaffLinesHint')"
+        @update:model-value="updateDisplay('staffLines', $event)"
+      />
     </SettingsCollapse>
+
+    <NotationLayoutSettings />
+
+    <NotationStyleSettings />
   </SettingsSection>
 </template>
 
@@ -97,11 +107,13 @@ import { InputNote } from "@/components/InputNote/";
 import {
   SettingsCollapse,
   SettingsSelect,
-  SettingsRange,
   SettingsToggle,
+  SettingsRange,
   SettingsSection,
 } from "@/components/Settings";
 import { mergeDisplayConfig } from "@/components/Notation/utils";
+import NotationLayoutSettings from "@/components/Notation/NotationLayoutSettings.vue";
+import NotationStyleSettings from "@/components/Notation/NotationStyleSettings.vue";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();

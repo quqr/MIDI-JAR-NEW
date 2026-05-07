@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, nextTick, watch, computed } from "vue";
+import { onMounted, onUnmounted, ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 
@@ -44,7 +44,6 @@ const INTERACTIVE_SELECTOR = [
   ".swap",
   ".drawer-toggle",
   ".vue-flow__node",
-  ".vue-flow__edge",
 ].join(",");
 
 function findInteractiveTarget(el: HTMLElement): HTMLElement | null {
@@ -159,6 +158,8 @@ watch(
   (enabled) => {
     if (enabled) {
       registerListeners();
+      halfElementWidth = cursorSettings.value.innerSize / 2;
+      halfElementWidth2 = cursorSettings.value.outerSize / 2;
     } else {
       unregisterListeners();
       resetHoverState();
@@ -168,14 +169,9 @@ watch(
 
 watch(
   () => [cursorSettings.value.innerSize, cursorSettings.value.outerSize],
-  async () => {
-    await nextTick();
-    if (innerPointer.value) {
-      halfElementWidth = innerPointer.value.offsetWidth / 2;
-    }
-    if (outerPointer.value) {
-      halfElementWidth2 = outerPointer.value.offsetWidth / 2;
-    }
+  () => {
+    halfElementWidth = cursorSettings.value.innerSize / 2;
+    halfElementWidth2 = cursorSettings.value.outerSize / 2;
   },
 );
 
@@ -228,14 +224,8 @@ const outerPointerStyle = computed(() => {
 });
 
 onMounted(async () => {
-  await nextTick();
-
-  if (innerPointer.value) {
-    halfElementWidth = innerPointer.value.offsetWidth / 2;
-  }
-  if (outerPointer.value) {
-    halfElementWidth2 = outerPointer.value.offsetWidth / 2;
-  }
+  halfElementWidth = cursorSettings.value.innerSize / 2;
+  halfElementWidth2 = cursorSettings.value.outerSize / 2;
 
   if (cursorSettings.value.enabled) {
     registerListeners();
@@ -258,7 +248,7 @@ onUnmounted(() => {
     <div
       v-if="cursorSettings.enabled"
       ref="outerPointer"
-      class="fixed top-0 left-0 rounded-full pointer-events-none z-[99999] will-change-transform"
+      class="fixed top-0 left-0 rounded-full pointer-events-none z-[9999] will-change-transform"
       :style="outerPointerStyle"
     />
   </Teleport>

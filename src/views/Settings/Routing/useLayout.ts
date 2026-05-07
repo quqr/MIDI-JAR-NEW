@@ -29,7 +29,7 @@ export function useLayout() {
       g.setNode(node.id, {
         width: nodeData.dimensions?.width ?? NODE_WIDTH,
         height: nodeData.dimensions?.height ?? NODE_HEIGHT,
-        rank: isInput ? 0 : 1,
+        rank: isInput ? 1 : 0,
       });
     }
 

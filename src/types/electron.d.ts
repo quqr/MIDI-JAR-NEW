@@ -95,6 +95,9 @@ export interface ElectronAPI {
       callback: (message: number[], timestamp: number, device: string) => void,
     ) => () => void;
   };
+  shell: {
+    openExternal: (url: string) => Promise<void>;
+  };
 }
 
 declare global {

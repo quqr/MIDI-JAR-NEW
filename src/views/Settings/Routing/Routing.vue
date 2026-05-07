@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import { onMounted, onUnmounted } from "vue";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 import type { MidiRoute } from "@/stores/midiRouting";
 import MidiFlowGraph from "./MidiFlowGraph.vue";
@@ -67,4 +68,12 @@ async function handleClearAndRefresh() {
   await routingStore.refreshDevices();
   routingStore.createDefaultRoutes();
 }
+
+onMounted(() => {
+  routingStore.startPolling(3000);
+});
+
+onUnmounted(() => {
+  routingStore.stopPolling();
+});
 </script>
