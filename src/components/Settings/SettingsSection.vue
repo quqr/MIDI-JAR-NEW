@@ -5,19 +5,11 @@
         v-if="showResetSuccess"
         class="alert alert-success alert-sm mb-4 py-2 px-3"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
+        <Icon
+          name="check-circle"
           class="stroke-current flex-shrink-0 h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+          :size="16"
+        />
         <span class="text-sm">{{ t("common.resetSuccess") }}</span>
       </div>
       <slot></slot>
@@ -39,6 +31,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import Icon from "@/components/Icon/Icon.vue";
 
 interface Props {
   showReset?: boolean;

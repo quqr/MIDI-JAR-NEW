@@ -1,7 +1,7 @@
-import { ref, readonly, watch } from "vue";
+import { ref, readonly, watch, type Ref } from "vue";
 import { Chord as TChord } from "@tonaljs/chord";
 
-import { useQuizSettingsStore } from "@/stores/quizSettings";
+import { useSettingsStore } from "@/stores";
 import {
   getGameState,
   GameState,
@@ -11,15 +11,15 @@ import {
   generateGame,
 } from "./utils";
 
-export function useQuiz(pitchClasses: string[], chords: (TChord | null)[]) {
-  const quizSettingsStore = useQuizSettingsStore();
+export function useQuiz(pitchClasses: Ref<string[]>, chords: Ref<(TChord | null)[]>) {
+  const settingsStore = useSettingsStore();
 
   const parameters = ref<Parameters>({
-    mode: quizSettingsStore.chordQuiz.mode,
-    difficulty: quizSettingsStore.chordQuiz.difficulty,
-    gameLength: quizSettingsStore.chordQuiz.gameLength,
-    key: quizSettingsStore.notation.key,
-    accidentals: quizSettingsStore.notation.accidentals,
+    mode: settingsStore.settings.chordQuiz.mode,
+    difficulty: settingsStore.settings.chordQuiz.difficulty,
+    gameLength: settingsStore.settings.chordQuiz.gameLength,
+    key: settingsStore.settings.notation.key,
+    accidentals: settingsStore.settings.notation.accidentals,
   });
 
   const games = ref<Game[]>([]);
@@ -46,7 +46,7 @@ export function useQuiz(pitchClasses: string[], chords: (TChord | null)[]) {
   }
 
   function handleChordPlayed() {
-    const newState = chords.reduce<GameState>((best, chord) => {
+    const newState = chords.value.reduce<GameState>((best, chord) => {
       const currentGame = games.value[gameState.value.gameIndex];
       if (!currentGame) return best;
 
@@ -55,7 +55,7 @@ export function useQuiz(pitchClasses: string[], chords: (TChord | null)[]) {
         gameState.value.index,
         currentGame.chords[gameState.value.index],
         chord,
-        pitchClasses,
+        pitchClasses.value,
       );
 
       if (
@@ -85,7 +85,7 @@ export function useQuiz(pitchClasses: string[], chords: (TChord | null)[]) {
       currentGame.score += gameState.value.score;
       currentGame.played.push(gameState.value.chord);
 
-      if (gameState.value.index + 2 >= currentGame.chords.length) {
+      if (gameState.value.index + 2 >= currentGame.chords.length && !newGames[gameState.value.gameIndex + 1]) {
         const game = generateGame(parameters.value);
         if (game) {
           newGames.push(game);
@@ -117,22 +117,22 @@ export function useQuiz(pitchClasses: string[], chords: (TChord | null)[]) {
   }
 
   watch(
-    [() => quizSettingsStore.chordQuiz, () => quizSettingsStore.notation],
+    [() => settingsStore.settings.chordQuiz, () => settingsStore.settings.notation],
     () => {
       parameters.value = {
-        mode: quizSettingsStore.chordQuiz.mode,
-        difficulty: quizSettingsStore.chordQuiz.difficulty,
-        gameLength: quizSettingsStore.chordQuiz.gameLength,
-        key: quizSettingsStore.notation.key,
-        accidentals: quizSettingsStore.notation.accidentals,
+        mode: settingsStore.settings.chordQuiz.mode,
+        difficulty: settingsStore.settings.chordQuiz.difficulty,
+        gameLength: settingsStore.settings.chordQuiz.gameLength,
+        key: settingsStore.settings.notation.key,
+        accidentals: settingsStore.settings.notation.accidentals,
       };
       initializeGame();
     },
     { deep: true },
   );
 
-  watch([() => pitchClasses.length, () => chords], () => {
-    if (pitchClasses.length === 0) {
+  watch([() => pitchClasses.value.length, () => chords.value], () => {
+    if (pitchClasses.value.length === 0) {
       handleChordRelease();
     } else {
       handleChordPlayed();

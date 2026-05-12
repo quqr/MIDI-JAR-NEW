@@ -2,7 +2,7 @@
   <div
     :id="id"
     ref="containerRef"
-    class="notation-base  h-full w-full overflow-auto"
+    class="notation-base h-full w-full overflow-auto"
     :class="className"
     :style="containerStyle"
   />
@@ -16,7 +16,12 @@ import { Renderer } from "vexflow";
 import { formatSharpsFlats } from "@/helpers";
 import { debounce } from "@/helpers/debounce";
 import type { NotationProps } from "./types";
-import { getTransposedNotes, mergeDisplayConfig, mergeLayoutConfig, mergeStyleConfig } from "./utils";
+import {
+  getTransposedNotes,
+  mergeDisplayConfig,
+  mergeLayoutConfig,
+  mergeStyleConfig,
+} from "./utils";
 import { getLayoutDimensions } from "./layout";
 import { renderGrandStaff, renderSingleStaff } from "./renderer";
 
@@ -51,7 +56,9 @@ const notes = computed(() =>
 
 const keySignatureText = computed(() => {
   if (!display.value.keySignatureText) return undefined;
-  return t("notation.key", { tonic: formatSharpsFlats(props.keySignature.tonic) });
+  return t("notation.key", {
+    tonic: formatSharpsFlats(props.keySignature.tonic),
+  });
 });
 
 const containerStyle = computed(() => ({
@@ -127,7 +134,14 @@ onMounted(() => {
 });
 
 watch(
-  [notes, () => props.staffClef, () => props.keySignature, display, layout, style],
+  [
+    notes,
+    () => props.staffClef,
+    () => props.keySignature,
+    display,
+    layout,
+    style,
+  ],
   () => {
     requestAnimationFrame(renderNotation);
   },

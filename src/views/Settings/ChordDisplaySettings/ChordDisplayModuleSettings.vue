@@ -285,6 +285,7 @@ import {
 import { fields } from "./utils";
 import NotationLayoutSettings from "@/components/Notation/NotationLayoutSettings.vue";
 import NotationStyleSettings from "@/components/Notation/NotationStyleSettings.vue";
+import { setValueByPath } from "@/helpers";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -331,15 +332,6 @@ const labelOptions = fields.keyboard.label.choices.map((c) => ({
   label: c.label,
   value: c.value,
 }));
-
-function setValueByPath(obj: any, path: string, value: any) {
-  const parts = path.split(".");
-  let current = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    current = current[parts[i]];
-  }
-  current[parts[parts.length - 1]] = value;
-}
 
 function updateSetting(key: string, value: any) {
   const index = settingsStore.settings.chordDisplay.findIndex(

@@ -1,12 +1,7 @@
 <template>
-  <div
-    class="midi-input-node"
-    :class="{ 'midi-input-node--active': isActive }"
-  >
-    <div >
-      <span>{{
-        data.label
-      }}</span>
+  <div class="midi-input-node" :class="{ 'midi-input-node--active': isActive }">
+    <div>
+      <span>{{ data.label }}</span>
     </div>
     <Handle type="source" :position="Position.Right" class="handle-source" />
   </div>
@@ -21,4 +16,3 @@ const props = defineProps<NodeProps>();
 
 const { isActive } = useMidiActivity(props.data.label as string);
 </script>
-

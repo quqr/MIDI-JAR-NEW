@@ -5,8 +5,9 @@ import router from "./router";
 import i18n from "@/locales/i18n";
 import "@/styles/tailwind.css";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
+import { useWidgetStore } from "@/stores/widget";
 import { logger } from "@/utils/logger";
-import { isElectron, getElectronAPI } from "@/utils/electron";
+import { isTauri, getTauriAPI } from "@/utils/tauri";
 
 logger.interceptConsole();
 
@@ -26,40 +27,72 @@ async function initializeMidi() {
   }
 }
 
-async function setupElectronListeners() {
-  if (!isElectron()) {
+async function setupTauriListeners() {
+  if (!isTauri()) {
     return;
   }
 
-  try {
-    const electronAPI = getElectronAPI();
+  document.addEventListener('contextmenu', event => event.preventDefault());
+  document.addEventListener('copy', event => event.preventDefault());
 
-    electronAPI.on("file:opened", (data: any) => {
+  try {
+    const tauriAPI = getTauriAPI();
+
+    tauriAPI.on("file:opened", (data: any) => {
       logger.info(`文件已打开: ${JSON.stringify(data)}`);
       app.config.globalProperties.$emit("file:opened", data);
     });
 
-    electronAPI.on("midi:refresh-devices", () => {
+    tauriAPI.on("midi:refresh-devices", () => {
       logger.info("收到 MIDI 设备刷新请求");
       initializeMidi();
     });
 
-    electronAPI.on("midi:settings", (data: any) => {
+    tauriAPI.on("midi:settings", (data: any) => {
       logger.info(`收到 MIDI 设置更新: ${JSON.stringify(data)}`);
       app.config.globalProperties.$emit("midi:settings", data);
     });
 
-    logger.info("Electron 事件监听器已设置");
+    logger.info("Tauri 事件监听器已设置");
   } catch (error) {
-    logger.error(`Electron 监听器设置失败: ${error}`);
+    logger.error(`Tauri 监听器设置失败: ${error}`);
   }
 }
 
-if (isElectron()) {
-  logger.info("检测到 Electron 环境");
+if (isTauri()) {
+  logger.info("检测到 Tauri 环境");
 }
 
 initializeMidi();
-setupElectronListeners();
+setupTauriListeners();
+
+async function restoreWidgets() {
+  if (!isTauri()) return;
+  try {
+    const widgetStore = useWidgetStore(pinia);
+    await widgetStore.loadLayout();
+    for (const state of widgetStore.widgets.values()) {
+      const tauriAPI = getTauriAPI();
+      await tauriAPI.widget.createWindow({
+        label: state.label,
+        title: `${state.type.charAt(0).toUpperCase() + state.type.slice(1)} - MIDI-JAR`,
+        url: `/widget/${state.type}/${state.moduleId}`,
+        width: state.width,
+        height: state.height,
+        x: state.x,
+        y: state.y,
+        alwaysOnTop: state.alwaysOnTop,
+      });
+      if (state.opacity < 1) {
+        await tauriAPI.widget.setOpacity(state.label, state.opacity);
+      }
+    }
+    logger.info(`恢复了 ${widgetStore.widgets.size} 个 widget 窗口`);
+  } catch (error) {
+    logger.error(`Widget 恢复失败: ${error}`);
+  }
+}
+
+restoreWidgets();
 
 app.mount("#app");

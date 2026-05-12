@@ -10,9 +10,9 @@
     <ChordDictionaryToolbar :disable-update="disableUpdate" />
 
     <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div class="flex flex-row flex-1 min-h-0 overflow-hidden">
+      <div class="flex flex-row flex-1 min-h-0 gap-0">
         <div
-          class="w-48 flex-shrink-0 overflow-y-auto border-r border-base-200"
+          class="w-48 flex-shrink-0 min-h-0 overflow-y-auto border-r border-base-200"
         >
           <ChordDictionaryChromaMenu
             v-bind="chromaMenuProps"
@@ -21,7 +21,7 @@
         </div>
 
         <div
-          class="w-56 flex-shrink-0 overflow-y-auto border-r border-base-200"
+          class="w-56 flex-shrink-0 min-h-0 overflow-y-auto border-r border-base-200"
         >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"

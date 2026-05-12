@@ -1,6 +1,11 @@
 <template>
   <div class="drawer lg:drawer-open h-full">
-    <input id="settings-drawer" v-model="drawerOpen" type="checkbox" class="drawer-toggle" />
+    <input
+      id="settings-drawer"
+      v-model="drawerOpen"
+      type="checkbox"
+      class="drawer-toggle"
+    />
     <div class="drawer-content flex flex-col min-h-0">
       <div class="navbar bg-base-300 w-full flex-none">
         <label
@@ -37,7 +42,9 @@
         class="drawer-overlay"
         :aria-label="t('common.closeMenu')"
       ></label>
-      <div class="flex min-h-full flex-col bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64">
+      <div
+        class="flex min-h-full flex-col bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64"
+      >
         <ul
           class="menu w-full grow gap-4 pt-4"
           :aria-label="t('settings.navigation')"
@@ -66,8 +73,12 @@
         <h3 class="font-bold text-lg">{{ t("settings.resetConfirmTitle") }}</h3>
         <p class="py-4">{{ resetConfirmMessage }}</p>
         <div class="modal-action">
-          <button class="btn btn-sm" @click="closeDialog">{{ t("common.cancel") }}</button>
-          <button class="btn btn-sm btn-error" @click="confirmReset">{{ t("settings.resetConfirm") }}</button>
+          <button class="btn btn-sm" @click="closeDialog">
+            {{ t("common.cancel") }}
+          </button>
+          <button class="btn btn-sm btn-error" @click="confirmReset">
+            {{ t("settings.resetConfirm") }}
+          </button>
         </div>
       </div>
       <form method="dialog" class="modal-backdrop">

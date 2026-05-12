@@ -28,17 +28,26 @@ export function getLayoutDimensions(
   const totalStaveHeight =
     staveCount * layout.staveHeight + (isBothClefs ? layout.staveGap : 0);
   const requiredHeight =
-    layout.paddingTop + effectiveTextHeight + totalStaveHeight + layout.bottomPadding;
+    layout.paddingTop +
+    effectiveTextHeight +
+    totalStaveHeight +
+    layout.bottomPadding;
 
   const staveWidth = Math.max(
     layout.noteWidth,
-    containerWidth - effectiveClefWidth - effectiveKeySigWidth - layout.sidePadding * 2,
+    containerWidth -
+      effectiveClefWidth -
+      effectiveKeySigWidth -
+      layout.sidePadding * 2,
   );
 
   const scaleX =
     containerWidth /
     Math.max(
-      staveWidth + effectiveClefWidth + effectiveKeySigWidth + layout.sidePadding * 2,
+      staveWidth +
+        effectiveClefWidth +
+        effectiveKeySigWidth +
+        layout.sidePadding * 2,
       containerWidth * 0.8,
     );
   const scaleY = containerHeight / requiredHeight;

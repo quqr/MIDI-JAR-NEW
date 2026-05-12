@@ -49,13 +49,22 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
   ): void {
+    console.log(
+      `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: namespace='${namespace}'`,
+    );
     const listener = (ev: MidiMessageEvent) => {
+      console.log(
+        `[MIDI_DEBUG] midiMessagesStore listener: namespace='${namespace}' message=${JSON.stringify(ev.message)} device='${ev.device}'`,
+      );
       addMessage(ev.message, ev.timestamp, ev.device, namespace);
       onMessage(ev.message, ev.timestamp, ev.device);
     };
     listenerMap.set(onMessage, listener);
     const manager = getManager(namespace);
     manager.addEventListener("message", listener);
+    console.log(
+      `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: done for '${namespace}'`,
+    );
   }
 
   function unsubscribeFromNamespace(

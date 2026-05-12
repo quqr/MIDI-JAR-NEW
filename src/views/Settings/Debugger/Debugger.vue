@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full flex flex-col overflow-hidden gap-2">
-    <div class="flex items-center border-b px-2 py-1 gap-2 flex-wrap">
+  <div class="h-full flex flex-col overflow-hidden">
+    <div class="flex items-center border-b px-2 py-1 gap-2 flex-wrap flex-shrink-0">
       <button
         class="btn btn-sm"
         :class="displayTimingClock ? 'btn-primary' : 'btn-outline'"
@@ -34,7 +34,7 @@
       </label>
     </div>
 
-    <div class="flex flex-col p-2 overflow-auto min-h-full" ref="logContainer">
+    <div class="flex-1 min-h-0 p-2 overflow-auto" ref="logContainer">
       <div
         v-for="log in filteredLogs"
         :key="log.id"
@@ -48,8 +48,6 @@
         <span>{{ log.message }}</span>
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -134,13 +132,14 @@ const filteredLogs = computed(() => {
 });
 
 watch(
-  () => filteredLogs.value.length,
+  filteredLogs,
   async () => {
     if (autoScroll.value && logContainer.value) {
       await nextTick();
-      logContainer.value.scrollTop = logContainer.value.scrollHeight;
+      logContainer.value.scrollTo({ top: logContainer.value.scrollHeight, behavior: 'instant' });
     }
   },
+  { deep: true }
 );
 
 const clearLogs = () => {

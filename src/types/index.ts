@@ -1,7 +1,12 @@
 import type { MidiRoute } from "./midi";
-import type { NotationDisplayConfig, NotationLayoutConfig, NotationStyleConfig } from "@/components/Notation/types";
+import type {
+  NotationDisplayConfig,
+  NotationLayoutConfig,
+  NotationStyleConfig,
+} from "@/components/Notation/types";
 
 export type { MidiRoute } from "./midi";
+export * from "./widget";
 export interface MessageEventData {
   type: string;
   data?: any;

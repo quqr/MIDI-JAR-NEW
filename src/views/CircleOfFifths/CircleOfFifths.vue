@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative w-full h-full flex flex-col justify-center items-center overflow-hidden p-4 sm:p-6 lg:p-8"
+    class="relative w-full h-full flex flex-col justify-center items-center overflow-hidden p-2"
   >
     <div class="absolute top-4 right-4 z-10">
       <SettingsButton

@@ -1,7 +1,8 @@
 import { MidiInputDevice, ApiMidiInput } from "./MidiInputDevice";
 import { MidiOutputDevice, ApiMidiOutput } from "./MidiOutputDevice";
-import { isElectron } from "@/utils/electron";
+import { isTauri } from "@/utils/tauri";
 import { logger } from "@/utils/logger";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 
 const MODULE_OUTPUTS = [
   "chord-dictionary",
@@ -14,24 +15,33 @@ const MODULE_OUTPUTS = [
 export class MidiDeviceManager {
   private inputs: Map<string, MidiInputDevice> = new Map();
   private outputs: Map<string, MidiOutputDevice> = new Map();
-  private offInputs: (() => void) | null = null;
-  private offOutputs: (() => void) | null = null;
-  private offWires: (() => void) | null = null;
+  private offInputs: UnlistenFn | null = null;
+  private offOutputs: UnlistenFn | null = null;
+  private offWires: UnlistenFn | null = null;
 
   async initialize(): Promise<void> {
     logger.info("MidiDeviceManager: 初始化...");
 
-    if (isElectron()) {
-      window.electronAPI.midi.getInputs();
-      window.electronAPI.midi.getOutputs();
+    if (isTauri()) {
+      const [inputsUnlisten, outputsUnlisten] = await Promise.all([
+        window.tauriAPI.midi.onInputs((inputs) => {
+          this.updateInputs(inputs);
+        }),
+        window.tauriAPI.midi.onOutputs((outputs) => {
+          this.updateOutputs(outputs);
+        }),
+      ]);
 
-      this.offInputs = window.electronAPI.midi.onInputs((inputs) => {
-        this.updateInputs(inputs);
-      });
+      this.offInputs = inputsUnlisten;
+      this.offOutputs = outputsUnlisten;
 
-      this.offOutputs = window.electronAPI.midi.onOutputs((outputs) => {
-        this.updateOutputs(outputs);
-      });
+      const [inputs, outputs] = await Promise.all([
+        window.tauriAPI.midi.getInputs(),
+        window.tauriAPI.midi.getOutputs(),
+      ]);
+
+      this.updateInputs(inputs);
+      this.updateOutputs(outputs);
     }
 
     logger.success("MidiDeviceManager: 初始化完成");
@@ -52,8 +62,8 @@ export class MidiDeviceManager {
   }
 
   async refreshDevices(): Promise<void> {
-    if (isElectron()) {
-      window.electronAPI.midi.refreshDevices();
+    if (isTauri()) {
+      await window.tauriAPI.midi.refreshDevices();
     }
   }
 

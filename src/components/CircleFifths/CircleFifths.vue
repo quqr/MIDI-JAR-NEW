@@ -248,7 +248,6 @@ const size = ref<number | null>(null);
 const current = ref(getCurrentKey(props.keySignature?.alteration || 0));
 const rotation = ref(((current.value * 1) / 12) * 360);
 const isRotating = ref(false);
-const hasCompletedRotation = ref(false);
 
 const config = computed<CircleOfFifthsConfig>(() => ({
   ...defaultConfig,
@@ -308,7 +307,6 @@ const debouncedRotation = debounce(
 
     if (diff) {
       isRotating.value = true;
-      hasCompletedRotation.value = false;
     }
 
     current.value = newValue;

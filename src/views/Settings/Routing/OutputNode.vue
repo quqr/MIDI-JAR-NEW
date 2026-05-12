@@ -1,7 +1,6 @@
 <template>
   <div
-    class="midi-output-node shadow-sm rounded-lg 
-    bg-base-100 border-2 border-secondary border-r-4 "
+    class="midi-output-node shadow-sm rounded-lg bg-base-100 border-2 border-secondary border-r-4"
   >
     <Handle type="target" :position="Position.Left" :class="handleClass" />
     <div class="flex items-center gap-2 px-4 py-3">

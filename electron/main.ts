@@ -1,4 +1,12 @@
-import { app, BrowserWindow, Tray, Menu, screen, dialog, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  screen,
+  dialog,
+  shell,
+} from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
@@ -347,16 +355,13 @@ secureHandle(
   },
 );
 
-secureHandle(
-  IPC_CHANNELS.SHELL.OPEN_EXTERNAL,
-  async (_event, url: string) => {
-    try {
-      await shell.openExternal(url);
-    } catch (error) {
-      console.error(`Failed to open URL: ${url}`, error);
-    }
-  },
-);
+secureHandle(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, async (_event, url: string) => {
+  try {
+    await shell.openExternal(url);
+  } catch (error) {
+    console.error(`Failed to open URL: ${url}`, error);
+  }
+});
 
 function sendToAll(channel: string, ...args: unknown[]) {
   const windows = BrowserWindow.getAllWindows();

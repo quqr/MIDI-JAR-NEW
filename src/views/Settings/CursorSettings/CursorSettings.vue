@@ -191,21 +191,48 @@ const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
 const colorSourceOptions = computed(() => [
-  { label: t("settings.cursorSettings.colorSourceOptions.custom"), value: "custom" },
-  { label: t("settings.cursorSettings.colorSourceOptions.theme"), value: "theme" },
+  {
+    label: t("settings.cursorSettings.colorSourceOptions.custom"),
+    value: "custom",
+  },
+  {
+    label: t("settings.cursorSettings.colorSourceOptions.theme"),
+    value: "theme",
+  },
 ]);
 
 const hoverModeOptions = computed(() => [
-  { label: t("settings.cursorSettings.hoverModeOptions.cover"), value: "cover" },
-  { label: t("settings.cursorSettings.hoverModeOptions.border"), value: "border" },
+  {
+    label: t("settings.cursorSettings.hoverModeOptions.cover"),
+    value: "cover",
+  },
+  {
+    label: t("settings.cursorSettings.hoverModeOptions.border"),
+    value: "border",
+  },
   { label: t("settings.cursorSettings.hoverModeOptions.none"), value: "none" },
 ]);
 
 const blendModeOptions = computed(() => [
-  { label: t("settings.cursorSettings.blendModeOptions.normal"), value: "normal" },
-  { label: t("settings.cursorSettings.blendModeOptions.exclusion"), value: "exclusion" },
-  { label: t("settings.cursorSettings.blendModeOptions.difference"), value: "difference" },
-  { label: t("settings.cursorSettings.blendModeOptions.multiply"), value: "multiply" },
-  { label: t("settings.cursorSettings.blendModeOptions.screen"), value: "screen" },
+  {
+    label: t("settings.cursorSettings.blendModeOptions.normal"),
+    value: "normal",
+  },
+  {
+    label: t("settings.cursorSettings.blendModeOptions.exclusion"),
+    value: "exclusion",
+  },
+  {
+    label: t("settings.cursorSettings.blendModeOptions.difference"),
+    value: "difference",
+  },
+  {
+    label: t("settings.cursorSettings.blendModeOptions.multiply"),
+    value: "multiply",
+  },
+  {
+    label: t("settings.cursorSettings.blendModeOptions.screen"),
+    value: "screen",
+  },
 ]);
 </script>

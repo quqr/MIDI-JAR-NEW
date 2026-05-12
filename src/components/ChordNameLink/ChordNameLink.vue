@@ -2,7 +2,7 @@
   <RouterLink
     v-if="chord"
     :to="to"
-    class="chord-name-link  link text-inherit no-underline hover:opacity-85 hover:underline"
+    class="chord-name-link link text-inherit no-underline hover:opacity-85 hover:underline"
   >
     <ChordName
       :chord="chord"
@@ -10,7 +10,6 @@
       :hideRoot="hideRoot"
       :highlightAlterations="highlightAlterations"
       :latinSharpsFlats="latinSharpsFlats"
-      
     />
   </RouterLink>
 </template>

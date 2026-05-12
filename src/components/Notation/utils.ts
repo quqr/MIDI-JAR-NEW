@@ -46,7 +46,9 @@ export const getVoice = (
 
   let voiceNotes = notes
     .map(noteToVex)
-    .filter((vn): vn is VexNote => vn !== null && (!filterClef || vn.clef === clef));
+    .filter(
+      (vn): vn is VexNote => vn !== null && (!filterClef || vn.clef === clef),
+    );
 
   voiceNotes = deduplicateVexNotes(voiceNotes);
   voiceNotes = sortVexNotes(voiceNotes);

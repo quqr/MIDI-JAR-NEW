@@ -1,22 +1,12 @@
 <template>
   <div
-    class="chord-dictionary-toolbar flex items-center gap-2 p-3 border-b border-base-200 bg-base-100 flex-wrap"
+    class="chord-dictionary-toolbar flex items-center gap-2 px-3 py-2 border-b border-base-200 bg-base-100 flex-wrap flex-shrink-0"
   >
     <div v-if="!disableUpdate" class="relative inline-block">
       <button class="btn btn-sm btn-outline" @click="menuOpen = !menuOpen">
         {{ getGroupLabel(groupBy)
         }}{{ filterInKey ? t("chordDictionary.inKey") : "" }}
-        <svg
-          class="w-4 h-4 ml-1"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        <Icon name="chevron-down" size="16" class="ml-1" />
       </button>
 
       <div
@@ -139,6 +129,7 @@ import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { SettingsButton } from "@/components/SettingsButton";
 import { SettingsModal } from "@/components/SettingsModal";
+import Icon from "@/components/Icon/Icon.vue";
 import ChordSearch from "./ChordSearch/ChordSearch.vue";
 import ChordDictionarySettings from "../Settings/ChordDictionarySettings/ChordDictionarySettings.vue";
 

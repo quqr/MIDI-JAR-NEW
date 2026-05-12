@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
+import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import AppLayout from "@/views/Layout/AppLayout.vue";
 import SettingsLayout from "@/views/Settings/Layout/SettingsLayout.vue";
 import i18n from "@/locales/i18n";
@@ -154,13 +154,20 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/widget/:type/:moduleId",
+    name: "widget",
+    component: () => import("@/views/Widget/WidgetPage.vue"),
+    props: true,
+    meta: { title: "Widget" },
+  },
+  {
     path: "/:pathMatch(.*)*",
     redirect: "/",
   },
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
 });
 

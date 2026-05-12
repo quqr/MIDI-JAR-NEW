@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { WindowState, defaultWindowState } from "@/types";
-import { isElectron, getElectronAPI } from "@/utils/electron";
+import { isTauri, getTauriAPI } from "@/utils/tauri";
 import { logger } from "@/utils/logger";
 
 const STORAGE_KEY = "midi-jar-window-state";
@@ -34,8 +34,8 @@ export const useWindowStateStore = defineStore("windowState", () => {
   const windowState = ref<WindowState>(loadWindowState());
 
   function setAlwaysOnTop(flag: boolean): void {
-    if (isElectron()) {
-      getElectronAPI().window.setAlwaysOnTop(flag);
+    if (isTauri()) {
+      getTauriAPI().window.setAlwaysOnTop(flag);
     }
     windowState.value.alwaysOnTop = flag;
   }
@@ -57,8 +57,8 @@ export const useWindowStateStore = defineStore("windowState", () => {
   }
 
   async function getWindowState(): Promise<WindowState | null> {
-    if (isElectron()) {
-      return await getElectronAPI().window.getWindowState();
+    if (isTauri()) {
+      return await getTauriAPI().window.getWindowState();
     }
     return windowState.value;
   }

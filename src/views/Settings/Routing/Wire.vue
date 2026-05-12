@@ -15,28 +15,47 @@
       :d="path[0]"
       style="pointer-events: none"
     />
-    <circle
-      :cx="targetX"
-      :cy="targetY"
-      fill="#fff"
-      :r="4"
-      stroke="currentColor"
-      :stroke-width="1.5"
-      style="pointer-events: none"
-    />
     <g
-      :transform="`translate(${path[1]}, ${path[2]})`"
+      :transform="`translate(${targetX}, ${targetY})`"
+      class="wire-delete-btn"
       style="cursor: pointer; pointer-events: all"
     >
-      <circle r="12" fill="hsl(var(--color-error) / 0.15)" stroke="hsl(var(--color-error) / 0.5)" :stroke-width="1" />
+      <circle
+        r="12"
+        fill="hsl(var(--color-error) / 0.85)"
+        stroke="hsl(var(--color-error) / 0.5)"
+        :stroke-width="1.5"
+      />
       <text
         text-anchor="middle"
         dominant-baseline="central"
-        fill="hsl(var(--color-error))"
-        font-size="11"
+        fill="#ffffff"
+        font-size="12"
         font-weight="bold"
         style="pointer-events: none; user-select: none"
-      >✕</text>
+        >✕</text
+      >
+    </g>
+    <g
+      :transform="`translate(${path[1]}, ${path[2]})`"
+      class="wire-delete-btn"
+      style="cursor: pointer; pointer-events: all"
+    >
+      <circle
+        r="14"
+        fill="hsl(var(--color-error) / 0.85)"
+        stroke="hsl(var(--color-error) / 0.5)"
+        :stroke-width="1.5"
+      />
+      <text
+        text-anchor="middle"
+        dominant-baseline="central"
+        fill="#ffffff"
+        font-size="14"
+        font-weight="bold"
+        style="pointer-events: none; user-select: none"
+        >✕</text
+      >
     </g>
   </g>
 </template>
@@ -64,3 +83,13 @@ const currentStrokeWidth = computed(() => {
   return style?.strokeWidth ?? 2.5;
 });
 </script>
+
+<style scoped>
+.wire-delete-btn:hover {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px hsl(var(--color-error) / 0.6));
+}
+.wire-delete-btn:hover circle {
+  fill: hsl(var(--color-error));
+}
+</style>

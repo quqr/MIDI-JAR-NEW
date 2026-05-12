@@ -423,9 +423,7 @@ const staffClef = computed(() => settingsStore.settings.notation.staffClef);
 const staffTranspose = computed(
   () => settingsStore.settings.notation.staffTranspose,
 );
-const notationDisplay = computed(
-  () => settingsStore.settings.notation.display,
-);
+const notationDisplay = computed(() => settingsStore.settings.notation.display);
 
 const midi = computed(() => getChordInversion(chord.value!, 0));
 

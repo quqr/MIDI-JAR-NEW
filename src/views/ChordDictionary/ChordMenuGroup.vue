@@ -3,17 +3,11 @@
     <summary
       class="flex items-center px-3 py-1.5 rounded-md cursor-pointer text-sm font-semibold text-base-content/70 hover:bg-base-200 list-none marker:content-['']"
     >
-      <svg
+      <Icon
+        name="angle-right"
         class="w-3 h-3 mr-2 transition-transform group-open:rotate-90"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M9 18l6-6-6-6" />
-      </svg>
+        :size="12"
+      />
       {{ group.label }}
     </summary>
     <ul class="ml-4">
@@ -39,6 +33,7 @@
 import type { ChordGroup, ChordItem } from "./utils";
 import ChordMenuItem from "./ChordMenuItem.vue";
 import ChordMenuGroup from "./ChordMenuGroup.vue";
+import Icon from "@/components/Icon/Icon.vue";
 
 defineProps<{
   group: ChordGroup;

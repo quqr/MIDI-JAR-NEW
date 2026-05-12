@@ -20,6 +20,8 @@ export const defaultNotationSettings: NotationSettings = {
   staffClef: "both",
   staffTranspose: 0,
   display: {},
+  layout: {},
+  style: {},
 };
 
 export const useQuizSettingsStore = defineStore("quizSettings", () => {

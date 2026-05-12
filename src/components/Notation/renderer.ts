@@ -30,10 +30,7 @@ type RenderStaveOptions = {
   keySignatureText?: string;
 };
 
-function createAndDrawStave(
-  context: any,
-  options: RenderStaveOptions,
-): Stave {
+function createAndDrawStave(context: any, options: RenderStaveOptions): Stave {
   const stave = new Stave(options.x, options.y, options.width);
 
   if (options.display.clef) {
@@ -73,7 +70,8 @@ type RenderNotesOptions = {
 };
 
 function renderNotesToStave(options: RenderNotesOptions): void {
-  const { notes, clef, stave, context, keySignatureTonic, filterClef, style } = options;
+  const { notes, clef, stave, context, keySignatureTonic, filterClef, style } =
+    options;
 
   if (!notes.length) return;
 
@@ -112,7 +110,15 @@ export type GrandStaffOptions = {
 };
 
 export function renderGrandStaff(options: GrandStaffOptions): void {
-  const { context, layout, notes, keySignatureTonic, keySignatureText, display, style } = options;
+  const {
+    context,
+    layout,
+    notes,
+    keySignatureTonic,
+    keySignatureText,
+    display,
+    style,
+  } = options;
 
   const staveTreble = createAndDrawStave(context, {
     x: 0,
@@ -192,7 +198,16 @@ export type SingleStaffOptions = {
 };
 
 export function renderSingleStaff(options: SingleStaffOptions): void {
-  const { context, layout, notes, staffClef, keySignatureTonic, keySignatureText, display, style } = options;
+  const {
+    context,
+    layout,
+    notes,
+    staffClef,
+    keySignatureTonic,
+    keySignatureText,
+    display,
+    style,
+  } = options;
 
   const stave = createAndDrawStave(context, {
     x: 0,

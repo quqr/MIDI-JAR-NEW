@@ -14,17 +14,11 @@
             class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
             aria-hidden="true"
           >
-            <svg
+            <Icon
+              :name="mapMdiToIcon(icon)"
               class="w-7 h-7"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path :d="getIconPath(icon)" />
-            </svg>
+              :size="28"
+            />
           </div>
 
           <div class="flex-1 min-w-0">
@@ -40,21 +34,11 @@
                 :aria-label="$t('common.settings')"
                 @click.stop
               >
-                <svg
-                  class="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                <Icon
+                  name="settings"
+                  :size="16"
                   aria-hidden="true"
-                >
-                  <path
-                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-                  />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+                />
               </RouterLink>
             </div>
 
@@ -73,7 +57,7 @@
 
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { getIconPath } from "@/constants/icon-paths";
+import Icon from "@/components/Icon/Icon.vue";
 
 defineProps<{
   to: string;
@@ -82,4 +66,17 @@ defineProps<{
   description?: string;
   icon: string;
 }>();
+
+const MDI_TO_ICON: Record<string, string> = {
+  "mdi-piano": "piano",
+  "mdi-help-circle-outline": "help-circle",
+  "mdi-circle-outline": "circle",
+  "mdi-book-open-page-variant": "book",
+  "mdi-swap-horizontal": "swap",
+  "mdi-bug": "bug",
+};
+
+function mapMdiToIcon(mdiName: string): string {
+  return MDI_TO_ICON[mdiName] || "home";
+}
 </script>

@@ -1,5 +1,10 @@
 import type { Node, Edge, MarkerType, Position } from "@vue-flow/core";
-import type { MidiInput, MidiOutput, MidiRoute, MidiWire } from "@/stores/midiRouting";
+import type {
+  MidiInput,
+  MidiOutput,
+  MidiRoute,
+  MidiWire,
+} from "@/stores/midiRouting";
 
 export function mapDevicesToNodes(
   inputs: MidiInput[],
@@ -70,9 +75,7 @@ export function mapRoutesToEdges(
 
   for (const route of routes) {
     const targetId =
-      route.type === "internal"
-        ? "output-internal"
-        : `output-${route.output}`;
+      route.type === "internal" ? "output-internal" : `output-${route.output}`;
 
     const edgeId = `edge-${route.input}-${targetId}`;
     if (seen.has(edgeId)) continue;

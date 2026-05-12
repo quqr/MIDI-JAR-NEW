@@ -2,3 +2,6 @@
 @plugin "daisyui/index.js" {
   themes: all;
 }
+body {
+  user-select: none;
+}

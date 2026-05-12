@@ -1,18 +1,12 @@
 import { fileURLToPath, URL } from "node:url";
 import { resolve } from "path";
-import { rmSync } from "fs";
 import { defineConfig } from "vite";
 import Vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
-import electron from "vite-plugin-electron";
 
 const isDevEnv = process.env.NODE_ENV === "development";
 
 export default defineConfig(() => {
-  if (process.env.NODE_ENV !== "development") {
-    rmSync("dist", { recursive: true, force: true });
-  }
-
   return {
     resolve: {
       extensions: [".mjs", ".js", ".ts", ".less", ".vue", ".json", ".scss"],
@@ -22,6 +16,10 @@ export default defineConfig(() => {
     },
     base: "./",
     clearScreen: false,
+    server: {
+      port: 5173,
+      strictPort: true,
+    },
     build: {
       sourcemap: isDevEnv,
       minify: true,
@@ -42,40 +40,6 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [
-      Vue(),
-      tailwindcss(),
-      null,
-      electron([
-        {
-          entry: "electron/main.ts",
-          vite: {
-            build: {
-              outDir: "dist-electron",
-              rollupOptions: {
-                external: ["electron", "@julusian/midi"],
-              },
-            },
-          },
-        },
-        {
-          entry: "electron/preload.ts",
-          onstart(args) {
-            args.reload();
-          },
-          vite: {
-            build: {
-              outDir: "dist-electron",
-              lib: {
-                formats: ["cjs"],
-              },
-              rollupOptions: {
-                external: ["electron"],
-              },
-            },
-          },
-        },
-      ]),
-    ],
+    plugins: [Vue(), tailwindcss()],
   };
 });

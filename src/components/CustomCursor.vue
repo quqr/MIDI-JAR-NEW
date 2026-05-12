@@ -44,6 +44,7 @@ const INTERACTIVE_SELECTOR = [
   ".swap",
   ".drawer-toggle",
   ".vue-flow__node",
+  ".wire-delete-btn",
 ].join(",");
 
 function findInteractiveTarget(el: HTMLElement): HTMLElement | null {
@@ -193,7 +194,8 @@ const innerPointerStyle = computed(() => {
 const outerPointerStyle = computed(() => {
   const s = cursorSettings.value;
   const hover = hoveredRect.value;
-  const isHover = isHoverState.value && hover !== null && s.hoverMode !== "none";
+  const isHover =
+    isHoverState.value && hover !== null && s.hoverMode !== "none";
 
   if (isHover) {
     const isCover = s.hoverMode === "cover";
@@ -248,7 +250,7 @@ onUnmounted(() => {
     <div
       v-if="cursorSettings.enabled"
       ref="outerPointer"
-      class="fixed top-0 left-0 rounded-full pointer-events-none z-[9999] will-change-transform"
+      class="fixed top-0 left-0 pointer-events-none z-[9999] will-change-transform"
       :style="outerPointerStyle"
     />
   </Teleport>

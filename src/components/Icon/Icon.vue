@@ -76,7 +76,11 @@ type IconName =
   | "midi-error"
   | "pads"
   | "exclamation"
-  | "cursor";
+  | "cursor"
+  | "check-circle"
+  | "eye"
+  | "lock"
+  | "unlock";
 
 const props = withDefaults(
   defineProps<{
@@ -180,6 +184,10 @@ const iconPath = computed((): string => {
     exclamation:
       "M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     cursor: "M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z",
+    "check-circle": "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3",
+    eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+    lock: "M16 8h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V6a4 4 0 0 1 8 0v2zm-4 6v2",
+    unlock: "M8 11V7a4 4 0 1 1 8 0M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z",
   };
   return paths[props.name] || paths.home;
 });

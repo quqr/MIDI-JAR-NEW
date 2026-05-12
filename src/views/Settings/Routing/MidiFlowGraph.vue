@@ -38,7 +38,10 @@
 
       <Controls position="top-right">
         <template #top-actions>
-          <ControlButton title="Auto Layout" @click="handleAutoLayout"></ControlButton>
+          <ControlButton
+            title="Auto Layout"
+            @click="handleAutoLayout"
+          ></ControlButton>
         </template>
       </Controls>
     </VueFlow>
@@ -50,7 +53,13 @@ import { ref, shallowRef, computed, watch, nextTick, onMounted } from "vue";
 import { VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
 import { Controls, ControlButton } from "@vue-flow/controls";
-import type { Connection, EdgeMouseEvent, Node, Edge, MarkerType } from "@vue-flow/core";
+import type {
+  Connection,
+  EdgeMouseEvent,
+  Node,
+  Edge,
+  MarkerType,
+} from "@vue-flow/core";
 
 import InputNode from "./InputNode.vue";
 import OutputNode from "./OutputNode.vue";
@@ -59,7 +68,12 @@ import { mapDevicesToNodes, mapRoutesToEdges } from "./graphUtils";
 import { useLayout } from "./useLayout";
 import { useHelperLines } from "./useHelperLines";
 
-import type { MidiInput, MidiOutput, MidiRoute, MidiWire } from "@/stores/midiRouting";
+import type {
+  MidiInput,
+  MidiOutput,
+  MidiRoute,
+  MidiWire,
+} from "@/stores/midiRouting";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 
 const props = defineProps<{
@@ -128,7 +142,12 @@ function handleConnect(connection: Connection) {
 
   props.onAddRoute(inputName, outputName, type);
 
-  const route: MidiRoute = { input: inputName, output: outputName, type: type as "physical" | "internal", enabled: true };
+  const route: MidiRoute = {
+    input: inputName,
+    output: outputName,
+    type: type as "physical" | "internal",
+    enabled: true,
+  };
   const edgeId = `edge-${connection.source}-${targetId}`;
 
   const exists = flowEdges.value.some((e) => e.id === edgeId);
@@ -138,7 +157,7 @@ function handleConnect(connection: Connection) {
       source: connection.source ?? "",
       target: targetId,
       type: "wire",
-      animated: false,
+      animated: true,
       markerEnd: {
         type: "arrowclosed" as MarkerType,
         color: "hsl(var(--color-base-content) / 0.5)",
@@ -164,27 +183,39 @@ function onDragStop({ nodes: draggedNodes }: { nodes: Node[] }) {
   persistViewport();
 }
 
-watch(computedNodes, (newNodes) => {
-  const existingMap = new Map(flowNodes.value.map((n) => [n.id, n]));
-  flowNodes.value = newNodes.map((node) => {
-    const existing = existingMap.get(node.id);
-    if (existing) {
-      return { ...node, position: existing.position };
-    }
-    return node;
-  });
-});
+watch(
+  computedNodes,
+  (newNodes) => {
+    const existingMap = new Map(flowNodes.value.map((n) => [n.id, n]));
+    flowNodes.value = newNodes.map((node) => {
+      const existing = existingMap.get(node.id);
+      if (existing) {
+        return { ...node, position: existing.position };
+      }
+      return node;
+    });
+  },
+  { immediate: true },
+);
 
-watch(computedEdges, (newEdges) => {
-  const existingMap = new Map(flowEdges.value.map((e) => [e.id, e]));
-  flowEdges.value = newEdges.map((edge) => {
-    const existing = existingMap.get(edge.id);
-    if (existing) {
-      return { ...edge, animated: existing.animated, style: existing.style };
-    }
-    return edge;
-  });
-});
+watch(
+  computedEdges,
+  (newEdges) => {
+    const existingMap = new Map(flowEdges.value.map((e) => [e.id, e]));
+    flowEdges.value = newEdges.map((edge) => {
+      const existing = existingMap.get(edge.id);
+      if (existing) {
+        return {
+          ...edge,
+          animated: existing.animated || edge.animated,
+          style: existing.style || edge.style,
+        };
+      }
+      return edge;
+    });
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
   const hasSavedPositions = Object.keys(routingStore.nodePositions).length > 0;
@@ -213,11 +244,9 @@ onMounted(() => {
 @import "@vue-flow/controls/dist/style.css";
 @import "@vue-flow/minimap/dist/style.css";
 
-
 .vue-flow__handle {
-    height:24px;
-    width:8px;
-    border-radius:4px
+  height: 24px;
+  width: 8px;
+  border-radius: 4px;
 }
-
 </style>

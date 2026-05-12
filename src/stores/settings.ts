@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch, computed } from "vue";
 import { Settings, defaultSettings } from "@/types";
-import { mergeDeep } from "@/helpers";
+import { mergeDeep, setValueByPath } from "@/helpers";
 import { logger } from "@/utils/logger";
 
 const STORAGE_KEY = "midi-jar-settings";
@@ -29,23 +29,6 @@ function saveSettings(settings: Settings) {
 export const useSettingsStore = defineStore("settings", () => {
   const settings = ref<Settings>(loadSettings());
   const inited = ref(false);
-
-  function setValueByPath(
-    obj: Record<string, unknown>,
-    path: string,
-    value: unknown,
-  ): void {
-    const parts = path.split(".");
-    let current: Record<string, unknown> = obj;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const key = parts[i];
-      if (!(key in current)) {
-        current[key] = {};
-      }
-      current = current[key] as Record<string, unknown>;
-    }
-    current[parts[parts.length - 1]] = value;
-  }
 
   function updateSetting(key: string, value: unknown): Promise<void> {
     setValueByPath(

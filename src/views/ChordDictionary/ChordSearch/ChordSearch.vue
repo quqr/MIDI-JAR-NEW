@@ -1,18 +1,11 @@
 <template>
   <div class="relative inline-block">
     <button class="btn btn-sm btn-outline" @click="menuOpen = !menuOpen">
-      <svg
+      <Icon
+        name="search"
         class="w-4 h-4 mr-1"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.35-4.35" />
-      </svg>
+        :size="16"
+      />
       <span class="truncate">
         {{ search || t("chordDictionary.searchChord") }}
       </span>
@@ -25,18 +18,11 @@
       <div class="card-body p-3 pb-2">
         <div class="form-control w-full">
           <div class="relative">
-            <svg
+            <Icon
+              name="search"
               class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
+              :size="16"
+            />
             <input
               v-model="search"
               type="text"
@@ -50,17 +36,11 @@
               class="btn btn-xs btn-ghost btn-circle absolute right-1 top-1/2 -translate-y-1/2"
               @click="search = ''"
             >
-              <svg
+              <Icon
+                name="x"
                 class="w-3 h-3"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
+                :size="12"
+              />
             </button>
           </div>
         </div>
@@ -128,6 +108,7 @@ import type { Chord as TChord } from "@tonaljs/chord";
 import { isSameChord } from "@/helpers";
 import { searchChords } from "./utils";
 import ChordSearchOption from "./ChordSearchOption.vue";
+import Icon from "@/components/Icon/Icon.vue";
 
 interface Props {
   onSelect: (value: string | null) => void;

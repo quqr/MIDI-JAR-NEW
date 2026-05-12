@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { isElectron } from "@/utils/electron";
+import { isTauri } from "@/utils/tauri";
 import { logger } from "@/utils/logger";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 
 export interface MidiRoute {
   input: string;
@@ -66,7 +67,9 @@ function loadNodePositions(): Record<string, { x: number; y: number }> {
   return {};
 }
 
-function saveNodePositions(positions: Record<string, { x: number; y: number }>) {
+function saveNodePositions(
+  positions: Record<string, { x: number; y: number }>,
+) {
   try {
     localStorage.setItem(NODE_POSITIONS_KEY, JSON.stringify(positions));
   } catch (e) {
@@ -106,13 +109,14 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   const outputs = ref<MidiOutput[]>([]);
   const wires = ref<MidiWire[]>([]);
   const routes = ref<MidiRoute[]>(loadRoutes());
-  const nodePositions = ref<Record<string, { x: number; y: number }>>(loadNodePositions());
+  const nodePositions =
+    ref<Record<string, { x: number; y: number }>>(loadNodePositions());
   const viewport = ref<FlowViewport | null>(loadViewport());
   const error = ref<string | null>(null);
 
-  let offInputs: (() => void) | null = null;
-  let offOutputs: (() => void) | null = null;
-  let offWires: (() => void) | null = null;
+  let offInputs: UnlistenFn | null = null;
+  let offOutputs: UnlistenFn | null = null;
+  let offWires: UnlistenFn | null = null;
   let pollingTimer: ReturnType<typeof setInterval> | null = null;
 
   function createDefaultRoutes(): void {
@@ -127,46 +131,66 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
       enabled: true,
     });
     saveRoutes(routes.value);
-    syncRoutesToMain();
     logger.info(`已创建默认路由: ${firstInput} → internal`);
   }
 
   function syncRoutesToMain() {
-    if (!isElectron()) return;
-    window.electronAPI.midi.clearRoutes();
-    for (const route of routes.value) {
-      window.electronAPI.midi.addRoute({
-        input: route.input,
-        output: route.output,
-        type: route.type,
-        enabled: route.enabled,
-      });
+    if (!isTauri()) {
+      console.log("[MIDI_DEBUG] syncRoutesToMain: not in Tauri, skipping");
+      return Promise.resolve();
     }
+    const routeList = routes.value.map((r) => ({
+      input: r.input,
+      output: r.output,
+      type: r.type,
+      enabled: r.enabled,
+    }));
+    console.log(
+      `[MIDI_DEBUG] syncRoutesToMain: syncing ${routeList.length} routes`,
+      JSON.stringify(routeList),
+    );
+    return window.tauriAPI.midi.syncRoutes(routeList).catch((e: Error) => {
+      logger.error(`同步路由失败: ${e.message}`);
+      console.error("[MIDI_DEBUG] syncRoutesToMain FAILED:", e);
+    });
   }
 
   async function initialize(): Promise<void> {
     if (initialized.value) return;
 
     try {
-      if (isElectron()) {
-        window.electronAPI.midi.getInputs();
-        window.electronAPI.midi.getOutputs();
-        window.electronAPI.midi.getWires();
+      if (isTauri()) {
+        const [inputsUnlisten, outputsUnlisten, wiresUnlisten] =
+          await Promise.all([
+            window.tauriAPI.midi.onInputs((data: MidiInput[]) => {
+              inputs.value = data;
+            }),
+            window.tauriAPI.midi.onOutputs((data: MidiOutput[]) => {
+              outputs.value = data;
+            }),
+            window.tauriAPI.midi.onWires((data: MidiWire[]) => {
+              wires.value = data;
+            }),
+          ]);
 
-        offInputs = window.electronAPI.midi.onInputs((data: MidiInput[]) => {
-          inputs.value = data;
-        });
+        offInputs = inputsUnlisten;
+        offOutputs = outputsUnlisten;
+        offWires = wiresUnlisten;
 
-        offOutputs = window.electronAPI.midi.onOutputs((data: MidiOutput[]) => {
-          outputs.value = data;
-        });
+        const [inputsData, outputsData, wiresData] = await Promise.all([
+          window.tauriAPI.midi.getInputs(),
+          window.tauriAPI.midi.getOutputs(),
+          window.tauriAPI.midi.getWires(),
+        ]);
 
-        offWires = window.electronAPI.midi.onWires((data: MidiWire[]) => {
-          wires.value = data;
-        });
+        inputs.value = inputsData;
+        outputs.value = outputsData;
+        wires.value = wiresData;
       }
 
       createDefaultRoutes();
+
+      syncRoutesToMain();
 
       initialized.value = true;
       logger.info(
@@ -179,11 +203,16 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   }
 
   async function refreshDevices(): Promise<void> {
-    if (isElectron()) {
-      window.electronAPI.midi.refreshDevices();
-      window.electronAPI.midi.getInputs();
-      window.electronAPI.midi.getOutputs();
-      window.electronAPI.midi.getWires();
+    if (isTauri()) {
+      await window.tauriAPI.midi.refreshDevices();
+      const [inputsData, outputsData, wiresData] = await Promise.all([
+        window.tauriAPI.midi.getInputs(),
+        window.tauriAPI.midi.getOutputs(),
+        window.tauriAPI.midi.getWires(),
+      ]);
+      inputs.value = inputsData;
+      outputs.value = outputsData;
+      wires.value = wiresData;
     }
   }
 
@@ -255,8 +284,8 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   async function clearRoutes(): Promise<void> {
     routes.value = [];
     saveRoutes([]);
-    if (isElectron()) {
-      window.electronAPI.midi.clearRoutes();
+    if (isTauri()) {
+      window.tauriAPI.midi.clearRoutes();
     }
   }
 
@@ -320,6 +349,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     startPolling,
     stopPolling,
     createDefaultRoutes,
+    syncRoutesToMain,
     addRoute,
     deleteRoute,
     updateRoute,

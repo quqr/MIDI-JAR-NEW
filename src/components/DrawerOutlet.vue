@@ -12,17 +12,7 @@
             class="btn btn-sm btn-ghost btn-circle transition-colors hover:bg-base-200"
             @click="handleClose"
           >
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <Icon name="x" :size="16" />
           </button>
         </div>
         <div class="overflow-auto" style="height: calc(100% - 41px)">
@@ -40,6 +30,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import Icon from "@/components/Icon/Icon.vue";
 
 interface Props {
   context?: unknown;

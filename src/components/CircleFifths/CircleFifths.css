@@ -19,7 +19,8 @@
 
 .circle-fifths-svg {
   flex-shrink: 0;
-  will-change: contents;
+  max-width: 100%;
+  will-change: transform;
 }
 
 .circle-fifths-children {
@@ -28,7 +29,7 @@
   left: 0;
   right: 0;
   top: 0;
-  z-index: -1;
+  z-index: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -36,6 +37,7 @@
 }
 
 .wheel--isRotating {
+  will-change: transform;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
