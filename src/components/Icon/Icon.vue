@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-type IconName =
+export type IconName =
   | "home"
   | "music"
   | "menu"

@@ -32,9 +32,11 @@ async function setupTauriListeners() {
     return;
   }
 
-  document.addEventListener('contextmenu', event => event.preventDefault());
-  document.addEventListener('copy', event => event.preventDefault());
+            // 监听 contextmenu 事件（即右键菜单），并阻止其默认行为，以禁用右键菜单
+      document.addEventListener('contextmenu', event => event.preventDefault());
 
+      // 监听 copy 事件（即复制操作），并阻止其默认行为，以禁用复制功能
+      document.addEventListener('copy', event => event.preventDefault());
   try {
     const tauriAPI = getTauriAPI();
 
@@ -83,9 +85,6 @@ async function restoreWidgets() {
         y: state.y,
         alwaysOnTop: state.alwaysOnTop,
       });
-      if (state.opacity < 1) {
-        await tauriAPI.widget.setOpacity(state.label, state.opacity);
-      }
     }
     logger.info(`恢复了 ${widgetStore.widgets.size} 个 widget 窗口`);
   } catch (error) {

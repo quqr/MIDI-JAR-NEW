@@ -2,3 +2,6 @@
 /dist
 /dist-electron
 /release
+/src-tauri/target
+/sidecar-midi/node_modules
+/src-tauri/target-check/debug

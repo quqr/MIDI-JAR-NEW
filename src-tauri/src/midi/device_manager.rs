@@ -1,5 +1,6 @@
 use midir::{MidiInput, MidiOutput, MidiOutputConnection};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
 use super::input_device::{ApiMidiInput, MidiInputDevice};
@@ -10,6 +11,8 @@ use super::wire::{ApiMidiWire, MidiWire};
 
 const IGNORE_RTMIDI_REGEX: &str = "RtMidi";
 const IGNORE_INPUT_REGEX: &str = "^output-internal";
+const DEDUP_INTERVAL_MS: u128 = 5;
+const DEDUP_CACHE_SIZE: usize = 32;
 const DEBUG_MIDI: bool = true;
 
 const MODULE_OUTPUTS: &[&str] = &[
@@ -22,6 +25,50 @@ const MODULE_OUTPUTS: &[&str] = &[
 
 type MidiInputConnection = midir::MidiInputConnection<()>;
 
+#[derive(Clone)]
+struct CachedMessage {
+    data: Vec<u8>,
+    timestamp_ms: u128,
+}
+
+struct MidiDedup {
+    cache: Vec<CachedMessage>,
+    index: usize,
+}
+
+impl MidiDedup {
+    fn new() -> Self {
+        Self {
+            cache: Vec::with_capacity(DEDUP_CACHE_SIZE),
+            index: 0,
+        }
+    }
+
+    fn is_duplicate(&mut self, message: &[u8], timestamp_ms: u128) -> bool {
+        for cached in &self.cache {
+            if timestamp_ms.abs_diff(cached.timestamp_ms) <= DEDUP_INTERVAL_MS
+                && cached.data.len() == message.len()
+                && cached.data == message
+            {
+                return true;
+            }
+        }
+        if self.cache.len() < DEDUP_CACHE_SIZE {
+            self.cache.push(CachedMessage {
+                data: message.to_vec(),
+                timestamp_ms,
+            });
+        } else {
+            self.cache[self.index % DEDUP_CACHE_SIZE] = CachedMessage {
+                data: message.to_vec(),
+                timestamp_ms,
+            };
+            self.index += 1;
+        }
+        false
+    }
+}
+
 pub struct MidiDeviceManager {
     midi_in: Option<MidiInput>,
     midi_out: Option<MidiOutput>,
@@ -30,6 +77,7 @@ pub struct MidiDeviceManager {
     wires: Vec<MidiWire>,
     active_connections: HashMap<String, MidiInputConnection>,
     active_output_connections: HashMap<String, MidiOutputConnection>,
+    dedup: Arc<Mutex<MidiDedup>>,
 }
 
 enum OutputEntry {
@@ -47,6 +95,7 @@ impl MidiDeviceManager {
             wires: Vec::new(),
             active_connections: HashMap::new(),
             active_output_connections: HashMap::new(),
+            dedup: Arc::new(Mutex::new(MidiDedup::new())),
         };
         manager.refresh_internal_outputs();
         manager
@@ -74,6 +123,7 @@ impl MidiDeviceManager {
     fn refresh_inputs(&mut self) -> bool {
         let mut changed = false;
         let mut found_inputs: Vec<String> = Vec::new();
+        let mut has_loopback = false;
 
         let midi_in_ref = match self.midi_in.as_ref() {
             Some(m) => m,
@@ -91,7 +141,18 @@ impl MidiDeviceManager {
                     }
                 }
 
+                let is_loopback = name.contains("Loopback");
+                if is_loopback && has_loopback {
+                    if DEBUG_MIDI {
+                        eprintln!("[MIDI_DEBUG] refresh_inputs: skipping duplicate loopback '{}'", name);
+                    }
+                    continue;
+                }
+
                 found_inputs.push(name.clone());
+                if is_loopback {
+                    has_loopback = true;
+                }
 
                 if let Some(existing) = self.inputs.get(&name) {
                     if !existing.connected {
@@ -275,6 +336,7 @@ impl MidiDeviceManager {
 
         let app_handle_clone = app_handle.clone();
         let input_name_clone = input_name.clone();
+        let dedup_clone = self.dedup.clone();
 
         if DEBUG_MIDI {
             eprintln!("[MIDI_DEBUG] establish_connection: calling midi_in.connect() for '{}'", input_name);
@@ -285,8 +347,22 @@ impl MidiDeviceManager {
             "midi-jar-route",
             move |stamp, message, _| {
                 let timestamp = (stamp as f64) * 1000.0;
-                eprintln!("[MIDI_DEBUG] >>> MIDI CALLBACK FIRED! device='{}' timestamp={} message={:?}",
-                    input_name_clone, timestamp, message);
+
+                {
+                    let mut dedup = dedup_clone.lock().unwrap();
+                    if dedup.is_duplicate(message, timestamp as u128) {
+                        if DEBUG_MIDI {
+                            eprintln!("[MIDI_DEBUG] >>> DEDUP SKIP device='{}' message={:?}",
+                                input_name_clone, message);
+                        }
+                        return;
+                    }
+                }
+
+                if DEBUG_MIDI {
+                    eprintln!("[MIDI_DEBUG] >>> MIDI CALLBACK FIRED! device='{}' timestamp={} message={:?}",
+                        input_name_clone, timestamp, message);
+                }
 
                 if is_internal {
                     for &module_name in MODULE_OUTPUTS {

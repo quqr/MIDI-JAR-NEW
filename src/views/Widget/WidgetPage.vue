@@ -1,7 +1,8 @@
 <template>
   <div
-    class="h-full w-full flex flex-col text-base-content overflow-hidden"
-    :style="{ backgroundColor: bgColorWithAlpha }"
+    class="h-full w-full flex flex-col overflow-hidden widget-root"
+    :class="isLocked ? 'cursor-default' : ''"
+    :style="rootStyle"
   >
     <WidgetTitleBar
       :title="widgetTitle"
@@ -9,8 +10,13 @@
       :isMaximized="isMaximized"
       :alwaysOnTop="alwaysOnTop"
       :autoHide="autoHide"
-      :positionLocked="positionLocked"
+      :positionLocked="isLocked"
       :opacity="opacity"
+      :transparentMode="transparentMode"
+      :showPin="true"
+      :showAutoHide="true"
+      :showLock="true"
+      :showOpacity="true"
       @close="handleClose"
       @minimize="handleMinimize"
       @toggleMaximize="handleToggleMaximize"
@@ -18,21 +24,21 @@
       @toggleAutoHide="handleToggleAutoHide"
       @toggleLock="handleToggleLock"
       @changeOpacity="handleChangeOpacity"
+      @toggleTransparentMode="handleToggleTransparentMode"
     />
-    <div class="flex-1 min-h-0 overflow-hidden">
-      <div v-if="isKeyboard" class="h-full w-full p-1">
+    <div class="flex-1 min-h-0 overflow-hidden widget-content">
+      <div v-if="isKeyboard" class="h-full w-full p-1 keyboard-container">
         <PianoKeyboard
           :sustained="sustainedMidiNotes as unknown as number[]"
           :played="playedMidiNotes as unknown as number[]"
           :midi="midiNotes as unknown as number[]"
           :chord="chords[0] as any"
-          :keySignature="keySignature as unknown as KeySignatureConfig"
-          :keyboard="keyboardSettings"
+          :keySignature="keySignature as any"
+          :keyboard="keyboardSettings as any"
         />
       </div>
       <div v-else-if="isNotation" class="h-full w-full flex items-center justify-center p-1">
         <Notation
-          class="max-w-full max-h-full"
           :midiNotes="midiNotes as number[]"
           :keySignature="keySignature"
           :staffClef="staffClef"
@@ -42,15 +48,12 @@
           :style="notationStyle"
         />
       </div>
-      <div v-else-if="isChord" class="h-full w-full flex flex-col items-center justify-center p-2">
-        <div class="w-full flex items-center justify-center text-2xl sm:text-4xl font-bold">
+      <div v-else-if="isChord" ref="chordContainerRef" class="h-full w-full flex items-center justify-center p-2">
+        <div class="flex items-center justify-center font-bold chord-text">
           <ChordNameLink :chord="chords[0] as any" :notation="chordNotation" :highlightAlterations="highlightAlterations" />
         </div>
-        <div class="w-full text-center text-sm sm:text-lg font-semibold opacity-70 mt-2">
-          {{ chords[0]?.name }}
-        </div>
       </div>
-      <div v-else-if="isIntervals" class="h-full w-full flex items-center justify-center p-2">
+      <div v-else-if="isIntervals" ref="intervalsContainerRef" class="h-full w-full flex items-center justify-center p-2 interval-text">
         <ChordIntervals :intervals="chords[0]?.intervals as unknown as string[]" :pitchClasses="pitchClasses as unknown as string[]" :tonic="chords[0]?.tonic" />
       </div>
     </div>
@@ -70,7 +73,6 @@ import { useNotes } from "@/composables/useNotes";
 import { useSettingsStore } from "@/stores";
 import { isTauri } from "@/utils/tauri";
 import type { WidgetType } from "@/types/widget";
-import type { KeySignatureConfig } from "@/types";
 
 const route = useRoute();
 const props = defineProps<{
@@ -88,19 +90,18 @@ const isIntervals = computed(() => type.value === "intervals");
 
 const settingsStore = useSettingsStore();
 
+const chordContainerRef = ref<HTMLElement | null>(null);
+const intervalsContainerRef = ref<HTMLElement | null>(null);
 const isMaximized = ref(false);
 const alwaysOnTop = ref(true);
 const autoHide = ref(false);
-const positionLocked = ref(false);
+const isLocked = ref(false);
 const opacity = ref(1);
+const transparentMode = ref(false);
 let unlisten: (() => void)[] = [];
 let autoHideTimer: ReturnType<typeof setTimeout> | null = null;
 let savedOpacity = 1;
-
-const bgColorWithAlpha = computed(() => {
-  const alpha = opacity.value;
-  return `oklch(var(--b1) / ${alpha})`;
-});
+let textResizeObserver: ResizeObserver | null = null;
 
 const moduleSettings = computed(() => {
   return settingsStore.settings.chordDisplay.find((m: any) => m.id === moduleId.value);
@@ -126,8 +127,8 @@ const {
 } = useNotes({
   accidentals: () => settingsStore.settings.notation.accidentals,
   key: () => settingsStore.settings.notation.key,
-  useSustain: computed(() => moduleSettings.value?.useSustain ?? true),
-  detectOnRelease: computed(() => moduleSettings.value?.detectOnRelease ?? true),
+  useSustain: () => moduleSettings.value?.useSustain ?? true,
+  detectOnRelease: () => moduleSettings.value?.detectOnRelease ?? true,
   namespace: `chord-display/${moduleId.value}`,
 });
 
@@ -140,6 +141,21 @@ const widgetTitle = computed(() => {
   };
   return titles[type.value] || "Widget";
 });
+
+const bgAlpha = computed(() => {
+  if (autoHide.value) return 0.15;
+  return transparentMode.value ? 1 : opacity.value;
+});
+
+const contentOpacity = computed(() => {
+  if (autoHide.value) return 0.15;
+  return transparentMode.value ? opacity.value : 1;
+});
+
+const rootStyle = computed(() => ({
+  "--bg-alpha": bgAlpha.value,
+  "--content-alpha": contentOpacity.value,
+}));
 
 async function handleClose() {
   if (!isTauri()) return;
@@ -175,11 +191,10 @@ async function handleToggleAutoHide() {
 }
 
 async function handleToggleLock() {
-  positionLocked.value = !positionLocked.value;
-  if (isTauri()) {
-    const win = getCurrentWindow();
-    await win.setResizable(!positionLocked.value);
-  }
+  if (!isTauri()) return;
+  isLocked.value = !isLocked.value;
+  const win = getCurrentWindow();
+  await win.setResizable(!isLocked.value);
 }
 
 async function handleChangeOpacity(value: number) {
@@ -187,13 +202,17 @@ async function handleChangeOpacity(value: number) {
   savedOpacity = value;
 }
 
+function handleToggleTransparentMode() {
+  transparentMode.value = !transparentMode.value;
+}
+
 function startAutoHideTimer() {
   if (!autoHide.value) return;
   clearAutoHideTimer();
   autoHideTimer = setTimeout(() => {
     savedOpacity = opacity.value;
-    opacity.value = 0.1;
-  }, 1000);
+    opacity.value = 0.15;
+  }, 800);
 }
 
 function clearAutoHideTimer() {
@@ -203,7 +222,7 @@ function clearAutoHideTimer() {
   }
 }
 
-async function onWindowBlur() {
+function onWindowBlur() {
   startAutoHideTimer();
 }
 
@@ -212,6 +231,24 @@ function onWindowFocus() {
   if (autoHide.value && opacity.value < savedOpacity) {
     opacity.value = savedOpacity;
   }
+}
+
+function setupTextResizeObserver() {
+  const target = isChord.value ? chordContainerRef.value : intervalsContainerRef.value;
+  if (!target || textResizeObserver) return;
+
+  textResizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width, height } = entry.contentRect;
+      if (width === 0 || height === 0) return;
+
+      const baseFontSize = Math.min(width / 8, height / 3, 48);
+      const fontSize = Math.max(baseFontSize, 12);
+      target.style.fontSize = `${fontSize}px`;
+    }
+  });
+
+  textResizeObserver.observe(target);
 }
 
 onMounted(async () => {
@@ -233,6 +270,8 @@ onMounted(async () => {
   });
 
   unlisten.push(unlistenResized, unlistenBlur);
+
+  setupTextResizeObserver();
 });
 
 onUnmounted(() => {
@@ -241,5 +280,50 @@ onUnmounted(() => {
   }
   unlisten = [];
   clearAutoHideTimer();
+  if (textResizeObserver) {
+    textResizeObserver.disconnect();
+    textResizeObserver = null;
+  }
 });
 </script>
+
+<style scoped>
+:global(html),
+:global(body) {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.widget-root {
+  background-color: oklch(var(--b1) / var(--bg-alpha, 1));
+  box-shadow: none;
+}
+
+.widget-content {
+  opacity: var(--content-alpha, 1);
+  transition: opacity 0.15s ease-out;
+}
+
+.widget-titlebar {
+  background-color: oklch(var(--b1) / var(--bg-alpha, 1));
+}
+
+.opacity-slider input[type="range"] {
+  height: 8px;
+}
+
+.keyboard-container svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chord-text {
+  font-size: clamp(1rem, 8vw, 8rem);
+}
+
+.interval-text {
+  font-size: clamp(0.75rem, 4vw, 3rem);
+}
+</style>

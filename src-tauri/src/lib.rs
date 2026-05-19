@@ -198,7 +198,7 @@ async fn create_widget_window(
         .decorations(false)
         .resizable(true)
         .min_inner_size(200.0, 150.0)
-        .skip_taskbar(false)
+        .transparent(true)
         .shadow(false)
         .visible(true);
 
