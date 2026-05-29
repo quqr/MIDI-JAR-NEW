@@ -1,29 +1,24 @@
 import { defineStore } from "pinia";
 import { ref, watch, computed } from "vue";
 import { Settings, defaultSettings } from "@/types";
-import { mergeDeep, setValueByPath } from "@/helpers";
-import { logger } from "@/utils/logger";
+import { mergeDeep, setValueByPath, loadFromStorage, saveToStorage } from "@/helpers";
+import { debounce } from "@/helpers/debounce";
 
 const STORAGE_KEY = "midi-jar-settings";
 
 function loadSettings(): Settings {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return mergeDeep(defaultSettings, JSON.parse(stored));
-    }
-  } catch (e) {
-    logger.warn(`Failed to load settings: ${e}`);
+  const stored = loadFromStorage<Partial<Settings>>({
+    key: STORAGE_KEY,
+    defaultValue: {},
+  });
+  if (Object.keys(stored).length > 0) {
+    return mergeDeep(defaultSettings, stored) as Settings;
   }
   return { ...defaultSettings };
 }
 
 function saveSettings(settings: Settings) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch (e) {
-    logger.warn(`Failed to save settings: ${e}`);
-  }
+  saveToStorage(STORAGE_KEY, settings);
 }
 
 export const useSettingsStore = defineStore("settings", () => {
@@ -70,15 +65,21 @@ export const useSettingsStore = defineStore("settings", () => {
     );
   }
 
-  if (!localStorage.getItem(STORAGE_KEY)) {
+  const stored = loadFromStorage<Partial<Settings>>({
+    key: STORAGE_KEY,
+    defaultValue: {},
+  });
+  if (Object.keys(stored).length === 0) {
     saveSettings(settings.value);
   }
   inited.value = true;
 
+  const debouncedSaveSettings = debounce(saveSettings, 300);
+
   watch(
     settings,
     (newSettings) => {
-      saveSettings(newSettings);
+      debouncedSaveSettings(newSettings);
     },
     { deep: true },
   );

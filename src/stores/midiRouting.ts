@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { isTauri } from "@/utils/tauri";
 import { logger } from "@/utils/logger";
+import { loadFromStorage, saveToStorage, removeFromStorage } from "@/helpers";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
 export interface MidiRoute {
@@ -36,45 +37,27 @@ const NODE_POSITIONS_KEY = "midi-jar-node-positions";
 const VIEWPORT_KEY = "midi-jar-viewport";
 
 function loadRoutes(): MidiRoute[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    logger.warn("Failed to load MIDI routes from localStorage: " + e);
-  }
-  return [];
+  return loadFromStorage<MidiRoute[]>({
+    key: STORAGE_KEY,
+    defaultValue: [],
+  });
 }
 
 function saveRoutes(routes: MidiRoute[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
-  } catch (e) {
-    logger.warn("Failed to save MIDI routes to localStorage: " + e);
-  }
+  saveToStorage(STORAGE_KEY, routes);
 }
 
 function loadNodePositions(): Record<string, { x: number; y: number }> {
-  try {
-    const stored = localStorage.getItem(NODE_POSITIONS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    logger.warn("Failed to load node positions from localStorage: " + e);
-  }
-  return {};
+  return loadFromStorage<Record<string, { x: number; y: number }>>({
+    key: NODE_POSITIONS_KEY,
+    defaultValue: {},
+  });
 }
 
 function saveNodePositions(
   positions: Record<string, { x: number; y: number }>,
 ) {
-  try {
-    localStorage.setItem(NODE_POSITIONS_KEY, JSON.stringify(positions));
-  } catch (e) {
-    logger.warn("Failed to save node positions to localStorage: " + e);
-  }
+  saveToStorage(NODE_POSITIONS_KEY, positions);
 }
 
 interface FlowViewport {
@@ -84,23 +67,14 @@ interface FlowViewport {
 }
 
 function loadViewport(): FlowViewport | null {
-  try {
-    const stored = localStorage.getItem(VIEWPORT_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    logger.warn("Failed to load viewport from localStorage: " + e);
-  }
-  return null;
+  return loadFromStorage<FlowViewport | null>({
+    key: VIEWPORT_KEY,
+    defaultValue: null,
+  });
 }
 
 function saveViewport(viewport: FlowViewport) {
-  try {
-    localStorage.setItem(VIEWPORT_KEY, JSON.stringify(viewport));
-  } catch (e) {
-    logger.warn("Failed to save viewport to localStorage: " + e);
-  }
+  saveToStorage(VIEWPORT_KEY, viewport);
 }
 
 export const useMidiRoutingStore = defineStore("midiRouting", () => {
@@ -190,7 +164,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
 
       createDefaultRoutes();
 
-      syncRoutesToMain();
+      await syncRoutesToMain();
 
       initialized.value = true;
       logger.info(
@@ -245,7 +219,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         { ...route, enabled: route.enabled ?? true },
       ];
       saveRoutes(routes.value);
-      syncRoutesToMain();
+      await syncRoutesToMain();
       logger.success(
         `路由已创建: ${route.input} → ${route.output} (${route.type})`,
       );
@@ -262,7 +236,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         ),
     );
     saveRoutes(routes.value);
-    syncRoutesToMain();
+    await syncRoutesToMain();
     logger.warn(`路由已删除: ${route.input} → ${route.output} (${route.type})`);
   }
 
@@ -278,7 +252,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
         : r,
     );
     saveRoutes(routes.value);
-    syncRoutesToMain();
+    await syncRoutesToMain();
   }
 
   async function clearRoutes(): Promise<void> {
@@ -309,7 +283,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
 
   function clearViewport() {
     viewport.value = null;
-    localStorage.removeItem(VIEWPORT_KEY);
+    removeFromStorage(VIEWPORT_KEY);
   }
 
   const physicalOutputs = computed(() =>

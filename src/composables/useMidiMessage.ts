@@ -13,10 +13,10 @@ export function useMidiMessage(
     onMessage?.(message, timestamp, device);
   };
 
-  onMounted(() => {
+  onMounted(async () => {
     if (!onMessage) return;
     const store = useMidiMessagesStore();
-    store.subscribeToNamespace(namespace, handler);
+    await store.subscribeToNamespace(namespace, handler);
   });
 
   onUnmounted(() => {

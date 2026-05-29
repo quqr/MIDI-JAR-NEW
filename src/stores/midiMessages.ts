@@ -30,25 +30,26 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     namespace: string,
   ): void {
     const entry: MidiMessageEntry = { message, timestamp, device, namespace };
-    messages.value.unshift(entry);
+    messages.value.push(entry);
     if (messages.value.length > maxMessages) {
-      messages.value = messages.value.slice(0, maxMessages);
+      messages.value.splice(0, messages.value.length - maxMessages);
     }
   }
 
-  function getManager(namespace: string): InternalMidiMessages {
+  async function getManager(namespace: string): Promise<InternalMidiMessages> {
     let manager = managerMap.get(namespace);
     if (!manager) {
       manager = new InternalMidiMessages(namespace);
       managerMap.set(namespace, manager);
+      await manager.initialize();
     }
     return manager;
   }
 
-  function subscribeToNamespace(
+  async function subscribeToNamespace(
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
-  ): void {
+  ): Promise<void> {
     console.log(
       `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: namespace='${namespace}'`,
     );
@@ -60,7 +61,7 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
       onMessage(ev.message, ev.timestamp, ev.device);
     };
     listenerMap.set(onMessage, listener);
-    const manager = getManager(namespace);
+    const manager = await getManager(namespace);
     manager.addEventListener("message", listener);
     console.log(
       `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: done for '${namespace}'`,
@@ -85,11 +86,21 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     messages.value = [];
   }
 
+  function $reset(): void {
+    for (const manager of managerMap.values()) {
+      manager.dispose();
+    }
+    managerMap.clear();
+    listenerMap.clear();
+    messages.value = [];
+  }
+
   return {
     messages,
     addMessage,
     subscribeToNamespace,
     unsubscribeFromNamespace,
     clearMessages,
+    $reset,
   };
 });

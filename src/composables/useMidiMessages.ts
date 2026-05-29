@@ -25,9 +25,9 @@ export function useMidiMessages(
     }
   };
 
-  onMounted(() => {
+  onMounted(async () => {
     const store = useMidiMessagesStore();
-    store.subscribeToNamespace(namespace, listener);
+    await store.subscribeToNamespace(namespace, listener);
   });
 
   onUnmounted(() => {

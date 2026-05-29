@@ -1,4 +1,4 @@
-import { ipcMain, IpcMainInvokeEvent } from "electron";
+import { app, ipcMain, IpcMainInvokeEvent } from "electron";
 
 const ALLOWED_CHANNELS = new Set([
   "app:quit",
@@ -27,6 +27,8 @@ const ALLOWED_CHANNELS = new Set([
   "shell:open-external",
 ]);
 
+const isDev = !app.isPackaged;
+
 export function validateChannel(channel: string): boolean {
   return ALLOWED_CHANNELS.has(channel);
 }
@@ -39,7 +41,7 @@ export function secureHandle(
     throw new Error(`Unauthorized IPC channel: ${channel}`);
   }
   ipcMain.handle(channel, async (event, ...args) => {
-    console.log(`[IPC] handle: ${channel}`);
+    if (isDev) console.log(`[IPC] handle: ${channel}`);
     return handler(event, ...args);
   });
 }
@@ -52,7 +54,20 @@ export function secureOn(
     throw new Error(`Unauthorized IPC channel: ${channel}`);
   }
   ipcMain.on(channel, (event, ...args) => {
-    console.log(`[IPC] on: ${channel}`);
+    const senderUrl = event.senderFrame?.url;
+    if (
+      senderUrl &&
+      senderUrl !== "about:blank" &&
+      !senderUrl.startsWith("file://") &&
+      !senderUrl.startsWith("http://localhost")
+    ) {
+      if (isDev)
+        console.warn(
+          `[IPC] Rejected message on "${channel}" from unauthorized origin: ${senderUrl}`,
+        );
+      return;
+    }
+    if (isDev) console.log(`[IPC] on: ${channel}`);
     handler(event, ...args);
   });
 }

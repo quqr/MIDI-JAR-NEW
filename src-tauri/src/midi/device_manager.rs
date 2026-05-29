@@ -1,6 +1,6 @@
 use midir::{MidiInput, MidiOutput, MidiOutputConnection};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 use tauri::{AppHandle, Emitter};
 
 use super::input_device::{ApiMidiInput, MidiInputDevice};
@@ -13,7 +13,15 @@ const IGNORE_RTMIDI_REGEX: &str = "RtMidi";
 const IGNORE_INPUT_REGEX: &str = "^output-internal";
 const DEDUP_INTERVAL_MS: u128 = 5;
 const DEDUP_CACHE_SIZE: usize = 32;
+
+#[cfg(debug_assertions)]
 const DEBUG_MIDI: bool = true;
+#[cfg(not(debug_assertions))]
+const DEBUG_MIDI: bool = false;
+
+static IGNORE_INPUT_RE: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(IGNORE_INPUT_REGEX).unwrap()
+});
 
 const MODULE_OUTPUTS: &[&str] = &[
     "chord-dictionary",
@@ -135,10 +143,8 @@ impl MidiDeviceManager {
                 if name.contains(IGNORE_RTMIDI_REGEX) {
                     continue;
                 }
-                if let Ok(re) = regex::Regex::new(IGNORE_INPUT_REGEX) {
-                    if re.is_match(&name) {
-                        continue;
-                    }
+                if IGNORE_INPUT_RE.is_match(&name) {
+                    continue;
                 }
 
                 let is_loopback = name.contains("Loopback");

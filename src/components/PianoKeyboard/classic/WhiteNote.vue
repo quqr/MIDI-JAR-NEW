@@ -64,6 +64,4 @@ const props = defineProps<Props>();
   </g>
 </template>
 
-<style>
-@import "./classic.css";
-</style>
+

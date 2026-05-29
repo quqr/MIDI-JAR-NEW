@@ -225,8 +225,9 @@ export function getRandomChordInKey(
   const keyChroma = Note.chroma(keySignature.tonic) ?? 0;
   let chordTypes: ReturnType<typeof ChordType.all> = [];
   let tonic = keySignature.tonic;
+  let retries = 0;
 
-  while (!chordTypes.length) {
+  while (!chordTypes.length && retries < 100) {
     tonic = randomPick(keySignature.scale);
     const chroma = Note.chroma(tonic) ?? 0;
     const scaleChroma = stringRotate(IN_KEY_SCALE_CHROMA, chroma - keyChroma);
@@ -240,6 +241,7 @@ export function getRandomChordInKey(
           chordComplexity &&
         isInKey(chord.chroma),
     );
+    retries++;
   }
 
   const type = randomPick(chordTypes);
@@ -256,9 +258,11 @@ export function generateChords(
     .reduce<TChord[]>((acc, _, index) => {
       let newChord: TChord;
       const previous = acc.length ? acc[acc.length - 1] : null;
+      let retries = 0;
       do {
         newChord = generator(index, acc);
-      } while (previous && previous.symbol === newChord.symbol);
+        retries++;
+      } while (previous && previous.symbol === newChord.symbol && retries < 100);
 
       acc.push(newChord);
       return acc;

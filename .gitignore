@@ -5,3 +5,15 @@
 /src-tauri/target
 /sidecar-midi/node_modules
 /src-tauri/target-check/debug
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

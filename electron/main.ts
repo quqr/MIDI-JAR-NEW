@@ -7,7 +7,7 @@ import {
   dialog,
   shell,
 } from "electron";
-import { join, dirname } from "path";
+import { join, dirname, resolve, sep } from "path";
 import { fileURLToPath } from "url";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { IPC_CHANNELS } from "./ipc";
@@ -17,6 +17,20 @@ import * as midi from "./midi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+function isPathWithinUserData(filePath: string): boolean {
+  const userDataPath = app.getPath("userData");
+  const resolved = resolve(filePath);
+  return resolved.startsWith(userDataPath + sep) || resolved === userDataPath;
+}
+
+function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: unknown[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  }) as T;
+}
 
 const WINDOW_STATE_FILE = "app-data/window-state.json";
 const DEFAULT_WIDTH = 1200;
@@ -175,7 +189,9 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow(windowOptions);
-  mainWindow.webContents.openDevTools();
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.webContents.openDevTools();
+  }
   if (savedState.isMaximized) {
     mainWindow.maximize();
   }
@@ -217,16 +233,19 @@ function createWindow() {
     },
   );
 
+  const debouncedSaveWindowState = debounce(() => {
+    const state = getWindowState();
+    if (state) saveWindowState(state);
+  }, 300);
+
   mainWindow.on("resize", () => {
     if (mainWindow && !mainWindow.isMaximized()) {
-      const state = getWindowState();
-      if (state) saveWindowState(state);
+      debouncedSaveWindowState();
     }
   });
 
   mainWindow.on("move", () => {
-    const state = getWindowState();
-    if (state) saveWindowState(state);
+    debouncedSaveWindowState();
   });
 
   mainWindow.on("maximize", () => {
@@ -334,6 +353,9 @@ secureHandle(
 secureHandle(
   IPC_CHANNELS.FILE_SYSTEM.READ_FILE,
   async (_event, filePath: string) => {
+    if (!isPathWithinUserData(filePath)) {
+      return { success: false, error: "Access denied" };
+    }
     try {
       const content = readFileSync(filePath, "utf-8");
       return { success: true, content };
@@ -346,6 +368,9 @@ secureHandle(
 secureHandle(
   IPC_CHANNELS.FILE_SYSTEM.WRITE_FILE,
   async (_event, filePath: string, content: string) => {
+    if (!isPathWithinUserData(filePath)) {
+      return { success: false, error: "Access denied" };
+    }
     try {
       writeFileSync(filePath, content, "utf-8");
       return { success: true };

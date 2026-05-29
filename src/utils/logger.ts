@@ -33,7 +33,7 @@ class Logger {
       message,
     });
     if (this.logs.value.length > this.maxLogs) {
-      this.logs.value = this.logs.value.slice(-this.maxLogs);
+      this.logs.value.splice(0, this.logs.value.length - this.maxLogs);
     }
   }
 

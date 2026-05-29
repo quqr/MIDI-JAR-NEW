@@ -16,7 +16,11 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
 const REFRESH_LOOP_INTERVAL_MS: u64 = 100;
+
+#[cfg(debug_assertions)]
 const DEBUG_MIDI: bool = true;
+#[cfg(not(debug_assertions))]
+const DEBUG_MIDI: bool = false;
 
 pub struct MidiManager {
     manager: Arc<Mutex<InnerManager>>,

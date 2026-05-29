@@ -7,3 +7,4 @@ export * from "./midi";
 export * from "./note";
 export * from "./chords";
 export * from "./chord-detect";
+export * from "./storage";

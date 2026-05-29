@@ -35,6 +35,4 @@ const props = defineProps<Props>();
   </g>
 </template>
 
-<style>
-@import "./flat.css";
-</style>
+

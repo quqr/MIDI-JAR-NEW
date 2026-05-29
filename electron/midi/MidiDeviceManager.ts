@@ -162,6 +162,10 @@ export class MidiDeviceManager extends EventEmitter {
     const previousWires = this.wires;
     this.wires = [];
 
+    for (let w = 0; w < previousWires.length; w += 1) {
+      previousWires[w].unplug();
+    }
+
     for (let r = 0; r < routes.length; r += 1) {
       const route = routes[r];
       if (route.enabled) {
@@ -171,10 +175,6 @@ export class MidiDeviceManager extends EventEmitter {
         wire.plug(input, output);
         this.wires.push(wire);
       }
-    }
-
-    for (let w = 0; w < previousWires.length; w += 1) {
-      previousWires[w].unplug();
     }
 
     this.emit("refreshed");

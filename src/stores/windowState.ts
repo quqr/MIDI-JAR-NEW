@@ -2,32 +2,20 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { WindowState, defaultWindowState } from "@/types";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
-import { logger } from "@/utils/logger";
+import { loadFromStorage, saveToStorage } from "@/helpers";
 
 const STORAGE_KEY = "midi-jar-window-state";
 
 function loadWindowState(): WindowState {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return {
-        ...defaultWindowState,
-        ...parsed,
-      };
-    }
-  } catch (e) {
-    logger.warn(`Failed to load window state: ${e}`);
-  }
-  return { ...defaultWindowState };
+  return loadFromStorage<WindowState>({
+    key: STORAGE_KEY,
+    defaultValue: defaultWindowState,
+    mergeWithDefault: true,
+  });
 }
 
 function saveWindowState(state: WindowState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    logger.warn(`Failed to save window state: ${e}`);
-  }
+  saveToStorage(STORAGE_KEY, state);
 }
 
 export const useWindowStateStore = defineStore("windowState", () => {

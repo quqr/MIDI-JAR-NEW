@@ -217,7 +217,7 @@
               <div
                 v-for="(_, index) in chord.intervals"
                 :key="index"
-                v-show="index > 0"
+                v-if="index > 0"
                 class="flex flex-row items-center flex-wrap w-full gap-4 p-4 mb-2 bg-base-200/50 rounded-md"
               >
                 <div class="flex-basis-[200px] flex-grow-0">

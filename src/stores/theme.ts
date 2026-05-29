@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref, watchEffect } from "vue";
+import { loadFromStorage, saveToStorage } from "@/helpers";
 import { logger } from "@/utils/logger";
 
 const THEME_STORAGE_KEY = "midi-jar-theme";
@@ -61,7 +62,10 @@ export function isDarkTheme(themeName: string): boolean {
 
 export const useThemeStore = defineStore("theme", () => {
   const defaultTheme = "light";
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || defaultTheme;
+  const savedTheme = loadFromStorage<string>({
+    key: THEME_STORAGE_KEY,
+    defaultValue: defaultTheme,
+  });
   const currentTheme = ref<string>(savedTheme);
 
   const isDark = computed(() => isDarkTheme(currentTheme.value));
@@ -72,7 +76,7 @@ export const useThemeStore = defineStore("theme", () => {
 
   function setTheme(theme: string) {
     currentTheme.value = theme;
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    saveToStorage(THEME_STORAGE_KEY, theme);
     document.documentElement.setAttribute("data-theme", theme);
     logger.info(`主题已切换为: ${theme}`);
   }

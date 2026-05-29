@@ -7,8 +7,21 @@ import { IPC_CHANNELS } from "./ipc";
 // Adding heavy logic here will increase startup time.
 // All heavy operations should be done in the main process.
 
+const ALLOWED_ON_CHANNELS = new Set([
+  "midi:inputs",
+  "midi:outputs",
+  "midi:wires",
+  "midi:message",
+  "midi:activity",
+  "window:on-state-changed",
+  "window:on-maximized-changed",
+  "app:on-ready",
+  "app:on-before-quit",
+]);
+
 contextBridge.exposeInMainWorld("electronAPI", {
   on: (channel: string, callback: (data?: any) => void) => {
+    if (!ALLOWED_ON_CHANNELS.has(channel)) return;
     ipcRenderer.on(channel, (_event, data) => callback(data));
   },
   app: {
@@ -25,15 +38,23 @@ contextBridge.exposeInMainWorld("electronAPI", {
     setAlwaysOnTop: (flag: boolean) =>
       ipcRenderer.invoke(IPC_CHANNELS.WINDOW.SET_ALWAYS_ON_TOP, flag),
     onStateChanged: (callback: (state: any) => void) => {
-      ipcRenderer.on(IPC_CHANNELS.WINDOW.ON_STATE_CHANGED, (_event, state) =>
-        callback(state),
-      );
+      const listener = (_event: any, state: any) => callback(state);
+      ipcRenderer.on(IPC_CHANNELS.WINDOW.ON_STATE_CHANGED, listener);
+      return () =>
+        ipcRenderer.removeListener(
+          IPC_CHANNELS.WINDOW.ON_STATE_CHANGED,
+          listener,
+        );
     },
     onMaximizedChanged: (callback: (maximized: boolean) => void) => {
-      ipcRenderer.on(
-        IPC_CHANNELS.WINDOW.ON_MAXIMIZED_CHANGED,
-        (_event, maximized: boolean) => callback(maximized),
-      );
+      const listener = (_event: any, maximized: boolean) =>
+        callback(maximized);
+      ipcRenderer.on(IPC_CHANNELS.WINDOW.ON_MAXIMIZED_CHANGED, listener);
+      return () =>
+        ipcRenderer.removeListener(
+          IPC_CHANNELS.WINDOW.ON_MAXIMIZED_CHANGED,
+          listener,
+        );
     },
     startDrag: () => {
       ipcRenderer.send(IPC_CHANNELS.WINDOW.START_DRAG);

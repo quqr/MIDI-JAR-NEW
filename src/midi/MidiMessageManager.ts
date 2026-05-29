@@ -1,5 +1,11 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
+function debugLog(...args: unknown[]) {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+}
+
 export class MidiMessageEvent extends Event {
   message: number[];
   timestamp: number;
@@ -60,7 +66,7 @@ export class InternalMidiMessages extends MidiMessageManager {
 
   constructor(namespace: string) {
     super(namespace);
-    console.log(
+    debugLog(
       `[MIDI_DEBUG] InternalMidiMessages constructor: namespace='${namespace}'`,
     );
   }
@@ -75,7 +81,7 @@ export class InternalMidiMessages extends MidiMessageManager {
     }
 
     this.initializing = true;
-    console.log(
+    debugLog(
       `[MIDI_DEBUG] InternalMidiMessages: initializing listener for '${this.namespace}'`,
     );
 
@@ -98,7 +104,7 @@ export class InternalMidiMessages extends MidiMessageManager {
       const unlisten = await unlistenPromise;
 
       if (this.disposed) {
-        console.log(
+        debugLog(
           `[MIDI_DEBUG] InternalMidiMessages: disposed during initialization for '${this.namespace}', cleaning up`,
         );
         unlisten();
@@ -106,7 +112,7 @@ export class InternalMidiMessages extends MidiMessageManager {
         return;
       }
 
-      console.log(
+      debugLog(
         `[MIDI_DEBUG] InternalMidiMessages: listener registered for '${this.namespace}'`,
       );
       this.offListener = unlisten;
@@ -123,7 +129,7 @@ export class InternalMidiMessages extends MidiMessageManager {
   }
 
   private handleMessage(message: number[], timestamp: number, device: string) {
-    console.log(
+    debugLog(
       `[MIDI_DEBUG] InternalMidiMessages.handleMessage: namespace='${this.namespace}' message=${JSON.stringify(message)} device='${device}'`,
     );
     this.dispatchEvent(
@@ -137,7 +143,7 @@ export class InternalMidiMessages extends MidiMessageManager {
     if (this.offListener) {
       this.offListener();
       this.offListener = null;
-      console.log(
+      debugLog(
         `[MIDI_DEBUG] InternalMidiMessages: listener disposed for '${this.namespace}'`,
       );
     }

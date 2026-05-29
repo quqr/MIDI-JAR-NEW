@@ -138,7 +138,7 @@ async fn open_file_dialog(
     app: AppHandle,
 ) -> Result<Option<Vec<String>>, String> {
     use tauri_plugin_dialog::DialogExt;
-    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).add_filter("All Files", &["*"]).blocking_pick_files();
+    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).add_filter("All Files", &["*"]).pick_files().await;
     Ok(result.map(|paths| paths.iter().map(|p| p.to_string()).collect()))
 }
 
@@ -147,22 +147,39 @@ async fn save_file_dialog(
     app: AppHandle,
 ) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
-    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).set_file_name("untitled.mid").blocking_pick_file();
+    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).set_file_name("untitled.mid").pick_file().await;
     Ok(result.map(|p| p.to_string()))
 }
 
 #[tauri::command]
-fn read_file(file_path: String) -> Result<String, String> {
-    fs::read_to_string(&file_path).map_err(|e| e.to_string())
+fn read_file(file_path: String, app: AppHandle) -> Result<String, String> {
+    let allowed_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let resolved = std::path::Path::new(&file_path)
+        .canonicalize()
+        .map_err(|e| format!("invalid path: {}", e))?;
+    if !resolved.starts_with(&allowed_dir) {
+        return Err("access denied: path outside app data directory".into());
+    }
+    fs::read_to_string(&resolved).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn write_file(file_path: String, content: String) -> Result<(), String> {
-    fs::write(&file_path, content).map_err(|e| e.to_string())
+fn write_file(file_path: String, content: String, app: AppHandle) -> Result<(), String> {
+    let allowed_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let resolved = std::path::Path::new(&file_path)
+        .canonicalize()
+        .map_err(|e| format!("invalid path: {}", e))?;
+    if !resolved.starts_with(&allowed_dir) {
+        return Err("access denied: path outside app data directory".into());
+    }
+    fs::write(&resolved, content).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 async fn open_external(url: String, app: AppHandle) -> Result<(), String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("access denied: only http:// and https:// URLs are allowed".into());
+    }
     use tauri_plugin_opener::OpenerExt;
     app.opener().open_url(url, None::<String>).map_err(|e| e.to_string())
 }
