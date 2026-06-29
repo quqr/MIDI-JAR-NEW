@@ -11,9 +11,13 @@ interface Props {
   keys: ClassicKeyboardKeys;
   sizes: ClassicKeyboardSizes;
   keyboard: KeyboardSettings;
+  clickable?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  clickable: false,
+});
+const emit = defineEmits<{ click: [midi: number] }>();
 </script>
 
 <template>
@@ -32,6 +36,8 @@ const props = defineProps<Props>();
       :offset="noteDef.offset"
       :key-name="props.keyboard.keyName"
       :sizes="props.sizes"
+      :clickable="props.clickable"
+      @click="emit('click', $event)"
     />
     <BlackNote
       v-for="noteDef in props.keys.blacks"
@@ -43,8 +49,8 @@ const props = defineProps<Props>();
       :offset="noteDef.offset"
       :key-name="props.keyboard.keyName"
       :sizes="props.sizes"
+      :clickable="props.clickable"
+      @click="emit('click', $event)"
     />
   </g>
 </template>
-
-

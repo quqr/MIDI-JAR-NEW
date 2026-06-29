@@ -15,7 +15,11 @@ export function loadFromStorage<T>({
     const stored = localStorage.getItem(key);
     if (stored) {
       const parsed = JSON.parse(stored) as T;
-      if (mergeWithDefault && typeof defaultValue === "object" && defaultValue !== null) {
+      if (
+        mergeWithDefault &&
+        typeof defaultValue === "object" &&
+        defaultValue !== null
+      ) {
         return { ...defaultValue, ...parsed } as T;
       }
       return parsed;

@@ -1,6 +1,8 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
-    <div class="flex items-center border-b px-2 py-1 gap-2 flex-wrap flex-shrink-0">
+    <div
+      class="flex items-center border-b px-2 py-1 gap-2 flex-wrap flex-shrink-0"
+    >
       <button
         class="btn btn-sm"
         :class="displayTimingClock ? 'btn-primary' : 'btn-outline'"
@@ -136,10 +138,13 @@ watch(
   async () => {
     if (autoScroll.value && logContainer.value) {
       await nextTick();
-      logContainer.value.scrollTo({ top: logContainer.value.scrollHeight, behavior: 'instant' });
+      logContainer.value.scrollTo({
+        top: logContainer.value.scrollHeight,
+        behavior: "instant",
+      });
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 const clearLogs = () => {

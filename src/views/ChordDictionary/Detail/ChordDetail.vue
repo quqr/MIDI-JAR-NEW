@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="detailRef"
-    class="flex flex-col items-center p-4"
-  >
+  <div ref="detailRef" class="flex flex-col items-center p-4">
     <EmptyChordDetail
       v-if="!chordName || !chord"
       :chord-name="chordName ?? undefined"
@@ -41,14 +38,37 @@
       </div>
 
       <!-- Core: Piano keyboard -->
+      <!-- Interactive toolbar -->
+      <div
+        v-if="selectedMidis.length > 0"
+        class="w-full flex items-center gap-2 mb-2"
+      >
+        <button class="btn btn-ghost btn-xs" @click="clearSelected">
+          {{ t("chordDictionary.clearSelected") }}
+        </button>
+        <span
+          v-if="selectedMidis.length === 1"
+          class="text-xs text-base-content/60"
+        >
+          {{ t("chordDictionary.singleNoteHint") }}
+        </span>
+        <span
+          v-else-if="selectedMidis.length >= 2 && !detectedChordName"
+          class="badge badge-warning badge-sm"
+        >
+          {{ t("chordDictionary.unrecognizedChord") }}
+        </span>
+      </div>
       <PianoKeyboard
         class="w-full my-4 p-3 sm:p-4 bg-base-300/30 rounded-lg"
         :targets="midi"
-        :played="playedMidiNotes"
+        :played="combinedPlayedMidi"
         :sustained="sustainedMidiNotes"
         :midi="midiNotes"
         :chord="chord"
         :keyboard="keyboardSettings"
+        :clickable="true"
+        @note-click="onNoteClick"
       />
 
       <!-- Core: Intervals (full width) -->
@@ -68,7 +88,9 @@
       </section>
 
       <!-- Core: Notation (full width) -->
-      <section class="w-full p-3 bg-base-300/30 rounded-lg mb-4 overflow-visible">
+      <section
+        class="w-full p-3 bg-base-300/30 rounded-lg mb-4 overflow-visible"
+      >
         <h3
           class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
         >
@@ -129,9 +151,7 @@
                 <button
                   class="btn btn-xs btn-ghost btn-circle"
                   :class="
-                    isPreferred(index) || isDefault(index)
-                      ? 'text-warning'
-                      : ''
+                    isPreferred(index) || isDefault(index) ? 'text-warning' : ''
                   "
                   :title="
                     isPreferred(index)
@@ -143,9 +163,7 @@
                       ? t('chordDictionary.unsetAsPreferredAlias', { alias })
                       : t('chordDictionary.setAsPreferredAlias', { alias })
                   "
-                  @click="
-                    toggleAlias(isPreferred(index), chord.aliases[index])
-                  "
+                  @click="toggleAlias(isPreferred(index), chord.aliases[index])"
                 >
                   <Icon
                     name="star"
@@ -164,10 +182,7 @@
       </div>
 
       <!-- Tertiary: Other interpretations - collapsed by default -->
-      <div
-        v-if="alternativeChords.length"
-        class="w-full mb-4"
-      >
+      <div v-if="alternativeChords.length" class="w-full mb-4">
         <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
           <summary
             class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
@@ -198,58 +213,55 @@
             {{ t("chordDictionary.inversions") }}
           </summary>
           <div class="collapse-content pt-0 px-2">
-            <template
-              v-for="(_, index) in chord.intervals"
-              :key="index"
-            >
+            <template v-for="(_, index) in chord.intervals" :key="index">
               <div
                 v-if="index > 0"
                 class="flex flex-row items-center flex-wrap w-full gap-3 p-3 mb-2 bg-base-300/30 rounded-lg"
               >
-              <div class="flex-basis-[200px] flex-grow-0">
-                <ChordName
+                <div class="flex-basis-[200px] flex-grow-0">
+                  <ChordName
+                    :chord="getSlashChord(index)"
+                    class="text-2xl font-semibold"
+                  />
+                  <div class="text-xs italic text-base-content/70">
+                    {{
+                      t("chordDictionary.inversionOn", {
+                        interval: getInterval(index),
+                      })
+                    }}
+                  </div>
+                  <div v-if="getAltChord(index)" class="text-xs mt-2">
+                    {{ t("chordDictionary.seeAlso") }}
+                    <a
+                      href="#"
+                      class="text-primary hover:underline"
+                      @click.prevent="
+                        goToChordDetail(
+                          getAltChord(index)!.tonic +
+                            getAltChord(index)!.aliases[0],
+                        )
+                      "
+                    >
+                      {{ getAltChordName(index) }}
+                    </a>
+                  </div>
+                </div>
+                <PianoKeyboard
+                  class="flex-grow"
+                  :played="getInversionMidi(index)"
+                  :midi="getInversionMidi(index)"
                   :chord="getSlashChord(index)"
-                  class="text-2xl font-semibold"
+                  :keyboard="keyboardSettings"
                 />
-                <div class="text-xs italic text-base-content/70">
-                  {{
-                    t("chordDictionary.inversionOn", {
-                      interval: getInterval(index),
-                    })
-                  }}
-                </div>
-                <div v-if="getAltChord(index)" class="text-xs mt-2">
-                  {{ t("chordDictionary.seeAlso") }}
-                  <a
-                    href="#"
-                    class="text-primary hover:underline"
-                    @click.prevent="
-                      goToChordDetail(
-                        getAltChord(index)!.tonic +
-                          getAltChord(index)!.aliases[0],
-                      )
-                    "
-                  >
-                    {{ getAltChordName(index) }}
-                  </a>
-                </div>
+                <Notation
+                  class="mx-auto"
+                  :midi-notes="getInversionMidi(index)"
+                  :key-signature="keySignature"
+                  :staff-clef="staffClef"
+                  :staff-transpose="staffTranspose"
+                  :display="notationDisplay"
+                />
               </div>
-              <PianoKeyboard
-                class="flex-grow"
-                :played="getInversionMidi(index)"
-                :midi="getInversionMidi(index)"
-                :chord="getSlashChord(index)"
-                :keyboard="keyboardSettings"
-              />
-              <Notation
-                class="mx-auto"
-                :midi-notes="getInversionMidi(index)"
-                :key-signature="keySignature"
-                :staff-clef="staffClef"
-                :staff-transpose="staffTranspose"
-                :display="notationDisplay"
-              />
-            </div>
             </template>
           </div>
         </details>
@@ -379,6 +391,8 @@ const {
 } = useChordDictionaryModule();
 
 const detailRef = ref<HTMLElement | null>(null);
+const selectedMidis = ref<number[]>([]);
+const detectedChordName = ref<string | null>(null);
 
 const chordName = computed(() => route.params.chordName as string | undefined);
 
@@ -447,12 +461,52 @@ const keyboardSettings = computed(() => KEYBOARD_SETTINGS);
 
 const notationLabels = computed(() => NOTATION_LABELS);
 
+const combinedPlayedMidi = computed(() => {
+  const base = playedMidiNotes || [];
+  return [...new Set([...base, ...selectedMidis.value])];
+});
+
 watch(chordName, async () => {
   await nextTick();
   if (detailRef.value) {
     detailRef.value.scrollIntoView({ behavior: "smooth" });
   }
 });
+
+watch(chordName, () => {
+  selectedMidis.value = [];
+  detectedChordName.value = null;
+});
+
+function onNoteClick(midi: number) {
+  const index = selectedMidis.value.indexOf(midi);
+  if (index >= 0) {
+    selectedMidis.value.splice(index, 1);
+  } else {
+    selectedMidis.value.push(midi);
+  }
+  detectChord();
+}
+
+function detectChord() {
+  if (selectedMidis.value.length < 2) {
+    detectedChordName.value = null;
+    return;
+  }
+  const noteNames = selectedMidis.value.map((midi) => Note.fromMidi(midi));
+  const detected = Chord.detect(noteNames);
+  if (detected.length > 0) {
+    detectedChordName.value = detected[0];
+    goToChordDetail(detected[0]);
+  } else {
+    detectedChordName.value = null;
+  }
+}
+
+function clearSelected() {
+  selectedMidis.value = [];
+  detectedChordName.value = null;
+}
 
 function goToChordDetail(name: string) {
   router.push({ path: `/chord-dictionary/${encodeURIComponent(name)}` });

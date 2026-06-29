@@ -11,7 +11,7 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-  <g class="labels" transform="translate(0,0)">
+  <g class="labels pointer-events-none" transform="translate(0,0)">
     <text
       v-for="noteDef in props.keys.labels"
       :key="noteDef.midi"
@@ -22,5 +22,3 @@ const props = defineProps<Props>();
     />
   </g>
 </template>
-
-

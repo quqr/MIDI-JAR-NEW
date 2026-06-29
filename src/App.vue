@@ -12,7 +12,10 @@ const isWidgetRoute = computed(() => route.name === "widget");
 <template>
   <CustomCursor v-if="!isWidgetRoute" />
   <RouterView v-if="isWidgetRoute" />
-  <div v-else class="grid grid-rows-[auto_1fr_auto] h-screen w-screen bg-base-300">
+  <div
+    v-else
+    class="grid grid-rows-[auto_1fr_auto] h-screen w-screen bg-base-300"
+  >
     <AppNavbar />
     <RouterView />
   </div>

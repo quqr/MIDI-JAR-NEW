@@ -36,10 +36,12 @@ function fuzzyScore(query: string, target: string): number {
   if (target === query) return 0;
 
   // Starts with
-  if (target.startsWith(query)) return 0.1 + (target.length - query.length) * 0.05;
+  if (target.startsWith(query))
+    return 0.1 + (target.length - query.length) * 0.05;
 
   // Contains
-  if (target.includes(query)) return 0.5 + (target.length - query.length) * 0.05;
+  if (target.includes(query))
+    return 0.5 + (target.length - query.length) * 0.05;
 
   // Levenshtein distance normalized by target length
   const dist = levenshtein([...query], [...target]);
@@ -58,9 +60,9 @@ function fuzzyScore(query: string, target: string): number {
 export function searchChordTypes(query: string): ChordSearchResult[] {
   if (!query || query.length < 1) return [];
 
-  const q = query.toLowerCase().replace(/[#♯b♭]/g, (m) =>
-    m === "♯" || m === "#" ? "#" : "b",
-  );
+  const q = query
+    .toLowerCase()
+    .replace(/[#♯b♭]/g, (m) => (m === "♯" || m === "#" ? "#" : "b"));
   const results: ChordSearchResult[] = [];
   const seen = new Set<string>();
 
@@ -102,7 +104,10 @@ export function searchChordTypes(query: string): ChordSearchResult[] {
         seen.add(key);
         results.push({
           chord,
-          parts: ["C" + bestAlias.slice(0, q.length), bestAlias.slice(q.length) || bestAlias] as [string, string],
+          parts: [
+            "C" + bestAlias.slice(0, q.length),
+            bestAlias.slice(q.length) || bestAlias,
+          ] as [string, string],
           score: bestScore,
         });
       }
@@ -191,7 +196,8 @@ export function searchChords(searchText: string): ChordSearchResult[] {
             if (!seen.has(key)) {
               seen.add(key);
               const parts: [string, string] = [
-                tonic + bestAlias.slice(0, Math.min(bestAlias.length, type.length)),
+                tonic +
+                  bestAlias.slice(0, Math.min(bestAlias.length, type.length)),
                 bestAlias,
               ];
               results.push({ chord, parts, score: bestScore });

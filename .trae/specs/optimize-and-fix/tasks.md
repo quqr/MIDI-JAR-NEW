@@ -129,6 +129,7 @@
   - [ ] 22.3: 修复 `ChordIntervals.vue` 中无效的空 class 绑定
 
 # Task Dependencies
+
 - [Task 7] 依赖 [Task 6]（MIDI 消息接收修复后再实现物理输出）
 - [Task 11] 依赖 [Task 12]（PianoKeyboard 重构前先优化消息缓冲区）
 - [Task 20] 可与 [Task 21] 并行

@@ -51,6 +51,7 @@ interface Props {
   targets?: number[] | null;
   exactTargets?: boolean;
   chord?: Chord;
+  clickable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -88,7 +89,10 @@ const props = withDefaults(defineProps<Props>(), {
   targets: null,
   exactTargets: false,
   chord: undefined,
+  clickable: false,
 });
+
+const emit = defineEmits<{ noteClick: [midi: number] }>();
 
 const pianoRef = ref<HTMLDivElement | null>(null);
 
@@ -511,6 +515,8 @@ const flatKeys = computed(() => buildFlatKeys());
           :keys="classicKeys.keys"
           :sizes="classicKeys.sizes"
           :keyboard="props.keyboard"
+          :clickable="props.clickable"
+          @click="emit('noteClick', $event)"
         />
       </svg>
     </template>
@@ -535,6 +541,8 @@ const flatKeys = computed(() => buildFlatKeys());
           :notes="flatKeys.keys.notes"
           :sizes="flatKeys.sizes"
           :keyboard="props.keyboard"
+          :clickable="props.clickable"
+          @click="emit('noteClick', $event)"
         />
       </svg>
     </template>

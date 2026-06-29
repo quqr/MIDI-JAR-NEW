@@ -9,15 +9,22 @@ interface Props {
   offset: number;
   keyName: "none" | "octave" | "pitchClass" | "note";
   sizes: ClassicKeyboardSizes;
+  clickable?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  clickable: false,
+});
+const emit = defineEmits<{ click: [midi: number] }>();
 </script>
 
 <template>
   <g
     class="note white"
-    :class="`note-${props.name} chroma-${props.chroma} midi-${props.midi}`"
+    :class="[
+      `note-${props.name} chroma-${props.chroma} midi-${props.midi}`,
+      { 'cursor-pointer': props.clickable },
+    ]"
     :transform="`translate(${props.offset},0)`"
   >
     <rect
@@ -37,6 +44,7 @@ const props = defineProps<Props>();
       :y="-props.sizes.RADIUS"
       :rx="props.sizes.RADIUS"
       :ry="props.sizes.RADIUS"
+      @click="emit('click', props.midi)"
     />
     <circle
       class="pianoTonic"
@@ -63,5 +71,3 @@ const props = defineProps<Props>();
     </text>
   </g>
 </template>
-
-

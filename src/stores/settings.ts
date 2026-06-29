@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import { ref, watch, computed } from "vue";
 import { Settings, defaultSettings } from "@/types";
-import { mergeDeep, setValueByPath, loadFromStorage, saveToStorage } from "@/helpers";
+import {
+  mergeDeep,
+  setValueByPath,
+  loadFromStorage,
+  saveToStorage,
+} from "@/helpers";
 import { debounce } from "@/helpers/debounce";
 
 const STORAGE_KEY = "midi-jar-settings";

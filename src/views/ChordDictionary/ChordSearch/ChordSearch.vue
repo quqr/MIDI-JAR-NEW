@@ -30,7 +30,9 @@
 
     <Teleport to="body">
       <div
-        v-if="menuOpen && (searchResults.length || previousChords.length || search)"
+        v-if="
+          menuOpen && (searchResults.length || previousChords.length || search)
+        "
         class="fixed z-[9999] card bg-base-100 shadow-xl w-72"
         :style="dropdownStyle"
       >

@@ -37,7 +37,10 @@
           :keyboard="keyboardSettings as any"
         />
       </div>
-      <div v-else-if="isNotation" class="h-full w-full flex items-center justify-center p-1">
+      <div
+        v-else-if="isNotation"
+        class="h-full w-full flex items-center justify-center p-1"
+      >
         <Notation
           :midiNotes="midiNotes as number[]"
           :keySignature="keySignature"
@@ -48,13 +51,29 @@
           :style="notationStyle"
         />
       </div>
-      <div v-else-if="isChord" ref="chordContainerRef" class="h-full w-full flex items-center justify-center p-2">
+      <div
+        v-else-if="isChord"
+        ref="chordContainerRef"
+        class="h-full w-full flex items-center justify-center p-2"
+      >
         <div class="flex items-center justify-center font-bold chord-text">
-          <ChordNameLink :chord="chords[0] as any" :notation="chordNotation" :highlightAlterations="highlightAlterations" />
+          <ChordNameLink
+            :chord="chords[0] as any"
+            :notation="chordNotation"
+            :highlightAlterations="highlightAlterations"
+          />
         </div>
       </div>
-      <div v-else-if="isIntervals" ref="intervalsContainerRef" class="h-full w-full flex items-center justify-center p-2 interval-text">
-        <ChordIntervals :intervals="chords[0]?.intervals as unknown as string[]" :pitchClasses="pitchClasses as unknown as string[]" :tonic="chords[0]?.tonic" />
+      <div
+        v-else-if="isIntervals"
+        ref="intervalsContainerRef"
+        class="h-full w-full flex items-center justify-center p-2 interval-text"
+      >
+        <ChordIntervals
+          :intervals="chords[0]?.intervals as unknown as string[]"
+          :pitchClasses="pitchClasses as unknown as string[]"
+          :tonic="chords[0]?.tonic"
+        />
       </div>
     </div>
   </div>
@@ -81,7 +100,9 @@ const props = defineProps<{
 }>();
 
 const type = computed(() => (route.params.type as WidgetType) || props.type);
-const moduleId = computed(() => (route.params.moduleId as string) || props.moduleId);
+const moduleId = computed(
+  () => (route.params.moduleId as string) || props.moduleId,
+);
 
 const isKeyboard = computed(() => type.value === "keyboard");
 const isNotation = computed(() => type.value === "notation");
@@ -104,18 +125,34 @@ let savedOpacity = 1;
 let textResizeObserver: ResizeObserver | null = null;
 
 const moduleSettings = computed(() => {
-  return settingsStore.settings.chordDisplay.find((m: any) => m.id === moduleId.value);
+  return settingsStore.settings.chordDisplay.find(
+    (m: any) => m.id === moduleId.value,
+  );
 });
 
 const keyboardSettings = computed(() => moduleSettings.value?.keyboard ?? {});
-const chordNotation = computed(() => moduleSettings.value?.chordNotation ?? "preferred");
-const highlightAlterations = computed(() => moduleSettings.value?.highlightAlterations ?? true);
+const chordNotation = computed(
+  () => moduleSettings.value?.chordNotation ?? "preferred",
+);
+const highlightAlterations = computed(
+  () => moduleSettings.value?.highlightAlterations ?? true,
+);
 
-const notationDisplay = computed(() => settingsStore.settings.notation?.display ?? {});
-const notationLayout = computed(() => settingsStore.settings.notation?.layout ?? {});
-const notationStyle = computed(() => settingsStore.settings.notation?.style ?? {});
-const staffClef = computed(() => settingsStore.settings.notation?.staffClef ?? "treble");
-const staffTranspose = computed(() => settingsStore.settings.notation?.staffTranspose ?? 0);
+const notationDisplay = computed(
+  () => settingsStore.settings.notation?.display ?? {},
+);
+const notationLayout = computed(
+  () => settingsStore.settings.notation?.layout ?? {},
+);
+const notationStyle = computed(
+  () => settingsStore.settings.notation?.style ?? {},
+);
+const staffClef = computed(
+  () => settingsStore.settings.notation?.staffClef ?? "treble",
+);
+const staffTranspose = computed(
+  () => settingsStore.settings.notation?.staffTranspose ?? 0,
+);
 
 const {
   midiNotes,
@@ -234,7 +271,9 @@ function onWindowFocus() {
 }
 
 function setupTextResizeObserver() {
-  const target = isChord.value ? chordContainerRef.value : intervalsContainerRef.value;
+  const target = isChord.value
+    ? chordContainerRef.value
+    : intervalsContainerRef.value;
   if (!target || textResizeObserver) return;
 
   textResizeObserver = new ResizeObserver((entries) => {

@@ -17,11 +17,15 @@
 
     <!-- Recent chords -->
     <section v-if="recentChords.length" class="w-full mb-6">
-      <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 flex items-center gap-2">
+      <h3
+        class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 flex items-center gap-2"
+      >
         <Icon name="clock" :size="14" />
         {{ t("chordDictionary.previousChords") }}
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <div
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
+      >
         <button
           v-for="chord in recentChords"
           :key="chord.aliases[0]"
@@ -39,10 +43,14 @@
       :key="category.label"
       class="w-full mb-5"
     >
-      <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2">
+      <h3
+        class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2"
+      >
         {{ category.label }}
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <div
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
+      >
         <button
           v-for="entry in category.chords"
           :key="entry.name"
@@ -50,7 +58,9 @@
           @click="goToChord(entry.name)"
         >
           <span class="truncate font-medium text-sm">{{ entry.display }}</span>
-          <span class="text-[10px] text-base-content/50 font-mono ml-auto whitespace-nowrap">
+          <span
+            class="text-[10px] text-base-content/50 font-mono ml-auto whitespace-nowrap"
+          >
             {{ entry.intervals }}
           </span>
         </button>

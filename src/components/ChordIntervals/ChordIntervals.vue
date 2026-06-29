@@ -16,7 +16,9 @@
       </template>
       <template v-else>
         <span class="text-xs text-base-content/60">{{ interval }}</span>
-        <span class="text-xs text-base-content/60">{{ OCTAVE_INTERVALS[index] }}</span>
+        <span class="text-xs text-base-content/60">{{
+          OCTAVE_INTERVALS[index]
+        }}</span>
       </template>
     </div>
   </div>

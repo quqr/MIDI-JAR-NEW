@@ -22,5 +22,3 @@ const props = defineProps<Props>();
     />
   </g>
 </template>
-
-

@@ -19,19 +19,11 @@
           :to="crumb.to"
           class="breadcrumb-nav__link"
         >
-          <Icon
-            v-if="crumb.icon"
-            :name="mapMdiToIcon(crumb.icon)"
-            :size="14"
-          />
+          <Icon v-if="crumb.icon" :name="mapMdiToIcon(crumb.icon)" :size="14" />
           <span class="breadcrumb-nav__text">{{ crumb.title }}</span>
         </RouterLink>
         <span v-else class="breadcrumb-nav__current" aria-current="page">
-          <Icon
-            v-if="crumb.icon"
-            :name="mapMdiToIcon(crumb.icon)"
-            :size="14"
-          />
+          <Icon v-if="crumb.icon" :name="mapMdiToIcon(crumb.icon)" :size="14" />
           <span class="breadcrumb-nav__text">{{ crumb.title }}</span>
         </span>
       </li>

@@ -1,5 +1,7 @@
 <template>
-  <div class="chord-dictionary-module-provider flex flex-col flex-1 min-h-0 overflow-hidden">
+  <div
+    class="chord-dictionary-module-provider flex flex-col flex-1 min-h-0 overflow-hidden"
+  >
     <slot />
   </div>
 </template>

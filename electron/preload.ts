@@ -47,8 +47,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
         );
     },
     onMaximizedChanged: (callback: (maximized: boolean) => void) => {
-      const listener = (_event: any, maximized: boolean) =>
-        callback(maximized);
+      const listener = (_event: any, maximized: boolean) => callback(maximized);
       ipcRenderer.on(IPC_CHANNELS.WINDOW.ON_MAXIMIZED_CHANGED, listener);
       return () =>
         ipcRenderer.removeListener(

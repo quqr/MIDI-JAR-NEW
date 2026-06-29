@@ -217,20 +217,26 @@ const highlightAlterations = computed(
   () => moduleSettings.value?.highlightAlterations ?? false,
 );
 const displayKeyboard = computed(
-  () => !isKeyboardPoppedOut.value && (moduleSettings.value?.displayKeyboard ?? true),
+  () =>
+    !isKeyboardPoppedOut.value &&
+    (moduleSettings.value?.displayKeyboard ?? true),
 );
 const displayChord = computed(
   () => !isChordPoppedOut.value && (moduleSettings.value?.displayChord ?? true),
 );
 const displayName = computed(() => moduleSettings.value?.displayName ?? false);
 const displayNotation = computed(
-  () => !isNotationPoppedOut.value && (moduleSettings.value?.displayNotation ?? false),
+  () =>
+    !isNotationPoppedOut.value &&
+    (moduleSettings.value?.displayNotation ?? false),
 );
 const displayAltChords = computed(
   () => moduleSettings.value?.displayAltChords ?? true,
 );
 const displayIntervals = computed(
-  () => !isIntervalsPoppedOut.value && (moduleSettings.value?.displayIntervals ?? false),
+  () =>
+    !isIntervalsPoppedOut.value &&
+    (moduleSettings.value?.displayIntervals ?? false),
 );
 const keyboard = computed(() => moduleSettings.value?.keyboard);
 

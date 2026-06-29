@@ -14,11 +14,7 @@
             class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
             aria-hidden="true"
           >
-            <Icon
-              :name="mapMdiToIcon(icon)"
-              class="w-7 h-7"
-              :size="28"
-            />
+            <Icon :name="mapMdiToIcon(icon)" class="w-7 h-7" :size="28" />
           </div>
 
           <div class="flex-1 min-w-0">
@@ -34,11 +30,7 @@
                 :aria-label="$t('common.settings')"
                 @click.stop
               >
-                <Icon
-                  name="settings"
-                  :size="16"
-                  aria-hidden="true"
-                />
+                <Icon name="settings" :size="16" aria-hidden="true" />
               </RouterLink>
             </div>
 

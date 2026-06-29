@@ -158,10 +158,7 @@ const { chords, pitchClasses, clearNotes } = useNotes({
   accidentals: () => settingsStore.settings.notation.accidentals,
   namespace: "chord-quiz",
 });
-const { games, gameState } = useQuiz(
-  pitchClasses as any,
-  chords as any,
-);
+const { games, gameState } = useQuiz(pitchClasses as any, chords as any);
 
 const statusColors: Record<string, string> = {
   none: "text-base-content",

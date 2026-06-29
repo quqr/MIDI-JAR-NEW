@@ -1,6 +1,7 @@
 # Checklist
 
 ## 阶段一：严重安全漏洞修复
+
 - [ ] Electron 文件读写 API 添加路径白名单验证，限制为应用数据目录
 - [ ] Tauri capabilities 文件系统权限添加 scope 限制
 - [ ] Tauri lib.rs 文件读写命令添加路径验证逻辑
@@ -16,6 +17,7 @@
 - [ ] `.gitignore` 添加 `.env`、证书文件等敏感文件模式
 
 ## 阶段二：严重功能 Bug 修复
+
 - [ ] `InternalMidiMessages` 在 `getManager` 创建后调用 `initialize()`，MIDI 消息可正常接收
 - [ ] Rust 端物理 MIDI 输出路由消息转发功能已实现
 - [ ] `generateChords` 和 `getRandomChordInKey` 添加最大重试次数，无无限循环风险
@@ -24,6 +26,7 @@
 - [ ] Electron/Tauri 双后端 MIDI API 行为统一，`getInputs`/`getOutputs`/`getWires` 均返回 Promise
 
 ## 阶段三：性能优化
+
 - [ ] settings.ts、windowState.ts、midiRouting.ts 的 localStorage 写入已添加 debounce
 - [ ] Electron main.ts 的 resize/move 事件已添加 debounce
 - [ ] Rust 端 Resized 窗口事件已添加防抖
@@ -42,6 +45,7 @@
 - [ ] 生产环境所有 `console.log`/`eprintln!` 调试输出已移除或条件化
 
 ## 阶段四：中等优先级 Bug 修复
+
 - [ ] ChordDictionary `watchEffect` 已改为精确 `watch` + 防抖
 - [ ] `useMidiLatency` 中 `onUnmounted` 已移至 `setup` 阶段同步注册
 - [ ] CircleFifths `v-if`+`v-for` 已重构为 `<template v-if>` 包裹
@@ -59,6 +63,7 @@
 - [ ] CircleFifths `DEGREE_NAMES`/`MODE_NAMES` 已改为响应式，语言切换后正确更新
 
 ## 阶段五：类型安全与代码质量
+
 - [ ] `tauri.d.ts` 中 14 处 `any` 已替换为具体类型
 - [ ] `index.ts` 与 `settings.ts` 重复类型定义已合并
 - [ ] `MidiMessageType`/`MidiMessageTuple`/`MidiMessage` 重复定义已统一

@@ -262,7 +262,11 @@ export function generateChords(
       do {
         newChord = generator(index, acc);
         retries++;
-      } while (previous && previous.symbol === newChord.symbol && retries < 100);
+      } while (
+        previous &&
+        previous.symbol === newChord.symbol &&
+        retries < 100
+      );
 
       acc.push(newChord);
       return acc;

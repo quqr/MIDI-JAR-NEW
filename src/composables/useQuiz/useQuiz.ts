@@ -11,7 +11,10 @@ import {
   generateGame,
 } from "./utils";
 
-export function useQuiz(pitchClasses: Ref<string[]>, chords: Ref<(TChord | null)[]>) {
+export function useQuiz(
+  pitchClasses: Ref<string[]>,
+  chords: Ref<(TChord | null)[]>,
+) {
   const settingsStore = useSettingsStore();
 
   const parameters = ref<Parameters>({
@@ -85,7 +88,10 @@ export function useQuiz(pitchClasses: Ref<string[]>, chords: Ref<(TChord | null)
       currentGame.score += gameState.value.score;
       currentGame.played.push(gameState.value.chord);
 
-      if (gameState.value.index + 2 >= currentGame.chords.length && !newGames[gameState.value.gameIndex + 1]) {
+      if (
+        gameState.value.index + 2 >= currentGame.chords.length &&
+        !newGames[gameState.value.gameIndex + 1]
+      ) {
         const game = generateGame(parameters.value);
         if (game) {
           newGames.push(game);
@@ -117,7 +123,10 @@ export function useQuiz(pitchClasses: Ref<string[]>, chords: Ref<(TChord | null)
   }
 
   watch(
-    [() => settingsStore.settings.chordQuiz, () => settingsStore.settings.notation],
+    [
+      () => settingsStore.settings.chordQuiz,
+      () => settingsStore.settings.notation,
+    ],
     () => {
       parameters.value = {
         mode: settingsStore.settings.chordQuiz.mode,

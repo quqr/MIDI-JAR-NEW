@@ -32,11 +32,11 @@ async function setupTauriListeners() {
     return;
   }
 
-            // 监听 contextmenu 事件（即右键菜单），并阻止其默认行为，以禁用右键菜单
-      document.addEventListener('contextmenu', event => event.preventDefault());
+  // 监听 contextmenu 事件（即右键菜单），并阻止其默认行为，以禁用右键菜单
+  document.addEventListener("contextmenu", (event) => event.preventDefault());
 
-      // 监听 copy 事件（即复制操作），并阻止其默认行为，以禁用复制功能
-      document.addEventListener('copy', event => event.preventDefault());
+  // 监听 copy 事件（即复制操作），并阻止其默认行为，以禁用复制功能
+  document.addEventListener("copy", (event) => event.preventDefault());
   try {
     const tauriAPI = getTauriAPI();
 

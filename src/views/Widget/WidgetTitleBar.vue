@@ -4,19 +4,28 @@
     data-tauri-drag-region
     @dblclick="$emit('toggleMaximize')"
   >
-    <div class="flex items-center gap-1.5 flex-1 min-w-0" data-tauri-drag-region>
+    <div
+      class="flex items-center gap-1.5 flex-1 min-w-0"
+      data-tauri-drag-region
+    >
       <Icon :name="iconName" class="w-3.5 h-3.5 flex-shrink-0 opacity-60" />
       <span class="text-xs font-medium truncate opacity-80">{{ title }}</span>
     </div>
     <div class="flex items-center gap-0.5 flex-shrink-0">
-      <div v-if="showOpacity" class="flex items-center gap-1 mr-1 opacity-slider">
+      <div
+        v-if="showOpacity"
+        class="flex items-center gap-1 mr-1 opacity-slider"
+      >
         <button
           class="btn btn-ghost btn-xs w-5 h-5 p-0 min-h-0"
           :class="{ 'text-primary': transparentMode }"
           @click.stop="$emit('toggleTransparentMode')"
           :title="transparentMode ? '内容淡出模式' : '背景透明模式'"
         >
-          <Icon :name="transparentMode ? 'visible' : 'layers'" class="w-2.5 h-2.5" />
+          <Icon
+            :name="transparentMode ? 'visible' : 'layers'"
+            class="w-2.5 h-2.5"
+          />
         </button>
         <input
           type="range"
@@ -25,7 +34,12 @@
           step="0.05"
           :value="opacity"
           class="range range-xs range-primary w-14 h-3"
-          @input="$emit('changeOpacity', parseFloat(($event.target as HTMLInputElement).value))"
+          @input="
+            $emit(
+              'changeOpacity',
+              parseFloat(($event.target as HTMLInputElement).value),
+            )
+          "
           @mousedown.stop
           @click.stop
         />
