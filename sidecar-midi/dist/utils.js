@@ -2,8 +2,6 @@ import { InternalOutput } from "./internal_output.js";
 const MODULE_OUTPUTS = [
   "chord-dictionary",
   "chord-display/default",
-  "chord-quiz",
-  "circle-of-fifths",
   "debugger",
 ];
 export function getModuleOutputs() {

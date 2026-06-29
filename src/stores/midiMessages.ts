@@ -17,6 +17,7 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
   const maxMessages = 200;
 
   const managerMap = new Map<string, InternalMidiMessages>();
+  const refCountMap = new Map<string, number>();
 
   const listenerMap = new Map<
     (message: number[], timestamp: number, device: string) => void,
@@ -36,13 +37,31 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     }
   }
 
+  function cleanupManager(namespace: string): void {
+    const manager = managerMap.get(namespace);
+    if (manager) {
+      manager.dispose();
+      managerMap.delete(namespace);
+    }
+    refCountMap.delete(namespace);
+  }
+
   async function getManager(namespace: string): Promise<InternalMidiMessages> {
     let manager = managerMap.get(namespace);
+
+    if (manager && manager.isDisposed()) {
+      managerMap.delete(namespace);
+      refCountMap.delete(namespace);
+      manager = null;
+    }
+
     if (!manager) {
       manager = new InternalMidiMessages(namespace);
       managerMap.set(namespace, manager);
+      refCountMap.set(namespace, 0);
       await manager.initialize();
     }
+
     return manager;
   }
 
@@ -50,22 +69,17 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
   ): Promise<void> {
-    console.log(
-      `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: namespace='${namespace}'`,
-    );
     const listener = (ev: MidiMessageEvent) => {
-      console.log(
-        `[MIDI_DEBUG] midiMessagesStore listener: namespace='${namespace}' message=${JSON.stringify(ev.message)} device='${ev.device}'`,
-      );
       addMessage(ev.message, ev.timestamp, ev.device, namespace);
       onMessage(ev.message, ev.timestamp, ev.device);
     };
+
     listenerMap.set(onMessage, listener);
     const manager = await getManager(namespace);
     manager.addEventListener("message", listener);
-    console.log(
-      `[MIDI_DEBUG] midiMessagesStore.subscribeToNamespace: done for '${namespace}'`,
-    );
+
+    const currentCount = refCountMap.get(namespace) || 0;
+    refCountMap.set(namespace, currentCount + 1);
   }
 
   function unsubscribeFromNamespace(
@@ -77,6 +91,13 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
       const manager = managerMap.get(namespace);
       if (manager) {
         manager.removeEventListener("message", listener);
+
+        const currentCount = refCountMap.get(namespace) || 0;
+        if (currentCount <= 1) {
+          cleanupManager(namespace);
+        } else {
+          refCountMap.set(namespace, currentCount - 1);
+        }
       }
       listenerMap.delete(onMessage);
     }
@@ -92,6 +113,7 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     }
     managerMap.clear();
     listenerMap.clear();
+    refCountMap.clear();
     messages.value = [];
   }
 

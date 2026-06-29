@@ -15,18 +15,10 @@
             icon="mdi-piano"
           />
           <ModuleCard
-            to="/quiz"
-            settings-to="/settings/quiz"
-            :title="$t('nav.chordQuiz')"
-            :description="$t('home.moduleDescriptions.chordQuiz')"
-            icon="mdi-help-circle-outline"
-          />
-          <ModuleCard
-            to="/circle-of-fifths"
-            settings-to="/settings/circle-of-fifths"
-            :title="$t('nav.circleOfFifths')"
-            :description="$t('home.moduleDescriptions.circleOfFifths')"
-            icon="mdi-circle-outline"
+            to="/waterfall-piano"
+            :title="$t('nav.waterfallPiano')"
+            :description="$t('home.moduleDescriptions.waterfallPiano')"
+            icon="mdi-piano"
           />
           <ModuleCard
             to="/chord-dictionary"

@@ -51,8 +51,6 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-home": "home",
   "mdi-music-note": "music",
   "mdi-piano": "piano",
-  "mdi-circle-of-fifths": "circle-of-fifths",
-  "mdi-quiz": "quiz",
   "mdi-dictionary": "dictionary",
   "mdi-settings": "settings",
 };

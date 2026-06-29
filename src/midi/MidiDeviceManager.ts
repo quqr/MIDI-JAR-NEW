@@ -7,8 +7,6 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 const MODULE_OUTPUTS = [
   "chord-dictionary",
   "chord-display/default",
-  "chord-quiz",
-  "circle-of-fifths",
   "debugger",
 ];
 

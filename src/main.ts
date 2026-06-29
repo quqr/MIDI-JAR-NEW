@@ -5,7 +5,6 @@ import router from "./router";
 import i18n from "@/locales/i18n";
 import "@/styles/tailwind.css";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
-import { useWidgetStore } from "@/stores/widget";
 import { logger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
 
@@ -67,31 +66,5 @@ if (isTauri()) {
 
 initializeMidi();
 setupTauriListeners();
-
-async function restoreWidgets() {
-  if (!isTauri()) return;
-  try {
-    const widgetStore = useWidgetStore(pinia);
-    await widgetStore.loadLayout();
-    for (const state of widgetStore.widgets.values()) {
-      const tauriAPI = getTauriAPI();
-      await tauriAPI.widget.createWindow({
-        label: state.label,
-        title: `${state.type.charAt(0).toUpperCase() + state.type.slice(1)} - MIDI-JAR`,
-        url: `/widget/${state.type}/${state.moduleId}`,
-        width: state.width,
-        height: state.height,
-        x: state.x,
-        y: state.y,
-        alwaysOnTop: state.alwaysOnTop,
-      });
-    }
-    logger.info(`恢复了 ${widgetStore.widgets.size} 个 widget 窗口`);
-  } catch (error) {
-    logger.error(`Widget 恢复失败: ${error}`);
-  }
-}
-
-restoreWidgets();
 
 app.mount("#app");

@@ -56,23 +56,6 @@ export interface TauriAPI {
   shell: {
     openExternal: (url: string) => Promise<void>;
   };
-  widget: {
-    createWindow: (options: {
-      label: string;
-      title: string;
-      url: string;
-      width: number;
-      height: number;
-      x: number;
-      y: number;
-      alwaysOnTop: boolean;
-    }) => Promise<void>;
-    closeWindow: (label: string) => Promise<void>;
-    getStates: () => Promise<any[]>;
-    saveStates: (states: any[]) => Promise<void>;
-    getAllWindows: () => Promise<string[]>;
-    onWindowClosed: (callback: (label: string) => void) => Promise<UnlistenFn>;
-  };
 }
 
 declare global {

@@ -158,29 +158,10 @@ const tauriAPI = {
   shell: {
     openExternal: (url: string) => invoke<void>("open_external", { url }),
   },
-  widget: {
-    createWindow: (options: {
-      label: string;
-      title: string;
-      url: string;
-      width: number;
-      height: number;
-      x: number;
-      y: number;
-      alwaysOnTop: boolean;
-    }) => invoke<void>("create_widget_window", options),
-    closeWindow: (label: string) =>
-      invoke<void>("close_widget_window", { label }),
-    getStates: () => invoke<any[]>("get_widget_states"),
-    saveStates: (states: any[]) =>
-      invoke<void>("save_widget_states_cmd", { states }),
-    getAllWindows: () => invoke<string[]>("get_all_widget_windows"),
-    onWindowClosed: (callback: (label: string) => void) => {
-      return listen<string>("widget:closed", (event) => {
-        callback(event.payload);
-      });
-    },
-  },
 };
+
+if (isTauri()) {
+  window.tauriAPI = tauriAPI;
+}
 
 export default tauriAPI;

@@ -223,7 +223,6 @@ async fn create_widget_window(
         .decorations(false)
         .resizable(true)
         .min_inner_size(200.0, 150.0)
-        .transparent(true)
         .shadow(false)
         .visible(true);
 

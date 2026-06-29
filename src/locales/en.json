@@ -24,11 +24,10 @@
     "midiDescription": "Explore powerful MIDI tools",
     "chordDisplay": "Chord Display",
     "chordDisplayWithId": "Chord Display ({moduleId})",
-    "circleOfFifths": "Circle of Fifths",
-    "chordQuiz": "Chord Quiz",
     "chordDictionary": "Chord Dictionary",
     "routing": "Routing",
-    "debugger": "Debugger"
+    "debugger": "Debugger",
+    "waterfallPiano": "Waterfall Piano"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -41,8 +40,7 @@
     "debuggerPreview": "Debugger preview",
     "moduleDescriptions": {
       "chordDisplay": "Visualize chords in real-time as you play",
-      "chordQuiz": "Test your ear with interactive chord recognition",
-      "circleOfFifths": "Explore key relationships and modes",
+      "waterfallPiano": "Interactive piano with waterfall particle effects",
       "chordDictionary": "Look up chord structures and voicings",
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages"
@@ -76,49 +74,6 @@
     "also": "Also:",
     "openSettings": "Open chord display settings",
     "settings": "Chord Display Settings"
-  },
-  "chordQuiz": {
-    "openSettings": "Open chord quiz settings",
-    "settings": "Chord Quiz Settings",
-    "pts": "pts",
-    "gameWillStart": "Game will start",
-    "best": "BEST",
-    "game": "GAME {n}",
-    "reactions": {
-      "different": [
-        "No",
-        "Not even close",
-        "Nope",
-        "???",
-        "Try again",
-        "Wut ?",
-        "Come on...",
-        "Incorrect",
-        "Wrong",
-        "👎"
-      ],
-      "subset": [
-        "Almost",
-        "Not so far",
-        "Not quite my chord",
-        "Kinda",
-        "Close",
-        "Close one",
-        "🤏"
-      ],
-      "equal": ["Yeah", "Right", "Correct", "Good", "Perfect", "OK", "👍"],
-      "superset": [
-        "Wow !",
-        "Super !",
-        "Awesome !",
-        "Impressive !",
-        "Even Better !",
-        "JAZZY !!",
-        "Smooth !",
-        "Ooh !",
-        "👌"
-      ]
-    }
   },
   "chordDictionary": {
     "inKey": " (In Key)",
@@ -192,30 +147,6 @@
       "major7th": "Major 7th"
     }
   },
-  "circleOfFifths": {
-    "openSettings": "Open circle of fifths settings",
-    "settings": "Circle of Fifths Settings",
-    "degreeNames": {
-      "tonic": "TONIC",
-      "supertonic": "SUPERTONIC",
-      "mediant": "MEDIANT",
-      "subdominant": "SUBDOMINANT",
-      "dominant": "DOMINANT",
-      "submediant": "SUBMEDIANT",
-      "leadingTone": "LEADING TONE"
-    },
-    "modeNames": {
-      "ionian": "IONIAN",
-      "dorian": "DORIAN",
-      "phrygian": "PHRYGIAN",
-      "lydian": "LYDIAN",
-      "mixolydian": "MIXOLYDIAN",
-      "aeolian": "AEOLIAN",
-      "locrian": "LOCRIAN"
-    },
-    "majorScaleIonianMode": "MAJOR SCALE - IONIAN MODE",
-    "minorScaleAeolianMode": "MINOR SCALE - AEOLIAN MODE"
-  },
   "notation": {
     "key": "Key: {tonic}",
     "semitone": "st"
@@ -228,8 +159,6 @@
     "musicNotation": "Music Notation",
     "chordDictionary": "Chord Dictionary",
     "chordDisplay": "Chord Display",
-    "circleOf5th": "Circle of 5th",
-    "chordQuiz": "Chord Quiz",
     "debugger": "Debugger",
     "licenses": {
       "title": "Licenses"
@@ -511,75 +440,6 @@
         "interval": "Interval"
       }
     },
-    "circleOfFifthsSettings": {
-      "displayOptions": "Display Options",
-      "advancedOptions": "Advanced Options",
-      "displayMajor": "Display Major",
-      "displayMajorHint": "Enables the Major keys section of the circle",
-      "displayMinor": "Display Minor",
-      "displayMinorHint": "Enables the Minor keys section of the circle",
-      "mainScale": "Main scale",
-      "mainScaleHint": "Choose what scale to put first (only if both major and minor are displayed)",
-      "displayDiminished": "Display Diminished",
-      "displayDiminishedHint": "Enables the Diminished chords section of the circle",
-      "displayDominantChords": "Display Dominant Chords",
-      "displayDominantChordsHint": "Adds a section in the circle with dominant chords: V7, bVII7, bII7, and III7",
-      "displaySuspendedChords": "Display Suspended Chords",
-      "displaySuspendedChordsHint": "Adds suspended chords between associated keys",
-      "displayAlterations": "Display Alterations",
-      "displayAlterationsHint": "Adds the Key signature alterations",
-      "displayModes": "Display Modes",
-      "displayModesHint": "Adds markers for each enharmonic mode in the underlying key",
-      "displayDegrees": "Display Degrees",
-      "displayDegreesHint": "Adds a section above each key with its degree name",
-      "displayDegreeLabels": "Display Degrees Labels",
-      "displayDegreeLabelsHint": "Adds the degree names in the selected key. Left is in major key, right is in minor key",
-      "highlightSectors": "Highlight Sectors",
-      "highlightSectorsHint": "Enables sectors of the circle to be shown when played on chords or on notes",
-      "highlightSectorsInKey": "Highlight sectors in the key",
-      "highlightSectorsInKeyHint": "Shows differently the sectors in the current key scale",
-      "scaleOptions": {
-        "major": "Major",
-        "minor": "Minor"
-      },
-      "highlightSectorOptions": {
-        "onChord": "On Chord",
-        "onNotes": "On Notes"
-      }
-    },
-    "chordQuizSettings": {
-      "gameSettings": "Game Settings",
-      "displayOptions": "Display Options",
-      "mode": "Mode",
-      "modeHint": "Choose what algorithm is used to generate chords",
-      "difficulty": "Difficulty",
-      "difficultyHint": "An arbitrary complexity score is given to chords, the more intervals and alterations a chord has, the more it is complex.",
-      "previousLevel": "Previous level +",
-      "gameLength": "Game Length",
-      "gameLengthHint": "Number of chords to be generated for a single round (belonging to the same key signature)",
-      "gamification": "Gamification",
-      "gamificationHint": "Gamifies the quiz by adding scores and game count (no persistence of scoreboard)",
-      "chordNotation": "Chord Notation",
-      "chordNotationHint": "Choose the notation chords are displayed in",
-      "displayReaction": "Display Reaction",
-      "displayReactionHint": "Enables the textual reactions to success and fail",
-      "displayChordName": "Display Chord Name",
-      "displayChordNameHint": "Display the name of target chord in full text",
-      "displayIntervals": "Display Intervals",
-      "displayIntervalsHint": "Enables the list of intervals expected and currently played",
-      "modeOptions": {
-        "random": "Random",
-        "randomInKey": "Random in Key"
-      },
-      "difficultyOptions": {
-        "veryEasy": "Very Easy",
-        "easy": "Easy",
-        "medium": "Medium",
-        "hard": "Hard",
-        "veryHard": "Very Hard",
-        "allChords": "All chords"
-      }
-    },
     "debuggerSettings": {
       "midiClock": "MIDI Clock",
       "clearMessages": "Clear messages",
@@ -597,7 +457,7 @@
       "featureRoute": "Route MIDI messages between devices",
       "featureDisplay": "Display chords, notes and a piano as you play",
       "featureIntegrate": "Integrate in OBS, or in your Web Browser",
-      "featureLearn": "Learn with tools like Chord Quiz and Circle of Fifths",
+      "featureLearn": "Learn with tools like Chord Dictionary and Chord Display",
       "planToAdd": "I plan to add new modules, so don't hesitate to ",
       "reportBug": "Report a bug",
       "or": " or ",
@@ -661,5 +521,113 @@
     "licenses": "Licenses",
     "reportBug": "Report Bug",
     "openApp": "Open App"
+  },
+  "waterfallPiano": {
+    "settings": "Waterfall Piano Settings",
+    "openSettings": "Open waterfall piano settings",
+    "record": "Record",
+    "stop": "Stop",
+    "play": "Play",
+    "pause": "Pause",
+    "importMidi": "Import MIDI file",
+    "showKeyboard": "Show Keyboard",
+    "keyboardRange": "Keyboard Range",
+    "keyLabel": "Key Label",
+    "whiteKeyColor": "White Key Color",
+    "blackKeyColor": "Black Key Color",
+    "pressedKeyColor": "Pressed Key Color",
+    "audioPreset": "Audio Preset",
+    "volume": "Volume",
+    "reverbAmount": "Reverb Amount",
+    "sustain": "Sustain",
+    "visualStyle": "Visual Style",
+    "particleShape": "Particle Shape",
+    "colorScheme": "Color Scheme",
+    "realtimeSpeed": "Realtime Speed",
+    "lookAhead": "Look-Ahead Time (s)",
+    "particleSpeed": "Flow Speed",
+    "particleSize": "Particle Size",
+    "particleOpacity": "Opacity",
+    "particleDensity": "Particle Density",
+    "particleBehavior": "Particle Behavior",
+    "trailEffect": "Trail Effect",
+    "cornerRadius": "Corner Radius",
+    "hitLineColor": "Hit Line Color",
+    "hitLineGlow": "Hit Line Glow",
+    "backgroundType": "Background Type",
+    "backgroundColor": "Background Color",
+    "presetTheme": "Preset Theme",
+    "quality": "Quality",
+    "custom": "Custom",
+    "settingsGroups": {
+      "visual": "Visual",
+      "keyboard": "Keyboard",
+      "audio": "Audio",
+      "background": "Background",
+      "performance": "Performance"
+    },
+    "keyLabels": {
+      "none": "None",
+      "note": "Note Name",
+      "pitchClass": "Pitch Class",
+      "octave": "Octave"
+    },
+    "presets": {
+      "grandPiano": "Grand Piano",
+      "electricPiano": "Electric Piano",
+      "brightPiano": "Bright Piano",
+      "mellowPiano": "Mellow Piano",
+      "organ": "Organ",
+      "synthPad": "Synth Pad"
+    },
+    "shapes": {
+      "circle": "Circle",
+      "square": "Square",
+      "note": "Note",
+      "star": "Star"
+    },
+    "styles": {
+      "blocks": "Note Blocks",
+      "particles": "Particles",
+      "hybrid": "Hybrid"
+    },
+    "directions": {
+      "down": "Flow Down",
+      "up": "Flow Up"
+    },
+    "colorSchemes": {
+      "pitch": "By Pitch",
+      "hands": "By Hand",
+      "rainbow": "Rainbow",
+      "warm": "Warm",
+      "cool": "Cool",
+      "neon": "Neon",
+      "custom": "Custom"
+    },
+    "behaviors": {
+      "linear": "Linear",
+      "wave": "Wave",
+      "spiral": "Spiral",
+      "random": "Random"
+    },
+    "bgTypes": {
+      "solid": "Solid Color",
+      "gradient": "Gradient",
+      "preset": "Preset Theme",
+      "image": "Custom Image",
+      "stars": "Starfield"
+    },
+    "themes": {
+      "nightSky": "Night Sky",
+      "ocean": "Ocean",
+      "sunset": "Sunset",
+      "aurora": "Aurora",
+      "forest": "Forest"
+    },
+    "qualityLevels": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
   }
 }

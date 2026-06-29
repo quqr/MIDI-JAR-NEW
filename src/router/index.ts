@@ -23,16 +23,10 @@ const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
-        path: "circle-of-fifths",
-        name: "circle-of-fifths",
-        component: () => import("@/views/CircleOfFifths/CircleOfFifths.vue"),
-        meta: { title: "nav.circleOfFifths", icon: "circle-of-fifths" },
-      },
-      {
-        path: "quiz",
-        name: "chord-quiz",
-        component: () => import("@/views/ChordQuiz/ChordQuiz.vue"),
-        meta: { title: "nav.chordQuiz", icon: "quiz" },
+        path: "waterfall-piano",
+        name: "waterfall-piano",
+        component: () => import("@/views/WaterfallPiano/WaterfallPiano.vue"),
+        meta: { title: "nav.waterfallPiano", icon: "piano" },
       },
       {
         path: "chord-dictionary",
@@ -118,20 +112,6 @@ const routes: RouteRecordRaw[] = [
             ],
           },
           {
-            path: "circle-of-fifths",
-            name: "settings-circle-of-fifths",
-            component: () =>
-              import("@/views/Settings/CircleOfFifthsSettings/CircleOfFifthsSettings.vue"),
-            meta: { title: "settings.circleOf5th" },
-          },
-          {
-            path: "quiz",
-            name: "settings-quiz",
-            component: () =>
-              import("@/views/Settings/ChordQuizSettings/ChordQuizSettings.vue"),
-            meta: { title: "settings.chordQuiz" },
-          },
-          {
             path: "debug",
             name: "settings-debug",
             component: () => import("@/views/Settings/Debugger/Debugger.vue"),
@@ -152,13 +132,6 @@ const routes: RouteRecordRaw[] = [
         ],
       },
     ],
-  },
-  {
-    path: "/widget/:type/:moduleId",
-    name: "widget",
-    component: () => import("@/views/Widget/WidgetPage.vue"),
-    props: true,
-    meta: { title: "Widget" },
   },
   {
     path: "/:pathMatch(.*)*",

@@ -40,32 +40,6 @@ export type ChordDisplaySettings = {
   keyboard: KeyboardSettings;
 };
 
-export type ChordQuizSettings = {
-  mode: "random" | "randomInKey";
-  difficulty: 0 | 1 | 2 | 3 | 4 | 5;
-  gameLength: number;
-  gamification: boolean;
-  chordNotation: "long" | "short" | "symbol" | "preferred";
-  displayName: boolean;
-  displayReaction: boolean;
-  displayIntervals: boolean;
-};
-
-export type CircleOfFifthsSettings = {
-  scale: "major" | "minor";
-  highlightSector: "chord" | "notes";
-  highlightInScale: boolean;
-  displayMajor: boolean;
-  displayMinor: boolean;
-  displayDiminished: boolean;
-  displayDominants: boolean;
-  displayAlterations: boolean;
-  displaySuspended: boolean;
-  displayModes: boolean;
-  displayDegrees: boolean;
-  displayDegreeLabels: boolean;
-};
-
 export type ChordDictionarySettings = {
   interactive: "detect" | "play";
   hideDisabled: boolean;
@@ -122,8 +96,6 @@ export type Settings = {
   general: GeneralSettings;
   cursor: CursorSettings;
   chordDisplay: ChordDisplaySettings[];
-  chordQuiz: ChordQuizSettings;
-  circleOfFifths: CircleOfFifthsSettings;
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
   server: ServerSettings;

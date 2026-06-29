@@ -162,8 +162,6 @@ const isMac = ref(false);
 
 const navItems = [
   { path: "/home", label: "nav.home", icon: "home" },
-  { path: "/circle-of-fifths", label: "nav.circleOfFifths", icon: "circle" },
-  { path: "/quiz", label: "nav.chordQuiz", icon: "help-circle" },
   { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
 ];
 

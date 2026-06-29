@@ -6,8 +6,6 @@ export type MidiOutput = MidiOutputDevice | InternalOutput;
 const MODULE_OUTPUTS = [
   "chord-dictionary",
   "chord-display/default",
-  "chord-quiz",
-  "circle-of-fifths",
   "debugger",
 ];
 

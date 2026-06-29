@@ -111,6 +111,7 @@ export function useNotes({
   );
   const sustainedMidiNotes = ref<number[]>([]);
   const playedMidiNotes = ref<number[]>([]);
+  const clickedMidiNotes = ref<number[]>([]);
   const midiNotes = ref<number[]>([]);
   const notes = ref<string[]>([]);
   const pitchClasses = ref<string[]>([]);
@@ -142,6 +143,7 @@ export function useNotes({
     const currentMidiNotes = [
       ...sustainedMidiNotes.value,
       ...playedMidiNotes.value,
+      ...clickedMidiNotes.value,
     ];
     currentMidiNotes.sort(midiSortCompareFn);
     const currentNotes = currentMidiNotes.map(fromMidi);
@@ -155,6 +157,7 @@ export function useNotes({
   }
 
   function handleNoteOn(midi: number) {
+    clickedMidiNotes.value = [];
     playedMidiNotes.value = [...playedMidiNotes.value, midi];
     sustainedMidiNotes.value = sustainedMidiNotes.value.filter(
       (m) => m !== midi,
@@ -183,6 +186,29 @@ export function useNotes({
     if (!params.value.useSustain) return;
     sustained.value = false;
     sustainedMidiNotes.value = [];
+    recomputeFromMidiNotes();
+  }
+
+  function toggleNote(midi: number) {
+    // Mutual exclusion: clear MIDI-sourced notes when clicking
+    playedMidiNotes.value = [];
+    sustainedMidiNotes.value = [];
+    sustained.value = false;
+
+    const idx = clickedMidiNotes.value.indexOf(midi);
+    if (idx >= 0) {
+      clickedMidiNotes.value = clickedMidiNotes.value.filter(
+        (m) => m !== midi,
+      );
+    } else {
+      clickedMidiNotes.value = [...clickedMidiNotes.value, midi];
+    }
+    recomputeFromMidiNotes();
+  }
+
+  function clearClickedNotes() {
+    if (clickedMidiNotes.value.length === 0) return;
+    clickedMidiNotes.value = [];
     recomputeFromMidiNotes();
   }
 
@@ -264,6 +290,7 @@ export function useNotes({
   function clearNotes() {
     playedMidiNotes.value = [];
     sustainedMidiNotes.value = [];
+    clickedMidiNotes.value = [];
     midiNotes.value = [];
     notes.value = [];
     pitchClasses.value = [];
@@ -281,8 +308,11 @@ export function useNotes({
     sustained: readonly(sustained),
     sustainedMidiNotes: readonly(sustainedMidiNotes),
     playedMidiNotes: readonly(playedMidiNotes),
+    clickedMidiNotes: readonly(clickedMidiNotes),
     keySignature: readonly(keySignature),
     clearNotes,
+    clearClickedNotes,
+    toggleNote,
   };
 }
 

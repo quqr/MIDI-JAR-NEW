@@ -6,7 +6,6 @@ import type {
 } from "@/components/Notation/types";
 
 export type { MidiRoute } from "./midi";
-export * from "./widget";
 export interface MessageEventData {
   type: string;
   data?: any;
@@ -135,32 +134,6 @@ export type ChordDisplaySettings = {
   keyboard: KeyboardSettings;
 };
 
-export type ChordQuizSettings = {
-  mode: "random" | "randomInKey";
-  difficulty: 0 | 1 | 2 | 3 | 4 | 5;
-  gameLength: number;
-  gamification: boolean;
-  chordNotation: "long" | "short" | "symbol" | "preferred";
-  displayName: boolean;
-  displayReaction: boolean;
-  displayIntervals: boolean;
-};
-
-export type CircleOfFifthsSettings = {
-  scale: "major" | "minor";
-  highlightSector: "chord" | "notes";
-  highlightInScale: boolean;
-  displayMajor: boolean;
-  displayMinor: boolean;
-  displayDiminished: boolean;
-  displayDominants: boolean;
-  displayAlterations: boolean;
-  displaySuspended: boolean;
-  displayModes: boolean;
-  displayDegrees: boolean;
-  displayDegreeLabels: boolean;
-};
-
 export type ChordDictionarySettings = {
   interactive: "detect" | "play";
   hideDisabled: boolean;
@@ -212,8 +185,6 @@ export type Settings = {
   midiRoutes: MidiRoute[];
   cursor: CursorSettings;
   chordDisplay: ChordDisplaySettings[];
-  chordQuiz: ChordQuizSettings;
-  circleOfFifths: CircleOfFifthsSettings;
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
   server: ServerSettings;
@@ -262,32 +233,6 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
   displayAltChords: true,
   displayIntervals: true,
   keyboard: defaultKeyboardSettings,
-};
-
-export const defaultChordQuizSettings: ChordQuizSettings = {
-  mode: "random",
-  difficulty: 0,
-  gameLength: 16,
-  gamification: true,
-  chordNotation: "preferred",
-  displayName: true,
-  displayReaction: true,
-  displayIntervals: true,
-};
-
-export const defaultCircleOfFifthsSettings: CircleOfFifthsSettings = {
-  scale: "major",
-  highlightSector: "chord",
-  highlightInScale: true,
-  displayMajor: true,
-  displayMinor: true,
-  displayDiminished: true,
-  displayDominants: true,
-  displaySuspended: true,
-  displayAlterations: true,
-  displayModes: true,
-  displayDegrees: true,
-  displayDegreeLabels: true,
 };
 
 export const defaultChordDictionarySettings: ChordDictionarySettings = {
@@ -341,8 +286,6 @@ export const defaultSettings: Settings = {
   midiRoutes: [],
   cursor: defaultCursorSettings,
   chordDisplay: [defaultChordDisplaySettings],
-  chordQuiz: defaultChordQuizSettings,
-  circleOfFifths: defaultCircleOfFifthsSettings,
   chordDictionary: defaultChordDictionarySettings,
   notation: defaultNotationSettings,
   server: defaultServerSettings,

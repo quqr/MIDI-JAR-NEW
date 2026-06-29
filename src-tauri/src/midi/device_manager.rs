@@ -26,8 +26,6 @@ static IGNORE_INPUT_RE: LazyLock<regex::Regex> = LazyLock::new(|| {
 const MODULE_OUTPUTS: &[&str] = &[
     "chord-dictionary",
     "chord-display/default",
-    "chord-quiz",
-    "circle-of-fifths",
     "debugger",
 ];
 

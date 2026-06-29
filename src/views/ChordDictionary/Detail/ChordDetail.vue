@@ -38,37 +38,14 @@
       </div>
 
       <!-- Core: Piano keyboard -->
-      <!-- Interactive toolbar -->
-      <div
-        v-if="selectedMidis.length > 0"
-        class="w-full flex items-center gap-2 mb-2"
-      >
-        <button class="btn btn-ghost btn-xs" @click="clearSelected">
-          {{ t("chordDictionary.clearSelected") }}
-        </button>
-        <span
-          v-if="selectedMidis.length === 1"
-          class="text-xs text-base-content/60"
-        >
-          {{ t("chordDictionary.singleNoteHint") }}
-        </span>
-        <span
-          v-else-if="selectedMidis.length >= 2 && !detectedChordName"
-          class="badge badge-warning badge-sm"
-        >
-          {{ t("chordDictionary.unrecognizedChord") }}
-        </span>
-      </div>
       <PianoKeyboard
         class="w-full my-4 p-3 sm:p-4 bg-base-300/30 rounded-lg"
         :targets="midi"
-        :played="combinedPlayedMidi"
+        :played="playedMidiNotes"
         :sustained="sustainedMidiNotes"
         :midi="midiNotes"
         :chord="chord"
         :keyboard="keyboardSettings"
-        :clickable="true"
-        @note-click="onNoteClick"
       />
 
       <!-- Core: Intervals (full width) -->
@@ -89,7 +66,7 @@
 
       <!-- Core: Notation (full width) -->
       <section
-        class="w-full p-3 bg-base-300/30 rounded-lg mb-4 overflow-visible"
+        class="w-full min-w-0 p-3 bg-base-300/30 rounded-lg mb-4 overflow-visible"
       >
         <h3
           class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
@@ -391,8 +368,6 @@ const {
 } = useChordDictionaryModule();
 
 const detailRef = ref<HTMLElement | null>(null);
-const selectedMidis = ref<number[]>([]);
-const detectedChordName = ref<string | null>(null);
 
 const chordName = computed(() => route.params.chordName as string | undefined);
 
@@ -461,52 +436,12 @@ const keyboardSettings = computed(() => KEYBOARD_SETTINGS);
 
 const notationLabels = computed(() => NOTATION_LABELS);
 
-const combinedPlayedMidi = computed(() => {
-  const base = playedMidiNotes || [];
-  return [...new Set([...base, ...selectedMidis.value])];
-});
-
 watch(chordName, async () => {
   await nextTick();
   if (detailRef.value) {
     detailRef.value.scrollIntoView({ behavior: "smooth" });
   }
 });
-
-watch(chordName, () => {
-  selectedMidis.value = [];
-  detectedChordName.value = null;
-});
-
-function onNoteClick(midi: number) {
-  const index = selectedMidis.value.indexOf(midi);
-  if (index >= 0) {
-    selectedMidis.value.splice(index, 1);
-  } else {
-    selectedMidis.value.push(midi);
-  }
-  detectChord();
-}
-
-function detectChord() {
-  if (selectedMidis.value.length < 2) {
-    detectedChordName.value = null;
-    return;
-  }
-  const noteNames = selectedMidis.value.map((midi) => Note.fromMidi(midi));
-  const detected = Chord.detect(noteNames);
-  if (detected.length > 0) {
-    detectedChordName.value = detected[0];
-    goToChordDetail(detected[0]);
-  } else {
-    detectedChordName.value = null;
-  }
-}
-
-function clearSelected() {
-  selectedMidis.value = [];
-  detectedChordName.value = null;
-}
 
 function goToChordDetail(name: string) {
   router.push({ path: `/chord-dictionary/${encodeURIComponent(name)}` });

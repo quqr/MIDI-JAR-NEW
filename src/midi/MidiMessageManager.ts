@@ -66,9 +66,10 @@ export class InternalMidiMessages extends MidiMessageManager {
 
   constructor(namespace: string) {
     super(namespace);
-    debugLog(
-      `[MIDI_DEBUG] InternalMidiMessages constructor: namespace='${namespace}'`,
-    );
+  }
+
+  public isDisposed(): boolean {
+    return this.disposed;
   }
 
   public async initialize(): Promise<void> {
@@ -81,13 +82,10 @@ export class InternalMidiMessages extends MidiMessageManager {
     }
 
     this.initializing = true;
-    debugLog(
-      `[MIDI_DEBUG] InternalMidiMessages: initializing listener for '${this.namespace}'`,
-    );
 
     if (typeof window === "undefined" || !window.tauriAPI?.midi) {
-      console.warn(
-        `[MIDI_DEBUG] InternalMidiMessages: tauriAPI not available for '${this.namespace}'`,
+      debugLog(
+        `MidiMessageManager: tauriAPI not available for '${this.namespace}'`,
       );
       this.initializing = false;
       return;
@@ -104,22 +102,16 @@ export class InternalMidiMessages extends MidiMessageManager {
       const unlisten = await unlistenPromise;
 
       if (this.disposed) {
-        debugLog(
-          `[MIDI_DEBUG] InternalMidiMessages: disposed during initialization for '${this.namespace}', cleaning up`,
-        );
         unlisten();
         this.pendingUnlisten = null;
         return;
       }
 
-      debugLog(
-        `[MIDI_DEBUG] InternalMidiMessages: listener registered for '${this.namespace}'`,
-      );
       this.offListener = unlisten;
       this.initialized = true;
     } catch (error) {
-      console.error(
-        `[MIDI_DEBUG] InternalMidiMessages: failed to register listener for '${this.namespace}'`,
+      debugLog(
+        `MidiMessageManager: failed to register listener for '${this.namespace}'`,
         error,
       );
     } finally {
@@ -129,23 +121,26 @@ export class InternalMidiMessages extends MidiMessageManager {
   }
 
   private handleMessage(message: number[], timestamp: number, device: string) {
-    debugLog(
-      `[MIDI_DEBUG] InternalMidiMessages.handleMessage: namespace='${this.namespace}' message=${JSON.stringify(message)} device='${device}'`,
-    );
     this.dispatchEvent(
       new MidiMessageEvent("message", message, timestamp, device),
     );
   }
 
   public dispose() {
+    if (this.disposed) {
+      return;
+    }
+
     this.disposed = true;
 
     if (this.offListener) {
       this.offListener();
       this.offListener = null;
-      debugLog(
-        `[MIDI_DEBUG] InternalMidiMessages: listener disposed for '${this.namespace}'`,
-      );
+    }
+
+    if (this.pendingUnlisten) {
+      this.pendingUnlisten.then((unlisten) => unlisten());
+      this.pendingUnlisten = null;
     }
   }
 }

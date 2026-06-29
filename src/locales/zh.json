@@ -24,11 +24,10 @@
     "midiDescription": "探索强大的MIDI工具集合",
     "chordDisplay": "和弦显示",
     "chordDisplayWithId": "和弦显示 ({moduleId})",
-    "circleOfFifths": "五度圈",
-    "chordQuiz": "和弦测验",
     "chordDictionary": "和弦词典",
     "routing": "路由",
-    "debugger": "调试器"
+    "debugger": "调试器",
+    "waterfallPiano": "瀑布流钢琴"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -41,8 +40,7 @@
     "debuggerPreview": "调试器预览",
     "moduleDescriptions": {
       "chordDisplay": "实时可视化显示您弹奏的和弦",
-      "chordQuiz": "通过交互式和弦识别测试您的听力",
-      "circleOfFifths": "探索调性关系和调式",
+      "waterfallPiano": "带瀑布流粒子效果的交互式钢琴",
       "chordDictionary": "查询和弦结构和排列",
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息"
@@ -76,49 +74,6 @@
     "also": "还有:",
     "openSettings": "打开和弦显示设置",
     "settings": "和弦显示设置"
-  },
-  "chordQuiz": {
-    "openSettings": "打开和弦测验设置",
-    "settings": "和弦测验设置",
-    "pts": "分",
-    "gameWillStart": "游戏即将开始",
-    "best": "最佳",
-    "game": "第 {n} 局",
-    "reactions": {
-      "different": [
-        "不",
-        "差远了",
-        "不对",
-        "？？？",
-        "再试试",
-        "嗯？",
-        "加油...",
-        "错误",
-        "错了",
-        "👎"
-      ],
-      "subset": [
-        "差不多了",
-        "还差一点",
-        "不太对",
-        "有点像",
-        "接近了",
-        "差一点",
-        "🤏"
-      ],
-      "equal": ["对了", "正确", "没错", "好的", "完美", "OK", "👍"],
-      "superset": [
-        "哇！",
-        "太棒了！",
-        "厉害！",
-        "令人惊叹！",
-        "更棒了！",
-        "爵士范儿！！",
-        "流畅！",
-        "噢！",
-        "👌"
-      ]
-    }
   },
   "chordDictionary": {
     "inKey": " (调内)",
@@ -192,30 +147,6 @@
       "major7th": "大七度"
     }
   },
-  "circleOfFifths": {
-    "openSettings": "打开五度圈设置",
-    "settings": "五度圈设置",
-    "degreeNames": {
-      "tonic": "主音",
-      "supertonic": "上主音",
-      "mediant": "中音",
-      "subdominant": "下属音",
-      "dominant": "属音",
-      "submediant": "下中音",
-      "leadingTone": "导音"
-    },
-    "modeNames": {
-      "ionian": "伊奥尼亚",
-      "dorian": "多利亚",
-      "phrygian": "弗里几亚",
-      "lydian": "利底亚",
-      "mixolydian": "混合利底亚",
-      "aeolian": "伊奥利亚",
-      "locrian": "洛克里亚"
-    },
-    "majorScaleIonianMode": "大调音阶 - 伊奥尼亚调式",
-    "minorScaleAeolianMode": "小调音阶 - 伊奥利亚调式"
-  },
   "notation": {
     "key": "调: {tonic}",
     "semitone": "半音"
@@ -228,8 +159,6 @@
     "musicNotation": "乐谱记法",
     "chordDictionary": "和弦词典",
     "chordDisplay": "和弦显示",
-    "circleOf5th": "五度圈",
-    "chordQuiz": "和弦测验",
     "debugger": "调试器",
     "licenses": {
       "title": "许可证"
@@ -511,75 +440,6 @@
         "interval": "音程"
       }
     },
-    "circleOfFifthsSettings": {
-      "displayOptions": "显示选项",
-      "advancedOptions": "高级选项",
-      "displayMajor": "显示大调",
-      "displayMajorHint": "启用五度圈的大调部分",
-      "displayMinor": "显示小调",
-      "displayMinorHint": "启用五度圈的小调部分",
-      "mainScale": "主音阶",
-      "mainScaleHint": "选择优先显示的音阶 (仅在大调和小调都显示时有效)",
-      "displayDiminished": "显示减和弦",
-      "displayDiminishedHint": "启用五度圈的减和弦部分",
-      "displayDominantChords": "显示属和弦",
-      "displayDominantChordsHint": "在五度圈中添加属和弦部分: V7, bVII7, bII7 和 III7",
-      "displaySuspendedChords": "显示挂留和弦",
-      "displaySuspendedChordsHint": "在相关调之间添加挂留和弦",
-      "displayAlterations": "显示变音记号",
-      "displayAlterationsHint": "添加调号变音记号",
-      "displayModes": "显示调式",
-      "displayModesHint": "为每个等音调式添加标记",
-      "displayDegrees": "显示音级",
-      "displayDegreesHint": "在每个调上方添加音级名称",
-      "displayDegreeLabels": "显示音级标签",
-      "displayDegreeLabelsHint": "添加所选调的音级名称。左侧为大调，右侧为小调",
-      "highlightSectors": "高亮扇区",
-      "highlightSectorsHint": "弹奏和弦或音符时显示五度圈的扇区",
-      "highlightSectorsInKey": "高亮调内扇区",
-      "highlightSectorsInKeyHint": "以不同方式显示当前调音阶中的扇区",
-      "scaleOptions": {
-        "major": "大调",
-        "minor": "小调"
-      },
-      "highlightSectorOptions": {
-        "onChord": "按和弦",
-        "onNotes": "按音符"
-      }
-    },
-    "chordQuizSettings": {
-      "gameSettings": "游戏设置",
-      "displayOptions": "显示选项",
-      "mode": "模式",
-      "modeHint": "选择用于生成和弦的算法",
-      "difficulty": "难度",
-      "difficultyHint": "和弦有一个任意复杂度评分，音程和变化音越多，复杂度越高。",
-      "previousLevel": "上一难度 +",
-      "gameLength": "游戏长度",
-      "gameLengthHint": "单轮生成的和弦数量 (属于同一调号)",
-      "gamification": "游戏化",
-      "gamificationHint": "通过添加分数和局数使测验游戏化 (不持久化记分板)",
-      "chordNotation": "和弦记法",
-      "chordNotationHint": "选择和弦的显示记法",
-      "displayReaction": "显示反应",
-      "displayReactionHint": "启用成功和失败时的文字反应",
-      "displayChordName": "显示和弦名称",
-      "displayChordNameHint": "以完整文本显示目标和弦名称",
-      "displayIntervals": "显示音程",
-      "displayIntervalsHint": "启用预期和当前弹奏的音程列表",
-      "modeOptions": {
-        "random": "随机",
-        "randomInKey": "调内随机"
-      },
-      "difficultyOptions": {
-        "veryEasy": "非常简单",
-        "easy": "简单",
-        "medium": "中等",
-        "hard": "困难",
-        "veryHard": "非常困难",
-        "allChords": "所有和弦"
-      }
-    },
     "debuggerSettings": {
       "midiClock": "MIDI时钟",
       "clearMessages": "清除消息",
@@ -599,7 +459,7 @@
       "featureRoute": "在设备之间路由MIDI消息",
       "featureDisplay": "弹奏时显示和弦、音符和钢琴",
       "featureIntegrate": "集成到OBS或Web浏览器中",
-      "featureLearn": "使用和弦测验和五度圈等工具学习",
+      "featureLearn": "使用和弦词典和和弦展示等工具学习",
       "planToAdd": "我计划添加新模块，所以请不要犹豫",
       "reportBug": "报告Bug",
       "or": " 或 ",
@@ -663,5 +523,113 @@
     "licenses": "许可证",
     "reportBug": "报告Bug",
     "openApp": "打开应用"
+  },
+  "waterfallPiano": {
+    "settings": "瀑布流钢琴设置",
+    "openSettings": "打开瀑布流钢琴设置",
+    "record": "录制",
+    "stop": "停止",
+    "play": "播放",
+    "pause": "暂停",
+    "importMidi": "导入 MIDI 文件",
+    "showKeyboard": "显示键盘",
+    "keyboardRange": "键盘范围",
+    "keyLabel": "按键标签",
+    "whiteKeyColor": "白键颜色",
+    "blackKeyColor": "黑键颜色",
+    "pressedKeyColor": "按下颜色",
+    "audioPreset": "音色预设",
+    "volume": "音量",
+    "reverbAmount": "混响量",
+    "sustain": "延音",
+    "visualStyle": "视觉风格",
+    "particleShape": "粒子形状",
+    "colorScheme": "颜色方案",
+    "realtimeSpeed": "实时速度",
+    "lookAhead": "提前显示时间（秒）",
+    "particleSpeed": "流动速度",
+    "particleSize": "粒子大小",
+    "particleOpacity": "透明度",
+    "particleDensity": "粒子密度",
+    "particleBehavior": "粒子行为",
+    "trailEffect": "拖尾效果",
+    "cornerRadius": "圆角半径",
+    "hitLineColor": "命中线颜色",
+    "hitLineGlow": "命中线发光",
+    "backgroundType": "背景类型",
+    "backgroundColor": "背景颜色",
+    "presetTheme": "预设主题",
+    "quality": "质量",
+    "custom": "自定义",
+    "settingsGroups": {
+      "visual": "视觉",
+      "keyboard": "键盘",
+      "audio": "音频",
+      "background": "背景",
+      "performance": "性能"
+    },
+    "keyLabels": {
+      "none": "无",
+      "note": "音符名",
+      "pitchClass": "音名",
+      "octave": "八度"
+    },
+    "presets": {
+      "grandPiano": "三角钢琴",
+      "electricPiano": "电钢琴",
+      "brightPiano": "明亮钢琴",
+      "mellowPiano": "柔和钢琴",
+      "organ": "风琴",
+      "synthPad": "合成铺底"
+    },
+    "shapes": {
+      "circle": "圆形",
+      "square": "方形",
+      "note": "音符",
+      "star": "星形"
+    },
+    "styles": {
+      "blocks": "音符条",
+      "particles": "粒子",
+      "hybrid": "混合"
+    },
+    "directions": {
+      "down": "向下流动",
+      "up": "向上流动"
+    },
+    "colorSchemes": {
+      "pitch": "按音高",
+      "hands": "按左右手",
+      "rainbow": "彩虹",
+      "warm": "暖色调",
+      "cool": "冷色调",
+      "neon": "霓虹",
+      "custom": "自定义"
+    },
+    "behaviors": {
+      "linear": "直线",
+      "wave": "波浪",
+      "spiral": "螺旋",
+      "random": "随机"
+    },
+    "bgTypes": {
+      "solid": "纯色",
+      "gradient": "渐变",
+      "preset": "预设主题",
+      "image": "自定义图片",
+      "stars": "星空"
+    },
+    "themes": {
+      "nightSky": "夜空",
+      "ocean": "海洋",
+      "sunset": "日落",
+      "aurora": "极光",
+      "forest": "森林"
+    },
+    "qualityLevels": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    }
   }
 }

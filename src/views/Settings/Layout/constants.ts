@@ -80,12 +80,6 @@ export const navItems: NavItem[] = [
     labelKey: "settings.chordDictionary",
   },
   { icon: "piano", to: "/settings/chords", labelKey: "settings.chordDisplay" },
-  {
-    icon: "circle-of-fifths",
-    to: "/settings/circle-of-fifths",
-    labelKey: "settings.circleOf5th",
-  },
-  { icon: "quiz", to: "/settings/quiz", labelKey: "settings.chordQuiz" },
   { icon: "bug", to: "/settings/debug", labelKey: "settings.debugger" },
   // {
   //   icon: "copyright",

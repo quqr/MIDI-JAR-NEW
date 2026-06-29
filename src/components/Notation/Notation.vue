@@ -2,7 +2,7 @@
   <div
     :id="id"
     ref="containerRef"
-    class="notation-base w-full overflow-visible"
+    class="notation-base w-full min-w-0 overflow-visible"
     :class="className"
     :style="containerStyle"
   />

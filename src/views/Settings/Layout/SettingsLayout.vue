@@ -111,8 +111,6 @@ const routeToSettingKey: Record<string, string> = {
   "/settings/cursor": "cursor",
   "/settings/notation": "notation",
   "/settings/chord-dictionary": "chordDictionary",
-  "/settings/circle-of-fifths": "circleOfFifths",
-  "/settings/quiz": "chordQuiz",
 };
 
 const currentSettingKey = computed(() => {
@@ -133,8 +131,6 @@ const currentSectionLabel = computed(() => {
     notation: t("settings.musicNotation"),
     chordDictionary: t("settings.chordDictionary"),
     chordDisplay: t("settings.chordDisplay"),
-    circleOfFifths: t("settings.circleOf5th"),
-    chordQuiz: t("settings.chordQuiz"),
   };
   return labelMap[key] || key;
 });

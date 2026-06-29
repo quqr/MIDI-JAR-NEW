@@ -57,8 +57,6 @@ export type IconName =
   | "copyright"
   | "routing"
   | "dictionary"
-  | "circle-of-fifths"
-  | "quiz"
   | "window"
   | "maximize"
   | "minimize"
@@ -156,9 +154,6 @@ const iconPath = computed((): string => {
     routing: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
     dictionary:
       "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 4 17V5a2 2 0 0 1 2-2h14v14H6.5A2.5 2.5 0 0 0 4 19.5zM8 7h8M8 11h6",
-    "circle-of-fifths":
-      "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10zM12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83",
-    quiz: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10zM9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01",
     window: "M3 3h18v18H3zM3 9h18M9 21V9",
     maximize:
       "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3",
