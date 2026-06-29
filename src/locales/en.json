@@ -139,6 +139,7 @@
     "previousChords": "previous chords",
     "noChordsFound": "No chords found",
     "noChordsInHistory": "No chords in history",
+    "fuzzy": "fuzzy",
     "disableEnableChord": "Disable/enable chord",
     "intervals": "Intervals",
     "notation": "Notation",

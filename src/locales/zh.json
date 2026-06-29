@@ -139,6 +139,7 @@
     "previousChords": "历史和弦",
     "noChordsFound": "未找到和弦",
     "noChordsInHistory": "无历史和弦",
+    "fuzzy": "近似",
     "disableEnableChord": "禁用/启用和弦",
     "intervals": "音程",
     "notation": "记谱",

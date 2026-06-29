@@ -4,7 +4,7 @@
       <div class="mb-6">
         <Icon
           name="music"
-          class="size-16 mx-auto text-base-content/30"
+          class="size-16 mx-auto text-base-content/40"
           :size="64"
         />
       </div>

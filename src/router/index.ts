@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
             path: "",
             name: "chord-dictionary-index",
             component: () =>
-              import("@/views/ChordDictionary/Detail/ChordDetail.vue"),
+              import("@/views/ChordDictionary/Detail/ChordOverview.vue"),
           },
           {
             path: ":chordName",

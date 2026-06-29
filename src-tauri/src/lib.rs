@@ -138,7 +138,11 @@ async fn open_file_dialog(
     app: AppHandle,
 ) -> Result<Option<Vec<String>>, String> {
     use tauri_plugin_dialog::DialogExt;
-    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).add_filter("All Files", &["*"]).pick_files().await;
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).add_filter("All Files", &["*"]).pick_files(move |paths| {
+        let _ = tx.send(paths);
+    });
+    let result = rx.recv().map_err(|_| "dialog cancelled".to_string())?;
     Ok(result.map(|paths| paths.iter().map(|p| p.to_string()).collect()))
 }
 
@@ -147,7 +151,11 @@ async fn save_file_dialog(
     app: AppHandle,
 ) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
-    let result = app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).set_file_name("untitled.mid").pick_file().await;
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog().file().add_filter("MIDI Files", &["mid", "midi"]).set_file_name("untitled.mid").pick_file(move |path| {
+        let _ = tx.send(path);
+    });
+    let result = rx.recv().map_err(|_| "dialog cancelled".to_string())?;
     Ok(result.map(|p| p.to_string()))
 }
 

@@ -14,6 +14,7 @@ import { IPC_CHANNELS } from "./ipc";
 import { setupApplicationMenu } from "./menu";
 import { secureHandle, secureOn } from "./security";
 import * as midi from "./midi";
+import { debounce } from "../src/shared/debounce";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,14 +23,6 @@ function isPathWithinUserData(filePath: string): boolean {
   const userDataPath = app.getPath("userData");
   const resolved = resolve(filePath);
   return resolved.startsWith(userDataPath + sep) || resolved === userDataPath;
-}
-
-function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: unknown[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), ms);
-  }) as T;
 }
 
 const WINDOW_STATE_FILE = "app-data/window-state.json";

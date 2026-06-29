@@ -1,16 +1,16 @@
 <template>
   <div
     v-if="displaySymbol"
-    class="d-inline-flex text-accent align-end"
+    class="inline-flex text-accent items-end"
     style="height: 1.5em; line-height: 1.5em; vertical-align: bottom"
   >
-    <span class="font-weight-bold">{{
+    <span class="font-bold">{{
       latinSharpsFlats ? tonicPart : formatSharpsFlats(tonicPart)
     }}</span>
-    <span class="text-body-2" style="line-height: 1.5em">
+    <span class="text-base" style="line-height: 1.5em">
       <span
-        class="font-weight-bold font-italic"
-        :class="{ 'rounded bg-red': highlightAlterations }"
+        class="font-bold italic"
+        :class="{ 'rounded bg-error/20': highlightAlterations }"
         style="margin: 0 0.05em"
       >
         {{ formatQuality(firstToken) }}
@@ -18,8 +18,8 @@
       <span
         v-for="(part, index) in restTokens"
         :key="`${part}_${index}`"
-        class="align-super text-caption font-italic"
-        :class="{ 'rounded bg-blue': highlightAlterations }"
+        class="align-super text-xs italic"
+        :class="{ 'rounded bg-info/20': highlightAlterations }"
         style="margin: 0 0.05em"
       >
         {{ latinSharpsFlats ? part : formatSharpsFlats(part) }}
@@ -27,7 +27,7 @@
     </span>
     <span
       v-if="!hideRoot && chord?.root"
-      class="text-caption"
+      class="text-xs"
       style="line-height: 1.5em; opacity: 0.5; margin-left: 0.25em"
     >
       /{{ latinSharpsFlats ? chord!.root : formatSharpsFlats(chord!.root) }}

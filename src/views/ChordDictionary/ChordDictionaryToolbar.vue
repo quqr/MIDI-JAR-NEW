@@ -1,132 +1,199 @@
 <template>
   <div
-    class="chord-dictionary-toolbar flex items-center gap-2 px-3 py-2 border-b border-base-200 bg-base-100 flex-wrap flex-shrink-0"
+    class="chord-dictionary-toolbar flex flex-col gap-2 px-3 py-2 border-b border-base-200 bg-base-100 flex-shrink-0"
   >
-    <div v-if="!disableUpdate" class="relative inline-block">
-      <button class="btn btn-sm btn-outline" @click="menuOpen = !menuOpen">
-        {{ getGroupLabel(groupBy)
-        }}{{ filterInKey ? t("chordDictionary.inKey") : "" }}
-        <Icon name="chevron-down" size="16" class="ml-1" />
+    <!-- Row 1: Search + controls -->
+    <div class="flex items-center gap-2">
+      <!-- Hamburger for mobile drawer -->
+      <button
+        v-if="showDrawerToggle"
+        class="btn btn-sm btn-ghost btn-square lg:hidden"
+        :aria-label="t('common.openSidebar')"
+        @click="$emit('toggleDrawer')"
+      >
+        <Icon name="menu" :size="18" />
       </button>
 
-      <div
-        v-show="menuOpen"
-        class="absolute top-full left-0 z-50 mt-1 card bg-base-100 shadow-md min-w-[250px]"
-      >
-        <ul class="menu bg-base-100 w-full p-0">
-          <li class="menu-title">
-            <span>{{ t("chordDictionary.group") }}</span>
-          </li>
-          <li>
-            <a
-              :class="{ 'bg-primary/10 text-primary': groupBy === 'none' }"
-              @click="
-                updateGroupBy('none');
-                menuOpen = false;
-              "
-            >
-              {{ t("chordDictionary.groupNames.noGroup") }}
-            </a>
-          </li>
-          <li>
-            <a
-              :class="{ 'bg-primary/10 text-primary': groupBy === 'quality' }"
-              @click="
-                updateGroupBy('quality');
-                menuOpen = false;
-              "
-            >
-              {{ t("chordDictionary.groupNames.byQuality") }}
-            </a>
-          </li>
-          <li>
-            <a
-              :class="{ 'bg-primary/10 text-primary': groupBy === 'intervals' }"
-              @click="
-                updateGroupBy('intervals');
-                menuOpen = false;
-              "
-            >
-              {{ t("chordDictionary.groupNames.byIntervals") }}
-            </a>
-          </li>
-          <li class="divider my-1"></li>
-          <li class="menu-title">
-            <span>{{ t("chordDictionary.filter") }}</span>
-          </li>
-          <li>
-            <a
-              :class="{ 'bg-primary/10 text-primary': hideDisabled }"
-              @click="
-                toggleHideDisabled();
-                menuOpen = false;
-              "
-            >
-              {{ t("chordDictionary.hideDisabledChords") }}
-            </a>
-          </li>
-          <li>
-            <a
-              :class="{ 'bg-primary/10 text-primary': filterInKey }"
-              @click="
-                toggleFilterInKey();
-                menuOpen = false;
-              "
-            >
-              {{ t("chordDictionary.onlyChordsInKey") }}
-            </a>
-          </li>
-        </ul>
+      <!-- Inline search -->
+      <ChordSearch :on-select="handleChordSelect" mode="inline" />
+
+      <template v-if="!disableUpdate">
+        <!-- Group by dropdown -->
+        <div class="relative hidden sm:block">
+          <button
+            class="btn btn-sm btn-outline gap-1"
+            @click="menuOpen = !menuOpen"
+          >
+            <span class="truncate max-w-[80px]">
+              {{ getGroupLabel(groupBy) }}
+            </span>
+            <Icon name="chevron-down" size="14" />
+          </button>
+
+          <div
+            v-show="menuOpen"
+            class="absolute top-full left-0 z-50 mt-1 card bg-base-100 shadow-md min-w-[180px]"
+          >
+            <ul class="menu bg-base-100 w-full p-1">
+              <li class="menu-title">
+                <span>{{ t("chordDictionary.group") }}</span>
+              </li>
+              <li>
+                <a
+                  :class="{ 'bg-primary/10 text-primary': groupBy === 'none' }"
+                  @click="
+                    updateGroupBy('none');
+                    menuOpen = false;
+                  "
+                >
+                  {{ t("chordDictionary.groupNames.noGroup") }}
+                </a>
+              </li>
+              <li>
+                <a
+                  :class="{
+                    'bg-primary/10 text-primary': groupBy === 'quality',
+                  }"
+                  @click="
+                    updateGroupBy('quality');
+                    menuOpen = false;
+                  "
+                >
+                  {{ t("chordDictionary.groupNames.byQuality") }}
+                </a>
+              </li>
+              <li>
+                <a
+                  :class="{
+                    'bg-primary/10 text-primary': groupBy === 'intervals',
+                  }"
+                  @click="
+                    updateGroupBy('intervals');
+                    menuOpen = false;
+                  "
+                >
+                  {{ t("chordDictionary.groupNames.byIntervals") }}
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div
+            v-show="menuOpen"
+            class="fixed inset-0 z-40"
+            @click="menuOpen = false"
+          ></div>
+        </div>
+
+        <!-- Filter toggles -->
+        <div class="hidden md:flex items-center gap-3 ml-1">
+          <label
+            class="flex items-center gap-1.5 cursor-pointer text-xs text-base-content/70 whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              class="toggle toggle-xs toggle-primary"
+              :checked="filterInKey"
+              @change="toggleFilterInKey"
+            />
+            {{ t("chordDictionary.onlyChordsInKey") }}
+          </label>
+          <label
+            class="flex items-center gap-1.5 cursor-pointer text-xs text-base-content/70 whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              class="toggle toggle-xs toggle-primary"
+              :checked="hideDisabled"
+              @change="toggleHideDisabled"
+            />
+            {{ t("chordDictionary.hideDisabledChords") }}
+          </label>
+        </div>
+      </template>
+
+      <div class="flex-1"></div>
+
+      <!-- Interactive mode toggle -->
+      <div v-if="!disableUpdate" class="flex items-center">
+        <button
+          class="btn btn-sm btn-square"
+          :class="
+            interactiveMode === 'detect'
+              ? 'btn-primary'
+              : 'btn-ghost text-base-content/50'
+          "
+          :title="t('chordDictionary.detect')"
+          :aria-label="t('chordDictionary.detect')"
+          @click="handleToggleInteractive('detect')"
+        >
+          <Icon name="eye" :size="16" />
+        </button>
+        <button
+          class="btn btn-sm btn-square"
+          :class="
+            interactiveMode === 'play'
+              ? 'btn-primary'
+              : 'btn-ghost text-base-content/50'
+          "
+          :title="t('chordDictionary.play')"
+          :aria-label="t('chordDictionary.play')"
+          @click="handleToggleInteractive('play')"
+        >
+          <Icon name="controller" :size="16" />
+        </button>
       </div>
-      <div
-        v-show="menuOpen"
-        class="fixed inset-0 z-40"
-        @click="menuOpen = false"
-      ></div>
+
+      <SettingsButton
+        :aria-label="t('chordDictionary.openDictionarySettings')"
+        @click="settingsOpen = true"
+      />
+
+      <SettingsModal
+        v-model="settingsOpen"
+        :title="t('chordDictionary.settings')"
+      >
+        <ChordDictionarySettings />
+      </SettingsModal>
     </div>
 
-    <div v-if="!disableUpdate" class="divider divider-horizontal mx-0"></div>
-
-    <ChordSearch :on-select="handleChordSelect" />
-
-    <div v-if="!disableUpdate" class="btn-group ml-2">
-      <button
-        class="btn btn-sm"
-        :class="interactiveMode === 'detect' ? 'btn-active' : 'btn-outline'"
-        @click="handleToggleInteractive('detect')"
-      >
-        {{ t("chordDictionary.detect") }}
-      </button>
-      <button
-        class="btn btn-sm"
-        :class="interactiveMode === 'play' ? 'btn-active' : 'btn-outline'"
-        @click="handleToggleInteractive('play')"
-      >
-        {{ t("chordDictionary.play") }}
-      </button>
-    </div>
-
-    <div class="flex-1"></div>
-
-    <SettingsButton
-      :aria-label="t('chordDictionary.openDictionarySettings')"
-      @click="settingsOpen = true"
-    />
-
-    <SettingsModal
-      v-model="settingsOpen"
-      :title="t('chordDictionary.settings')"
+    <!-- Row 2: Chroma selector auto-fit grid -->
+    <div
+      class="grid gap-1"
+      style="grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr))"
+      role="tablist"
+      :aria-label="t('chordDictionary.chromaNavigation')"
     >
-      <ChordDictionarySettings />
-    </SettingsModal>
+      <button
+        v-for="note in notesList"
+        :key="note"
+        role="tab"
+        :aria-selected="selectedChroma === getChroma(note)"
+        class="btn btn-xs sm:btn-sm px-0 min-h-0 h-7 sm:h-8 text-xs font-medium transition-colors"
+        :class="
+          selectedChroma === getChroma(note)
+            ? 'btn-primary'
+            : 'btn-ghost hover:bg-base-200'
+        "
+        @click="$emit('selectChroma', getChroma(note))"
+      >
+        {{ formatNote(note) }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { Note } from "tonal";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
+import type { KeySignatureConfig } from "@/helpers";
+import {
+  NOTE_NAMES,
+  formatSharpsFlats,
+  getNoteInKeySignature,
+} from "@/helpers";
 import { SettingsButton } from "@/components/SettingsButton";
 import { SettingsModal } from "@/components/SettingsModal";
 import Icon from "@/components/Icon/Icon.vue";
@@ -135,11 +202,21 @@ import ChordDictionarySettings from "../Settings/ChordDictionarySettings/ChordDi
 
 interface Props {
   disableUpdate?: boolean;
+  showDrawerToggle?: boolean;
+  keySignature: KeySignatureConfig;
+  selectedChroma: number | null;
+  filterChordsInKey: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disableUpdate: false,
+  showDrawerToggle: false,
 });
+
+defineEmits<{
+  (e: "toggleDrawer"): void;
+  (e: "selectChroma", chroma: number): void;
+}>();
 
 const { t } = useI18n();
 const router = useRouter();
@@ -158,6 +235,21 @@ const hideDisabled = computed(
 const interactiveMode = computed(
   () => settingsStore.settings.chordDictionary.interactive,
 );
+
+// Chroma selector
+const notesList = computed(() =>
+  props.filterChordsInKey ? props.keySignature.scale : NOTE_NAMES,
+);
+
+function getChroma(note: string): number {
+  return Note.chroma(note) as number;
+}
+
+function formatNote(note: string): string {
+  return formatSharpsFlats(
+    getNoteInKeySignature(note, props.keySignature.notes),
+  );
+}
 
 function getGroupLabel(groupByValue: string): string {
   if (groupByValue === "none") return t("chordDictionary.groupNames.noGroup");

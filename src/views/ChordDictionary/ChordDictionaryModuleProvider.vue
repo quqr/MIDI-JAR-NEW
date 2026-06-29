@@ -1,5 +1,5 @@
 <template>
-  <div class="chord-dictionary-module-provider">
+  <div class="chord-dictionary-module-provider flex flex-col flex-1 min-h-0 overflow-hidden">
     <slot />
   </div>
 </template>
@@ -48,6 +48,7 @@ watch(
   (v) => {
     if (v) contextValue.keySignature = v;
   },
+  { deep: true },
 );
 watch(
   () => props.midiNotes,

@@ -2,7 +2,7 @@
   <div
     :id="id"
     ref="containerRef"
-    class="notation-base h-full w-full overflow-auto"
+    class="notation-base w-full overflow-visible"
     :class="className"
     :style="containerStyle"
   />
@@ -41,6 +41,7 @@ const { t } = useI18n();
 const containerRef = ref<HTMLElement | null>(null);
 let renderer: Renderer | null = null;
 let resizeObserver: ResizeObserver | null = null;
+let lastWidth = 0;
 
 const display = computed(() => mergeDisplayConfig(props.display));
 const layout = computed(() => mergeLayoutConfig(props.layout));
@@ -65,15 +66,15 @@ const containerStyle = computed(() => ({
   backgroundColor: style.value.backgroundColor,
 }));
 
-const renderNotation = () => {
+function renderNotation() {
   if (!renderer || !containerRef.value) return;
 
-  const containerWidth = containerRef.value.clientWidth;
-  const containerHeight = containerRef.value.clientHeight;
+  const width = containerRef.value.clientWidth;
+  if (width === 0) return;
 
-  if (containerWidth === 0 || containerHeight === 0) return;
-
-  const dimensions = getLayoutDimensions(containerWidth, containerHeight, {
+  // Width-driven only: use a large reference height so scaleY never constrains scale.
+  // The SVG renders at its natural height and the container auto-sizes via overflow:visible.
+  const dimensions = getLayoutDimensions(width, 9999, {
     staffClef: props.staffClef as "both" | "bass" | "treble",
     alteration: props.keySignature.alteration,
     layout: layout.value,
@@ -108,19 +109,28 @@ const renderNotation = () => {
       style: style.value,
     });
   }
-};
+}
 
-const setupResizeObserver = () => {
+function setupResizeObserver() {
   if (!containerRef.value || resizeObserver) return;
 
   resizeObserver = new ResizeObserver(
-    debounce(() => {
-      renderNotation();
+    debounce((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const newWidth =
+        entry.contentBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+      // Only re-render on width change to break the height→resize→render loop
+      if (Math.abs(newWidth - lastWidth) > 1) {
+        lastWidth = newWidth;
+        renderNotation();
+      }
     }, 80),
   );
 
   resizeObserver.observe(containerRef.value);
-};
+  lastWidth = containerRef.value.clientWidth;
+}
 
 onMounted(() => {
   if (containerRef.value) {
@@ -137,7 +147,7 @@ watch(
   [
     notes,
     () => props.staffClef,
-    () => props.keySignature,
+    () => JSON.stringify(props.keySignature),
     display,
     layout,
     style,

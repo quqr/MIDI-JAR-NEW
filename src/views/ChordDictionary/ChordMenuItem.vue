@@ -1,6 +1,6 @@
 <template>
   <li
-    class="px-3 py-1.5 rounded-md cursor-pointer text-sm transition-colors hover:bg-base-200"
+    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors hover:bg-base-300/40"
     :class="{
       'bg-primary/10 text-primary font-semibold':
         selected === item.chordType.aliases[0],

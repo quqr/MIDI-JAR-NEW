@@ -1,5 +1,5 @@
 <template>
-  <div class="chord-dictionary-chroma-menu p-4 max-h-[60vh] overflow-y-auto">
+  <div class="chord-dictionary-chroma-menu p-4 h-full">
     <ul
       class="menu bg-base-100"
       role="tablist"
