@@ -19,7 +19,9 @@
           />
         </div>
 
-        <div class="flex-1 flex flex-col gap-6 md:gap-20 items-center justify-center">
+        <div
+          class="flex-1 flex flex-col gap-6 md:gap-20 items-center justify-center"
+        >
           <div
             v-if="displayChord"
             id="chord"
@@ -195,9 +197,7 @@ const highlightAlterations = computed(
 const displayKeyboard = computed(
   () => moduleSettings.value?.displayKeyboard ?? true,
 );
-const displayChord = computed(
-  () => moduleSettings.value?.displayChord ?? true,
-);
+const displayChord = computed(() => moduleSettings.value?.displayChord ?? true);
 const displayName = computed(() => moduleSettings.value?.displayName ?? false);
 const displayNotation = computed(
   () => moduleSettings.value?.displayNotation ?? false,

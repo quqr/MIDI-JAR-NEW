@@ -3,33 +3,28 @@ export type VisualStyle = "blocks" | "particles" | "hybrid";
 
 // ─── 颜色方案 ───
 export type ColorScheme =
-  | "pitch"
-  | "hands"
-  | "rainbow"
-  | "warm"
-  | "cool"
-  | "neon"
-  | "custom";
+  "pitch" | "hands" | "rainbow" | "warm" | "cool" | "neon" | "custom";
 
 // ─── 粒子形状 ───
 export type ParticleShape = "circle" | "square" | "note" | "star";
 
 // ─── 背景类型 ───
-export type BackgroundType = "solid" | "gradient" | "preset" | "image" | "stars";
+export type BackgroundType =
+  "solid" | "gradient" | "preset" | "image" | "stars";
+
+// ─── 图片适配方式 ───
+export type ImageFitMode = "cover" | "stretch" | "center" | "tile";
+
+// ─── 纹理预设 ───
+export type TexturePreset = "none" | "noise" | "stripes" | "dots" | "glow" | "metallic";
 
 // ─── 渐变方向 ───
 export type GradientDirection =
-  | "linear-vertical"
-  | "linear-horizontal"
-  | "radial";
+  "linear-vertical" | "linear-horizontal" | "radial";
 
 // ─── 预设主题 ───
 export type PresetTheme =
-  | "night-sky"
-  | "ocean"
-  | "sunset"
-  | "aurora"
-  | "forest";
+  "night-sky" | "ocean" | "sunset" | "aurora" | "forest";
 
 // ─── 音色预设 ───
 export type AudioPreset =
@@ -46,16 +41,58 @@ export type KeyboardRange = "88" | "61" | "49" | "custom";
 // ─── 按键标签 ───
 export type KeyLabel = "none" | "note" | "pitchClass" | "octave";
 
-// ─── 质量档位 ───
-export type QualityLevel = "low" | "medium" | "high";
-
 // ─── 播放状态 ───
 export type PlaybackState = "idle" | "playing" | "paused";
 
 // ─── 播放内容类型 ───
 export type ContentType = "none" | "recording" | "midi";
 
+// ─── 命中线样式 ───
+export type HitLineStyle = "solid" | "dashed" | "dotted";
+
 // ─── 瀑布流视觉配置 ───
+export interface HitLineConfig {
+  color: string;
+  glow: boolean;
+  thickness: number; // 线条粗细（像素）
+  glowRadius: number; // 发光扩散范围
+  glowIntensity: number; // 发光强度 0-1
+  style: HitLineStyle; // 线条样式
+  visible: boolean; // 是否显示
+}
+
+export interface NoteBlockConfig {
+  borderColor: string;
+  borderWidth: number;
+  borderEnabled: boolean;
+  gradientEnabled: boolean;
+  gradientTopColor: string;
+  gradientBottomColor: string;
+  highlightEnabled: boolean;
+  highlightOpacity: number;
+  fadeIn: boolean; // 淡入动画
+  fadeOut: boolean; // 淡出动画
+}
+
+export interface TrailParticleConfig {
+  size: number;
+  colorDecay: number; // 颜色衰减速度 0-1
+  spreadAngle: number; // 扩散角度 0-180
+  lifetime: number; // 生命周期（帧数）
+}
+
+export interface HitParticleConfig {
+  count: number;
+  speed: number;
+  lifetime: number; // 生命周期（帧数）
+}
+
+export interface ParticlePhysicsConfig {
+  gravity: number; // 重力加速度
+  windX: number; // X 方向风力
+  windY: number; // Y 方向风力
+}
+
 export interface ParticleConfig {
   style: VisualStyle;
   shape: ParticleShape;
@@ -68,8 +105,11 @@ export interface ParticleConfig {
   density: number;
   trail: boolean;
   cornerRadius: number;
-  hitLineColor: string;
-  hitLineGlow: boolean;
+  hitLine: HitLineConfig;
+  noteBlock: NoteBlockConfig;
+  trailParticle: TrailParticleConfig;
+  hitParticle: HitParticleConfig;
+  physics: ParticlePhysicsConfig;
 }
 
 // ─── 背景配置 ───
@@ -83,6 +123,59 @@ export interface BackgroundConfig {
   imageFile: string;
   imageBlur: number;
   imageDarken: number;
+  imageFitMode: ImageFitMode;
+}
+
+// ─── 后处理配置 ───
+export interface PostProcessingConfig {
+  bloom: {
+    enabled: boolean;
+    intensity: number; // 0-1
+    threshold: number; // 0-1, 亮度阈值
+    radius: number; // 模糊半径
+  };
+  motionBlur: {
+    enabled: boolean;
+    strength: number; // 0-1
+  };
+  chromaticAberration: {
+    enabled: boolean;
+    intensity: number; // 0-1
+  };
+  vignette: {
+    enabled: boolean;
+    intensity: number; // 0-1
+    radius: number; // 0-1, 暗角范围
+  };
+}
+
+// ─── 音符块纹理配置 ───
+export interface NoteTextureConfig {
+  preset: TexturePreset;
+  scale: number; // 纹理缩放
+  intensity: number; // 0-1, 纹理可见度
+}
+
+// ─── 音符块粒子配置（增强版）───
+export interface NoteBlockParticleConfig {
+  surfaceEmission: {
+    enabled: boolean;
+    rate: number; // 每帧粒子数
+    speed: number;
+    lifetime: number;
+  };
+  hitExplosion: {
+    enabled: boolean;
+    count: number;
+    speed: number;
+    lifetime: number;
+  };
+  orbiting: {
+    enabled: boolean;
+    count: number;
+    radius: number;
+    speed: number;
+  };
 }
 
 // ─── 键盘配置 ───
@@ -95,6 +188,13 @@ export interface KeyboardConfig {
   whiteKeyColor: string;
   blackKeyColor: string;
   pressedKeyColor: string;
+  heightRatio: number; // 键盘占屏幕高度的比例 0.1-0.5
+  keyCornerRadius: number; // 按键圆角
+  keyBorderWidth: number; // 按键边框粗细
+  keyBorderColor: string; // 按键边框颜色
+  separatorEnabled: boolean; // 键盘分隔线
+  separatorColor: string;
+  separatorThickness: number;
 }
 
 // ─── 音频配置 ───
@@ -116,12 +216,6 @@ export interface MidiFileConfig {
   showNoteNames: boolean;
 }
 
-// ─── 性能配置 ───
-export interface PerformanceConfig {
-  quality: QualityLevel;
-  maxParticles: number;
-}
-
 // ─── 瀑布流钢琴总配置 ───
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
@@ -129,7 +223,9 @@ export interface WaterfallPianoSettings {
   keyboard: KeyboardConfig;
   audio: AudioConfig;
   midiFile: MidiFileConfig;
-  performance: PerformanceConfig;
+  postProcessing: PostProcessingConfig;
+  noteTexture: NoteTextureConfig;
+  noteBlockParticles: NoteBlockParticleConfig;
 }
 
 // ─── 录制的音符 ───

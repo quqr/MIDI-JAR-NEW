@@ -3,6 +3,7 @@
 ## 概述
 
 两项改动：
+
 1. **ChordDisplay 钢琴改为可交互** — 用户可以点击琴键，音符进入 `useNotes` 的和弦检测流程（与 MIDI 输入互斥）
 2. **移除 Widget/弹出窗口功能** — 删除所有 Widget 相关的前后端代码
 
@@ -10,15 +11,15 @@
 
 ## 决策记录
 
-| 决策 | 结论 |
-|------|------|
+| 决策             | 结论                                                               |
+| ---------------- | ------------------------------------------------------------------ |
 | ChordDetail 交互 | 完全移除所有交互逻辑（selectedMidis, onNoteClick, detectChord 等） |
-| 点击行为模型 | Toggle 模式（点击加入，再点击移除） |
-| 输入互斥 | 点击 → 清除 MIDI 音符；MIDI 弹奏 → 清除点击音符 |
-| 实现位置 | 扩展 `useNotes` composable |
-| Widget | 完全移除（前后端 + Tauri 配置） |
-| clickable 设置 | 始终开启，不加设置项 |
-| 清除机制 | 手动 toggle + 切换模块时自动清除 |
+| 点击行为模型     | Toggle 模式（点击加入，再点击移除）                                |
+| 输入互斥         | 点击 → 清除 MIDI 音符；MIDI 弹奏 → 清除点击音符                    |
+| 实现位置         | 扩展 `useNotes` composable                                         |
+| Widget           | 完全移除（前后端 + Tauri 配置）                                    |
+| clickable 设置   | 始终开启，不加设置项                                               |
+| 清除机制         | 手动 toggle + 切换模块时自动清除                                   |
 
 ---
 
@@ -40,7 +41,7 @@
    const currentMidiNotes = [
      ...sustainedMidiNotes.value,
      ...playedMidiNotes.value,
-     ...clickedMidiNotes.value,  // 新增
+     ...clickedMidiNotes.value, // 新增
    ];
    ```
 5. **新增 `clearClickedNotes()` 函数** — 仅清除点击音符（供模块切换时调用）
@@ -62,11 +63,7 @@
 
 1. **PianoKeyboard 添加 `:clickable="true"` 和 `@note-click`**
    ```vue
-   <PianoKeyboard
-     ...
-     :clickable="true"
-     @note-click="onNoteClick"
-   />
+   <PianoKeyboard ... :clickable="true" @note-click="onNoteClick" />
    ```
 2. **新增 `onNoteClick(midi)` 处理函数** — 调用 `useNotes` 暴露的 `toggleNote(midi)`
 3. **将 `clickedMidiNotes` 合并到 `played` prop** — 使点击的音符显示为红色高亮
@@ -101,13 +98,13 @@
 
 ### 删除文件（5 个）
 
-| 文件 | 说明 |
-|------|------|
-| `src/views/Widget/WidgetPage.vue` | Widget 主页面 |
+| 文件                                  | 说明                |
+| ------------------------------------- | ------------------- |
+| `src/views/Widget/WidgetPage.vue`     | Widget 主页面       |
 | `src/views/Widget/WidgetTitleBar.vue` | Widget 自定义标题栏 |
-| `src/views/Widget/index.ts` | Barrel 导出 |
-| `src/stores/widget.ts` | Widget Pinia store |
-| `src/types/widget.ts` | Widget 类型定义 |
+| `src/views/Widget/index.ts`           | Barrel 导出         |
+| `src/stores/widget.ts`                | Widget Pinia store  |
+| `src/types/widget.ts`                 | Widget 类型定义     |
 
 ### 修改前端文件（7 个）
 
@@ -123,12 +120,13 @@
    - 4 个 `isXxxPoppedOut` 计算属性
    - `popOut()` 函数
    - `onMounted`/`onUnmounted` 中的 widget 监听器
-   - 所有 "Pop out" 按钮和 `@contextmenu.prevent="popOut(...)"` 
+   - 所有 "Pop out" 按钮和 `@contextmenu.prevent="popOut(...)"`
    - `displayXxx` 计算属性中的 `!isXxxPoppedOut` 条件
 
 ### 修改 Rust 后端（1 个）
 
 **`src-tauri/src/lib.rs`** — 删除：
+
 - `WidgetWindowState` 结构体
 - `WIDGET_STATE_FILE` 常量
 - `get_widget_state_path()`, `load_widget_states()`, `save_widget_states()` 函数

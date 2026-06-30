@@ -50,8 +50,7 @@
           <div class="collapse-content" v-if="openId === pkg.id">
             <pre
               class="text-xs bg-base-300 rounded p-4 whitespace-pre-wrap overflow-auto max-h-60"
-              >{{ pkg.text }}</pre
-            >
+              >{{ pkg.text }}</pre>
           </div>
         </div>
       </div>

@@ -39,6 +39,7 @@
 ## 阶段四：五个核心页面
 
 ### ChordDictionary
+
 - [ ] 首次加载默认 C 根音 + quality 分组
 - [ ] 和弦卡片 staggered 入场动画（`n × 30ms`）
 - [ ] 详情使用滑入式抽屉（`translateX` + 玻璃态 + 外部点击关闭）
@@ -48,6 +49,7 @@
 - [ ] 无匹配结果时"未找到符合条件的和弦"提示
 
 ### ChordDisplay
+
 - [ ] 页面顶部光晕层可见
 - [ ] 所有子区域统一玻璃态容器
 - [ ] `gap-20` 已修复 → `gap-4`
@@ -58,6 +60,7 @@
 - [ ] 无 inline style，全用 Tailwind
 
 ### ChordQuiz
+
 - [ ] ✓+success / ✗+error / ⓘ+warning 渐变 badge
 - [ ] 游戏完成状态：得分动画 + "再玩一次" + "分享"
 - [ ] 自动推进模式（正确 500ms 后自动，错误不跳，设置可关）
@@ -65,6 +68,7 @@
 - [ ] 底部 home 按钮 `opacity-80`
 
 ### CircleOfFifths
+
 - [ ] 外围渐变光晕环可视
 - [ ] MIDI 输入时 `animate-pulse` 呼吸效果
 - [ ] 无 MIDI 时引导提示
@@ -72,6 +76,7 @@
 - [ ] 交互 tooltip
 
 ### Layout
+
 - [ ] `<Transition name="page">` 路由切换 `scale-95→100` + `opacity` 200ms
 - [ ] SettingsLayout 抽屉弹簧滑入动画
 - [ ] 所有页面 `max-w-[1400px] mx-auto` 居中

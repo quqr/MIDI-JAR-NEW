@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import type { BackgroundConfig, PresetTheme } from "../types";
+import type { BackgroundConfig, PresetTheme, ImageFitMode } from "../types";
 import { presetThemes } from "../constants";
 
 export class BackgroundRenderer {
@@ -19,14 +19,27 @@ export class BackgroundRenderer {
         this.drawSolid(config.solidColor, width, height);
         break;
       case "gradient":
-        this.drawGradient(config.gradientDirection, config.gradientStart, config.gradientEnd, width, height);
+        this.drawGradient(
+          config.gradientDirection,
+          config.gradientStart,
+          config.gradientEnd,
+          width,
+          height,
+        );
         break;
       case "preset":
         this.drawPreset(config.presetTheme, width, height);
         break;
       case "image":
         if (config.imageFile) {
-          this.drawImage(config.imageFile, config.imageBlur, config.imageDarken, width, height);
+          this.drawImage(
+            config.imageFile,
+            config.imageBlur,
+            config.imageDarken,
+            config.imageFitMode,
+            width,
+            height,
+          );
         } else {
           this.drawPreset("night-sky", width, height);
         }
@@ -44,7 +57,13 @@ export class BackgroundRenderer {
     this.container.addChild(g);
   }
 
-  private drawGradient(_direction: string, start: string, end: string, width: number, height: number) {
+  private drawGradient(
+    _direction: string,
+    start: string,
+    end: string,
+    width: number,
+    height: number,
+  ) {
     const g = new PIXI.Graphics();
 
     // PixiJS 8 doesn't have built-in gradient, so we simulate with horizontal lines
@@ -61,7 +80,13 @@ export class BackgroundRenderer {
 
   private drawPreset(theme: PresetTheme, width: number, height: number) {
     const colors = presetThemes[theme];
-    this.drawGradient("linear-vertical", colors.start, colors.end, width, height);
+    this.drawGradient(
+      "linear-vertical",
+      colors.start,
+      colors.end,
+      width,
+      height,
+    );
 
     // Add decorative elements for some themes
     if (theme === "night-sky") {
@@ -102,14 +127,72 @@ export class BackgroundRenderer {
     this.container.addChild(g);
   }
 
-  private drawImage(imageData: string, blur: number, darken: number, width: number, height: number) {
-    const sprite = PIXI.Sprite.from(imageData);
-    sprite.width = width;
-    sprite.height = height;
+  private drawImage(
+    imageData: string,
+    blur: number,
+    darken: number,
+    fitMode: ImageFitMode,
+    width: number,
+    height: number,
+  ) {
+    const texture = PIXI.Texture.from(imageData);
+    const imgW = texture.width;
+    const imgH = texture.height;
 
-    if (blur > 0) {
-      // Note: BlurFilter requires pixi.js filters
-      // For now, we'll just darken the image
+    let sprite: PIXI.Sprite | PIXI.TilingSprite;
+
+    switch (fitMode) {
+      case "cover": {
+        const s = PIXI.Sprite.from(texture);
+        const scale = Math.max(width / imgW, height / imgH);
+        s.width = imgW * scale;
+        s.height = imgH * scale;
+        s.x = (width - s.width) / 2;
+        s.y = (height - s.height) / 2;
+        sprite = s;
+        break;
+      }
+      case "stretch": {
+        const s = PIXI.Sprite.from(texture);
+        s.width = width;
+        s.height = height;
+        sprite = s;
+        break;
+      }
+      case "center": {
+        const s = PIXI.Sprite.from(texture);
+        // If image is larger than screen, scale down to fit
+        if (imgW > width || imgH > height) {
+          const scale = Math.min(width / imgW, height / imgH);
+          s.width = imgW * scale;
+          s.height = imgH * scale;
+        } else {
+          s.width = imgW;
+          s.height = imgH;
+        }
+        s.x = (width - s.width) / 2;
+        s.y = (height - s.height) / 2;
+        sprite = s;
+        break;
+      }
+      case "tile": {
+        const ts = new PIXI.TilingSprite({
+          texture,
+          width,
+          height,
+        });
+        sprite = ts;
+        break;
+      }
+      default: {
+        const s = PIXI.Sprite.from(texture);
+        const scale = Math.max(width / imgW, height / imgH);
+        s.width = imgW * scale;
+        s.height = imgH * scale;
+        s.x = (width - s.width) / 2;
+        s.y = (height - s.height) / 2;
+        sprite = s;
+      }
     }
 
     this.container.addChild(sprite);

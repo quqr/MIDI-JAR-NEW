@@ -111,6 +111,7 @@ const routeToSettingKey: Record<string, string> = {
   "/settings/cursor": "cursor",
   "/settings/notation": "notation",
   "/settings/chord-dictionary": "chordDictionary",
+  "/settings/waterfall-piano": "waterfallPiano",
 };
 
 const currentSettingKey = computed(() => {
@@ -131,6 +132,7 @@ const currentSectionLabel = computed(() => {
     notation: t("settings.musicNotation"),
     chordDictionary: t("settings.chordDictionary"),
     chordDisplay: t("settings.chordDisplay"),
+    waterfallPiano: t("settings.waterfallPiano"),
   };
   return labelMap[key] || key;
 });

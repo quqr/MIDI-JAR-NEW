@@ -24,24 +24,32 @@
       >
         <Icon name="settings" :size="16" />
       </button>
+      <button
+        class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
+        :aria-label="t('waterfallPiano.playbackControls')"
+        @click="sidebarOpen = !sidebarOpen"
+      >
+        <Icon name="music" :size="16" />
+      </button>
     </div>
 
-    <!-- 底部浮动控制条 -->
-    <ControlBar
-      ref="controlBarRef"
-      class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
-      @toggle-record="toggleRecord"
-      @stop-all="stopAll"
-      @toggle-playback="togglePlayback"
-      @import-midi="importMidi"
-      @seek="seekTo"
-    />
+    <!-- 右侧边栏抽屉 -->
+    <SidebarDrawer
+      v-model="sidebarOpen"
+      :title="t('waterfallPiano.playbackControls')"
+    >
+      <PlaybackPanel
+        ref="playbackPanelRef"
+        @toggle-record="toggleRecord"
+        @stop-all="stopAll"
+        @toggle-playback="togglePlayback"
+        @import-midi="importMidi"
+        @seek="seekTo"
+      />
+    </SidebarDrawer>
 
     <!-- 设置模态框 -->
-    <SettingsModal
-      v-model="settingsOpen"
-      :title="t('waterfallPiano.settings')"
-    >
+    <SettingsModal v-model="settingsOpen" :title="t('waterfallPiano.settings')">
       <SettingsPanel />
     </SettingsModal>
   </div>
@@ -56,15 +64,17 @@ import { useWaterfallPianoStore } from "./stores/waterfallPiano";
 import { Recorder } from "./audio/Recorder";
 import { MidiFilePlayer } from "./midi/MidiFilePlayer";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
-import ControlBar from "./components/ControlBar.vue";
+import SidebarDrawer from "./components/SidebarDrawer.vue";
+import PlaybackPanel from "./components/PlaybackPanel.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import type { PlaybackState, ContentType, ScheduledNote } from "./types";
 
 const { t } = useI18n();
 const store = useWaterfallPianoStore();
 const settingsOpen = ref(false);
+const sidebarOpen = ref(false);
 const canvasRef = ref<InstanceType<typeof WaterfallCanvas>>();
-const controlBarRef = ref<InstanceType<typeof ControlBar>>();
+const playbackPanelRef = ref<InstanceType<typeof PlaybackPanel>>();
 
 const recorder = new Recorder();
 const midiPlayer = new MidiFilePlayer();
@@ -98,10 +108,10 @@ recorder.setCallbacks({
     store.isPlaying = false;
     engine().setMode("realtime");
     engine().setTransportPlaying(false);
-    controlBarRef.value?.setProgress(0, 0);
+    playbackPanelRef.value?.setProgress(0, 0);
   },
   onProgress: (progress, seconds) => {
-    controlBarRef.value?.setProgress(progress, seconds);
+    playbackPanelRef.value?.setProgress(progress, seconds);
     engine().setTransportTime(seconds);
   },
   onScheduledNotesReady: (notes) => {
@@ -123,10 +133,10 @@ midiPlayer.setCallbacks({
     store.isPlaying = false;
     engine().setMode("realtime");
     engine().setTransportPlaying(false);
-    controlBarRef.value?.setProgress(0, 0);
+    playbackPanelRef.value?.setProgress(0, 0);
   },
   onProgress: (progress, seconds) => {
-    controlBarRef.value?.setProgress(progress, seconds);
+    playbackPanelRef.value?.setProgress(progress, seconds);
     engine().setTransportTime(seconds);
   },
   onScheduledNotesReady: (notes) => {
@@ -175,7 +185,7 @@ function stopAll() {
   engine().setTransportPlaying(false);
   engine().clearNoteBlocks();
   engine().keyboardRenderer?.clearAllHighlights();
-  controlBarRef.value?.setProgress(0, 0);
+  playbackPanelRef.value?.setProgress(0, 0);
 }
 
 // ─── 播放/暂停/恢复 ───
@@ -210,7 +220,10 @@ async function togglePlayback() {
   // 从头开始播放
   if (contentType.value === "midi" && midiPlayer.getDuration() > 0) {
     await startMidiPlayback();
-  } else if (contentType.value === "recording" || store.recordedNotes.length > 0) {
+  } else if (
+    contentType.value === "recording" ||
+    store.recordedNotes.length > 0
+  ) {
     contentType.value = "recording";
     await startRecordingPlayback();
   }
@@ -268,7 +281,7 @@ async function importMidi(file: File) {
     await midiPlayer.loadFile(file);
     store.currentMidiFileName = file.name;
     contentType.value = "midi";
-    controlBarRef.value?.setMidiInfo(file.name, midiPlayer.getDuration());
+    playbackPanelRef.value?.setMidiInfo(file.name, midiPlayer.getDuration());
   } catch (err) {
     console.error("Failed to load MIDI file:", err);
   }

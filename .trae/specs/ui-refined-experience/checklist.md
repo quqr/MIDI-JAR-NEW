@@ -5,6 +5,7 @@
 ## 阶段 1：设计基础设施
 
 ### Task 1: 色彩系统（DaisyUI 规范）
+
 - [ ] 所有颜色使用 DaisyUI 语义色 class
 - [ ] 无硬编码颜色值（`#1A1A2E`、`#6366F1`、`#E8EAED` 等）
 - [ ] 透明度修饰 `/10`、`/20`、`/30`、`/40`、`/60`、`/70` 正确使用
@@ -12,6 +13,7 @@
 - [ ] 全局搜索无硬编码颜色残留
 
 ### Task 2: 全局样式
+
 - [ ] 无 `@keyframes ripple`
 - [ ] 无 `@keyframes countUp`
 - [ ] 无 `@keyframes shimmer`
@@ -22,6 +24,7 @@
 - [ ] 全局文字色 `text-base-content`（DaisyUI 语义色）
 
 ### Task 3: App.vue / AppLayout.vue
+
 - [ ] 路由过渡仅 opacity 100ms
 - [ ] 无 `transform: scale()` 过渡
 - [ ] AppLayout `max-w-[1400px] mx-auto min-h-screen`
@@ -32,6 +35,7 @@
 ## 阶段 2：核心组件
 
 ### Task 4: ChordName.vue
+
 - [ ] 根音 `font-bold text-base-content`
 - [ ] 修饰符 `font-normal text-base-content/60`
 - [ ] 分隔符 `/` `text-base-content/40`
@@ -42,6 +46,7 @@
 - [ ] size prop 正常工作
 
 ### Task 5: PianoKeyboard.vue
+
 - [ ] 白键 `bg-base-100 border-r border-base-300`
 - [ ] 黑键 `bg-base-content`
 - [ ] 高亮键 `bg-primary`
@@ -50,6 +55,7 @@
 - [ ] 无指法提示
 
 ### Task 6: ModuleCard.vue
+
 - [ ] 卡片 `bg-base-100 rounded-2xl p-5 shadow-sm hover:shadow-md`
 - [ ] 图标容器 `w-12 h-12 rounded-xl`
 - [ ] 各模块图标颜色不同
@@ -59,6 +65,7 @@
 - [ ] 无 `group-hover`
 
 ### Task 7: ChordCardGrid.vue
+
 - [ ] 卡片 `bg-base-100 rounded-xl border border-base-300 p-3 text-center`
 - [ ] 悬停 `hover:border-primary/30 hover:shadow-sm`
 - [ ] 和弦名 `text-base font-bold text-base-content`
@@ -69,6 +76,7 @@
 - [ ] 无音符 badge
 
 ### Task 8: ChordDetail.vue
+
 - [ ] 和弦名 `text-2xl font-bold text-base-content`
 - [ ] 音高标签 `w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-semibold`
 - [ ] 键盘区域 `mt-4 p-3 rounded-lg bg-base-200`
@@ -79,6 +87,7 @@
 ## 阶段 3：主页面
 
 ### Task 9: Home.vue
+
 - [ ] 品牌标题 `text-3xl sm:text-4xl font-bold tracking-tight text-base-content`
 - [ ] **无副标题**（移除 "音乐学习工具箱"）
 - [ ] **无搜索框**（移除）
@@ -93,6 +102,7 @@
 - [ ] 无 staggered 动画
 
 ### Task 10: ChordDictionary.vue
+
 - [ ] 工具栏 `flex items-center gap-3 px-4 py-3 border-b border-base-300 bg-base-100`
 - [ ] 左栏 `w-48 border-r border-base-300 p-3 hidden md:block`
 - [ ] 根音按钮选中 `btn-primary`
@@ -107,6 +117,7 @@
 - [ ] 移动端底部标签栏
 
 ### Task 11: ChordDisplay.vue — 右侧统一面板
+
 - [ ] 右侧面板 `w-80 lg:w-96 flex-shrink-0 flex flex-col gap-4 p-5 rounded-xl bg-base-100 border border-base-300 shadow-sm`
 - [ ] 面板顶部：和弦名称 `text-3xl font-bold tracking-tight text-base-content`
 - [ ] 面板顶部：音高标签 `flex gap-2 mt-2` 每个音 `w-10 h-10 rounded-full bg-primary/10 text-primary`
@@ -129,6 +140,7 @@
 - [ ] 手机 < 768px：上下垂直，键盘 `fixed bottom-0`
 
 ### Task 12: ChordQuiz.vue
+
 - [ ] 信息栏 `flex items-center justify-between px-4 py-3`
 - [ ] 进度条 `h-1.5 rounded-full bg-base-200` 填充 `bg-primary`
 - [ ] 目标和弦 `text-5xl font-bold tracking-tight text-center py-10`
@@ -137,6 +149,7 @@
 - [ ] 操作按钮 `px-4 py-2 rounded-lg text-sm font-medium bg-base-200 hover:bg-base-300`
 
 ### Task 13: CircleOfFifths.vue
+
 - [ ] SVG `max-w-xl mx-auto`
 - [ ] 大调扇形 `fill-primary/10`
 - [ ] 小调扇形 `fill-warning/10`
@@ -147,6 +160,7 @@
 - [ ] 快速切换按钮选中 `bg-primary text-primary-content`
 
 ### Task 14: Settings 群组
+
 - [ ] 侧边导航 `w-44 border-r border-base-300 p-4 hidden md:block`
 - [ ] 导航项选中 `bg-primary/10 text-primary`
 - [ ] 内容区域 `flex-1 p-6 overflow-y-auto max-w-2xl`
@@ -159,16 +173,19 @@
 ## 阶段 4：子组件
 
 ### Task 15: ChordCategoryTree.vue
+
 - [ ] 标题 `text-xs font-medium text-base-content/60 uppercase tracking-wider mb-3`
 - [ ] 分类项 `py-1.5 px-2 rounded-lg text-sm hover:bg-base-200`
 - [ ] 选中 `bg-primary/10 text-primary font-medium`
 
 ### Task 16: ChordSearch.vue
+
 - [ ] 触发按钮 `px-3 py-1.5 rounded-lg border border-base-300 text-sm text-base-content/60 hover:border-primary/30`
 - [ ] 下拉面板 `bg-base-100 border border-base-300 rounded-xl shadow-lg w-72`
 - [ ] 选项 `px-3 py-2 text-sm hover:bg-base-200`
 
 ### Task 17: Settings 控件
+
 - [ ] Toggle: `toggle toggle-sm`
 - [ ] Select: `select select-bordered select-sm`
 - [ ] Range: `range range-sm`
@@ -179,11 +196,13 @@
 - [ ] Collapse: `<details>` + `rounded-xl border border-base-300 p-3`
 
 ### Task 18: WidgetPage.vue
+
 - [ ] 标题栏 `bg-base-200 border-b border-base-300 px-3 py-1.5`
 - [ ] 和弦名 `text-lg font-bold text-base-content`
 - [ ] 音程列表 `text-xs text-base-content/60`
 
 ### Task 19: CircleFifths 子组件
+
 - [ ] 大调扇形 `fill-primary/10` 选中 `fill-primary/20`
 - [ ] 小调扇形 `fill-warning/10` 选中 `fill-warning/20`
 - [ ] 描边 `stroke-base-300 stroke-width="1"`
@@ -192,6 +211,7 @@
 - [ ] 13 个子组件均无动画
 
 ### Task 20: 其他组件
+
 - [ ] Icon.vue: `w-5 h-5`
 - [ ] NavButton.vue: `px-3 py-1.5 rounded-lg text-sm hover:bg-base-200`
 - [ ] PopOutButton.vue: `w-8 h-8 rounded-lg hover:bg-base-200`
@@ -209,6 +229,7 @@
 ## 阶段 5：验证
 
 ### Task 21: 视觉一致性
+
 - [ ] 所有页面背景色统一
 - [ ] 所有卡片 `rounded-xl` 或 `rounded-2xl`
 - [ ] 所有按钮 `hover:bg-base-200`
@@ -216,6 +237,7 @@
 - [ ] 所有间距 `gap-3` / `gap-4` / `space-y-4`
 
 ### Task 22: 用户体验
+
 - [ ] 首页 0.5 秒内可理解
 - [ ] 核心功能 1 次点击可达
 - [ ] 所有交互反馈 ≤ 150ms
@@ -223,6 +245,7 @@
 - [ ] 移动端所有功能可用
 
 ### Task 23: 功能保留
+
 - [ ] 和弦词典查询正常
 - [ ] MIDI 输入实时显示正常
 - [ ] 和弦识别游戏正常
@@ -235,6 +258,7 @@
 - [ ] MIDI 路由正常
 
 ### Task 24: 残留检查
+
 - [ ] 无 `backdrop-blur` 残留
 - [ ] 无 `bg-gradient-to-br` 残留
 - [ ] 无 `hover:scale` 残留
@@ -244,6 +268,7 @@
 - [ ] 无弹簧弹性过渡残留
 
 ### Task 25: 构建
+
 - [ ] `vue-tsc --noEmit` 通过
 - [ ] `npx vitest run` 通过
 - [ ] `npm run build` 成功

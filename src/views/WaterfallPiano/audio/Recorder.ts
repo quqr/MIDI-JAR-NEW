@@ -11,7 +11,10 @@ export interface RecorderCallbacks {
 
 export class Recorder {
   private recordedNotes: RecordedNote[] = [];
-  private pendingNotes = new Map<number, { startTime: number; velocity: number }>();
+  private pendingNotes = new Map<
+    number,
+    { startTime: number; velocity: number }
+  >();
   private startTime = 0;
   private callbacks: RecorderCallbacks | null = null;
   private isPlaying = false;

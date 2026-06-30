@@ -14,11 +14,11 @@
 
 ## 依赖版本
 
-| 依赖 | 版本 | 用途 |
-|------|------|------|
-| `pixi.js` | `^8.19.0` | 2D 渲染引擎（WebGL/WebGPU + 自动 Canvas 回退） |
-| `tone` | `^15.1.22` | Web Audio 合成音频框架 |
-| `@tonejs/midi` | `^2.0.28` | MIDI 文件解析（Tone.js 官方 MIDI 解析库） |
+| 依赖           | 版本       | 用途                                           |
+| -------------- | ---------- | ---------------------------------------------- |
+| `pixi.js`      | `^8.19.0`  | 2D 渲染引擎（WebGL/WebGPU + 自动 Canvas 回退） |
+| `tone`         | `^15.1.22` | Web Audio 合成音频框架                         |
+| `@tonejs/midi` | `^2.0.28`  | MIDI 文件解析（Tone.js 官方 MIDI 解析库）      |
 
 > 已有依赖：daisyui ^5.6.5、tailwindcss ^4.3.1、vue ^3.5.39、pinia ^3.0.4
 
@@ -44,6 +44,7 @@
 ```
 
 **布局特点**：
+
 - Canvas 占满整个页面（减去导航栏高度），沉浸感最强
 - 粒子在 Canvas 上半部分流动，键盘在底部
 - 键盘区域可通过设置隐藏，隐藏后粒子占满整个 Canvas
@@ -56,79 +57,79 @@
 
 ### 1. 粒子效果自定义
 
-| 参数 | 类型 | 可选值 | 说明 |
-|------|------|--------|------|
-| 形状 | select | circle / square / note / star | 粒子外形 |
-| 颜色方案 | select | warm / cool / rainbow / neon / custom | 音高→颜色映射 |
-| 自定义颜色 | colorpicker ×3 | 低/中/高音区颜色 | custom 方案时生效 |
-| 速度 | range | 0.5-5 | 粒子流动速度 |
-| 大小 | range | 2-30px | 粒子基础大小 |
-| 透明度 | range | 0.1-1 | 粒子初始透明度 |
-| 密度 | range | 1-10 | 同时存在的粒子数量倍数 |
-| 物理行为 | select | linear / wave / spiral / random | 粒子运动轨迹 |
-| 重力 | range | -2 到 2 | 正值向下拉，负值向上飘 |
-| 拖尾效果 | toggle | on/off | 粒子留下渐隐轨迹 |
-| 淡出曲线 | select | linear / ease-in / ease-out / ease-in-out | 透明度衰减方式 |
+| 参数       | 类型           | 可选值                                    | 说明                   |
+| ---------- | -------------- | ----------------------------------------- | ---------------------- |
+| 形状       | select         | circle / square / note / star             | 粒子外形               |
+| 颜色方案   | select         | warm / cool / rainbow / neon / custom     | 音高→颜色映射          |
+| 自定义颜色 | colorpicker ×3 | 低/中/高音区颜色                          | custom 方案时生效      |
+| 速度       | range          | 0.5-5                                     | 粒子流动速度           |
+| 大小       | range          | 2-30px                                    | 粒子基础大小           |
+| 透明度     | range          | 0.1-1                                     | 粒子初始透明度         |
+| 密度       | range          | 1-10                                      | 同时存在的粒子数量倍数 |
+| 物理行为   | select         | linear / wave / spiral / random           | 粒子运动轨迹           |
+| 重力       | range          | -2 到 2                                   | 正值向下拉，负值向上飘 |
+| 拖尾效果   | toggle         | on/off                                    | 粒子留下渐隐轨迹       |
+| 淡出曲线   | select         | linear / ease-in / ease-out / ease-in-out | 透明度衰减方式         |
 
 ### 2. 背景自定义
 
-| 参数 | 类型 | 可选值 | 说明 |
-|------|------|--------|------|
-| 背景类型 | select | solid / gradient / preset / image | 背景来源 |
-| 纯色 | colorpicker | 任意颜色 | solid 类型 |
-| 渐变方向 | select | linear-vertical / linear-horizontal / radial | gradient 类型 |
-| 渐变起止色 | colorpicker ×2 | 任意颜色 | gradient 类型 |
-| 预设主题 | select | night-sky / ocean / sunset / aurora / forest | 内置视觉主题 |
-| 自定义图片 | file-input | PNG/JPG/WEBP | image 类型 |
-| 图片模糊 | range | 0-20px | 背景模糊程度 |
-| 图片暗化 | range | 0-1 | 背景变暗程度 |
+| 参数       | 类型           | 可选值                                       | 说明          |
+| ---------- | -------------- | -------------------------------------------- | ------------- |
+| 背景类型   | select         | solid / gradient / preset / image            | 背景来源      |
+| 纯色       | colorpicker    | 任意颜色                                     | solid 类型    |
+| 渐变方向   | select         | linear-vertical / linear-horizontal / radial | gradient 类型 |
+| 渐变起止色 | colorpicker ×2 | 任意颜色                                     | gradient 类型 |
+| 预设主题   | select         | night-sky / ocean / sunset / aurora / forest | 内置视觉主题  |
+| 自定义图片 | file-input     | PNG/JPG/WEBP                                 | image 类型    |
+| 图片模糊   | range          | 0-20px                                       | 背景模糊程度  |
+| 图片暗化   | range          | 0-1                                          | 背景变暗程度  |
 
 ### 3. 键盘自定义
 
-| 参数 | 类型 | 可选值 | 说明 |
-|------|------|--------|------|
-| 显示键盘 | toggle | on/off | 是否显示钢琴键盘 |
-| 键盘范围 | select | 88键 / 61键 / 49键 / 自定义 | 键位数量 |
-| 自定义范围 | input ×2 | 音名（如 C3, B5） | custom 时生效 |
-| 按键标签 | select | none / note / pitchClass / octave | 键上显示的文字 |
-| 白键颜色 | colorpicker | 任意颜色 | |
-| 黑键颜色 | colorpicker | 任意颜色 | |
-| 按下颜色 | colorpicker | 任意颜色 | 按键高亮色 |
-| 键盘位置 | select | bottom / top | 键盘在 Canvas 中的位置 |
+| 参数       | 类型        | 可选值                            | 说明                   |
+| ---------- | ----------- | --------------------------------- | ---------------------- |
+| 显示键盘   | toggle      | on/off                            | 是否显示钢琴键盘       |
+| 键盘范围   | select      | 88键 / 61键 / 49键 / 自定义       | 键位数量               |
+| 自定义范围 | input ×2    | 音名（如 C3, B5）                 | custom 时生效          |
+| 按键标签   | select      | none / note / pitchClass / octave | 键上显示的文字         |
+| 白键颜色   | colorpicker | 任意颜色                          |                        |
+| 黑键颜色   | colorpicker | 任意颜色                          |                        |
+| 按下颜色   | colorpicker | 任意颜色                          | 按键高亮色             |
+| 键盘位置   | select      | bottom / top                      | 键盘在 Canvas 中的位置 |
 
 ### 4. 音频自定义
 
-| 参数 | 类型 | 可选值 | 说明 |
-|------|------|--------|------|
-| 音色预设 | select | 6种预设 | 见下方预设表 |
-| 音量 | range | 0-100 | 主音量 |
-| 混响量 | range | 0-100 | 混响湿信号比例 |
-| 混响衰减 | range | 0.5-5s | 混响尾音长度 |
-| 延音 | toggle | on/off | 松键后音符持续 |
-| 力度响应 | toggle | on/off | 按键力度影响音量 |
+| 参数     | 类型   | 可选值  | 说明             |
+| -------- | ------ | ------- | ---------------- |
+| 音色预设 | select | 6种预设 | 见下方预设表     |
+| 音量     | range  | 0-100   | 主音量           |
+| 混响量   | range  | 0-100   | 混响湿信号比例   |
+| 混响衰减 | range  | 0.5-5s  | 混响尾音长度     |
+| 延音     | toggle | on/off  | 松键后音符持续   |
+| 力度响应 | toggle | on/off  | 按键力度影响音量 |
 
 ### 5. MIDI 文件自定义
 
-| 参数 | 类型 | 可选值 | 说明 |
-|------|------|--------|------|
-| 播放速度 | range | 0.25-4x | 回放速度倍率 |
-| 音轨选择 | multi-select | MIDI 文件中的各音轨 | 选择显示/播放的音轨 |
-| 音轨颜色 | colorpicker ×N | 每个音轨独立颜色 | |
-| 循环播放 | toggle | on/off | 循环播放 MIDI |
-| 显示音符名 | toggle | on/off | 粒子上显示音名 |
+| 参数       | 类型           | 可选值              | 说明                |
+| ---------- | -------------- | ------------------- | ------------------- |
+| 播放速度   | range          | 0.25-4x             | 回放速度倍率        |
+| 音轨选择   | multi-select   | MIDI 文件中的各音轨 | 选择显示/播放的音轨 |
+| 音轨颜色   | colorpicker ×N | 每个音轨独立颜色    |                     |
+| 循环播放   | toggle         | on/off              | 循环播放 MIDI       |
+| 显示音符名 | toggle         | on/off              | 粒子上显示音名      |
 
 ---
 
 ## 音色预设
 
-| 预设名 | Tone.js 实现 | 说明 |
-|--------|-------------|------|
-| Grand Piano | `PolySynth(Synth)` + ADSR(0.01, 0.3, 0.4, 1.0) | 经典钢琴 |
-| Electric Piano | `PolySynth(FMSynth)` | FM 合成电钢琴 |
-| Bright Piano | `PolySynth(Synth)` + 高频 envelope | 明亮钢琴 |
-| Mellow Piano | `PolySynth(AMSynth)` | 柔和钢琴 |
-| Organ | `PolySynth(Synth, {oscillator: {type: 'square'}})` | 风琴 |
-| Synth Pad | `PolySynth(Synth, {oscillator: {type: 'sine'}})` + 长 release | 合成铺底 |
+| 预设名         | Tone.js 实现                                                  | 说明          |
+| -------------- | ------------------------------------------------------------- | ------------- |
+| Grand Piano    | `PolySynth(Synth)` + ADSR(0.01, 0.3, 0.4, 1.0)                | 经典钢琴      |
+| Electric Piano | `PolySynth(FMSynth)`                                          | FM 合成电钢琴 |
+| Bright Piano   | `PolySynth(Synth)` + 高频 envelope                            | 明亮钢琴      |
+| Mellow Piano   | `PolySynth(AMSynth)`                                          | 柔和钢琴      |
+| Organ          | `PolySynth(Synth, {oscillator: {type: 'square'}})`            | 风琴          |
+| Synth Pad      | `PolySynth(Synth, {oscillator: {type: 'sine'}})` + 长 release | 合成铺底      |
 
 ---
 
@@ -293,12 +294,16 @@ src/views/WaterfallPiano/
 
     <!-- 右上角浮动按钮 -->
     <div class="absolute top-4 right-4 z-10 flex gap-2">
-      <button class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
-              @click="settingsOpen = true">
+      <button
+        class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
+        @click="settingsOpen = true"
+      >
         ⚙
       </button>
-      <button class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
-              @click="toggleFullscreen">
+      <button
+        class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
+        @click="toggleFullscreen"
+      >
         ⛶
       </button>
     </div>
@@ -316,81 +321,82 @@ src/views/WaterfallPiano/
 
 **daisyUI 组件选型**：
 
-| 元素 | 组件 | 说明 |
-|------|------|------|
-| 浮动按钮 | `btn btn-circle btn-sm btn-ghost` + `backdrop-blur` | 设置/全屏按钮 |
-| 控制条容器 | `card bg-base-100/60 backdrop-blur-md shadow-lg` | 毛玻璃悬浮条 |
-| 录制/播放按钮 | `btn btn-circle` | 圆形图标按钮 |
-| 录制状态 | `badge badge-error animate-pulse` | 呼吸动画 |
-| MIDI 导入 | `btn btn-ghost btn-sm` + hidden `<input type="file">` | 文件选择 |
-| 设置面板 | `SettingsCollapse` / `SettingsToggle` / `SettingsRange` / `SettingsSelect` / `SettingsColorPicker` | 复用现有组件 |
-| 标签页 | `tabs tabs-bordered` | 设置面板内分组 |
-| 播放速度 | `range range-sm` | 滑块 |
-| 进度条 | `progress` | MIDI 播放进度 |
+| 元素          | 组件                                                                                               | 说明           |
+| ------------- | -------------------------------------------------------------------------------------------------- | -------------- |
+| 浮动按钮      | `btn btn-circle btn-sm btn-ghost` + `backdrop-blur`                                                | 设置/全屏按钮  |
+| 控制条容器    | `card bg-base-100/60 backdrop-blur-md shadow-lg`                                                   | 毛玻璃悬浮条   |
+| 录制/播放按钮 | `btn btn-circle`                                                                                   | 圆形图标按钮   |
+| 录制状态      | `badge badge-error animate-pulse`                                                                  | 呼吸动画       |
+| MIDI 导入     | `btn btn-ghost btn-sm` + hidden `<input type="file">`                                              | 文件选择       |
+| 设置面板      | `SettingsCollapse` / `SettingsToggle` / `SettingsRange` / `SettingsSelect` / `SettingsColorPicker` | 复用现有组件   |
+| 标签页        | `tabs tabs-bordered`                                                                               | 设置面板内分组 |
+| 播放速度      | `range range-sm`                                                                                   | 滑块           |
+| 进度条        | `progress`                                                                                         | MIDI 播放进度  |
 
 ---
 
 ## 键盘快捷键
 
-| 按键 | 功能 |
-|------|------|
-| A S D F G H J K | 白键 C4-C5 |
-| W E T Y U | 黑键 C#4-A#4 |
-| Z / X | 八度下移/上移 |
-| Space | 开始/停止录制 |
-| Enter | 播放/停止 MIDI 回放 |
-| Escape | 关闭设置面板 |
-| O | 切换键盘显示/隐藏 |
-| ↑ / ↓ | 播放速度 +/- |
+| 按键            | 功能                |
+| --------------- | ------------------- |
+| A S D F G H J K | 白键 C4-C5          |
+| W E T Y U       | 黑键 C#4-A#4        |
+| Z / X           | 八度下移/上移       |
+| Space           | 开始/停止录制       |
+| Enter           | 播放/停止 MIDI 回放 |
+| Escape          | 关闭设置面板        |
+| O               | 切换键盘显示/隐藏   |
+| ↑ / ↓           | 播放速度 +/-        |
 
 ---
 
 ## 文件清单
 
-| 操作 | 文件路径 | 层级 |
-|------|----------|------|
-| 修改 | `src/router/index.ts` | 核心 |
-| 修改 | `src/locales/en.json` | 核心 |
-| 修改 | `src/locales/zh.json` | 核心 |
-| 修改 | `package.json` | 核心 |
-| 新增 | `src/views/WaterfallPiano/types.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/constants.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/stores/waterfallPiano.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/WaterfallPiano.vue` | 核心 |
+| 操作 | 文件路径                                                  | 层级 |
+| ---- | --------------------------------------------------------- | ---- |
+| 修改 | `src/router/index.ts`                                     | 核心 |
+| 修改 | `src/locales/en.json`                                     | 核心 |
+| 修改 | `src/locales/zh.json`                                     | 核心 |
+| 修改 | `package.json`                                            | 核心 |
+| 新增 | `src/views/WaterfallPiano/types.ts`                       | 核心 |
+| 新增 | `src/views/WaterfallPiano/constants.ts`                   | 核心 |
+| 新增 | `src/views/WaterfallPiano/stores/waterfallPiano.ts`       | 核心 |
+| 新增 | `src/views/WaterfallPiano/WaterfallPiano.vue`             | 核心 |
 | 新增 | `src/views/WaterfallPiano/components/WaterfallCanvas.vue` | 核心 |
-| 新增 | `src/views/WaterfallPiano/engine/WaterfallEngine.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/engine/KeyboardRenderer.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/audio/AudioEngine.ts` | 核心 |
-| 新增 | `src/views/WaterfallPiano/components/SettingsPanel.vue` | 核心 |
-| 新增 | `src/views/WaterfallPiano/engine/ObjectPool.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/engine/NoteColorMapper.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/engine/ParticleSystem.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/audio/PresetManager.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/audio/Recorder.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/midi/MidiFilePlayer.ts` | 增强 |
-| 新增 | `src/views/WaterfallPiano/components/ControlBar.vue` | 增强 |
-| 新增 | `src/views/WaterfallPiano/engine/BackgroundRenderer.ts` | 完善 |
+| 新增 | `src/views/WaterfallPiano/engine/WaterfallEngine.ts`      | 核心 |
+| 新增 | `src/views/WaterfallPiano/engine/KeyboardRenderer.ts`     | 核心 |
+| 新增 | `src/views/WaterfallPiano/audio/AudioEngine.ts`           | 核心 |
+| 新增 | `src/views/WaterfallPiano/components/SettingsPanel.vue`   | 核心 |
+| 新增 | `src/views/WaterfallPiano/engine/ObjectPool.ts`           | 增强 |
+| 新增 | `src/views/WaterfallPiano/engine/NoteColorMapper.ts`      | 增强 |
+| 新增 | `src/views/WaterfallPiano/engine/ParticleSystem.ts`       | 增强 |
+| 新增 | `src/views/WaterfallPiano/audio/PresetManager.ts`         | 增强 |
+| 新增 | `src/views/WaterfallPiano/audio/Recorder.ts`              | 增强 |
+| 新增 | `src/views/WaterfallPiano/midi/MidiFilePlayer.ts`         | 增强 |
+| 新增 | `src/views/WaterfallPiano/components/ControlBar.vue`      | 增强 |
+| 新增 | `src/views/WaterfallPiano/engine/BackgroundRenderer.ts`   | 完善 |
 
 ---
 
 ## 决策记录
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| 布局 | 全屏沉浸式 | Canvas 占满页面，沉浸感最强；设置用 Modal 复用现有组件 |
-| 粒子渲染 | PixiJS Container + Graphics | ParticleContainer 不支持独立颜色/大小 |
-| 音频引擎 | Tone.js 15.1.22 | PolySynth + Reverb + Transport |
-| MIDI 解析 | @tonejs/midi 2.0.28 | Tone.js 官方 MIDI 解析库，与 Transport 无缝集成 |
-| 设置面板 | SettingsModal + Settings 组件体系 | 复用现有 SettingsCollapse/Toggle/Range/Select/ColorPicker |
-| 控制条 | 底部浮动毛玻璃 | 不遮挡 Canvas，视觉层次感强 |
-| 键盘开关 | toggle in settings | 用户可选择隐藏键盘，最大化粒子展示区 |
-| 构建策略 | 功能分层 | 每层独立可交付，降低集成风险 |
+| 决策      | 选择                              | 理由                                                      |
+| --------- | --------------------------------- | --------------------------------------------------------- |
+| 布局      | 全屏沉浸式                        | Canvas 占满页面，沉浸感最强；设置用 Modal 复用现有组件    |
+| 粒子渲染  | PixiJS Container + Graphics       | ParticleContainer 不支持独立颜色/大小                     |
+| 音频引擎  | Tone.js 15.1.22                   | PolySynth + Reverb + Transport                            |
+| MIDI 解析 | @tonejs/midi 2.0.28               | Tone.js 官方 MIDI 解析库，与 Transport 无缝集成           |
+| 设置面板  | SettingsModal + Settings 组件体系 | 复用现有 SettingsCollapse/Toggle/Range/Select/ColorPicker |
+| 控制条    | 底部浮动毛玻璃                    | 不遮挡 Canvas，视觉层次感强                               |
+| 键盘开关  | toggle in settings                | 用户可选择隐藏键盘，最大化粒子展示区                      |
+| 构建策略  | 功能分层                          | 每层独立可交付，降低集成风险                              |
 
 ---
 
 ## Verification
 
 ### 核心层
+
 - [ ] Canvas 占满页面（减去导航栏）
 - [ ] 钢琴键盘正确渲染（白键/黑键比例）
 - [ ] 鼠标点击 → 音频播放 + 键盘高亮
@@ -399,6 +405,7 @@ src/views/WaterfallPiano/
 - [ ] 设置面板可打开/关闭，选项即时生效
 
 ### 增强层
+
 - [ ] 弹奏时粒子从键盘向上流动
 - [ ] 导入 .mid 文件 → 解析成功 → 瀑布流播放
 - [ ] MIDI 播放时粒子从顶部向下流动
@@ -407,6 +414,7 @@ src/views/WaterfallPiano/
 - [ ] 控制条所有按钮功能正常
 
 ### 完善层
+
 - [ ] 5 种背景类型均可选择
 - [ ] 粒子形状/颜色/物理行为可自定义
 - [ ] 拖尾效果可开启/关闭

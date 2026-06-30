@@ -3,6 +3,7 @@ import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem } from "./NoteBlockSystem";
 import type { NoteBlockCallbacks } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
+import { PostProcessingRenderer } from "./PostProcessingRenderer";
 import { AudioEngine } from "../audio/AudioEngine";
 import type { WaterfallPianoSettings, ScheduledNote } from "../types";
 
@@ -11,8 +12,10 @@ export class WaterfallEngine {
   keyboardRenderer: KeyboardRenderer | null = null;
   noteBlockSystem: NoteBlockSystem | null = null;
   backgroundRenderer: BackgroundRenderer | null = null;
+  postProcessingRenderer: PostProcessingRenderer | null = null;
   audioEngine: AudioEngine;
 
+  private sceneContainer: PIXI.Container | null = null;
   private backgroundContainer: PIXI.Container | null = null;
   private noteBlockContainer: PIXI.Container | null = null;
   private keyboardContainer: PIXI.Container | null = null;
@@ -45,14 +48,17 @@ export class WaterfallEngine {
     this.backgroundContainer = new PIXI.Container();
     this.noteBlockContainer = new PIXI.Container();
     this.keyboardContainer = new PIXI.Container();
+    this.sceneContainer = new PIXI.Container();
 
-    this.app.stage.addChild(this.backgroundContainer);
-    this.app.stage.addChild(this.noteBlockContainer);
-    this.app.stage.addChild(this.keyboardContainer);
+    this.sceneContainer.addChild(this.backgroundContainer);
+    this.sceneContainer.addChild(this.noteBlockContainer);
+    this.sceneContainer.addChild(this.keyboardContainer);
+    this.app.stage.addChild(this.sceneContainer);
 
     this.keyboardRenderer = new KeyboardRenderer(this.keyboardContainer);
     this.noteBlockSystem = new NoteBlockSystem(this.noteBlockContainer);
     this.backgroundRenderer = new BackgroundRenderer(this.backgroundContainer);
+    this.postProcessingRenderer = new PostProcessingRenderer(this.app, this.sceneContainer);
 
     await this.audioEngine.init();
 
@@ -136,6 +142,12 @@ export class WaterfallEngine {
         whiteKeyColor: settings.keyboard.whiteKeyColor,
         blackKeyColor: settings.keyboard.blackKeyColor,
         pressedKeyColor: settings.keyboard.pressedKeyColor,
+        keyCornerRadius: settings.keyboard.keyCornerRadius,
+        keyBorderWidth: settings.keyboard.keyBorderWidth,
+        keyBorderColor: settings.keyboard.keyBorderColor,
+        separatorEnabled: settings.keyboard.separatorEnabled,
+        separatorColor: settings.keyboard.separatorColor,
+        separatorThickness: settings.keyboard.separatorThickness,
       });
 
       if (settings.keyboard.visible) {
@@ -157,14 +169,27 @@ export class WaterfallEngine {
       this.noteBlockSystem.setParticleSize(settings.particles.size);
       this.noteBlockSystem.setTrailEnabled(settings.particles.trail);
       this.noteBlockSystem.setDensity(settings.particles.density);
-      this.noteBlockSystem.setHitLineColor(settings.particles.hitLineColor);
-      this.noteBlockSystem.setHitLineGlow(settings.particles.hitLineGlow);
+      this.noteBlockSystem.setHitLineConfig(settings.particles.hitLine);
+      this.noteBlockSystem.setNoteBlockConfig(settings.particles.noteBlock);
+      this.noteBlockSystem.setTrailParticleConfig(settings.particles.trailParticle);
+      this.noteBlockSystem.setHitParticleConfig(settings.particles.hitParticle);
+      this.noteBlockSystem.setPhysicsConfig(settings.particles.physics);
+      this.noteBlockSystem.setNoteTextureConfig(settings.noteTexture);
+      this.noteBlockSystem.setNoteBlockParticleConfig(settings.noteBlockParticles);
       this.updateNoteBlockLayout();
     }
 
     if (this.backgroundRenderer && this.app) {
       this.backgroundRenderer.applyConfig(
         settings.background,
+        this.app.screen.width,
+        this.app.screen.height,
+      );
+    }
+
+    if (this.postProcessingRenderer && this.app) {
+      this.postProcessingRenderer.applyConfig(
+        settings.postProcessing,
         this.app.screen.width,
         this.app.screen.height,
       );
@@ -183,7 +208,7 @@ export class WaterfallEngine {
     const h = this.app.screen.height;
     const w = this.app.screen.width;
     const keyboardVisible = this.settings.keyboard.visible;
-    const keyboardHeight = keyboardVisible ? h * 0.3 : 0;
+    const keyboardHeight = keyboardVisible ? h * this.settings.keyboard.heightRatio : 0;
     // 键盘始终在底部
     const keyboardY = h - keyboardHeight;
 
@@ -209,11 +234,12 @@ export class WaterfallEngine {
 
     const w = this.app.screen.width;
     const h = this.app.screen.height;
-    const keyboardHeight = h * 0.3;
+    const keyboardHeight = h * this.settings.keyboard.heightRatio;
     // 键盘始终在底部
     const keyboardY = h - keyboardHeight;
 
     this.keyboardContainer!.y = keyboardY;
+    this.keyboardRenderer.containerOffsetY = keyboardY;
     this.keyboardRenderer.draw(w, keyboardHeight);
     this.updateNoteBlockLayout();
   }
@@ -292,6 +318,7 @@ export class WaterfallEngine {
       this.app.renderer.resize(parent.clientWidth, parent.clientHeight);
       this.drawKeyboard();
       this.backgroundRenderer?.resize(parent.clientWidth, parent.clientHeight);
+      this.postProcessingRenderer?.resize(parent.clientWidth, parent.clientHeight);
     }
   }
 
@@ -305,6 +332,7 @@ export class WaterfallEngine {
     }
     this.audioEngine.dispose();
     this.noteBlockSystem?.clear();
+    this.postProcessingRenderer?.destroy();
     if (this.app) {
       this.app.destroy(true);
       this.app = null;
@@ -312,6 +340,8 @@ export class WaterfallEngine {
     this.keyboardRenderer = null;
     this.noteBlockSystem = null;
     this.backgroundRenderer = null;
+    this.postProcessingRenderer = null;
+    this.sceneContainer = null;
     this.backgroundContainer = null;
     this.noteBlockContainer = null;
     this.keyboardContainer = null;

@@ -108,7 +108,11 @@ function handleKeyDown(e: KeyboardEvent) {
 
   // 键盘可见性
   if (key === "o") {
-    store.updateSetting("keyboard", "visible", !store.settings.keyboard.visible);
+    store.updateSetting(
+      "keyboard",
+      "visible",
+      !store.settings.keyboard.visible,
+    );
     return;
   }
 

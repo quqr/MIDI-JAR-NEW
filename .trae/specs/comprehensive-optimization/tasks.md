@@ -64,6 +64,7 @@
   - [x] 12.5 运行 `npx vitest run` 确认全部用例通过
 
 # Task Dependencies
+
 - Task 2 依赖 Task 1（类型统一后 Tauri API 类型定义更清晰）
 - Task 7 依赖 Task 2（事件总线中的 Tauri 事件也需要类型安全封装）
 - Task 12 可与 Task 1-11 并行开发

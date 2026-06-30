@@ -3,7 +3,12 @@ import * as Tone from "tone";
 import type { MidiTrackInfo, ScheduledNote } from "../types";
 
 export interface MidiFileCallbacks {
-  onNoteOn: (midi: number, velocity: number, trackIndex: number, hand: "left" | "right" | "unknown") => void;
+  onNoteOn: (
+    midi: number,
+    velocity: number,
+    trackIndex: number,
+    hand: "left" | "right" | "unknown",
+  ) => void;
   onNoteOff: (midi: number, trackIndex: number) => void;
   onPlaybackEnd: () => void;
   onProgress: (progress: number, seconds: number) => void;
@@ -77,7 +82,10 @@ export class MidiFilePlayer {
   }
 
   // ─── 左右手检测：轨道优先 + 音高回退 ───
-  private detectHand(trackIndex: number, trackCount: number): "left" | "right" | "unknown" {
+  private detectHand(
+    trackIndex: number,
+    trackCount: number,
+  ): "left" | "right" | "unknown" {
     if (trackCount >= 2) {
       // 钢琴 MIDI 通常 track 0 = 右手, track 1 = 左手
       // 但 track 0 可能是 tempo track（无音符）
@@ -133,7 +141,12 @@ export class MidiFilePlayer {
         transport.schedule((_time) => {
           if (!this.isPlaying) return;
           this.activeNotes.add(note.midi);
-          this.callbacks?.onNoteOn(note.midi, note.velocity, note.trackIndex, note.hand);
+          this.callbacks?.onNoteOn(
+            note.midi,
+            note.velocity,
+            note.trackIndex,
+            note.hand,
+          );
         }, noteOnTime);
       }
 

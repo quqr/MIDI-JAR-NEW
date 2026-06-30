@@ -80,6 +80,11 @@ export const navItems: NavItem[] = [
     labelKey: "settings.chordDictionary",
   },
   { icon: "piano", to: "/settings/chords", labelKey: "settings.chordDisplay" },
+  {
+    icon: "piano",
+    to: "/settings/waterfall-piano",
+    labelKey: "settings.waterfallPiano",
+  },
   { icon: "bug", to: "/settings/debug", labelKey: "settings.debugger" },
   // {
   //   icon: "copyright",

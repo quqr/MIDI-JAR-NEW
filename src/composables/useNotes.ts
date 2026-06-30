@@ -197,9 +197,7 @@ export function useNotes({
 
     const idx = clickedMidiNotes.value.indexOf(midi);
     if (idx >= 0) {
-      clickedMidiNotes.value = clickedMidiNotes.value.filter(
-        (m) => m !== midi,
-      );
+      clickedMidiNotes.value = clickedMidiNotes.value.filter((m) => m !== midi);
     } else {
       clickedMidiNotes.value = [...clickedMidiNotes.value, midi];
     }

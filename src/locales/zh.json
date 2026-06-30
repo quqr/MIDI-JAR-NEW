@@ -6,6 +6,7 @@
     "add": "添加",
     "delete": "删除",
     "resetToDefaults": "恢复默认",
+    "resetAllToDefaults": "恢复全部默认",
     "resetSuccess": "设置已恢复为默认值",
     "settings": "设置",
     "close": "关闭",
@@ -27,7 +28,8 @@
     "chordDictionary": "和弦词典",
     "routing": "路由",
     "debugger": "调试器",
-    "waterfallPiano": "瀑布流钢琴"
+    "waterfallPiano": "瀑布流钢琴",
+    "blackhole": "黑洞"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -43,7 +45,8 @@
       "waterfallPiano": "带瀑布流粒子效果的交互式钢琴",
       "chordDictionary": "查询和弦结构和排列",
       "routing": "在设备之间路由MIDI消息",
-      "debugger": "监控和调试MIDI消息"
+      "debugger": "监控和调试MIDI消息",
+      "blackhole": "实时WebGL黑洞引力透镜模拟"
     }
   },
   "layout": {
@@ -159,6 +162,7 @@
     "musicNotation": "乐谱记法",
     "chordDictionary": "和弦词典",
     "chordDisplay": "和弦显示",
+    "waterfallPiano": "瀑布流钢琴",
     "debugger": "调试器",
     "licenses": {
       "title": "许可证"
@@ -527,6 +531,7 @@
   "waterfallPiano": {
     "settings": "瀑布流钢琴设置",
     "openSettings": "打开瀑布流钢琴设置",
+    "playbackControls": "播放控制",
     "record": "录制",
     "stop": "停止",
     "play": "播放",
@@ -556,17 +561,94 @@
     "cornerRadius": "圆角半径",
     "hitLineColor": "命中线颜色",
     "hitLineGlow": "命中线发光",
+    "hitLineVisible": "显示命中线",
+    "hitLineThickness": "命中线粗细",
+    "hitLineGlowRadius": "发光范围",
+    "hitLineGlowIntensity": "发光强度",
+    "hitLineStyle": "命中线样式",
+    "hitLineStyles": {
+      "solid": "实线",
+      "dashed": "虚线",
+      "dotted": "点线"
+    },
+    "noteBlockBorder": "音符块边框",
+    "noteBlockBorderColor": "边框颜色",
+    "noteBlockBorderWidth": "边框粗细",
+    "noteBlockGradient": "音符块渐变",
+    "noteBlockHighlight": "音符块高光",
+    "noteBlockHighlightOpacity": "高光透明度",
+    "noteBlockFadeIn": "淡入动画",
+    "noteBlockFadeOut": "淡出动画",
+    "trailParticleSize": "拖尾粒子大小",
+    "trailColorDecay": "拖尾颜色衰减",
+    "trailSpreadAngle": "拖尾扩散角度",
+    "trailLifetime": "拖尾生命周期",
+    "hitParticleCount": "命中爆炸数量",
+    "hitParticleSpeed": "命中爆炸速度",
+    "hitParticleLifetime": "命中爆炸生命周期",
+    "particleGravity": "粒子重力",
+    "particleWindX": "风力 X",
+    "particleWindY": "风力 Y",
+    "keyboardHeightRatio": "键盘高度比例",
+    "keyCornerRadius": "按键圆角",
+    "keyBorderWidth": "按键边框粗细",
+    "keyBorderColor": "按键边框颜色",
+    "keyboardSeparator": "键盘分隔线",
+    "separatorColor": "分隔线颜色",
+    "separatorThickness": "分隔线粗细",
     "backgroundType": "背景类型",
     "backgroundColor": "背景颜色",
     "presetTheme": "预设主题",
-    "quality": "质量",
     "custom": "自定义",
+    "postProcessing": "后处理",
+    "noteTextures": "音符块纹理",
+    "noteBlockParticles": "音符块粒子",
+    "bloom": "泛光",
+    "bloomIntensity": "泛光强度",
+    "bloomThreshold": "泛光阈值",
+    "bloomRadius": "泛光半径",
+    "motionBlur": "运动模糊",
+    "motionBlurStrength": "运动模糊强度",
+    "chromaticAberration": "色差",
+    "chromaticAberrationIntensity": "色差强度",
+    "vignette": "暗角",
+    "vignetteIntensity": "暗角强度",
+    "vignetteRadius": "暗角范围",
+    "texturePreset": "纹理预设",
+    "textureScale": "纹理缩放",
+    "textureIntensity": "纹理强度",
+    "surfaceEmission": "表面散发",
+    "surfaceEmissionRate": "散发速率",
+    "surfaceEmissionSpeed": "散发速度",
+    "surfaceEmissionLifetime": "散发生命周期",
+    "hitExplosionEnhanced": "命中爆炸增强",
+    "hitExplosionCount": "爆炸数量",
+    "hitExplosionSpeed": "爆炸速度",
+    "hitExplosionLifetime": "爆炸生命周期",
+    "orbitingParticles": "环绕粒子",
+    "orbitingCount": "环绕数量",
+    "orbitingRadius": "环绕半径",
+    "orbitingSpeed": "环绕速度",
+    "imageFitMode": "图片适配",
+    "imageDarken": "图片暗度",
+    "uploadImage": "上传图片",
+    "clearImage": "清除图片",
     "settingsGroups": {
+      "basic": "基础设置",
+      "advanced": "高级设置",
       "visual": "视觉",
+      "visualAdvanced": "视觉高级",
       "keyboard": "键盘",
+      "keyboardAdvanced": "键盘高级",
       "audio": "音频",
+      "audioAdvanced": "音频高级",
       "background": "背景",
-      "performance": "性能"
+      "backgroundAdvanced": "背景高级",
+      "performance": "性能",
+      "particlePhysics": "粒子物理",
+      "postProcessing": "后处理",
+      "noteTextures": "音符块纹理",
+      "noteBlockParticles": "音符块粒子"
     },
     "keyLabels": {
       "none": "无",
@@ -626,10 +708,67 @@
       "aurora": "极光",
       "forest": "森林"
     },
-    "qualityLevels": {
-      "low": "低",
-      "medium": "中",
-      "high": "高"
+    "texturePresets": {
+      "none": "无",
+      "noise": "噪点",
+      "stripes": "条纹",
+      "dots": "圆点",
+      "glow": "发光",
+      "metallic": "金属"
+    },
+    "imageFitModes": {
+      "cover": "覆盖",
+      "stretch": "拉伸",
+      "center": "居中",
+      "tile": "平铺"
+    }
+  },
+  "blackhole": {
+    "openSettings": "打开黑洞设置",
+    "settings": {
+      "title": "黑洞设置",
+      "general": "总体",
+      "intensity": "强度",
+      "holeAndLens": "黑洞与透镜",
+      "diskGeometry": "吸积盘几何",
+      "diskMatter": "吸积盘物质与光",
+      "lightAndScreen": "光照与屏幕",
+      "background": "自定义背景"
+    },
+    "params": {
+      "holeRadius": "黑洞半径",
+      "lensDepth": "透镜深度",
+      "starGain": "星空亮度",
+      "diskInner": "盘内边缘",
+      "diskOuter": "盘外边缘",
+      "diskIncl": "盘倾角",
+      "diskRoll": "系统旋转",
+      "diskGain": "盘亮度",
+      "diskOpacity": "盘不透明度",
+      "diskTemp": "温度 (K)",
+      "dopplerMix": "多普勒混合",
+      "diskBeam": "光束指数",
+      "diskSpeed": "条纹速度",
+      "diskWind": "螺旋缠绕",
+      "diskContrast": "条纹对比度",
+      "exposure": "曝光",
+      "driftSpeed": "漂移速度"
+    },
+    "background": {
+      "upload": "上传背景图片",
+      "remove": "移除背景",
+      "opacity": "背景不透明度",
+      "fitMode": "适配方式",
+      "fitModes": {
+        "cover": "覆盖",
+        "stretch": "拉伸",
+        "center": "居中",
+        "tile": "平铺"
+      }
+    },
+    "globalBackground": {
+      "enable": "启用全局黑洞背景",
+      "disable": "关闭全局黑洞背景"
     }
   }
 }

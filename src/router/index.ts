@@ -29,6 +29,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.waterfallPiano", icon: "piano" },
       },
       {
+        path: "blackhole",
+        name: "blackhole",
+        component: () => import("@/views/Blackhole/BlackholePage.vue"),
+        meta: { title: "nav.blackhole", icon: "star" },
+      },
+      {
         path: "chord-dictionary",
         name: "chord-dictionary",
         component: () => import("@/views/ChordDictionary/ChordDictionary.vue"),
@@ -110,6 +116,13 @@ const routes: RouteRecordRaw[] = [
                   import("@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue"),
               },
             ],
+          },
+          {
+            path: "waterfall-piano",
+            name: "settings-waterfall-piano",
+            component: () =>
+              import("@/views/Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue"),
+            meta: { title: "settings.waterfallPiano" },
           },
           {
             path: "debug",

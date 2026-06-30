@@ -1,10 +1,11 @@
 <template>
-  <div
-    class="card bg-base-100/60 backdrop-blur-md shadow-lg border border-base-200/30 px-4 py-2 min-w-[400px]"
-  >
-    <div class="flex items-center gap-3">
-      <!-- 录制控制 -->
-      <div class="flex items-center gap-1">
+  <div class="flex flex-col gap-4">
+    <!-- 录制控制 -->
+    <div>
+      <div class="text-xs opacity-50 mb-2">
+        {{ t("waterfallPiano.record") }}
+      </div>
+      <div class="flex items-center gap-2">
         <button
           class="btn btn-circle btn-sm"
           :class="{ 'btn-error': isRecording }"
@@ -31,15 +32,19 @@
         >
           <span class="text-xs">{{ isPlaying ? "❚❚" : "▶" }}</span>
         </button>
+        <div
+          v-if="isRecording"
+          class="badge badge-error badge-sm animate-pulse"
+        >
+          REC
+        </div>
       </div>
+    </div>
 
-      <div class="divider divider-horizontal mx-0 h-6" />
-
-      <!-- 进度条（所有回放都显示） -->
-      <div
-        v-if="hasContent"
-        class="flex items-center gap-2 flex-1 min-w-[120px]"
-      >
+    <!-- 进度条 -->
+    <div v-if="hasContent">
+      <div class="text-xs opacity-50 mb-2">Progress</div>
+      <div class="flex items-center gap-2">
         <span class="text-xs opacity-50 font-mono w-10 text-right">{{
           formatTime(currentTime)
         }}</span>
@@ -57,17 +62,18 @@
           formatTime(duration)
         }}</span>
       </div>
+    </div>
 
-      <div class="divider divider-horizontal mx-0 h-6" />
-
-      <!-- MIDI 导入 -->
+    <!-- MIDI 导入 -->
+    <div>
+      <div class="text-xs opacity-50 mb-2">MIDI</div>
       <button
-        class="btn btn-ghost btn-sm gap-1"
+        class="btn btn-ghost btn-sm gap-1 w-full justify-start"
         :aria-label="t('waterfallPiano.importMidi')"
         @click="fileInput?.click()"
       >
         <span class="text-xs">⬆</span>
-        <span class="text-xs">MIDI</span>
+        <span class="text-xs">{{ t("waterfallPiano.importMidi") }}</span>
       </button>
       <input
         ref="fileInput"
@@ -76,24 +82,22 @@
         class="hidden"
         @change="onFileSelected"
       />
+    </div>
 
-      <!-- 录制状态 -->
-      <div v-if="isRecording" class="badge badge-error badge-sm animate-pulse">
-        REC
+    <!-- 状态信息 -->
+    <div>
+      <div class="text-xs opacity-50 mb-2">Status</div>
+      <div class="flex flex-col gap-1">
+        <div
+          v-if="noteCount > 0 && !midiFileName"
+          class="badge badge-success badge-sm w-fit"
+        >
+          {{ noteCount }} notes
+        </div>
+        <span v-if="midiFileName" class="text-xs opacity-50 truncate">
+          {{ midiFileName }}
+        </span>
       </div>
-
-      <!-- 已录制音符数 -->
-      <div
-        v-if="noteCount > 0 && !midiFileName"
-        class="badge badge-success badge-sm"
-      >
-        {{ noteCount }} notes
-      </div>
-
-      <!-- MIDI 文件名 -->
-      <span v-if="midiFileName" class="text-xs opacity-50 truncate max-w-32">
-        {{ midiFileName }}
-      </span>
     </div>
   </div>
 </template>

@@ -27,7 +27,9 @@ export class AudioEngine {
 
     // Create audio chain: synth → filter → compressor → reverb → volume → destination
     this.volume = new Tone.Volume(-6).toDestination();
-    this.reverb = new Tone.Reverb({ wet: 0.25, decay: 2.5 }).connect(this.volume);
+    this.reverb = new Tone.Reverb({ wet: 0.25, decay: 2.5 }).connect(
+      this.volume,
+    );
     await this.reverb.generate();
 
     this.compressor = new Tone.Compressor({

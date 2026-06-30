@@ -1,4 +1,7 @@
-import type { WaterfallPianoSettings, AudioPreset } from "./types";
+import type {
+  WaterfallPianoSettings,
+  AudioPreset,
+} from "./types";
 
 // ─── 默认设置 ───
 export const defaultWaterfallSettings: WaterfallPianoSettings = {
@@ -14,8 +17,43 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     density: 5,
     trail: false,
     cornerRadius: 3,
-    hitLineColor: "#ffffff",
-    hitLineGlow: true,
+    hitLine: {
+      color: "#ffffff",
+      glow: true,
+      thickness: 2,
+      glowRadius: 15,
+      glowIntensity: 0.8,
+      style: "solid",
+      visible: true,
+    },
+    noteBlock: {
+      borderColor: "#ffffff",
+      borderWidth: 1,
+      borderEnabled: false,
+      gradientEnabled: false,
+      gradientTopColor: "#6366f1",
+      gradientBottomColor: "#14b8a6",
+      highlightEnabled: true,
+      highlightOpacity: 0.3,
+      fadeIn: true,
+      fadeOut: true,
+    },
+    trailParticle: {
+      size: 4,
+      colorDecay: 0.5,
+      spreadAngle: 30,
+      lifetime: 30,
+    },
+    hitParticle: {
+      count: 8,
+      speed: 3,
+      lifetime: 20,
+    },
+    physics: {
+      gravity: 0,
+      windX: 0,
+      windY: 0,
+    },
   },
   background: {
     type: "preset",
@@ -27,6 +65,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     imageFile: "",
     imageBlur: 0,
     imageDarken: 0.5,
+    imageFitMode: "cover",
   },
   keyboard: {
     visible: true,
@@ -37,6 +76,13 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     whiteKeyColor: "#f0f0f0",
     blackKeyColor: "#1a1a1a",
     pressedKeyColor: "#6366f1",
+    heightRatio: 0.3,
+    keyCornerRadius: 0,
+    keyBorderWidth: 0,
+    keyBorderColor: "#333333",
+    separatorEnabled: true,
+    separatorColor: "#ffffff",
+    separatorThickness: 2,
   },
   audio: {
     preset: "grand-piano",
@@ -62,9 +108,51 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     loop: false,
     showNoteNames: false,
   },
-  performance: {
-    quality: "medium",
-    maxParticles: 500,
+  postProcessing: {
+    bloom: {
+      enabled: false,
+      intensity: 0.5,
+      threshold: 0.7,
+      radius: 8,
+    },
+    motionBlur: {
+      enabled: false,
+      strength: 0.3,
+    },
+    chromaticAberration: {
+      enabled: false,
+      intensity: 0.3,
+    },
+    vignette: {
+      enabled: false,
+      intensity: 0.5,
+      radius: 0.7,
+    },
+  },
+  noteTexture: {
+    preset: "none",
+    scale: 1,
+    intensity: 0.3,
+  },
+  noteBlockParticles: {
+    surfaceEmission: {
+      enabled: false,
+      rate: 0.3,
+      speed: 1,
+      lifetime: 20,
+    },
+    hitExplosion: {
+      enabled: false,
+      count: 12,
+      speed: 4,
+      lifetime: 25,
+    },
+    orbiting: {
+      enabled: false,
+      count: 4,
+      radius: 10,
+      speed: 2,
+    },
   },
 };
 
@@ -123,13 +211,6 @@ export const keyboardMap: Record<string, number> = {
   u: 70, // A#4
   j: 71, // B4
   k: 72, // C5
-};
-
-// ─── 质量档位对应的粒子上限 ───
-export const qualityParticleLimits = {
-  low: 100,
-  medium: 500,
-  high: 1000,
 };
 
 // ─── 持久化键 ───

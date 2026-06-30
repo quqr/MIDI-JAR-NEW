@@ -6,7 +6,20 @@ const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
   "49": { from: 36, to: 84 },
 };
 
-const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const NOTE_NAMES = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
 
 export function isBlackKey(midi: number): boolean {
   const note = midi % 12;
@@ -24,6 +37,12 @@ export interface KeyboardConfig {
   whiteKeyColor: string;
   blackKeyColor: string;
   pressedKeyColor: string;
+  keyCornerRadius: number;
+  keyBorderWidth: number;
+  keyBorderColor: string;
+  separatorEnabled: boolean;
+  separatorColor: string;
+  separatorThickness: number;
 }
 
 export class KeyboardRenderer {
@@ -35,6 +54,7 @@ export class KeyboardRenderer {
   private keyWidth = 0;
   private keyHeight = 0;
   private whiteKeyCount = 0;
+  containerOffsetY = 0;
 
   constructor(container: PIXI.Container) {
     this.container = container;
@@ -45,6 +65,12 @@ export class KeyboardRenderer {
       whiteKeyColor: "#f0f0f0",
       blackKeyColor: "#1a1a1a",
       pressedKeyColor: "#6366f1",
+      keyCornerRadius: 0,
+      keyBorderWidth: 0,
+      keyBorderColor: "#333333",
+      separatorEnabled: true,
+      separatorColor: "#ffffff",
+      separatorThickness: 2,
     };
   }
 
@@ -81,9 +107,17 @@ export class KeyboardRenderer {
       if (isBlackKey(midi)) continue;
 
       const key = new PIXI.Graphics();
-      key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      if (this.config.keyCornerRadius > 0) {
+        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+      } else {
+        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      }
       key.fill(this.config.whiteKeyColor);
-      key.stroke({ color: "#ccc", width: 1 });
+      if (this.config.keyBorderWidth > 0) {
+        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+      } else {
+        key.stroke({ color: "#ccc", width: 1 });
+      }
       key.x = x;
       key.y = 0;
       (key as { __midi?: number }).__midi = midi;
@@ -118,8 +152,12 @@ export class KeyboardRenderer {
       }
 
       const key = new PIXI.Graphics();
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, 3);
+      const r = Math.max(3, this.config.keyCornerRadius);
+      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
       key.fill(this.config.blackKeyColor);
+      if (this.config.keyBorderWidth > 0) {
+        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+      }
       // 黑键位置：前一个白键的右边缘 - 黑键宽度/2
       key.x = prevWhiteX + this.keyWidth - blackKeyWidth / 2;
       key.y = 0;
@@ -127,6 +165,15 @@ export class KeyboardRenderer {
 
       this.blackKeys.set(midi, key);
       this.container.addChild(key);
+    }
+
+    // 绘制键盘分隔线
+    if (this.config.separatorEnabled && this.config.separatorThickness > 0) {
+      const separator = new PIXI.Graphics();
+      separator.rect(0, 0, width, this.config.separatorThickness);
+      separator.fill(this.config.separatorColor);
+      separator.y = -this.config.separatorThickness;
+      this.container.addChild(separator);
     }
   }
 
@@ -150,10 +197,15 @@ export class KeyboardRenderer {
     if (isBlack) {
       const blackKeyWidth = this.keyWidth * 0.6;
       const blackKeyHeight = this.keyHeight * 0.6;
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, 3);
+      const r = Math.max(3, this.config.keyCornerRadius);
+      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
       key.fill(this.config.pressedKeyColor);
     } else {
-      key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      if (this.config.keyCornerRadius > 0) {
+        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+      } else {
+        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      }
       key.fill(this.config.pressedKeyColor);
       key.stroke({ color: "#aaa", width: 1 });
     }
@@ -171,12 +223,24 @@ export class KeyboardRenderer {
     if (isBlack) {
       const blackKeyWidth = this.keyWidth * 0.6;
       const blackKeyHeight = this.keyHeight * 0.6;
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, 3);
+      const r = Math.max(3, this.config.keyCornerRadius);
+      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
       key.fill(this.config.blackKeyColor);
+      if (this.config.keyBorderWidth > 0) {
+        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+      }
     } else {
-      key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      if (this.config.keyCornerRadius > 0) {
+        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+      } else {
+        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
+      }
       key.fill(this.config.whiteKeyColor);
-      key.stroke({ color: "#ccc", width: 1 });
+      if (this.config.keyBorderWidth > 0) {
+        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+      } else {
+        key.stroke({ color: "#ccc", width: 1 });
+      }
     }
   }
 
@@ -191,19 +255,22 @@ export class KeyboardRenderer {
     if (midi < this.config.from || midi > this.config.to) return -1;
 
     if (isBlackKey(midi)) {
-      // 找前一个白键的位置
-      const prevWhiteX = this.getWhiteKeyX(midi);
-      return prevWhiteX + this.keyWidth - this.keyWidth * 0.3;
+      // getWhiteKeyX(midi) 对于黑键天然返回其中心位置
+      // 因为黑键不计入白键累加，结果等于前一个白键右边缘 = 黑键中心
+      return this.getWhiteKeyX(midi);
     }
     return this.getWhiteKeyX(midi) + this.keyWidth / 2;
   }
 
   getNoteAtPoint(x: number, y: number): number | null {
+    // 将全局坐标转换为键盘容器的本地坐标
+    const localY = y - this.containerOffsetY;
+
     // 先检查黑键（在上层）
     const blackKeyWidth = this.keyWidth * 0.6;
     const blackKeyHeight = this.keyHeight * 0.6;
 
-    if (y <= blackKeyHeight) {
+    if (localY >= 0 && localY <= blackKeyHeight) {
       for (const [midi, key] of this.blackKeys) {
         if (x >= key.x && x <= key.x + blackKeyWidth) {
           return midi;
@@ -212,7 +279,7 @@ export class KeyboardRenderer {
     }
 
     // 再检查白键
-    if (y <= this.keyHeight) {
+    if (localY >= 0 && localY <= this.keyHeight) {
       const whiteIndex = Math.floor(x / this.keyWidth);
       if (whiteIndex >= 0 && whiteIndex < this.whiteKeyCount) {
         // 找到第 whiteIndex 个白键的 midi

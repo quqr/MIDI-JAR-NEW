@@ -66,9 +66,17 @@ export class NoteColorMapper {
     const t = Math.min(1, Math.max(0, (midi - 21) / 87));
     // Interpolate between low (0-0.33), mid (0.33-0.67), high (0.67-1)
     if (t < 0.33) {
-      return this.interpolateColor(this.customColors.low, this.customColors.mid, t / 0.33);
+      return this.interpolateColor(
+        this.customColors.low,
+        this.customColors.mid,
+        t / 0.33,
+      );
     } else if (t < 0.67) {
-      return this.interpolateColor(this.customColors.mid, this.customColors.high, (t - 0.33) / 0.34);
+      return this.interpolateColor(
+        this.customColors.mid,
+        this.customColors.high,
+        (t - 0.33) / 0.34,
+      );
     } else {
       return this.customColors.high;
     }

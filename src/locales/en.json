@@ -6,6 +6,7 @@
     "add": "Add",
     "delete": "Delete",
     "resetToDefaults": "Reset to Defaults",
+    "resetAllToDefaults": "Reset All to Defaults",
     "resetSuccess": "Settings reset to defaults successfully",
     "settings": "Settings",
     "close": "Close",
@@ -27,7 +28,8 @@
     "chordDictionary": "Chord Dictionary",
     "routing": "Routing",
     "debugger": "Debugger",
-    "waterfallPiano": "Waterfall Piano"
+    "waterfallPiano": "Waterfall Piano",
+    "blackhole": "Blackhole"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -43,7 +45,8 @@
       "waterfallPiano": "Interactive piano with waterfall particle effects",
       "chordDictionary": "Look up chord structures and voicings",
       "routing": "Route MIDI messages between devices",
-      "debugger": "Monitor and debug MIDI messages"
+      "debugger": "Monitor and debug MIDI messages",
+      "blackhole": "Real-time WebGL black hole gravitational lensing simulation"
     }
   },
   "layout": {
@@ -525,6 +528,7 @@
   "waterfallPiano": {
     "settings": "Waterfall Piano Settings",
     "openSettings": "Open waterfall piano settings",
+    "playbackControls": "Playback Controls",
     "record": "Record",
     "stop": "Stop",
     "play": "Play",
@@ -554,17 +558,94 @@
     "cornerRadius": "Corner Radius",
     "hitLineColor": "Hit Line Color",
     "hitLineGlow": "Hit Line Glow",
+    "hitLineVisible": "Show Hit Line",
+    "hitLineThickness": "Hit Line Thickness",
+    "hitLineGlowRadius": "Glow Radius",
+    "hitLineGlowIntensity": "Glow Intensity",
+    "hitLineStyle": "Hit Line Style",
+    "hitLineStyles": {
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted"
+    },
+    "noteBlockBorder": "Note Block Border",
+    "noteBlockBorderColor": "Border Color",
+    "noteBlockBorderWidth": "Border Width",
+    "noteBlockGradient": "Note Block Gradient",
+    "noteBlockHighlight": "Note Block Highlight",
+    "noteBlockHighlightOpacity": "Highlight Opacity",
+    "noteBlockFadeIn": "Fade In Animation",
+    "noteBlockFadeOut": "Fade Out Animation",
+    "trailParticleSize": "Trail Particle Size",
+    "trailColorDecay": "Trail Color Decay",
+    "trailSpreadAngle": "Trail Spread Angle",
+    "trailLifetime": "Trail Lifetime",
+    "hitParticleCount": "Hit Explosion Count",
+    "hitParticleSpeed": "Hit Explosion Speed",
+    "hitParticleLifetime": "Hit Explosion Lifetime",
+    "particleGravity": "Particle Gravity",
+    "particleWindX": "Wind X",
+    "particleWindY": "Wind Y",
+    "keyboardHeightRatio": "Keyboard Height Ratio",
+    "keyCornerRadius": "Key Corner Radius",
+    "keyBorderWidth": "Key Border Width",
+    "keyBorderColor": "Key Border Color",
+    "keyboardSeparator": "Keyboard Separator Line",
+    "separatorColor": "Separator Color",
+    "separatorThickness": "Separator Thickness",
     "backgroundType": "Background Type",
     "backgroundColor": "Background Color",
     "presetTheme": "Preset Theme",
-    "quality": "Quality",
     "custom": "Custom",
+    "postProcessing": "Post-Processing",
+    "noteTextures": "Note Textures",
+    "noteBlockParticles": "Note Block Particles",
+    "bloom": "Bloom",
+    "bloomIntensity": "Bloom Intensity",
+    "bloomThreshold": "Bloom Threshold",
+    "bloomRadius": "Bloom Radius",
+    "motionBlur": "Motion Blur",
+    "motionBlurStrength": "Motion Blur Strength",
+    "chromaticAberration": "Chromatic Aberration",
+    "chromaticAberrationIntensity": "Chromatic Aberration Intensity",
+    "vignette": "Vignette",
+    "vignetteIntensity": "Vignette Intensity",
+    "vignetteRadius": "Vignette Radius",
+    "texturePreset": "Texture Preset",
+    "textureScale": "Texture Scale",
+    "textureIntensity": "Texture Intensity",
+    "surfaceEmission": "Surface Emission",
+    "surfaceEmissionRate": "Emission Rate",
+    "surfaceEmissionSpeed": "Emission Speed",
+    "surfaceEmissionLifetime": "Emission Lifetime",
+    "hitExplosionEnhanced": "Enhanced Hit Explosion",
+    "hitExplosionCount": "Explosion Count",
+    "hitExplosionSpeed": "Explosion Speed",
+    "hitExplosionLifetime": "Explosion Lifetime",
+    "orbitingParticles": "Orbiting Particles",
+    "orbitingCount": "Orbit Count",
+    "orbitingRadius": "Orbit Radius",
+    "orbitingSpeed": "Orbit Speed",
+    "imageFitMode": "Image Fit Mode",
+    "imageDarken": "Image Darken",
+    "uploadImage": "Upload Image",
+    "clearImage": "Clear Image",
     "settingsGroups": {
+      "basic": "Basic Settings",
+      "advanced": "Advanced Settings",
       "visual": "Visual",
+      "visualAdvanced": "Visual Advanced",
       "keyboard": "Keyboard",
+      "keyboardAdvanced": "Keyboard Advanced",
       "audio": "Audio",
+      "audioAdvanced": "Audio Advanced",
       "background": "Background",
-      "performance": "Performance"
+      "backgroundAdvanced": "Background Advanced",
+      "performance": "Performance",
+      "particlePhysics": "Particle Physics",
+      "postProcessing": "Post-Processing",
+      "noteTextures": "Note Textures",
+      "noteBlockParticles": "Note Block Particles"
     },
     "keyLabels": {
       "none": "None",
@@ -624,10 +705,67 @@
       "aurora": "Aurora",
       "forest": "Forest"
     },
-    "qualityLevels": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High"
+    "texturePresets": {
+      "none": "None",
+      "noise": "Noise",
+      "stripes": "Stripes",
+      "dots": "Dots",
+      "glow": "Glow",
+      "metallic": "Metallic"
+    },
+    "imageFitModes": {
+      "cover": "Cover",
+      "stretch": "Stretch",
+      "center": "Center",
+      "tile": "Tile"
+    }
+  },
+  "blackhole": {
+    "openSettings": "Open blackhole settings",
+    "settings": {
+      "title": "Blackhole Settings",
+      "general": "General",
+      "intensity": "Intensity",
+      "holeAndLens": "Hole & Lens",
+      "diskGeometry": "Disk Geometry",
+      "diskMatter": "Disk Matter & Light",
+      "lightAndScreen": "Light & Screen",
+      "background": "Custom Background"
+    },
+    "params": {
+      "holeRadius": "Hole Radius",
+      "lensDepth": "Lens Depth",
+      "starGain": "Star Gain",
+      "diskInner": "Disk Inner",
+      "diskOuter": "Disk Outer",
+      "diskIncl": "Disk Inclination",
+      "diskRoll": "System Roll",
+      "diskGain": "Disk Gain",
+      "diskOpacity": "Disk Opacity",
+      "diskTemp": "Temperature (K)",
+      "dopplerMix": "Doppler Mix",
+      "diskBeam": "Beam Exponent",
+      "diskSpeed": "Streak Speed",
+      "diskWind": "Spiral Wind",
+      "diskContrast": "Streak Contrast",
+      "exposure": "Exposure",
+      "driftSpeed": "Drift Speed"
+    },
+    "background": {
+      "upload": "Upload Background Image",
+      "remove": "Remove Background",
+      "opacity": "Background Opacity",
+      "fitMode": "Fit Mode",
+      "fitModes": {
+        "cover": "Cover",
+        "stretch": "Stretch",
+        "center": "Center",
+        "tile": "Tile"
+      }
+    },
+    "globalBackground": {
+      "enable": "Enable Global Blackhole Background",
+      "disable": "Disable Global Blackhole Background"
     }
   }
 }
