@@ -66,11 +66,6 @@ export type NotationSettings = {
   style: Partial<NotationStyleConfig>;
 };
 
-export type ServerSettings = {
-  enabled: boolean;
-  port: number;
-};
-
 export type CursorSettings = {
   enabled: boolean;
   innerSize: number;
@@ -87,9 +82,7 @@ export type CursorSettings = {
 };
 
 export type GeneralSettings = {
-  launchAtStartup: boolean;
-  startMinimized: boolean;
-  language: "en" | "zh-CN";
+  language: "en" | "zh";
 };
 
 export type Settings = {
@@ -98,5 +91,4 @@ export type Settings = {
   chordDisplay: ChordDisplaySettings[];
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
-  server: ServerSettings;
 };

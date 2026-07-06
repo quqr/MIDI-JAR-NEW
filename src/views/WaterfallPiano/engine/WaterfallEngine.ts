@@ -4,8 +4,15 @@ import { NoteBlockSystem } from "./NoteBlockSystem";
 import type { NoteBlockCallbacks } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
 import { PostProcessingRenderer } from "./PostProcessingRenderer";
+import { StaffRenderer } from "./StaffRenderer";
+import { PerformanceMonitor } from "./PerformanceMonitor";
 import { AudioEngine } from "../audio/AudioEngine";
-import type { WaterfallPianoSettings, ScheduledNote } from "../types";
+import { clearGlowTextureCache } from "./GlowTexture";
+import type {
+  WaterfallPianoSettings,
+  ScheduledNote,
+  FlowDirection,
+} from "../types";
 
 export class WaterfallEngine {
   app: PIXI.Application | null = null;
@@ -13,20 +20,35 @@ export class WaterfallEngine {
   noteBlockSystem: NoteBlockSystem | null = null;
   backgroundRenderer: BackgroundRenderer | null = null;
   postProcessingRenderer: PostProcessingRenderer | null = null;
+  staffRenderer: StaffRenderer | null = null;
+  performanceMonitor: PerformanceMonitor | null = null;
   audioEngine: AudioEngine;
 
-  private sceneContainer: PIXI.Container | null = null;
+  // 分层容器
   private backgroundContainer: PIXI.Container | null = null;
+  private sceneContainer: PIXI.Container | null = null;
   private noteBlockContainer: PIXI.Container | null = null;
+  private hitLineContainer: PIXI.Container | null = null;
   private keyboardContainer: PIXI.Container | null = null;
+  private uiContainer: PIXI.Container | null = null;
+
   private settings: WaterfallPianoSettings | null = null;
   private tickHandler: ((ticker: PIXI.Ticker) => void) | null = null;
+  private isDestroyed = false;
 
-  // 模式
   private mode: "realtime" | "synthesia" = "realtime";
-
-  // 多指追踪
   private pointerToMidi = new Map<number, number>();
+
+  // 保存 PIXI 事件处理函数引用，以便 destroy 时移除
+  private stagePointerDownHandler:
+    | ((e: PIXI.FederatedPointerEvent) => void)
+    | null = null;
+  private stagePointerMoveHandler:
+    | ((e: PIXI.FederatedPointerEvent) => void)
+    | null = null;
+  private stagePointerUpHandler:
+    | ((e: PIXI.FederatedPointerEvent) => void)
+    | null = null;
 
   constructor() {
     this.audioEngine = new AudioEngine();
@@ -45,57 +67,83 @@ export class WaterfallEngine {
       autoDensity: true,
     });
 
+    // ─── 分层架构：背景层 → 场景层（音符块/命中线/键盘）→ UI 层 ───
     this.backgroundContainer = new PIXI.Container();
-    this.noteBlockContainer = new PIXI.Container();
-    this.keyboardContainer = new PIXI.Container();
     this.sceneContainer = new PIXI.Container();
+    this.noteBlockContainer = new PIXI.Container();
+    this.hitLineContainer = new PIXI.Container();
+    this.keyboardContainer = new PIXI.Container();
+    this.uiContainer = new PIXI.Container();
 
-    this.sceneContainer.addChild(this.backgroundContainer);
     this.sceneContainer.addChild(this.noteBlockContainer);
+    this.sceneContainer.addChild(this.hitLineContainer);
     this.sceneContainer.addChild(this.keyboardContainer);
+
+    this.app.stage.addChild(this.backgroundContainer);
     this.app.stage.addChild(this.sceneContainer);
+    this.app.stage.addChild(this.uiContainer);
 
     this.keyboardRenderer = new KeyboardRenderer(this.keyboardContainer);
-    this.noteBlockSystem = new NoteBlockSystem(this.noteBlockContainer);
+    this.noteBlockSystem = new NoteBlockSystem(
+      this.noteBlockContainer,
+      this.hitLineContainer,
+    );
     this.backgroundRenderer = new BackgroundRenderer(this.backgroundContainer);
-    this.postProcessingRenderer = new PostProcessingRenderer(this.app, this.sceneContainer);
+    this.backgroundRenderer.setApp(this.app);
+    this.postProcessingRenderer = new PostProcessingRenderer(
+      this.app,
+      this.sceneContainer,
+      this.noteBlockContainer,
+      this.hitLineContainer,
+    );
+    this.staffRenderer = new StaffRenderer(this.uiContainer);
+    this.performanceMonitor = new PerformanceMonitor(
+      settings.performance.minFps,
+      settings.performance.targetFps,
+    );
 
-    await this.audioEngine.init();
-
-    // 设置音符块回调（Synthesia 模式触发音频）
+    // setCallbacks 在 await 之前调用，避免 async 竞态条件
+    // （若 await 期间 destroy() 被调用，noteBlockSystem 会变为 null）
     this.noteBlockSystem.setCallbacks({
       onNoteTrigger: (midi, velocity, _hand) => {
         this.audioEngine.noteOn(midi, velocity);
         this.keyboardRenderer?.highlightNote(midi);
+        this.staffRenderer?.onNoteOn(midi);
       },
       onNoteEnd: (midi) => {
         this.audioEngine.noteOff(midi);
         this.keyboardRenderer?.clearHighlight(midi);
+        this.staffRenderer?.onNoteOff(midi);
       },
     } as NoteBlockCallbacks);
+
+    await this.audioEngine.init();
+
+    // 守卫：若 await 期间组件被卸载（HMR/路由切换），停止后续初始化
+    if (this.isDestroyed) return;
 
     this.applySettings(settings);
     this.setupKeyboardInteraction();
     this.startGameLoop();
   }
 
-  // ─── 多指 + 滑奏交互 ───
   private setupKeyboardInteraction() {
     if (!this.app || !this.keyboardRenderer) return;
 
     this.app.stage.eventMode = "static";
     this.app.stage.hitArea = this.app.screen;
 
-    this.app.stage.on("pointerdown", (e: PIXI.FederatedPointerEvent) => {
+    this.stagePointerDownHandler = (e: PIXI.FederatedPointerEvent) => {
       const point = e.global;
       const midi = this.keyboardRenderer!.getNoteAtPoint(point.x, point.y);
       if (midi !== null) {
         this.pointerToMidi.set(e.pointerId, midi);
         this.playRealtimeNote(midi, 100);
       }
-    });
+    };
+    this.app.stage.on("pointerdown", this.stagePointerDownHandler);
 
-    this.app.stage.on("pointermove", (e: PIXI.FederatedPointerEvent) => {
+    this.stagePointerMoveHandler = (e: PIXI.FederatedPointerEvent) => {
       if (!this.pointerToMidi.has(e.pointerId)) return;
       const point = e.global;
       const newMidi = this.keyboardRenderer!.getNoteAtPoint(point.x, point.y);
@@ -108,18 +156,18 @@ export class WaterfallEngine {
         this.pointerToMidi.set(e.pointerId, newMidi);
         this.playRealtimeNote(newMidi, 100);
       }
-    });
+    };
+    this.app.stage.on("pointermove", this.stagePointerMoveHandler);
 
-    const handlePointerUp = (e: PIXI.FederatedPointerEvent) => {
+    this.stagePointerUpHandler = (e: PIXI.FederatedPointerEvent) => {
       const midi = this.pointerToMidi.get(e.pointerId);
       if (midi !== undefined) {
         this.releaseRealtimeNote(midi);
         this.pointerToMidi.delete(e.pointerId);
       }
     };
-
-    this.app.stage.on("pointerup", handlePointerUp);
-    this.app.stage.on("pointerupoutside", handlePointerUp);
+    this.app.stage.on("pointerup", this.stagePointerUpHandler);
+    this.app.stage.on("pointerupoutside", this.stagePointerUpHandler);
   }
 
   private startGameLoop() {
@@ -127,7 +175,22 @@ export class WaterfallEngine {
 
     this.tickHandler = (ticker: PIXI.Ticker) => {
       const deltaSeconds = ticker.deltaMS / 1000;
+      const activeNoteCount = this.noteBlockSystem?.getActiveBlockCount() ?? 0;
+      const fps = ticker.FPS;
+
       this.noteBlockSystem?.update(ticker.deltaTime, deltaSeconds);
+      this.backgroundRenderer?.update(deltaSeconds, activeNoteCount, fps);
+      this.staffRenderer?.update(deltaSeconds);
+
+      // 自动降级
+      if (this.performanceMonitor && this.settings?.performance.autoDegrade) {
+        const action = this.performanceMonitor.update(fps);
+        if (action === "degrade") {
+          this.applyAutoDegrade();
+        } else if (action === "recover") {
+          this.applyAutoRecover();
+        }
+      }
     };
     this.app.ticker.add(this.tickHandler);
   }
@@ -171,11 +234,25 @@ export class WaterfallEngine {
       this.noteBlockSystem.setDensity(settings.particles.density);
       this.noteBlockSystem.setHitLineConfig(settings.particles.hitLine);
       this.noteBlockSystem.setNoteBlockConfig(settings.particles.noteBlock);
-      this.noteBlockSystem.setTrailParticleConfig(settings.particles.trailParticle);
+      this.noteBlockSystem.setTrailParticleConfig(
+        settings.particles.trailParticle,
+      );
       this.noteBlockSystem.setHitParticleConfig(settings.particles.hitParticle);
       this.noteBlockSystem.setPhysicsConfig(settings.particles.physics);
       this.noteBlockSystem.setNoteTextureConfig(settings.noteTexture);
-      this.noteBlockSystem.setNoteBlockParticleConfig(settings.noteBlockParticles);
+      this.noteBlockSystem.setNoteBlockParticleConfig(
+        settings.noteBlockParticles,
+      );
+      this.noteBlockSystem.setShowNoteNames(
+        settings.keyboard.showNoteNames || settings.midiFile.showNoteNames,
+      );
+      this.noteBlockSystem.setFlowDirection(
+        settings.keyboard.synthesiaFlowDirection,
+      );
+      this.noteBlockSystem.setParticleHardLimit(
+        settings.performance.particleHardLimit,
+      );
+      this.noteBlockSystem.setLifecycleCurve(settings.particles.lifecycleCurve);
       this.updateNoteBlockLayout();
     }
 
@@ -195,6 +272,23 @@ export class WaterfallEngine {
       );
     }
 
+    if (this.staffRenderer) {
+      this.staffRenderer.setVisible(settings.keyboard.staffVisible);
+      if (this.app) {
+        this.staffRenderer.resize(
+          this.app.screen.width,
+          this.app.screen.height,
+        );
+      }
+    }
+
+    if (this.performanceMonitor) {
+      this.performanceMonitor.setThresholds(
+        settings.performance.minFps,
+        settings.performance.targetFps,
+      );
+    }
+
     this.audioEngine.applyPreset(settings.audio.preset);
     const volumeDb = (settings.audio.volume / 100) * 30 - 30;
     this.audioEngine.setVolume(volumeDb);
@@ -208,8 +302,9 @@ export class WaterfallEngine {
     const h = this.app.screen.height;
     const w = this.app.screen.width;
     const keyboardVisible = this.settings.keyboard.visible;
-    const keyboardHeight = keyboardVisible ? h * this.settings.keyboard.heightRatio : 0;
-    // 键盘始终在底部
+    const keyboardHeight = keyboardVisible
+      ? h * this.settings.keyboard.heightRatio
+      : 0;
     const keyboardY = h - keyboardHeight;
 
     this.noteBlockSystem.setCanvasSize(w, h);
@@ -235,7 +330,6 @@ export class WaterfallEngine {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
     const keyboardHeight = h * this.settings.keyboard.heightRatio;
-    // 键盘始终在底部
     const keyboardY = h - keyboardHeight;
 
     this.keyboardContainer!.y = keyboardY;
@@ -244,7 +338,6 @@ export class WaterfallEngine {
     this.updateNoteBlockLayout();
   }
 
-  // ─── 模式切换 ───
   setMode(mode: "realtime" | "synthesia") {
     this.mode = mode;
     this.noteBlockSystem?.setMode(mode);
@@ -257,11 +350,11 @@ export class WaterfallEngine {
     return this.mode;
   }
 
-  // ─── 实时模式：音符控制 ───
   playRealtimeNote(midi: number, velocity = 100) {
     if (this.mode !== "realtime") return;
     this.audioEngine.noteOn(midi, velocity);
     this.keyboardRenderer?.highlightNote(midi);
+    this.staffRenderer?.onNoteOn(midi);
 
     if (this.noteBlockSystem && this.keyboardRenderer) {
       const x = this.keyboardRenderer.getNoteX(midi);
@@ -275,10 +368,10 @@ export class WaterfallEngine {
     if (this.mode !== "realtime") return;
     this.audioEngine.noteOff(midi);
     this.keyboardRenderer?.clearHighlight(midi);
+    this.staffRenderer?.onNoteOff(midi);
     this.noteBlockSystem?.endRealtimeNote(midi);
   }
 
-  // ─── Synthesia 模式：调度音符 ───
   scheduleSynthesiaNotes(notes: ScheduledNote[]) {
     if (!this.noteBlockSystem || !this.keyboardRenderer) return;
     this.noteBlockSystem.scheduleNotes(notes, (midi) => {
@@ -286,7 +379,6 @@ export class WaterfallEngine {
     });
   }
 
-  // ─── Synthesia 模式：时间更新 ───
   setTransportTime(time: number) {
     this.noteBlockSystem?.setTransportTime(time);
   }
@@ -295,20 +387,24 @@ export class WaterfallEngine {
     this.noteBlockSystem?.setTransportPlaying(playing);
   }
 
-  // ─── Synthesia 模式：手动触发音符（用于回调） ───
   triggerSynthesiaNote(midi: number, velocity: number) {
     this.audioEngine.noteOn(midi, velocity);
     this.keyboardRenderer?.highlightNote(midi);
+    this.staffRenderer?.onNoteOn(midi);
   }
 
   releaseSynthesiaNote(midi: number) {
     this.audioEngine.noteOff(midi);
     this.keyboardRenderer?.clearHighlight(midi);
+    this.staffRenderer?.onNoteOff(midi);
   }
 
-  // ─── 清理 ───
   clearNoteBlocks() {
     this.noteBlockSystem?.clear();
+  }
+
+  setFlowDirection(direction: FlowDirection) {
+    this.noteBlockSystem?.setFlowDirection(direction);
   }
 
   resize() {
@@ -318,7 +414,11 @@ export class WaterfallEngine {
       this.app.renderer.resize(parent.clientWidth, parent.clientHeight);
       this.drawKeyboard();
       this.backgroundRenderer?.resize(parent.clientWidth, parent.clientHeight);
-      this.postProcessingRenderer?.resize(parent.clientWidth, parent.clientHeight);
+      this.postProcessingRenderer?.resize(
+        parent.clientWidth,
+        parent.clientHeight,
+      );
+      this.staffRenderer?.resize(parent.clientWidth, parent.clientHeight);
     }
   }
 
@@ -326,24 +426,84 @@ export class WaterfallEngine {
     return this.noteBlockContainer;
   }
 
+  getHitLineContainer(): PIXI.Container | null {
+    return this.hitLineContainer;
+  }
+
+  // ─── 自动降级 ───
+  private degraded = false;
+  private applyAutoDegrade() {
+    if (this.degraded) return;
+    this.degraded = true;
+    this.noteBlockSystem?.setDegradeMode(true);
+    this.backgroundRenderer?.setDegradeMode(true);
+    this.postProcessingRenderer?.setDegradeMode(true);
+  }
+
+  private applyAutoRecover() {
+    if (!this.degraded) return;
+    this.degraded = false;
+    this.noteBlockSystem?.setDegradeMode(false);
+    this.backgroundRenderer?.setDegradeMode(false);
+    this.postProcessingRenderer?.setDegradeMode(false);
+  }
+
   destroy() {
+    this.isDestroyed = true;
+
+    // 移除 PIXI stage 事件监听器（防止闭包泄漏阻止 GC）
+    if (this.app) {
+      if (this.stagePointerDownHandler)
+        this.app.stage.off("pointerdown", this.stagePointerDownHandler);
+      if (this.stagePointerMoveHandler)
+        this.app.stage.off("pointermove", this.stagePointerMoveHandler);
+      if (this.stagePointerUpHandler) {
+        this.app.stage.off("pointerup", this.stagePointerUpHandler);
+        this.app.stage.off("pointerupoutside", this.stagePointerUpHandler);
+      }
+    }
+    this.stagePointerDownHandler = null;
+    this.stagePointerMoveHandler = null;
+    this.stagePointerUpHandler = null;
+
+    // 移除 ticker
     if (this.tickHandler && this.app) {
       this.app.ticker.remove(this.tickHandler);
     }
+    this.tickHandler = null;
+
+    // 销毁音频引擎
     this.audioEngine.dispose();
-    this.noteBlockSystem?.clear();
+
+    // 按依赖顺序销毁各渲染器
+    this.noteBlockSystem?.destroy();
     this.postProcessingRenderer?.destroy();
+    this.staffRenderer?.destroy();
+    this.backgroundRenderer?.destroy();
+    this.keyboardRenderer?.destroy();
+
+    // 清理模块级纹理缓存（防止 HMR/路由切换时 GPU 纹理泄漏）
+    clearGlowTextureCache();
+
+    // 销毁 PIXI Application（true = 同时销毁所有 stage 子元素）
     if (this.app) {
       this.app.destroy(true);
       this.app = null;
     }
+
+    // 释放所有引用
     this.keyboardRenderer = null;
     this.noteBlockSystem = null;
     this.backgroundRenderer = null;
     this.postProcessingRenderer = null;
+    this.staffRenderer = null;
+    this.performanceMonitor = null;
     this.sceneContainer = null;
     this.backgroundContainer = null;
     this.noteBlockContainer = null;
+    this.hitLineContainer = null;
     this.keyboardContainer = null;
+    this.uiContainer = null;
+    this.pointerToMidi.clear();
   }
 }

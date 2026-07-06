@@ -17,7 +17,10 @@
     "learn": "学习",
     "decrement": "减少",
     "increment": "增加",
-    "name": "名称"
+    "name": "名称",
+    "clear": "清除",
+    "connected": "已连接",
+    "disconnected": "未连接"
   },
   "nav": {
     "home": "首页",
@@ -28,8 +31,7 @@
     "chordDictionary": "和弦词典",
     "routing": "路由",
     "debugger": "调试器",
-    "waterfallPiano": "瀑布流钢琴",
-    "blackhole": "黑洞"
+    "waterfallPiano": "瀑布流钢琴"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -45,8 +47,7 @@
       "waterfallPiano": "带瀑布流粒子效果的交互式钢琴",
       "chordDictionary": "查询和弦结构和排列",
       "routing": "在设备之间路由MIDI消息",
-      "debugger": "监控和调试MIDI消息",
-      "blackhole": "实时WebGL黑洞引力透镜模拟"
+      "debugger": "监控和调试MIDI消息"
     }
   },
   "layout": {
@@ -61,9 +62,9 @@
     "maximize": "最大化",
     "averageRoutingLatency": "平均路由延迟",
     "highestRoutingLatency": "最高路由延迟",
-    "collapseBottomBar": "折叠底部栏",
-    "expandBottomBar": "展开底部栏",
-    "unpin": "取消置顶"
+    "unpin": "取消置顶",
+    "latencyTooltip": "MIDI 延迟: {ms} ms",
+    "latencyAriaLabel": "当前 MIDI 延迟 {ms} 毫秒"
   },
   "topBar": {
     "noMidiDevices": "未检测到 MIDI 设备",
@@ -164,10 +165,6 @@
     "chordDisplay": "和弦显示",
     "waterfallPiano": "瀑布流钢琴",
     "debugger": "调试器",
-    "licenses": {
-      "title": "许可证"
-    },
-    "about": "关于",
     "cursor": "光标",
     "resetCurrent": "重置当前",
     "resetAll": "全部重置",
@@ -175,6 +172,13 @@
     "resetConfirm": "重置",
     "resetCurrentConfirmMessage": "确定要将「{section}」设置恢复为默认值吗？",
     "resetAllConfirmMessage": "确定要将所有设置恢复为默认值吗？此操作不可撤销。",
+    "searchPlaceholder": "搜索设置...",
+    "noSearchResults": "未找到匹配的设置项",
+    "groups": {
+      "general": "通用",
+      "display": "显示",
+      "advanced": "高级"
+    },
     "cursorSettings": {
       "general": "基本设置",
       "enabled": "启用自定义光标",
@@ -245,21 +249,19 @@
       "languageHint": "选择应用语言",
       "theme": "主题",
       "themeHint": "选择应用主题",
-      "toggleTheme": "切换主题",
-      "serverRunning": "服务器正在端口 {port} 上运行",
-      "serverStopped": "服务器已停止",
-      "serverErrored": "服务器出错: {error}",
-      "accessThrough": "可通过以下地址访问: ",
-      "startup": "启动",
-      "launchAtStartup": "开机自启",
-      "startMinimized": "最小化启动",
-      "overlayServer": "覆盖层服务器",
-      "enableHttpWs": "启用 HTTP 和 WS 服务器",
-      "serverPort": "服务器端口"
+      "toggleTheme": "切换主题"
     },
     "routingSettings": {
       "refreshDevices": "刷新设备",
-      "clearAll": "清除全部"
+      "clearAll": "清除全部",
+      "viewMode": "视图模式",
+      "matrixView": "矩阵视图",
+      "flowView": "流程图视图",
+      "inputOutput": "输入 / 输出",
+      "noDevicesTitle": "未检测到 MIDI 设备",
+      "noDevicesDesc": "请连接 MIDI 设备后点击刷新按钮",
+      "clearConfirmTitle": "确认清除路由",
+      "confirmClear": "确定要清除所有路由连接吗？此操作不可撤销。"
     },
     "notationSettings": {
       "title": "记谱设置",
@@ -449,48 +451,6 @@
       "clearMessages": "清除消息",
       "autoScroll": "自动滚动"
     },
-    "aboutSettings": {
-      "byAuthor": "作者: Rémi Jarasson / ",
-      "laJarreASon": "La Jarre à Son",
-      "windowsNote": "注意: Windows上的标准MIDI驱动是独占的。要使用MIDI Jar，建议使用",
-      "loopMidi": "LoopMidi(Tobias Erichsen)",
-      "microsoftMidi": "Midi(微软官方)",
-      "loopMidiNote": "将MIDI控制器路由到虚拟设备，然后可以连接到DAW或独立VST等其他软件。",
-      "downloadLoopMidi": "下载 LoopMIDI",
-      "downloadMidi": "下载 MIDI",
-      "features": "功能特性",
-      "featuresDescription": "本应用集合了以下MIDI相关功能:",
-      "featureRoute": "在设备之间路由MIDI消息",
-      "featureDisplay": "弹奏时显示和弦、音符和钢琴",
-      "featureIntegrate": "集成到OBS或Web浏览器中",
-      "featureLearn": "使用和弦词典和和弦展示等工具学习",
-      "planToAdd": "我计划添加新模块，所以请不要犹豫",
-      "reportBug": "报告Bug",
-      "or": " 或 ",
-      "requestFeature": "请求新功能",
-      "changelog": "更新日志",
-      "specialMentions": "特别鸣谢",
-      "specialMentionsDescription": "MIDI Jar基于一系列出色的开源项目和资源，值得特别鸣谢:",
-      "credits": {
-        "name": "名称",
-        "description": "描述",
-        "links": "链接",
-        "github": "Github",
-        "website": "网站"
-      },
-      "creditDescriptions": {
-        "tonal": "一个功能性的JavaScript音乐理论库，使MIDI Jar能够检测和弦并轻松处理MIDI音符",
-        "vexflow": "一个用于渲染音乐记谱和吉他六线谱的JavaScript库。",
-        "julusianMidi": "RtMidi C++库的Node.js封装，提供实时MIDI输入输出。从@justinlatimer/node-midi分叉而来。",
-        "reactFlow": "高度可定制的库，用于构建交互式基于节点的UI、编辑器、流程图和图表。它使MIDI Jar拥有可理解的MIDI路由节点和可拖拽的边。",
-        "electronBoilerplate": "Electron中可扩展跨平台应用的基础，MIDI Jar的基础模板。",
-        "flaticon": "MIDI Jar的大部分图标基于Flaticon的<uicons>图标包。"
-      }
-    },
-    "licensesSettings": {
-      "github": "Github",
-      "empty": "未找到许可包信息"
-    },
     "notationOptions": {
       "long": "长格式 (min, maj, dom, aug, dim...)",
       "short": "短格式 (m, M, aug, dim...)",
@@ -537,6 +497,13 @@
     "play": "播放",
     "pause": "暂停",
     "importMidi": "导入 MIDI 文件",
+    "toggleRecord": "切换录制",
+    "togglePlayback": "切换播放",
+    "resetView": "重置视图",
+    "canvasPlaying": "瀑布流钢琴正在播放: {notes}",
+    "canvasIdle": "瀑布流钢琴就绪",
+    "recording": "录制中",
+    "playing": "播放中",
     "showKeyboard": "显示键盘",
     "keyboardRange": "键盘范围",
     "keyLabel": "按键标签",
@@ -648,7 +615,8 @@
       "particlePhysics": "粒子物理",
       "postProcessing": "后处理",
       "noteTextures": "音符块纹理",
-      "noteBlockParticles": "音符块粒子"
+      "noteBlockParticles": "音符块粒子",
+      "theme": "主题"
     },
     "keyLabels": {
       "none": "无",
@@ -699,7 +667,8 @@
       "gradient": "渐变",
       "preset": "预设主题",
       "image": "自定义图片",
-      "stars": "星空"
+      "stars": "星空",
+      "fluid": "流体"
     },
     "themes": {
       "nightSky": "夜空",
@@ -721,54 +690,61 @@
       "stretch": "拉伸",
       "center": "居中",
       "tile": "平铺"
-    }
-  },
-  "blackhole": {
-    "openSettings": "打开黑洞设置",
-    "settings": {
-      "title": "黑洞设置",
-      "general": "总体",
-      "intensity": "强度",
-      "holeAndLens": "黑洞与透镜",
-      "diskGeometry": "吸积盘几何",
-      "diskMatter": "吸积盘物质与光",
-      "lightAndScreen": "光照与屏幕",
-      "background": "自定义背景"
     },
-    "params": {
-      "holeRadius": "黑洞半径",
-      "lensDepth": "透镜深度",
-      "starGain": "星空亮度",
-      "diskInner": "盘内边缘",
-      "diskOuter": "盘外边缘",
-      "diskIncl": "盘倾角",
-      "diskRoll": "系统旋转",
-      "diskGain": "盘亮度",
-      "diskOpacity": "盘不透明度",
-      "diskTemp": "温度 (K)",
-      "dopplerMix": "多普勒混合",
-      "diskBeam": "光束指数",
-      "diskSpeed": "条纹速度",
-      "diskWind": "螺旋缠绕",
-      "diskContrast": "条纹对比度",
-      "exposure": "曝光",
-      "driftSpeed": "漂移速度"
+    "visualTheme": "视觉主题",
+    "particlePreset": "粒子预设",
+    "styleParameters": "风格参数",
+    "themeImportExport": "主题导入/导出",
+    "exportTheme": "导出主题",
+    "importTheme": "导入主题",
+    "advancedKeyboard": "键盘高级",
+    "staffVisible": "显示五线谱",
+    "showNoteNames": "音符块显示音名",
+    "flowDirection": "流动方向",
+    "gradientDirection": "渐变方向",
+    "advancedBackground": "高级背景效果",
+    "starfieldEnabled": "启用星空粒子",
+    "starfieldDensity": "星空密度",
+    "fluidEnabled": "启用流体模拟",
+    "fluidResolution": "流体分辨率",
+    "flowAnimation": "渐变流动动画",
+    "flowSpeed": "流动速度",
+    "bloomMultiPass": "多 pass 高质量泛光",
+    "motionBlurLayerOnly": "仅作用于音符块层",
+    "hitLineShaderGlow": "命中线 Shader 泛光",
+    "hitLineGlowEnabled": "启用泛光",
+    "hitLineGlowShaderIntensity": "泛光强度",
+    "hitLineGlowShaderRadius": "泛光半径",
+    "particleHardLimit": "粒子数量上限",
+    "autoDegrade": "自动降级",
+    "minFps": "最低帧率阈值",
+    "targetFps": "目标帧率",
+    "visualThemes": {
+      "classicGlow": "经典光效",
+      "neonParticles": "霓虹粒子",
+      "minimalTutor": "极简教学",
+      "starlightMagic": "星光魔法",
+      "retroCrt": "复古 CRT"
     },
-    "background": {
-      "upload": "上传背景图片",
-      "remove": "移除背景",
-      "opacity": "背景不透明度",
-      "fitMode": "适配方式",
-      "fitModes": {
-        "cover": "覆盖",
-        "stretch": "拉伸",
-        "center": "居中",
-        "tile": "平铺"
-      }
+    "particlePresets": {
+      "classic": "经典",
+      "neon": "霓虹",
+      "minimal": "极简",
+      "starlight": "星光",
+      "retroCrt": "复古 CRT"
     },
-    "globalBackground": {
-      "enable": "启用全局黑洞背景",
-      "disable": "关闭全局黑洞背景"
+    "styleParams": {
+      "ambianceIntensity": "氛围强度",
+      "particleDensity": "粒子浓度",
+      "burstForce": "爆发力度",
+      "floatSense": "漂浮感",
+      "glowIntensity": "光芒强度",
+      "colorTemperature": "颜色温度"
+    },
+    "gradientDirections": {
+      "vertical": "垂直",
+      "horizontal": "水平",
+      "radial": "径向"
     }
   }
 }

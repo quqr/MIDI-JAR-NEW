@@ -52,7 +52,7 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     if (manager && manager.isDisposed()) {
       managerMap.delete(namespace);
       refCountMap.delete(namespace);
-      manager = null;
+      manager = undefined;
     }
 
     if (!manager) {

@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
-import { isBlackKey } from "./KeyboardRenderer";
+import { isBlackKey, noteToName } from "./KeyboardRenderer";
+import { ParticleSystem } from "./ParticleSystem";
 import type {
   VisualStyle,
   ColorScheme,
@@ -11,8 +12,8 @@ import type {
   HitParticleConfig,
   ParticlePhysicsConfig,
   NoteTextureConfig,
-  TexturePreset,
   NoteBlockParticleConfig,
+  FlowDirection,
 } from "../types";
 
 // ─── 音符块 ───
@@ -24,70 +25,16 @@ interface NoteBlock {
   height: number;
   color: number;
   alpha: number;
-  // 实时模式
   startTime: number;
   active: boolean;
-  // Synthesia 模式
-  hitTime: number; // 秒，底边到达命中线的时间
-  endTime: number; // 秒，顶边到达命中线的时间
-  hasTriggered: boolean; // 是否已触发 noteOn
-  hasEnded: boolean; // 是否已触发 noteOff
+  hitTime: number;
+  endTime: number;
+  hasTriggered: boolean;
+  hasEnded: boolean;
   velocity: number;
   hand: "left" | "right" | "unknown";
   trackColor: number | null;
-}
-
-// ─── 拖尾粒子 ───
-interface TrailParticle {
-  x: number;
-  y: number;
-  size: number;
-  color: number;
-  alpha: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-}
-
-// ─── 命中爆炸粒子 ───
-interface HitParticle {
-  x: number;
-  y: number;
-  size: number;
-  color: number;
-  alpha: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-}
-
-// ─── 表面散发粒子 ───
-interface SurfaceParticle {
-  x: number;
-  y: number;
-  size: number;
-  color: number;
-  alpha: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-}
-
-// ─── 环绕粒子 ───
-interface OrbitingParticle {
-  angle: number;
-  radius: number;
-  size: number;
-  color: number;
-  alpha: number;
-  speed: number;
-  centerX: number;
-  centerY: number;
-  life: number;
-  maxLife: number;
+  nameSprite: PIXI.Text | null; // 音名标签
 }
 
 export interface NoteBlockCallbacks {
@@ -99,15 +46,16 @@ export interface NoteBlockCallbacks {
   onNoteEnd?: (midi: number) => void;
 }
 
+const TEXT_HEIGHT = 14; // 音名标签的固定文字高度（用于自适应判断）
+
 export class NoteBlockSystem {
   private graphics: PIXI.Graphics;
   private trailGraphics: PIXI.Graphics;
   private hitLineGraphics: PIXI.Graphics;
+  private nameLayer: PIXI.Container; // 音名标签层（位于音符块之上）
+  private particleSystem: ParticleSystem;
   private blocks: NoteBlock[] = [];
-  private trails: TrailParticle[] = [];
-  private hitParticles: HitParticle[] = [];
 
-  // 模式
   private mode: "realtime" | "synthesia" = "realtime";
 
   // 布局
@@ -118,16 +66,15 @@ export class NoteBlockSystem {
   private blackKeyWidth = 0;
 
   // 速度
-  private realtimeSpeed = 2; // 实时模式上升速度（像素/帧）
-  private fallSpeed = 120; // Synthesia 模式下落速度（像素/秒）
-  private lookAhead = 3; // 提前显示时间（秒）
+  private realtimeSpeed = 2;
+  private fallSpeed = 120;
+  private lookAhead = 3;
 
   // 视觉配置
   private style: VisualStyle = "blocks";
   private colorScheme: ColorScheme = "pitch";
   private opacity = 0.9;
   private cornerRadius = 3;
-  private particleShape: ParticleShape = "circle";
   private particleSize = 6;
   private trailEnabled = false;
   private density = 5;
@@ -141,6 +88,7 @@ export class NoteBlockSystem {
     glowIntensity: 0.8,
     style: "solid",
     visible: true,
+    shaderGlow: true,
   };
   private hitLineColor = 0xffffff;
 
@@ -152,32 +100,15 @@ export class NoteBlockSystem {
     gradientEnabled: false,
     gradientTopColor: "#6366f1",
     gradientBottomColor: "#14b8a6",
+    gradientMidColor: "#3b82f6",
     highlightEnabled: true,
     highlightOpacity: 0.3,
     fadeIn: true,
     fadeOut: true,
-  };
-
-  // 拖尾粒子配置
-  private trailParticleConfig: TrailParticleConfig = {
-    size: 4,
-    colorDecay: 0.5,
-    spreadAngle: 30,
-    lifetime: 30,
-  };
-
-  // 命中爆炸粒子配置
-  private hitParticleConfig: HitParticleConfig = {
-    count: 8,
-    speed: 3,
-    lifetime: 20,
-  };
-
-  // 粒子物理配置
-  private physicsConfig: ParticlePhysicsConfig = {
-    gravity: 0,
-    windX: 0,
-    windY: 0,
+    multiLayerGradient: true,
+    activeGlow: true,
+    activeGlowRadius: 8,
+    shadowEnabled: true,
   };
 
   // 音符块纹理配置
@@ -185,6 +116,8 @@ export class NoteBlockSystem {
     preset: "none",
     scale: 1,
     intensity: 0.3,
+    customImage: "",
+    customImageIntensity: 0.5,
   };
 
   // 音符块粒子配置
@@ -194,23 +127,31 @@ export class NoteBlockSystem {
     orbiting: { enabled: false, count: 4, radius: 10, speed: 2 },
   };
 
-  // 新粒子数组
-  private surfaceParticles: SurfaceParticle[] = [];
-  private orbitingParticles: OrbitingParticle[] = [];
-
   // Synthesia 播放状态
-  private transportTime = 0; // 当前播放时间（秒）
+  private transportTime = 0;
   private isTransportPlaying = false;
+
+  // 新增配置
+  private showNoteNames = false;
+  private flowDirection: FlowDirection = "down";
+  private degradeMode = false;
 
   private callbacks: NoteBlockCallbacks = {};
 
-  constructor(container: PIXI.Container) {
+  constructor(
+    blockContainer: PIXI.Container,
+    hitLineContainer: PIXI.Container,
+  ) {
     this.trailGraphics = new PIXI.Graphics();
     this.hitLineGraphics = new PIXI.Graphics();
     this.graphics = new PIXI.Graphics();
-    container.addChild(this.trailGraphics);
-    container.addChild(this.hitLineGraphics);
-    container.addChild(this.graphics);
+    this.nameLayer = new PIXI.Container();
+    blockContainer.addChild(this.trailGraphics);
+    blockContainer.addChild(this.graphics);
+    blockContainer.addChild(this.nameLayer);
+    hitLineContainer.addChild(this.hitLineGraphics);
+
+    this.particleSystem = new ParticleSystem(blockContainer);
   }
 
   setCallbacks(callbacks: NoteBlockCallbacks) {
@@ -235,14 +176,12 @@ export class NoteBlockSystem {
   }
 
   private updateFallSpeed() {
-    // 下落速度 = 下落距离 / 提前显示时间
     const fallDistance = this.keyboardY;
     if (this.lookAhead > 0 && fallDistance > 0) {
       this.fallSpeed = fallDistance / this.lookAhead;
     }
   }
 
-  // ─── 模式设置 ───
   setMode(mode: "realtime" | "synthesia") {
     this.mode = mode;
   }
@@ -274,7 +213,7 @@ export class NoteBlockSystem {
   }
 
   setParticleShape(shape: ParticleShape) {
-    this.particleShape = shape;
+    this.particleSystem.setShape(shape);
   }
 
   setParticleSize(size: number) {
@@ -289,15 +228,6 @@ export class NoteBlockSystem {
     this.density = d;
   }
 
-  setHitLineColor(color: string) {
-    this.hitLineColor = this.hexStringToNumber(color);
-    this.hitLineConfig.color = color;
-  }
-
-  setHitLineGlow(glow: boolean) {
-    this.hitLineConfig.glow = glow;
-  }
-
   setHitLineConfig(config: HitLineConfig) {
     this.hitLineConfig = config;
     this.hitLineColor = this.hexStringToNumber(config.color);
@@ -308,15 +238,16 @@ export class NoteBlockSystem {
   }
 
   setTrailParticleConfig(config: TrailParticleConfig) {
-    this.trailParticleConfig = config;
+    this.particleSystem.setTrailConfig(config);
+    this.particleSystem.setUseGlowTexture(config.glowTexture);
   }
 
   setHitParticleConfig(config: HitParticleConfig) {
-    this.hitParticleConfig = config;
+    this.particleSystem.setHitConfig(config);
   }
 
   setPhysicsConfig(config: ParticlePhysicsConfig) {
-    this.physicsConfig = config;
+    this.particleSystem.setPhysicsConfig(config);
   }
 
   setNoteTextureConfig(config: NoteTextureConfig) {
@@ -325,6 +256,37 @@ export class NoteBlockSystem {
 
   setNoteBlockParticleConfig(config: NoteBlockParticleConfig) {
     this.noteBlockParticleConfig = config;
+  }
+
+  setShowNoteNames(enabled: boolean) {
+    this.showNoteNames = enabled;
+    if (!enabled) {
+      // 清理所有音名标签
+      for (const block of this.blocks) {
+        if (block.nameSprite) {
+          this.nameLayer.removeChild(block.nameSprite);
+          block.nameSprite.destroy();
+          block.nameSprite = null;
+        }
+      }
+    }
+  }
+
+  setFlowDirection(direction: FlowDirection) {
+    this.flowDirection = direction;
+  }
+
+  setParticleHardLimit(limit: number) {
+    this.particleSystem.setHardLimit(limit);
+  }
+
+  setLifecycleCurve(enabled: boolean) {
+    this.particleSystem.setLifecycleEnabled(enabled);
+  }
+
+  setDegradeMode(enabled: boolean) {
+    this.degradeMode = enabled;
+    this.particleSystem.setDegradeMode(enabled);
   }
 
   // ─── Synthesia 播放控制 ───
@@ -357,6 +319,7 @@ export class NoteBlockSystem {
       velocity,
       hand: "unknown",
       trackColor: null,
+      nameSprite: null,
     };
     this.blocks.push(block);
   }
@@ -375,7 +338,7 @@ export class NoteBlockSystem {
   scheduleNotes(notes: ScheduledNote[], getX: (midi: number) => number) {
     for (const note of notes) {
       const x = getX(note.midi);
-      if (x < 0) continue; // 超出键盘范围
+      if (x < 0) continue;
       const color = this.resolveColor(note.midi, note.hand, null);
       const blockHeight = Math.max(8, note.duration * this.fallSpeed);
       const w = isBlackKey(note.midi) ? this.blackKeyWidth : this.keyWidth;
@@ -383,7 +346,7 @@ export class NoteBlockSystem {
       const block: NoteBlock = {
         midi: note.midi,
         x: x - w / 2,
-        y: 0, // 初始位置，会在 update 中计算
+        y: 0,
         width: w,
         height: blockHeight,
         color,
@@ -397,6 +360,7 @@ export class NoteBlockSystem {
         velocity: note.velocity,
         hand: note.hand,
         trackColor: null,
+        nameSprite: null,
       };
       this.blocks.push(block);
     }
@@ -463,8 +427,21 @@ export class NoteBlockSystem {
     );
   }
 
+  // ─── 获取命中线 Y 坐标（受流动方向影响） ───
+  private getHitLineY(): number {
+    // 向下流动（默认）：命中线在键盘上方（keyboardY）
+    // 向上流动：命中线在键盘下方（但键盘本身在底部，所以仍使用 keyboardY）
+    // 简化处理：命中线始终在 keyboardY 位置，只是音符块流动方向不同
+    return this.keyboardY;
+  }
+
   // ─── 主更新循环 ───
   update(delta: number, deltaSeconds: number) {
+    // 清理上一帧可能遗留的子节点并销毁，防止 Graphics 子节点累积泄漏
+    if (this.graphics.children.length > 0) {
+      const children = this.graphics.removeChildren();
+      for (const child of children) child.destroy();
+    }
     this.graphics.clear();
     this.trailGraphics.clear();
     this.hitLineGraphics.clear();
@@ -472,10 +449,8 @@ export class NoteBlockSystem {
     const now = performance.now();
     const toRemove: number[] = [];
 
-    // 绘制命中线
     this.drawHitLine();
 
-    // 更新音符块
     for (let i = 0; i < this.blocks.length; i++) {
       const block = this.blocks[i];
 
@@ -485,65 +460,70 @@ export class NoteBlockSystem {
         this.updateSynthesiaBlock(block, deltaSeconds);
       }
 
-      // 移除离开屏幕的块
       if (this.shouldRemove(block)) {
         toRemove.push(i);
+        if (block.nameSprite) {
+          this.nameLayer.removeChild(block.nameSprite);
+          block.nameSprite.destroy();
+          block.nameSprite = null;
+        }
         continue;
       }
 
-      // 绘制
       if (this.style === "blocks" || this.style === "hybrid") {
         this.drawBlock(block);
+        this.updateNameLabel(block);
       }
 
       // 表面散发粒子
       if (this.noteBlockParticleConfig.surfaceEmission.enabled) {
-        const active = block.active || (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded);
-        if (active && Math.random() < this.noteBlockParticleConfig.surfaceEmission.rate) {
-          this.spawnSurfaceParticle(block);
-        }
-      }
-
-      // 环绕粒子生成
-      if (this.noteBlockParticleConfig.orbiting.enabled) {
-        const active = block.active || (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded);
-        if (active && this.orbitingParticles.length < 100) {
-          this.spawnOrbitingParticles(block);
+        const active =
+          block.active ||
+          (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded);
+        if (active) {
+          this.particleSystem.spawnSurfaceEmission(
+            block.x,
+            block.y,
+            block.width,
+            block.height,
+            block.color,
+            this.noteBlockParticleConfig.surfaceEmission.rate,
+            this.noteBlockParticleConfig.surfaceEmission.speed,
+            this.noteBlockParticleConfig.surfaceEmission.lifetime,
+          );
         }
       }
     }
 
-    // 移除
     for (let i = toRemove.length - 1; i >= 0; i--) {
       this.blocks.splice(toRemove[i], 1);
     }
 
-    // 更新粒子
-    this.updateTrails(delta);
-    this.updateHitParticles(delta);
-    this.updateSurfaceParticles(delta);
-    this.updateOrbitingParticles(delta);
+    // 更新粒子系统（替代原有的 trails/hitParticles/surface/orbiting）
+    this.particleSystem.update(delta);
   }
 
   // ─── 实时模式更新 ───
   private updateRealtimeBlock(block: NoteBlock, now: number, delta: number) {
     if (block.active) {
-      // 按住时：底部固定在键盘位置，只向上生长
       const elapsed = now - block.startTime;
       block.height = Math.max(8, elapsed * this.realtimeSpeed * 0.04);
+      // 向下流动时，块从键盘向上生长；向上流动时，块从键盘向下生长（但实时模式主要向上）
+      // 实时模式保持原行为：向上生长
       block.y = this.keyboardY - block.height;
     } else {
-      // 松开后：停止生长，整体向上漂移离开屏幕
       block.y -= this.realtimeSpeed * delta;
     }
 
-    // 生成拖尾粒子
-    if (
-      this.trailEnabled &&
-      block.active &&
-      Math.random() < 0.3
-    ) {
-      this.spawnTrailParticle(block, -1); // -1 = 向上
+    if (this.trailEnabled && block.active && Math.random() < 0.3) {
+      // 实时模式向上：拖尾从底部向上
+      this.particleSystem.spawnTrail(
+        block.x + block.width / 2,
+        block.y + block.height,
+        block.color,
+        -1,
+        this.density,
+      );
     }
   }
 
@@ -551,48 +531,78 @@ export class NoteBlockSystem {
   private updateSynthesiaBlock(block: NoteBlock, _deltaSeconds: number) {
     if (!this.isTransportPlaying) return;
 
-    // 音符底边在 hitTime 到达键盘（Synthesia 标准）
-    const blockY =
-      this.keyboardY - (block.hitTime - this.transportTime) * this.fallSpeed;
-    block.y = blockY;
+    const hitY = this.getHitLineY();
+    if (this.flowDirection === "down") {
+      // 向下流动：音符块从顶部下落，底边在 hitTime 到达命中线
+      block.y = hitY - (block.hitTime - this.transportTime) * this.fallSpeed;
+    } else {
+      // 向上流动：音符块从底部向上，底边在 hitTime 到达命中线
+      // 这里"底边"的概念需要反转：向上流动时，块的顶部先到达命中线
+      // 简化处理：块从下方（屏幕外）向上移动，块底到达命中线时触发
+      block.y =
+        hitY +
+        (block.hitTime - this.transportTime) * this.fallSpeed -
+        block.height;
+    }
 
-    // 检查是否应该触发 noteOn（底边到达命中线）
+    // 触发 noteOn
     if (!block.hasTriggered && this.transportTime >= block.hitTime) {
       block.hasTriggered = true;
       this.callbacks.onNoteTrigger?.(block.midi, block.velocity, block.hand);
-      // 命中爆炸粒子（使用增强配置）
       if (this.noteBlockParticleConfig.hitExplosion.enabled) {
-        this.spawnEnhancedHitParticles(block);
+        this.particleSystem.spawnHitExplosion(
+          block.x + block.width / 2,
+          hitY,
+          block.color,
+          this.particleSize,
+        );
       } else if (this.style === "hybrid") {
-        this.spawnHitParticles(block);
+        this.particleSystem.spawnHitExplosion(
+          block.x + block.width / 2,
+          hitY,
+          block.color,
+          this.particleSize,
+        );
       }
     }
 
-    // 检查是否应该触发 noteOff（顶边到达命中线）
+    // 触发 noteOff
     if (!block.hasEnded && this.transportTime >= block.endTime) {
       block.hasEnded = true;
       this.callbacks.onNoteEnd?.(block.midi);
     }
 
-    // 生成拖尾粒子
+    // 拖尾粒子
     if (
       this.trailEnabled &&
       block.y > 0 &&
       block.y < this.keyboardY &&
       Math.random() < 0.2
     ) {
-      this.spawnTrailParticle(block, 1); // 1 = 向下
+      // 向下流动时拖尾向下，向上流动时拖尾向上
+      const direction = this.flowDirection === "down" ? 1 : -1;
+      const py = direction > 0 ? block.y : block.y + block.height;
+      this.particleSystem.spawnTrail(
+        block.x + block.width / 2,
+        py,
+        block.color,
+        direction,
+        this.density,
+      );
     }
   }
 
   // ─── 移除判断 ───
   private shouldRemove(block: NoteBlock): boolean {
     if (this.mode === "realtime") {
-      // 实时模式：块向上移动，离开屏幕顶部时移除
       return !block.active && block.y + block.height < 0;
     } else {
-      // Synthesia 模式：块向下移动，完全过键盘后移除
-      return block.hasEnded && block.y > this.canvasHeight;
+      if (this.flowDirection === "down") {
+        return block.hasEnded && block.y > this.canvasHeight;
+      } else {
+        // 向上流动：块向上离开屏幕
+        return block.hasEnded && block.y + block.height < 0;
+      }
     }
   }
 
@@ -602,26 +612,37 @@ export class NoteBlockSystem {
     if (!cfg.visible) return;
 
     const g = this.hitLineGraphics;
-    const y = this.keyboardY;
+    const y = this.getHitLineY();
     const half = cfg.thickness / 2;
 
-    // 发光效果
-    if (cfg.glow) {
+    // 如果启用 shader 泛光，则由 PostProcessingRenderer 处理，这里只画主线
+    // 否则使用多层矩形模拟
+    if (cfg.glow && !cfg.shaderGlow) {
       const layers = Math.max(1, Math.ceil(cfg.glowRadius / 5));
       for (let i = layers; i > 0; i--) {
         const spread = (i / layers) * cfg.glowRadius;
         const alpha = 0.08 * cfg.glowIntensity * (i / layers);
-        g.rect(0, y - half - spread, this.canvasWidth, cfg.thickness + spread * 2);
+        g.rect(
+          0,
+          y - half - spread,
+          this.canvasWidth,
+          cfg.thickness + spread * 2,
+        );
         g.fill({ color: this.hitLineColor, alpha });
       }
     }
 
-    // 主线（支持不同样式）
+    // 主线
     if (cfg.style === "dashed") {
       const dashLen = 12;
       const gapLen = 8;
       for (let x = 0; x < this.canvasWidth; x += dashLen + gapLen) {
-        g.rect(x, y - half, Math.min(dashLen, this.canvasWidth - x), cfg.thickness);
+        g.rect(
+          x,
+          y - half,
+          Math.min(dashLen, this.canvasWidth - x),
+          cfg.thickness,
+        );
         g.fill({ color: this.hitLineColor, alpha: 0.6 });
       }
     } else if (cfg.style === "dotted") {
@@ -636,7 +657,7 @@ export class NoteBlockSystem {
     }
   }
 
-  // ─── 绘制音符块 ───
+  // ─── 绘制音符块（多层渐变 + 活跃发光 + 阴影） ───
   private drawBlock(block: NoteBlock) {
     const g = this.graphics;
     const cfg = this.noteBlockConfig;
@@ -644,39 +665,92 @@ export class NoteBlockSystem {
     // 淡入淡出动画
     let alpha = block.alpha;
     if (cfg.fadeIn && !block.hasTriggered && this.mode === "synthesia") {
-      // 从顶部进入时淡入
-      const enterProgress = Math.max(0, Math.min(1, block.y / (this.keyboardY * 0.3)));
+      const enterProgress = Math.max(
+        0,
+        Math.min(1, block.y / (this.keyboardY * 0.3)),
+      );
       alpha *= enterProgress;
     }
     if (cfg.fadeOut && block.hasEnded && this.mode === "synthesia") {
-      // 结束后淡出
       const fadeProgress = Math.max(0, 1 - (block.y - this.keyboardY) / 100);
       alpha *= fadeProgress;
     }
 
-    // 主体
-    if (cfg.gradientEnabled && block.height > 8) {
+    // 微妙阴影
+    if (cfg.shadowEnabled && block.height > 4 && !this.degradeMode) {
+      this.drawRoundedRect(
+        g,
+        block.x + 1,
+        block.y + 2,
+        block.width,
+        block.height,
+        this.cornerRadius,
+      );
+      g.fill({ color: 0x000000, alpha: 0.3 * alpha });
+    }
+
+    // 活跃音符柔和边缘发光
+    // 直接绘制到主 graphics 上，避免每帧创建子 Graphics 导致内存泄漏
+    const isActive =
+      block.active ||
+      (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded);
+    if (cfg.activeGlow && isActive && block.height > 4 && !this.degradeMode) {
+      const glowR = cfg.activeGlowRadius;
+      // 内层光晕
+      this.drawRoundedRect(
+        g,
+        block.x - glowR * 0.3,
+        block.y - glowR * 0.3,
+        block.width + glowR * 0.6,
+        block.height + glowR * 0.6,
+        this.cornerRadius + glowR * 0.3,
+      );
+      g.fill({ color: block.color, alpha: 0.15 * alpha });
+      // 外层光晕
+      this.drawRoundedRect(
+        g,
+        block.x - glowR * 0.6,
+        block.y - glowR * 0.6,
+        block.width + glowR * 1.2,
+        block.height + glowR * 1.2,
+        this.cornerRadius + glowR * 0.6,
+      );
+      g.fill({ color: block.color, alpha: 0.08 * alpha });
+    }
+
+    // 主体（多层渐变：高光 → 主色 → 暗部）—— 降级时退化为单色
+    if (cfg.multiLayerGradient && block.height > 8 && !this.degradeMode) {
+      this.drawMultiLayerBlock(g, block, alpha);
+    } else if (cfg.gradientEnabled && block.height > 8) {
       const topColor = this.hexStringToNumber(cfg.gradientTopColor);
       const bottomColor = this.hexStringToNumber(cfg.gradientBottomColor);
-      this.drawRoundedRect(g, block.x, block.y, block.width, block.height, this.cornerRadius);
+      this.drawRoundedRect(
+        g,
+        block.x,
+        block.y,
+        block.width,
+        block.height,
+        this.cornerRadius,
+      );
       g.fill({ color: topColor, alpha });
       const bandH = Math.min(block.height * 0.3, 12);
       g.rect(block.x, block.y + block.height - bandH, block.width, bandH);
       g.fill({ color: bottomColor, alpha: alpha * 0.35 });
     } else {
-      this.drawRoundedRect(g, block.x, block.y, block.width, block.height, this.cornerRadius);
+      this.drawRoundedRect(
+        g,
+        block.x,
+        block.y,
+        block.width,
+        block.height,
+        this.cornerRadius,
+      );
       g.fill({ color: block.color, alpha });
     }
 
     // 程序化纹理叠加
     if (this.noteTextureConfig.preset !== "none" && block.height > 4) {
       this.drawBlockTexture(g, block, alpha);
-    }
-
-    // 发光边缘（使用描边而非独立矩形，避免出现两个视觉层）
-    if (block.active || (this.mode === "synthesia" && !block.hasTriggered)) {
-      this.drawRoundedRect(g, block.x, block.y, block.width, block.height, this.cornerRadius);
-      g.stroke({ color: block.color, alpha: 0.4 * alpha, width: 2 });
     }
 
     // 顶部高光
@@ -688,15 +762,107 @@ export class NoteBlockSystem {
 
     // 自定义边框
     if (cfg.borderEnabled) {
-      this.drawRoundedRect(g, block.x, block.y, block.width, block.height, this.cornerRadius);
-      g.stroke({ color: this.hexStringToNumber(cfg.borderColor), alpha, width: cfg.borderWidth });
+      this.drawRoundedRect(
+        g,
+        block.x,
+        block.y,
+        block.width,
+        block.height,
+        this.cornerRadius,
+      );
+      g.stroke({
+        color: this.hexStringToNumber(cfg.borderColor),
+        alpha,
+        width: cfg.borderWidth,
+      });
     }
 
-    // 已触发但未结束的块（当前正在响的音符）添加边框
+    // 已触发但未结束的块（正在响）的微妙提示边框
     if (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded) {
-      this.drawRoundedRect(g, block.x, block.y, block.width, block.height, this.cornerRadius);
-      g.stroke({ color: 0xffffff, alpha: 0.8 * alpha, width: 2 });
+      this.drawRoundedRect(
+        g,
+        block.x,
+        block.y,
+        block.width,
+        block.height,
+        this.cornerRadius,
+      );
+      g.stroke({ color: 0xffffff, alpha: 0.6 * alpha, width: 1.5 });
     }
+  }
+
+  // ─── 多层渐变块（高光 → 主色 → 暗部） ───
+  private drawMultiLayerBlock(
+    g: PIXI.Graphics,
+    block: NoteBlock,
+    alpha: number,
+  ) {
+    const cfg = this.noteBlockConfig;
+    const mainColor = block.color;
+    const topColor = this.hexStringToNumber(cfg.gradientTopColor);
+    const midColor = this.hexStringToNumber(cfg.gradientMidColor);
+    const bottomColor = this.hexStringToNumber(cfg.gradientBottomColor);
+
+    // 主体填充（主色）
+    this.drawRoundedRect(
+      g,
+      block.x,
+      block.y,
+      block.width,
+      block.height,
+      this.cornerRadius,
+    );
+    g.fill({ color: mainColor, alpha });
+
+    // 顶部高光层（渐变上 1/3）
+    const topH = block.height * 0.35;
+    const steps = 8;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      const color = this.blendColor(topColor, midColor, t);
+      g.rect(
+        block.x + 1,
+        block.y + t * topH,
+        block.width - 2,
+        topH / steps + 1,
+      );
+      g.fill({ color, alpha: alpha * 0.4 * (1 - t) });
+    }
+
+    // 底部暗部层（渐变下 1/3）
+    const bottomH = block.height * 0.35;
+    const bottomY = block.y + block.height - bottomH;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      const color = this.blendColor(midColor, bottomColor, t);
+      g.rect(
+        block.x + 1,
+        bottomY + t * bottomH,
+        block.width - 2,
+        bottomH / steps + 1,
+      );
+      g.fill({ color, alpha: alpha * 0.3 * t });
+    }
+
+    // 中间高光带（极细的亮线，模拟反光）
+    if (block.height > 20) {
+      const midY = block.y + block.height * 0.4;
+      g.rect(block.x + 1, midY, block.width - 2, 1);
+      g.fill({ color: 0xffffff, alpha: alpha * 0.15 });
+    }
+  }
+
+  private blendColor(c1: number, c2: number, t: number): number {
+    const r1 = (c1 >> 16) & 0xff;
+    const g1 = (c1 >> 8) & 0xff;
+    const b1 = c1 & 0xff;
+    const r2 = (c2 >> 16) & 0xff;
+    const g2 = (c2 >> 8) & 0xff;
+    const b2 = c2 & 0xff;
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const b = Math.round(b1 + (b2 - b1) * t);
+    return (r << 16) | (g << 8) | b;
   }
 
   private drawRoundedRect(
@@ -716,11 +882,7 @@ export class NoteBlockSystem {
   }
 
   // ─── 程序化纹理绘制 ───
-  private drawBlockTexture(
-    g: PIXI.Graphics,
-    block: NoteBlock,
-    alpha: number,
-  ) {
+  private drawBlockTexture(g: PIXI.Graphics, block: NoteBlock, alpha: number) {
     const cfg = this.noteTextureConfig;
     const intensity = cfg.intensity * alpha;
     const scale = cfg.scale;
@@ -731,7 +893,6 @@ export class NoteBlockSystem {
 
     switch (cfg.preset) {
       case "noise": {
-        // 随机噪点
         const step = Math.max(3, 6 / scale);
         for (let py = y; py < y + h; py += step) {
           for (let px = x; px < x + w; px += step) {
@@ -748,7 +909,6 @@ export class NoteBlockSystem {
         break;
       }
       case "stripes": {
-        // 对角线条纹
         const spacing = Math.max(4, 8 / scale);
         const stripeW = Math.max(1, 2 / scale);
         for (let i = -h; i < w + h; i += spacing) {
@@ -764,7 +924,6 @@ export class NoteBlockSystem {
         break;
       }
       case "dots": {
-        // 网格圆点
         const spacing = Math.max(5, 10 / scale);
         const dotR = Math.max(0.8, 1.5 / scale);
         for (let py = y + spacing / 2; py < y + h; py += spacing) {
@@ -776,7 +935,6 @@ export class NoteBlockSystem {
         break;
       }
       case "glow": {
-        // 中心发光带
         const bandH = Math.min(h * 0.4, 8);
         const bandY = y + (h - bandH) / 2;
         g.rect(x + 1, bandY, w - 2, bandH);
@@ -784,7 +942,6 @@ export class NoteBlockSystem {
         break;
       }
       case "metallic": {
-        // 水平金属线
         const spacing = Math.max(3, 5 / scale);
         for (let py = y + spacing; py < y + h; py += spacing) {
           g.rect(x + 1, py, w - 2, 1);
@@ -798,307 +955,114 @@ export class NoteBlockSystem {
     }
   }
 
-  // ─── 拖尾粒子 ───
-  private spawnTrailParticle(block: NoteBlock, direction: number) {
-    const cfg = this.trailParticleConfig;
-    const count = Math.ceil(this.density * 0.15);
-    const spreadRad = (cfg.spreadAngle / 180) * Math.PI;
-
-    for (let i = 0; i < count; i++) {
-      const px = block.x + Math.random() * block.width;
-      const py = direction < 0 ? block.y + block.height : block.y;
-
-      // direction < 0 = 向上（实时模式），direction > 0 = 向下（Synthesia）
-      const baseAngle = direction < 0 ? -Math.PI / 2 : Math.PI / 2;
-      const spread = (Math.random() - 0.5) * spreadRad;
-      const speed = 0.5 + Math.random() * 1.5;
-
-      this.trails.push({
-        x: px,
-        y: py,
-        size: cfg.size * (0.4 + Math.random() * 0.6),
-        color: block.color,
-        alpha: 0.7 + Math.random() * 0.3,
-        vx: Math.cos(baseAngle + spread) * speed,
-        vy: Math.sin(baseAngle + spread) * speed,
-        life: 0,
-        maxLife: cfg.lifetime + Math.random() * cfg.lifetime * 0.5,
-      });
-    }
-  }
-
-  private updateTrails(delta: number) {
-    const g = this.trailGraphics;
-    const toRemove: number[] = [];
-    const cfg = this.trailParticleConfig;
-    const phys = this.physicsConfig;
-
-    for (let i = 0; i < this.trails.length; i++) {
-      const p = this.trails[i];
-      p.life += delta;
-      // 应用物理效果
-      p.vx += (phys.windX * 0.01) * delta;
-      p.vy += (phys.gravity * 0.01 + phys.windY * 0.01) * delta;
-      p.x += p.vx * delta;
-      p.y += p.vy * delta;
-
-      const lifeRatio = p.life / p.maxLife;
-      // 颜色衰减
-      const colorAlpha = p.alpha * (1 - lifeRatio * cfg.colorDecay);
-      const alpha = p.alpha * (1 - lifeRatio);
-      const size = p.size * (1 - lifeRatio * 0.5);
-
-      if (p.life >= p.maxLife || alpha < 0.01) {
-        toRemove.push(i);
-        continue;
+  // ─── 音名标签 ───
+  private updateNameLabel(block: NoteBlock) {
+    if (!this.showNoteNames) {
+      if (block.nameSprite) {
+        this.nameLayer.removeChild(block.nameSprite);
+        block.nameSprite.destroy();
+        block.nameSprite = null;
       }
-
-      this.drawParticle(g, p.x, p.y, size, p.color, alpha * colorAlpha);
+      return;
     }
 
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.trails.splice(toRemove[i], 1);
-    }
-  }
-
-  // ─── 命中爆炸粒子 ───
-  private spawnHitParticles(block: NoteBlock) {
-    const cfg = this.hitParticleConfig;
-    const cx = block.x + block.width / 2;
-    const cy = this.keyboardY;
-
-    for (let i = 0; i < cfg.count; i++) {
-      const angle = (i / cfg.count) * Math.PI * 2 + Math.random() * 0.5;
-      const speed = cfg.speed * (0.5 + Math.random());
-
-      this.hitParticles.push({
-        x: cx,
-        y: cy,
-        size: this.particleSize * (0.5 + Math.random() * 0.8),
-        color: block.color,
-        alpha: 1,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1,
-        life: 0,
-        maxLife: cfg.lifetime + Math.random() * cfg.lifetime * 0.5,
-      });
-    }
-  }
-
-  private updateHitParticles(delta: number) {
-    const g = this.trailGraphics;
-    const toRemove: number[] = [];
-    const phys = this.physicsConfig;
-
-    for (let i = 0; i < this.hitParticles.length; i++) {
-      const p = this.hitParticles[i];
-      p.life += delta;
-      // 应用物理效果
-      p.vx += (phys.windX * 0.01) * delta;
-      p.vy += (phys.gravity * 0.01 + phys.windY * 0.01) * delta;
-      p.x += p.vx * delta;
-      p.y += p.vy * delta;
-      p.vy += 0.05 * delta;
-
-      const lifeRatio = p.life / p.maxLife;
-      const alpha = p.alpha * (1 - lifeRatio);
-      const size = p.size * (1 - lifeRatio * 0.3);
-
-      if (p.life >= p.maxLife || alpha < 0.01) {
-        toRemove.push(i);
-        continue;
+    // 块高不足时隐藏音名
+    if (block.height < TEXT_HEIGHT * 2) {
+      if (block.nameSprite) {
+        block.nameSprite.visible = false;
       }
-
-      this.drawParticle(g, p.x, p.y, size, p.color, alpha);
+      return;
     }
 
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.hitParticles.splice(toRemove[i], 1);
-    }
-  }
-
-  // ─── 增强命中爆炸粒子 ───
-  private spawnEnhancedHitParticles(block: NoteBlock) {
-    const cfg = this.noteBlockParticleConfig.hitExplosion;
-    const cx = block.x + block.width / 2;
-    const cy = this.keyboardY;
-
-    for (let i = 0; i < cfg.count; i++) {
-      const angle = (i / cfg.count) * Math.PI * 2 + Math.random() * 0.5;
-      const speed = cfg.speed * (0.5 + Math.random());
-
-      this.hitParticles.push({
-        x: cx,
-        y: cy,
-        size: this.particleSize * (0.5 + Math.random() * 1.2),
-        color: block.color,
-        alpha: 1,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1.5,
-        life: 0,
-        maxLife: cfg.lifetime + Math.random() * cfg.lifetime * 0.5,
+    // 创建或更新音名标签
+    if (!block.nameSprite) {
+      const name = noteToName(block.midi);
+      const textColor = this.getContrastColor(block.color);
+      block.nameSprite = new PIXI.Text({
+        text: name,
+        style: {
+          fontFamily: "SF Mono, Menlo, monospace",
+          fontSize: Math.min(12, block.width * 0.5),
+          fill: textColor,
+          align: "center",
+          dropShadow: {
+            color: 0x000000,
+            alpha: 0.6,
+            angle: Math.PI / 2,
+            distance: 1,
+            blur: 1,
+          },
+        },
       });
+      block.nameSprite.anchor.set(0.5, 0.5);
+      block.nameSprite.resolution = 2;
+      this.nameLayer.addChild(block.nameSprite);
     }
+
+    block.nameSprite.visible = true;
+    block.nameSprite.x = block.x + block.width / 2;
+    block.nameSprite.y = block.y + block.height / 2;
+    block.nameSprite.alpha = block.alpha;
   }
 
-  // ─── 表面散发粒子 ───
-  private spawnSurfaceParticle(block: NoteBlock) {
-    const cfg = this.noteBlockParticleConfig.surfaceEmission;
-    const side = Math.random() < 0.5 ? -1 : 1;
-    const px = side < 0 ? block.x : block.x + block.width;
-    const py = block.y + Math.random() * block.height;
-
-    const speed = cfg.speed * (0.3 + Math.random() * 0.7);
-    const angle = side < 0 ? Math.PI + (Math.random() - 0.5) * 0.8 : (Math.random() - 0.5) * 0.8;
-
-    this.surfaceParticles.push({
-      x: px,
-      y: py,
-      size: 2 + Math.random() * 3,
-      color: block.color,
-      alpha: 0.6 + Math.random() * 0.4,
-      vx: Math.cos(angle) * speed,
-      vy: (Math.random() - 0.5) * speed * 0.5,
-      life: 0,
-      maxLife: cfg.lifetime + Math.random() * cfg.lifetime * 0.5,
-    });
-  }
-
-  private updateSurfaceParticles(delta: number) {
-    const g = this.trailGraphics;
-    const toRemove: number[] = [];
-    const phys = this.physicsConfig;
-
-    for (let i = 0; i < this.surfaceParticles.length; i++) {
-      const p = this.surfaceParticles[i];
-      p.life += delta;
-      p.vx += (phys.windX * 0.01) * delta;
-      p.vy += (phys.gravity * 0.01 + phys.windY * 0.01) * delta;
-      p.x += p.vx * delta;
-      p.y += p.vy * delta;
-
-      const lifeRatio = p.life / p.maxLife;
-      const alpha = p.alpha * (1 - lifeRatio);
-      const size = p.size * (1 - lifeRatio * 0.5);
-
-      if (p.life >= p.maxLife || alpha < 0.01) {
-        toRemove.push(i);
-        continue;
-      }
-
-      this.drawParticle(g, p.x, p.y, size, p.color, alpha);
-    }
-
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.surfaceParticles.splice(toRemove[i], 1);
-    }
-  }
-
-  // ─── 环绕粒子 ───
-  private spawnOrbitingParticles(block: NoteBlock) {
-    const cfg = this.noteBlockParticleConfig.orbiting;
-    const cx = block.x + block.width / 2;
-    const cy = block.y + block.height / 2;
-    const existingForBlock = this.orbitingParticles.filter(
-      (p) => Math.abs(p.centerX - cx) < 1 && Math.abs(p.centerY - cy) < 1,
-    ).length;
-
-    if (existingForBlock >= cfg.count) return;
-
-    for (let i = existingForBlock; i < cfg.count; i++) {
-      this.orbitingParticles.push({
-        angle: (i / cfg.count) * Math.PI * 2,
-        radius: cfg.radius * (0.5 + Math.random() * 0.5),
-        size: 2 + Math.random() * 2,
-        color: block.color,
-        alpha: 0.7 + Math.random() * 0.3,
-        speed: cfg.speed * (0.5 + Math.random() * 0.5),
-        centerX: cx,
-        centerY: cy,
-        life: 0,
-        maxLife: 60 + Math.random() * 30,
-      });
-    }
-  }
-
-  private updateOrbitingParticles(delta: number) {
-    const g = this.trailGraphics;
-    const toRemove: number[] = [];
-
-    for (let i = 0; i < this.orbitingParticles.length; i++) {
-      const p = this.orbitingParticles[i];
-      p.life += delta;
-      p.angle += p.speed * 0.02 * delta;
-
-      const lifeRatio = p.life / p.maxLife;
-      const alpha = p.alpha * (1 - lifeRatio);
-
-      if (p.life >= p.maxLife || alpha < 0.01) {
-        toRemove.push(i);
-        continue;
-      }
-
-      const x = p.centerX + Math.cos(p.angle) * p.radius;
-      const y = p.centerY + Math.sin(p.angle) * p.radius;
-      this.drawParticle(g, x, y, p.size, p.color, alpha);
-    }
-
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.orbitingParticles.splice(toRemove[i], 1);
-    }
-  }
-
-  // ─── 根据形状绘制粒子 ───
-  private drawParticle(
-    g: PIXI.Graphics,
-    x: number,
-    y: number,
-    size: number,
-    color: number,
-    alpha: number,
-  ) {
-    switch (this.particleShape) {
-      case "circle":
-        g.circle(x, y, size);
-        g.fill({ color, alpha });
-        break;
-      case "square":
-        g.rect(x - size, y - size, size * 2, size * 2);
-        g.fill({ color, alpha });
-        break;
-      case "note":
-        // 简化音符形状：圆 + 竖线
-        g.circle(x, y, size);
-        g.fill({ color, alpha });
-        g.rect(x + size * 0.8, y - size * 2, 1, size * 2);
-        g.fill({ color, alpha });
-        break;
-      case "star":
-        // 简化星形：用圆代替（性能更好）
-        g.circle(x, y, size);
-        g.fill({ color, alpha });
-        break;
-    }
+  // 计算与块颜色对比度足够的文字颜色（黑或白）
+  private getContrastColor(bgColor: number): number {
+    const r = (bgColor >> 16) & 0xff;
+    const g = (bgColor >> 8) & 0xff;
+    const b = bgColor & 0xff;
+    // 相对亮度（简化）
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? 0x000000 : 0xffffff;
   }
 
   // ─── 清理 ───
   clear() {
+    for (const block of this.blocks) {
+      if (block.nameSprite) {
+        block.nameSprite.destroy();
+      }
+    }
     this.blocks = [];
-    this.trails = [];
-    this.hitParticles = [];
-    this.surfaceParticles = [];
-    this.orbitingParticles = [];
+    this.particleSystem.clear();
+    // 移除并销毁所有子节点（防止历史遗留的 glowG 子节点泄漏）
+    const children = this.graphics.removeChildren();
+    for (const child of children) child.destroy();
     this.graphics.clear();
     this.trailGraphics.clear();
     this.hitLineGraphics.clear();
+    this.nameLayer.removeChildren();
   }
 
   clearBlocksOnly() {
+    for (const block of this.blocks) {
+      if (block.nameSprite) {
+        this.nameLayer.removeChild(block.nameSprite);
+        block.nameSprite.destroy();
+      }
+    }
     this.blocks = [];
     this.graphics.clear();
   }
 
   getBlockCount(): number {
     return this.blocks.length;
+  }
+
+  getActiveBlockCount(): number {
+    return this.blocks.filter(
+      (b) =>
+        b.active ||
+        (this.mode === "synthesia" && b.hasTriggered && !b.hasEnded),
+    ).length;
+  }
+
+  destroy() {
+    this.clear();
+    this.particleSystem.destroy();
+    // 销毁 Graphics 对象本身
+    this.graphics.destroy();
+    this.trailGraphics.destroy();
+    this.hitLineGraphics.destroy();
+    this.nameLayer.destroy({ children: true });
   }
 }

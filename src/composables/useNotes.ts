@@ -1,5 +1,5 @@
 import { Note, Chord, Interval } from "tonal";
-import { ref, shallowRef, readonly, watch } from "vue";
+import { ref, shallowRef, watch } from "vue";
 
 import {
   getMidiChannel,
@@ -299,15 +299,15 @@ export function useNotes({
   useMidiMessage(onMidiMessage, namespace);
 
   return {
-    notes: readonly(notes),
-    pitchClasses: readonly(pitchClasses),
-    midiNotes: readonly(midiNotes),
-    chords: readonly(chords),
-    sustained: readonly(sustained),
-    sustainedMidiNotes: readonly(sustainedMidiNotes),
-    playedMidiNotes: readonly(playedMidiNotes),
-    clickedMidiNotes: readonly(clickedMidiNotes),
-    keySignature: readonly(keySignature),
+    notes,
+    pitchClasses,
+    midiNotes,
+    chords,
+    sustained,
+    sustainedMidiNotes,
+    playedMidiNotes,
+    clickedMidiNotes,
+    keySignature,
     clearNotes,
     clearClickedNotes,
     toggleNote,

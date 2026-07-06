@@ -12,14 +12,21 @@ function win(): ReturnType<typeof getCurrentWindow> {
 }
 
 export function isTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window;
+  const hasWindow = typeof window !== "undefined";
+  // Tauri 2.0 使用 __TAURI_INTERNALS__ 而不是 __TAURI__
+  const hasTauriInternals = hasWindow && "__TAURI_INTERNALS__" in window;
+  const hasTauriGlobal = hasWindow && "__TAURI__" in window;
+  return hasTauriInternals || hasTauriGlobal;
 }
 
 export function getTauriAPI(): NonNullable<Window["tauriAPI"]> {
   if (!isTauri()) {
     throw new Error("Not running in Tauri environment");
   }
-  return window.tauriAPI!;
+  if (!window.tauriAPI) {
+    throw new Error("tauriAPI is not available despite Tauri environment");
+  }
+  return window.tauriAPI;
 }
 
 export function runInTauri<T>(fn: () => T, fallback?: T): T | undefined {
@@ -160,8 +167,25 @@ const tauriAPI = {
   },
 };
 
-if (isTauri()) {
-  window.tauriAPI = tauriAPI;
+let initialized = false;
+
+function ensureInitialized(): void {
+  if (initialized) return;
+  initialized = true;
+
+  if (isTauri() && !window.tauriAPI) {
+    window.tauriAPI = tauriAPI;
+  }
+}
+
+// 在 DOMContentLoaded 后自动初始化，确保 __TAURI_INTERNALS__ 已注入
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ensureInitialized);
+  } else {
+    // DOM 已加载，立即初始化
+    ensureInitialized();
+  }
 }
 
 export default tauriAPI;

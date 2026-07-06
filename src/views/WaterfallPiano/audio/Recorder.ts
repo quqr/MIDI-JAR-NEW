@@ -254,4 +254,13 @@ export class Recorder {
     this.recordedNotes = [];
     this.pendingNotes.clear();
   }
+
+  /** 销毁所有资源并释放引用，应在组件 onUnmounted 中调用 */
+  dispose() {
+    this.stopPlayback();
+    this.callbacks = null;
+    this.recordedNotes = [];
+    this.pendingNotes.clear();
+    this.activeNotes.clear();
+  }
 }

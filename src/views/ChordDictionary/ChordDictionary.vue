@@ -13,25 +13,25 @@
       :key-signature="keySignature"
       :selected-chroma="chroma"
       :filter-chords-in-key="settingsStore.settings.chordDictionary.filterInKey"
-      @toggle-drawer="drawerOpen = !drawerOpen"
+      @toggle-drawer="toggleSidebar"
       @select-chroma="handleChromaChange"
     />
 
-    <div class="flex flex-col flex-1 min-h-0 overflow-hidden relative">
-      <!-- Mobile drawer overlay -->
+    <div class="flex flex-1 min-h-0 overflow-hidden relative">
+      <!-- Mobile/Tablet drawer overlay -->
       <Transition name="drawer-overlay">
         <div
           v-if="drawerOpen"
-          class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          class="fixed inset-0 bg-black/40 z-30 xl:hidden"
           @click="drawerOpen = false"
         ></div>
       </Transition>
 
-      <!-- Mobile drawer: chord type list only (chroma is in toolbar) -->
+      <!-- Mobile/Tablet drawer: chord type list -->
       <Transition name="drawer-slide">
         <div
           v-if="drawerOpen"
-          class="fixed top-0 left-0 bottom-0 z-40 w-72 bg-base-100 shadow-xl flex flex-col overflow-hidden lg:hidden"
+          class="fixed top-0 left-0 bottom-0 z-40 w-72 bg-base-100 shadow-xl flex flex-col overflow-hidden xl:hidden"
         >
           <div
             class="flex items-center justify-between px-3 py-2 border-b border-base-200 flex-shrink-0"
@@ -41,9 +41,10 @@
             </span>
             <button
               class="btn btn-sm btn-ghost btn-square"
+              :aria-label="t('common.close')"
               @click="drawerOpen = false"
             >
-              <Icon name="x" :size="16" />
+              <Icon name="x" :size="16" aria-hidden="true" />
             </button>
           </div>
           <div class="flex-1 min-h-0 overflow-y-auto">
@@ -55,10 +56,29 @@
         </div>
       </Transition>
 
-      <!-- Desktop: CSS Grid two-column layout -->
+      <!-- Tablet (sm-xl): collapsible sidebar -->
+      <AnimatePresence>
+        <motion.aside
+          v-if="sidebarVisible"
+          :initial="{ width: 0, opacity: 0 }"
+          :animate="{ width: 240, opacity: 1 }"
+          :exit="{ width: 0, opacity: 0 }"
+          :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
+          class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-200 bg-base-100/50"
+        >
+          <div class="w-[240px] min-h-0 overflow-y-auto">
+            <ChordDictionaryChordMenu
+              v-bind="chordMenuProps"
+              @select="handleChordTypeChange"
+            />
+          </div>
+        </motion.aside>
+      </AnimatePresence>
+
+      <!-- Desktop (xl+): fixed two-column layout -->
       <div
-        class="hidden lg:grid flex-1 min-h-0"
-        style="grid-template-columns: minmax(120px, 240px) 3fr"
+        class="hidden xl:grid flex-1 min-h-0"
+        style="grid-template-columns: minmax(180px, 240px) 3fr"
       >
         <!-- Left: Chord type list -->
         <div class="min-h-0 overflow-y-auto border-r border-base-200">
@@ -74,8 +94,8 @@
         </div>
       </div>
 
-      <!-- Mobile: single column, detail only -->
-      <div class="lg:hidden flex-1 min-h-0 overflow-y-auto">
+      <!-- Tablet/Mobile: detail only -->
+      <div class="xl:hidden flex-1 min-h-0 overflow-y-auto">
         <RouterView />
       </div>
     </div>
@@ -83,10 +103,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, watchEffect } from "vue";
+import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Chord, Note } from "tonal";
+import { motion } from "motion-v";
+import { AnimatePresence } from "motion-v";
 
 import { useSettingsStore } from "@/stores/settings";
 import useNotes from "@/composables/useNotes";
@@ -136,6 +158,26 @@ const pitchClassesArray = computed(() => pitchClasses.value.slice());
 const chroma = ref<number | null>(null);
 const chordType = ref<string | null>(null);
 const drawerOpen = ref(false);
+const sidebarVisible = ref(false);
+const isTablet = ref(false);
+
+let tabletMql: MediaQueryList | null = null;
+
+const handleTabletChange = (e: MediaQueryListEvent | MediaQueryList) => {
+  isTablet.value = e.matches;
+  // 平板端默认显示侧边栏
+  sidebarVisible.value = e.matches;
+  // 平板端关闭抽屉
+  if (e.matches) drawerOpen.value = false;
+};
+
+function toggleSidebar() {
+  if (isTablet.value) {
+    sidebarVisible.value = !sidebarVisible.value;
+  } else {
+    drawerOpen.value = !drawerOpen.value;
+  }
+}
 
 const chordMenuProps = computed(() => ({
   keySignature: keySignature.value,
@@ -198,6 +240,17 @@ watch(chordName, (newName) => {
     chroma.value = Note.chroma(chord.tonic) ?? null;
     chordType.value = chord.aliases[0];
   }
+});
+
+onMounted(() => {
+  // sm-xl 为平板范围
+  tabletMql = window.matchMedia("(min-width: 640px) and (max-width: 1279px)");
+  handleTabletChange(tabletMql);
+  tabletMql.addEventListener("change", handleTabletChange);
+});
+
+onUnmounted(() => {
+  tabletMql?.removeEventListener("change", handleTabletChange);
 });
 </script>
 

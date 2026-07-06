@@ -4,6 +4,7 @@ import type {
   NotationLayoutConfig,
   NotationStyleConfig,
 } from "@/components/Notation/types";
+import { getCurrentLocale } from "@/utils/utils";
 
 export type { MidiRoute } from "./midi";
 export interface MessageEventData {
@@ -71,13 +72,6 @@ export type ApiMidiRoute = {
 export type ApiMidiWire = {
   route: ApiMidiRoute;
   connected: boolean;
-};
-
-export type ServerState = {
-  started: boolean;
-  port: number | null;
-  error: string | null;
-  addresses: string[];
 };
 
 export type WindowState = {
@@ -154,11 +148,6 @@ export type NotationSettings = {
   style: Partial<NotationStyleConfig>;
 };
 
-export type ServerSettings = {
-  enabled: boolean;
-  port: number;
-};
-
 export type CursorSettings = {
   enabled: boolean;
   innerSize: number;
@@ -175,9 +164,7 @@ export type CursorSettings = {
 };
 
 export type GeneralSettings = {
-  launchAtStartup: boolean;
-  startMinimized: boolean;
-  language: "en" | "zh-CN";
+  language: "en" | "zh";
 };
 
 export type Settings = {
@@ -187,7 +174,6 @@ export type Settings = {
   chordDisplay: ChordDisplaySettings[];
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
-  server: ServerSettings;
 };
 
 /**
@@ -255,11 +241,6 @@ export const defaultNotationSettings: NotationSettings = {
   style: {},
 };
 
-export const defaultServerSettings: ServerSettings = {
-  enabled: true,
-  port: 25011,
-};
-
 export const defaultCursorSettings: CursorSettings = {
   enabled: true,
   innerSize: 12,
@@ -276,9 +257,7 @@ export const defaultCursorSettings: CursorSettings = {
 };
 
 export const defaultGeneralSettings: GeneralSettings = {
-  launchAtStartup: false,
-  startMinimized: false,
-  language: "en",
+  language: getCurrentLocale() as "en" | "zh",
 };
 
 export const defaultSettings: Settings = {
@@ -288,7 +267,6 @@ export const defaultSettings: Settings = {
   chordDisplay: [defaultChordDisplaySettings],
   chordDictionary: defaultChordDictionarySettings,
   notation: defaultNotationSettings,
-  server: defaultServerSettings,
 };
 
 export const defaultWindowState: WindowState = {

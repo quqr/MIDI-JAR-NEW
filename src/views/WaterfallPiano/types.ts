@@ -10,13 +10,14 @@ export type ParticleShape = "circle" | "square" | "note" | "star";
 
 // ─── 背景类型 ───
 export type BackgroundType =
-  "solid" | "gradient" | "preset" | "image" | "stars";
+  "solid" | "gradient" | "preset" | "image" | "stars" | "fluid";
 
 // ─── 图片适配方式 ───
 export type ImageFitMode = "cover" | "stretch" | "center" | "tile";
 
 // ─── 纹理预设 ───
-export type TexturePreset = "none" | "noise" | "stripes" | "dots" | "glow" | "metallic";
+export type TexturePreset =
+  "none" | "noise" | "stripes" | "dots" | "glow" | "metallic";
 
 // ─── 渐变方向 ───
 export type GradientDirection =
@@ -25,6 +26,21 @@ export type GradientDirection =
 // ─── 预设主题 ───
 export type PresetTheme =
   "night-sky" | "ocean" | "sunset" | "aurora" | "forest";
+
+// ─── Synthesia 流动方向 ───
+export type FlowDirection = "up" | "down";
+
+// ─── 主题预设标识 ───
+export type VisualThemeId =
+  | "classic-glow"
+  | "neon-particles"
+  | "minimal-tutor"
+  | "starlight-magic"
+  | "retro-crt";
+
+// ─── 粒子效果预设标识 ───
+export type ParticlePresetId =
+  "classic" | "neon" | "minimal" | "starlight" | "retro-crt";
 
 // ─── 音色预设 ───
 export type AudioPreset =
@@ -50,15 +66,32 @@ export type ContentType = "none" | "recording" | "midi";
 // ─── 命中线样式 ───
 export type HitLineStyle = "solid" | "dashed" | "dotted";
 
+// ─── 多色渐变停靠点 ───
+export interface GradientStop {
+  position: number; // 0-1
+  color: string; // hex
+}
+
+// ─── 风格参数（主题系统的第二层级） ───
+export interface StyleParameters {
+  ambianceIntensity: number; // 氛围强度 0-1，影响粒子密度、发光强度、背景动态速度
+  particleDensity: number; // 粒子浓度 0-1
+  burstForce: number; // 爆发力度 0-1，影响命中爆炸
+  floatSense: number; // 漂浮感 0-1，影响粒子漂浮速度
+  glowIntensity: number; // 光芒强度 0-1
+  colorTemperature: number; // 颜色温度 0-1，0=冷 1=暖
+}
+
 // ─── 瀑布流视觉配置 ───
 export interface HitLineConfig {
   color: string;
   glow: boolean;
-  thickness: number; // 线条粗细（像素）
-  glowRadius: number; // 发光扩散范围
-  glowIntensity: number; // 发光强度 0-1
-  style: HitLineStyle; // 线条样式
-  visible: boolean; // 是否显示
+  thickness: number;
+  glowRadius: number;
+  glowIntensity: number;
+  style: HitLineStyle;
+  visible: boolean;
+  shaderGlow: boolean; // 使用 shader 实现泛光（替代多层矩形）
 }
 
 export interface NoteBlockConfig {
@@ -68,29 +101,38 @@ export interface NoteBlockConfig {
   gradientEnabled: boolean;
   gradientTopColor: string;
   gradientBottomColor: string;
+  gradientMidColor: string; // 新增：中间色，用于多层渐变
   highlightEnabled: boolean;
   highlightOpacity: number;
-  fadeIn: boolean; // 淡入动画
-  fadeOut: boolean; // 淡出动画
+  fadeIn: boolean;
+  fadeOut: boolean;
+  multiLayerGradient: boolean; // 多层渐变（高光 → 主色 → 暗部）
+  activeGlow: boolean; // 活跃音符柔和边缘发光
+  activeGlowRadius: number;
+  shadowEnabled: boolean; // 微妙阴影
 }
 
 export interface TrailParticleConfig {
   size: number;
-  colorDecay: number; // 颜色衰减速度 0-1
-  spreadAngle: number; // 扩散角度 0-180
-  lifetime: number; // 生命周期（帧数）
+  colorDecay: number;
+  spreadAngle: number;
+  lifetime: number;
+  glowTexture: boolean; // 使用预渲染发光纹理
+  turbulence: number; // 湍流强度 0-1
 }
 
 export interface HitParticleConfig {
   count: number;
   speed: number;
-  lifetime: number; // 生命周期（帧数）
+  lifetime: number;
+  glowTexture: boolean;
+  turbulence: number;
 }
 
 export interface ParticlePhysicsConfig {
-  gravity: number; // 重力加速度
-  windX: number; // X 方向风力
-  windY: number; // Y 方向风力
+  gravity: number;
+  windX: number;
+  windY: number;
 }
 
 export interface ParticleConfig {
@@ -98,8 +140,8 @@ export interface ParticleConfig {
   shape: ParticleShape;
   colorScheme: ColorScheme;
   customColors: { low: string; mid: string; high: string };
-  speed: number; // 实时模式的上升速度
-  lookAhead: number; // MIDI 模式的提前显示时间（秒）
+  speed: number;
+  lookAhead: number;
   size: number;
   opacity: number;
   density: number;
@@ -110,6 +152,8 @@ export interface ParticleConfig {
   trailParticle: TrailParticleConfig;
   hitParticle: HitParticleConfig;
   physics: ParticlePhysicsConfig;
+  particlePreset: ParticlePresetId; // 粒子效果预设
+  lifecycleCurve: boolean; // 生命周期曲线（Particular 风格）
 }
 
 // ─── 背景配置 ───
@@ -119,48 +163,64 @@ export interface BackgroundConfig {
   gradientDirection: GradientDirection;
   gradientStart: string;
   gradientEnd: string;
+  gradientStops: GradientStop[]; // 多色渐变停靠点
   presetTheme: PresetTheme;
   imageFile: string;
   imageBlur: number;
   imageDarken: number;
   imageFitMode: ImageFitMode;
+  starfieldEnabled: boolean; // 粒子星空
+  starfieldDensity: number; // 0-1
+  fluidEnabled: boolean; // 流体模拟
+  fluidResolution: number; // 流体模拟分辨率比例 0.25-1
+  flowAnimation: boolean; // 渐变流动动画
+  flowSpeed: number; // 流动速度倍率
 }
 
 // ─── 后处理配置 ───
 export interface PostProcessingConfig {
   bloom: {
     enabled: boolean;
-    intensity: number; // 0-1
-    threshold: number; // 0-1, 亮度阈值
-    radius: number; // 模糊半径
+    intensity: number;
+    threshold: number;
+    radius: number;
+    multiPass: boolean; // 多 pass 下采样/上采样
   };
   motionBlur: {
     enabled: boolean;
-    strength: number; // 0-1
+    strength: number;
+    layerOnly: boolean; // 仅作用于音符块层
   };
   chromaticAberration: {
     enabled: boolean;
-    intensity: number; // 0-1
+    intensity: number;
   };
   vignette: {
     enabled: boolean;
-    intensity: number; // 0-1
-    radius: number; // 0-1, 暗角范围
+    intensity: number;
+    radius: number;
+  };
+  hitLineGlow: {
+    enabled: boolean; // 命中线 shader 泛光
+    intensity: number;
+    radius: number;
   };
 }
 
 // ─── 音符块纹理配置 ───
 export interface NoteTextureConfig {
   preset: TexturePreset;
-  scale: number; // 纹理缩放
-  intensity: number; // 0-1, 纹理可见度
+  scale: number;
+  intensity: number;
+  customImage: string; // 自定义纹理图片（dataURL）
+  customImageIntensity: number;
 }
 
 // ─── 音符块粒子配置（增强版）───
 export interface NoteBlockParticleConfig {
   surfaceEmission: {
     enabled: boolean;
-    rate: number; // 每帧粒子数
+    rate: number;
     speed: number;
     lifetime: number;
   };
@@ -188,13 +248,16 @@ export interface KeyboardConfig {
   whiteKeyColor: string;
   blackKeyColor: string;
   pressedKeyColor: string;
-  heightRatio: number; // 键盘占屏幕高度的比例 0.1-0.5
-  keyCornerRadius: number; // 按键圆角
-  keyBorderWidth: number; // 按键边框粗细
-  keyBorderColor: string; // 按键边框颜色
-  separatorEnabled: boolean; // 键盘分隔线
+  heightRatio: number;
+  keyCornerRadius: number;
+  keyBorderWidth: number;
+  keyBorderColor: string;
+  separatorEnabled: boolean;
   separatorColor: string;
   separatorThickness: number;
+  staffVisible: boolean; // 五线谱指示器
+  synthesiaFlowDirection: FlowDirection; // Synthesia 流动方向
+  showNoteNames: boolean; // 音符块音名标签
 }
 
 // ─── 音频配置 ───
@@ -216,6 +279,20 @@ export interface MidiFileConfig {
   showNoteNames: boolean;
 }
 
+// ─── 性能配置 ───
+export interface PerformanceConfig {
+  particleHardLimit: number; // 粒子数量硬上限（默认 500，最大 2000）
+  autoDegrade: boolean; // 自动降级
+  minFps: number; // 触发降级的帧率阈值
+  targetFps: number; // 目标帧率
+}
+
+// ─── 主题配置（第三层级） ───
+export interface ThemeConfig {
+  current: VisualThemeId; // 当前主题
+  styleParameters: StyleParameters; // 风格参数
+}
+
 // ─── 瀑布流钢琴总配置 ───
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
@@ -226,14 +303,16 @@ export interface WaterfallPianoSettings {
   postProcessing: PostProcessingConfig;
   noteTexture: NoteTextureConfig;
   noteBlockParticles: NoteBlockParticleConfig;
+  performance: PerformanceConfig;
+  theme: ThemeConfig;
 }
 
 // ─── 录制的音符 ───
 export interface RecordedNote {
   midi: number;
   velocity: number;
-  time: number; // ms from recording start
-  duration: number; // ms
+  time: number;
+  duration: number;
   hand?: "left" | "right";
 }
 
@@ -249,8 +328,20 @@ export interface MidiTrackInfo {
 export interface ScheduledNote {
   midi: number;
   velocity: number;
-  time: number; // 秒，音符开始时间
-  duration: number; // 秒
+  time: number;
+  duration: number;
   hand: "left" | "right" | "unknown";
   trackIndex: number;
+}
+
+// ─── 主题预设（用于导入导出） ───
+export interface ThemePreset {
+  id: VisualThemeId;
+  name: string;
+  particles: ParticleConfig;
+  background: BackgroundConfig;
+  postProcessing: PostProcessingConfig;
+  noteTexture: NoteTextureConfig;
+  noteBlockParticles: NoteBlockParticleConfig;
+  styleParameters: StyleParameters;
 }

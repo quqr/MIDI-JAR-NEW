@@ -15,6 +15,14 @@ class Logger {
   private isIntercepting = false;
   private maxLogs = 500;
 
+  // 保存原始 console 方法引用，避免 interceptConsole 后 addLog 调用 console.log 形成无限递归
+  private originalLog: typeof console.log = console.log;
+  private originalWarn: typeof console.warn = console.warn;
+  private originalError: typeof console.error = console.error;
+  private originalInfo: typeof console.info = console.info;
+  // 防递归守卫：interceptConsole 拦截到的日志在 addLog 内部不应再次触发拦截
+  private isAddingFromInterceptor = false;
+
   private formatTimestamp(): string {
     const now = new Date();
     return now.toLocaleTimeString("zh-CN", {
@@ -26,14 +34,32 @@ class Logger {
   }
 
   private addLog(type: LogType, message: string): void {
-    this.logs.value.push({
+    const logEntry: LogEntry = {
       id: this.nextId++,
       timestamp: this.formatTimestamp(),
       type,
       message,
-    });
+    };
     if (this.logs.value.length > this.maxLogs) {
       this.logs.value.splice(0, this.logs.value.length - this.maxLogs);
+    }
+    this.logs.value.push(logEntry);
+
+    // 使用原始 console 方法输出，避免与 interceptConsole 形成无限递归
+    if (!this.isAddingFromInterceptor) {
+      switch (type) {
+        case "warn":
+          this.originalWarn(logEntry);
+          break;
+        case "error":
+          this.originalError(logEntry);
+          break;
+        case "success":
+          this.originalLog(logEntry);
+          break;
+        default:
+          this.originalInfo(logEntry);
+      }
     }
   }
 
@@ -76,31 +102,38 @@ class Logger {
     if (this.isIntercepting) return;
     this.isIntercepting = true;
 
-    const originalConsole = {
-      log: console.log,
-      warn: console.warn,
-      error: console.error,
-      info: console.info,
-    };
+    // 保存原始方法到实例属性，addLog 中使用这些引用避免递归
+    this.originalLog = console.log;
+    this.originalWarn = console.warn;
+    this.originalError = console.error;
+    this.originalInfo = console.info;
 
     console.log = (...args: any[]) => {
-      originalConsole.log.apply(console, args);
+      this.originalLog.apply(console, args);
+      this.isAddingFromInterceptor = true;
       this.addLog("info", args.map(this.formatArg).join(" "));
+      this.isAddingFromInterceptor = false;
     };
 
     console.warn = (...args: any[]) => {
-      originalConsole.warn.apply(console, args);
+      this.originalWarn.apply(console, args);
+      this.isAddingFromInterceptor = true;
       this.addLog("warn", args.map(this.formatArg).join(" "));
+      this.isAddingFromInterceptor = false;
     };
 
     console.error = (...args: any[]) => {
-      originalConsole.error.apply(console, args);
+      this.originalError.apply(console, args);
+      this.isAddingFromInterceptor = true;
       this.addLog("error", args.map(this.formatArg).join(" "));
+      this.isAddingFromInterceptor = false;
     };
 
     console.info = (...args: any[]) => {
-      originalConsole.info.apply(console, args);
+      this.originalInfo.apply(console, args);
+      this.isAddingFromInterceptor = true;
       this.addLog("info", args.map(this.formatArg).join(" "));
+      this.isAddingFromInterceptor = false;
     };
   }
 

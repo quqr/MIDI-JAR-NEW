@@ -57,4 +57,12 @@ export type IconName =
   | "midi-error"
   | "pads"
   | "exclamation"
-  | "cursor";
+  | "cursor"
+  | "check-circle"
+  | "eye"
+  | "lock"
+  | "unlock"
+  | "grid"
+  | "git-branch"
+  | "alert-circle"
+  | "play";

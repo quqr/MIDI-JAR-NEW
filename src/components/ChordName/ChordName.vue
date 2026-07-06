@@ -30,7 +30,7 @@
       class="text-xs"
       style="line-height: 1.5em; opacity: 0.5; margin-left: 0.25em"
     >
-      /{{ latinSharpsFlats ? chord!.root : formatSharpsFlats(chord!.root) }}
+      /{{ latinSharpsFlats ? chord.root : formatSharpsFlats(chord.root) }}
     </span>
   </div>
 </template>

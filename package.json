@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:pre",
-    "build:pre": "npm run format:fix && vue-tsc --noEmit && vite build",
+    "build:pre": "npm run format:fix && node --max-old-space-size=8192 ./node_modules/vue-tsc/bin/vue-tsc.js --noEmit && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
@@ -18,6 +18,9 @@
     "format:fix": "prettier . --write",
     "setup-hooks": "bash setup-hooks.sh",
     "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "generate-licenses": "node scripts/generate-licenses.js"
   },
   "keywords": [
@@ -45,6 +48,7 @@
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",
     "@vue-flow/minimap": "^1.5.4",
+    "motion-v": "^2.3.0",
     "normalize.css": "8.0.1",
     "pinia": "3.0.4",
     "pixi.js": "^8.19.0",

@@ -90,7 +90,7 @@ const { fitView, getViewport, setViewport } = useVueFlow();
 const { layout } = useLayout();
 const { onNodeDrag } = useHelperLines();
 
-const flowNodes = ref<Node[]>([]);
+const flowNodes = ref<any[]>([]);
 const flowEdges = shallowRef<Edge[]>([]);
 
 function addFlowEdge(edge: Edge) {
@@ -115,7 +115,7 @@ function persistViewport() {
 
 function handleAutoLayout() {
   const laidOutNodes = layout(computedNodes.value, computedEdges.value, "LR");
-  flowNodes.value = laidOutNodes;
+  flowNodes.value = laidOutNodes as Node[];
   for (const node of laidOutNodes) {
     routingStore.setNodePosition(node.id, { ...node.position });
   }
@@ -219,7 +219,7 @@ watch(
 
 onMounted(() => {
   const hasSavedPositions = Object.keys(routingStore.nodePositions).length > 0;
-  flowNodes.value = computedNodes.value;
+  flowNodes.value = computedNodes.value as Node[];
   flowEdges.value = computedEdges.value;
   nextTick(() => {
     if (flowNodes.value.length > 0) {

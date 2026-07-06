@@ -53,7 +53,7 @@ export default [
       ...tseslint.configs.recommended.rules,
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn", // 改为 warn，逐步清理 any 类型
     },
   },
 
@@ -84,7 +84,7 @@ export default [
       "vue/multi-word-component-names": "off",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn", // 改为 warn，逐步清理 any 类型
     },
   },
 ];

@@ -1,63 +1,6 @@
-export type IconName =
-  | "home"
-  | "music"
-  | "menu"
-  | "settings"
-  | "chevron-down"
-  | "chevron-up"
-  | "trash"
-  | "clock"
-  | "piano"
-  | "help-circle"
-  | "circle"
-  | "book"
-  | "swap"
-  | "bug"
-  | "cog"
-  | "layers"
-  | "midi"
-  | "power"
-  | "refresh"
-  | "overlay"
-  | "arrow-left"
-  | "arrow-right"
-  | "star"
-  | "heart"
-  | "info"
-  | "warning"
-  | "error"
-  | "check"
-  | "x"
-  | "plus"
-  | "minus"
-  | "search"
-  | "save"
-  | "controller"
-  | "server"
-  | "github"
-  | "copyright"
-  | "routing"
-  | "dictionary"
-  | "circle-of-fifths"
-  | "quiz"
-  | "window"
-  | "maximize"
-  | "minimize"
-  | "unmaximize"
-  | "loading"
-  | "pin"
-  | "unpin"
-  | "visible"
-  | "hidden"
-  | "reset"
-  | "angle-up"
-  | "angle-down"
-  | "angle-left"
-  | "angle-right"
-  | "midi-error"
-  | "pads"
-  | "exclamation"
-  | "cursor";
+import type { IconName } from "@/components/Icon/types";
+
+export type { IconName };
 
 export interface NavItem {
   icon: IconName;
@@ -65,31 +8,67 @@ export interface NavItem {
   labelKey: string;
 }
 
-export const navItems: NavItem[] = [
-  { icon: "window", to: "/settings/general", labelKey: "settings.general" },
-  { icon: "cursor", to: "/settings/cursor", labelKey: "settings.cursor" },
-  { icon: "routing", to: "/settings/routing", labelKey: "settings.routing" },
+export type SettingsGroup = "general" | "display" | "advanced";
+
+export interface GroupedNavItem extends NavItem {
+  group: SettingsGroup;
+}
+
+export const groupLabels: Record<SettingsGroup, string> = {
+  general: "settings.groups.general",
+  display: "settings.groups.display",
+  advanced: "settings.groups.advanced",
+};
+
+export const navItems: GroupedNavItem[] = [
+  {
+    icon: "window",
+    to: "/settings/general",
+    labelKey: "settings.general",
+    group: "general",
+  },
+  {
+    icon: "routing",
+    to: "/settings/routing",
+    labelKey: "settings.routing",
+    group: "general",
+  },
+  {
+    icon: "cursor",
+    to: "/settings/cursor",
+    labelKey: "settings.cursor",
+    group: "display",
+  },
   {
     icon: "music",
     to: "/settings/notation",
     labelKey: "settings.musicNotation",
+    group: "display",
   },
   {
     icon: "dictionary",
     to: "/settings/chord-dictionary",
     labelKey: "settings.chordDictionary",
+    group: "display",
   },
-  { icon: "piano", to: "/settings/chords", labelKey: "settings.chordDisplay" },
+  {
+    icon: "piano",
+    to: "/settings/chords",
+    labelKey: "settings.chordDisplay",
+    group: "display",
+  },
   {
     icon: "piano",
     to: "/settings/waterfall-piano",
     labelKey: "settings.waterfallPiano",
+    group: "display",
   },
-  { icon: "bug", to: "/settings/debug", labelKey: "settings.debugger" },
-  // {
-  //   icon: "copyright",
-  //   to: "/settings/licenses",
-  //   labelKey: "settings.licenses.title",
-  // },
-  { icon: "info", to: "/settings/about", labelKey: "settings.about" },
+  {
+    icon: "bug",
+    to: "/settings/debug",
+    labelKey: "settings.debugger",
+    group: "advanced",
+  },
 ];
+
+export const groupOrder: SettingsGroup[] = ["general", "display", "advanced"];

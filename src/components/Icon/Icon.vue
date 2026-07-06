@@ -16,69 +16,9 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import type { IconName } from "./types";
 
-export type IconName =
-  | "home"
-  | "music"
-  | "menu"
-  | "settings"
-  | "chevron-down"
-  | "chevron-up"
-  | "trash"
-  | "clock"
-  | "piano"
-  | "help-circle"
-  | "circle"
-  | "book"
-  | "swap"
-  | "bug"
-  | "cog"
-  | "layers"
-  | "midi"
-  | "power"
-  | "refresh"
-  | "overlay"
-  | "arrow-left"
-  | "arrow-right"
-  | "star"
-  | "heart"
-  | "info"
-  | "warning"
-  | "error"
-  | "check"
-  | "x"
-  | "plus"
-  | "minus"
-  | "search"
-  | "save"
-  | "controller"
-  | "server"
-  | "github"
-  | "copyright"
-  | "routing"
-  | "dictionary"
-  | "window"
-  | "maximize"
-  | "minimize"
-  | "unmaximize"
-  | "loading"
-  | "pin"
-  | "unpin"
-  | "visible"
-  | "hidden"
-  | "reset"
-  | "angle-up"
-  | "angle-down"
-  | "angle-left"
-  | "angle-right"
-  | "midi-error"
-  | "pads"
-  | "exclamation"
-  | "cursor"
-  | "check-circle"
-  | "eye"
-  | "lock"
-  | "unlock";
+export type { IconName };
 
 const props = withDefaults(
   defineProps<{
@@ -154,6 +94,9 @@ const iconPath = computed((): string => {
     routing: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
     dictionary:
       "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 4 17V5a2 2 0 0 1 2-2h14v14H6.5A2.5 2.5 0 0 0 4 19.5zM8 7h8M8 11h6",
+    "circle-of-fifths":
+      "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10zM12 6l2.5 4.5L12 12l-2.5-1.5L12 6zM12 12l2.5 1.5L12 18l-2.5-4.5L12 12z",
+    quiz: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10zM9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01",
     window: "M3 3h18v18H3zM3 9h18M9 21V9",
     maximize:
       "M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3",
@@ -184,6 +127,12 @@ const iconPath = computed((): string => {
     lock: "M16 8h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V6a4 4 0 0 1 8 0v2zm-4 6v2",
     unlock:
       "M8 11V7a4 4 0 1 1 8 0M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z",
+    grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
+    "git-branch":
+      "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM15 6a9 9 0 0 0-9 9",
+    "alert-circle":
+      "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10zM12 8v4M12 16h.01",
+    play: "M5 3l14 9-14 9V3z",
   };
   return paths[props.name] || paths.home;
 });

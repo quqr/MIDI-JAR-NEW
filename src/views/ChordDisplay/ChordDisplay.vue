@@ -9,7 +9,7 @@
           <Notation
             id="notation"
             class="items-center justify-center"
-            :midiNotes="midiNotes as number[]"
+            :midiNotes="midiNotes"
             :keySignature="keySignature"
             :staffClef="staffClef"
             :staffTranspose="staffTranspose"
@@ -28,7 +28,7 @@
             class="w-full flex items-center justify-center text-3xl md:text-5xl font-bold group relative"
           >
             <ChordNameLink
-              :chord="chords[0] as any"
+              :chord="chords[0]"
               class="items-center justify-center"
               :notation="chordNotation"
               :highlightAlterations="highlightAlterations"
@@ -47,8 +47,8 @@
             class="w-full flex items-center justify-center group relative"
           >
             <ChordIntervals
-              :intervals="chords[0]?.intervals as unknown as string[]"
-              :pitchClasses="pitchClasses as unknown as string[]"
+              :intervals="chords[0]?.intervals ?? []"
+              :pitchClasses="pitchClasses"
               :tonic="chords[0]?.tonic"
             />
           </div>
@@ -67,7 +67,7 @@
           <template v-for="(chord, index) in chords" :key="index">
             <span v-if="index > 0" class="inline-flex">
               <ChordNameLink
-                :chord="chord as any"
+                :chord="chord"
                 class="items-center justify-center text-lg"
                 :notation="chordNotation"
                 :highlightAlterations="highlightAlterations"
@@ -85,11 +85,11 @@
       <PianoKeyboard
         id="keyboard"
         class="w-full h-full"
-        :sustained="sustainedMidiNotes as unknown as number[]"
-        :played="combinedPlayedMidi as unknown as number[]"
-        :midi="midiNotes as unknown as number[]"
-        :chord="chords[0] as any"
-        :keySignature="keySignature as unknown as KeySignatureConfig"
+        :sustained="sustainedMidiNotes"
+        :played="combinedPlayedMidi"
+        :midi="midiNotes"
+        :chord="chords[0] ?? undefined"
+        :keySignature="keySignature"
         :keyboard="keyboard"
         :clickable="true"
         @note-click="onNoteClick"
@@ -120,7 +120,6 @@ import {
 } from "@/components/Notation/utils";
 import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
 import type { StaffClef } from "@/components/Notation/types";
-import type { KeySignatureConfig } from "@/helpers";
 
 const { t } = useI18n();
 const settingsOpen = ref(false);

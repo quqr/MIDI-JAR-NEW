@@ -14,6 +14,15 @@ export function useMidiLatency(filterDevice = "*") {
     highestLatency.value = 0;
   };
 
+  // onUnmounted 必须在 setup 期间同步注册，不能放在 async onMounted 回调的 await 之后
+  onUnmounted(() => {
+    if (cleanup) cleanup();
+    if (timeout.value) {
+      clearTimeout(timeout.value);
+      timeout.value = null;
+    }
+  });
+
   onMounted(async () => {
     if (window.tauriAPI?.midi) {
       cleanup = await window.tauriAPI.midi.onLatency((latency, device) => {
@@ -41,14 +50,6 @@ export function useMidiLatency(filterDevice = "*") {
         }
       });
     }
-
-    onUnmounted(() => {
-      if (cleanup) cleanup();
-      if (timeout.value) {
-        clearTimeout(timeout.value);
-        timeout.value = null;
-      }
-    });
   });
 
   return { currentLatency, highestLatency, resetHighest };

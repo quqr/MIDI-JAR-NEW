@@ -17,7 +17,12 @@ function loadSettings(): Settings {
     defaultValue: {},
   });
   if (Object.keys(stored).length > 0) {
-    return mergeDeep(defaultSettings, stored) as Settings;
+    const merged = mergeDeep(defaultSettings, stored) as Settings;
+    // 迁移：将旧的 "zh-CN" 语言值统一为 "zh"
+    if (merged.general?.language === "zh-CN" as unknown) {
+      merged.general.language = "zh";
+    }
+    return merged;
   }
   return { ...defaultSettings };
 }
@@ -31,6 +36,8 @@ export const useSettingsStore = defineStore("settings", () => {
   const inited = ref(false);
 
   function updateSetting(key: string, value: unknown): Promise<void> {
+    // setValueByPath 接受动态的 "." 分隔路径（如 "notation.staffClef"），
+    // 需要转成 Record<string, unknown> 运行时访问。这是已知的类型擦除场景。
     setValueByPath(
       settings.value as unknown as Record<string, unknown>,
       key,
@@ -79,7 +86,10 @@ export const useSettingsStore = defineStore("settings", () => {
   }
   inited.value = true;
 
-  const debouncedSaveSettings = debounce(saveSettings, 300);
+  const debouncedSaveSettings = debounce(
+    saveSettings as (...args: unknown[]) => unknown,
+    300,
+  );
 
   watch(
     settings,

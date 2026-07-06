@@ -113,7 +113,7 @@ export const highlightInfo = (
           elements[i].classList.add("info");
           const intervalEl = elements[i].querySelector(".pianoInfo");
           if (intervalEl) {
-            intervalEl.innerHTML = interval;
+            intervalEl.textContent = interval;
           }
         }
       }
@@ -131,7 +131,7 @@ export const fadeInfo = (containerEl: HTMLElement) => {
 
       const intervalEl = elements[i].querySelector(".pianoInfo");
       if (intervalEl) {
-        intervalEl.innerHTML = "";
+        intervalEl.textContent = "";
       }
     }
   }
@@ -148,7 +148,7 @@ const highlightLabel = (
     for (let i = 0; i < elements.length; i += 1) {
       elements[i].classList.add("labelled");
 
-      elements[i].innerHTML = text;
+      elements[i].textContent = text;
     }
   }
 };

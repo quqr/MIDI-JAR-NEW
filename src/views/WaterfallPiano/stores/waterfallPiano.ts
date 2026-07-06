@@ -60,6 +60,18 @@ function loadSettings(): WaterfallPianoSettings {
           ...stored.noteBlockParticles?.orbiting,
         },
       },
+      performance: {
+        ...defaultWaterfallSettings.performance,
+        ...stored.performance,
+      },
+      theme: {
+        current:
+          stored.theme?.current ?? defaultWaterfallSettings.theme.current,
+        styleParameters: {
+          ...defaultWaterfallSettings.theme.styleParameters,
+          ...stored.theme?.styleParameters,
+        },
+      },
     };
   }
   return { ...defaultWaterfallSettings };
@@ -78,9 +90,7 @@ export const useWaterfallPianoStore = defineStore("waterfallPiano", () => {
   }
 
   function resetGroup<K extends keyof WaterfallPianoSettings>(group: K) {
-    (settings.value[group] as Record<string, unknown>) = {
-      ...defaultWaterfallSettings[group],
-    };
+    settings.value[group] = { ...defaultWaterfallSettings[group] };
   }
 
   function updateSetting<K extends keyof WaterfallPianoSettings>(
@@ -88,9 +98,11 @@ export const useWaterfallPianoStore = defineStore("waterfallPiano", () => {
     key: keyof WaterfallPianoSettings[K],
     value: unknown,
   ) {
+    // 表单值（string | number）需要运行时写入，类型擦除不可避免
     (settings.value[section] as Record<string, unknown>)[key as string] = value;
   }
 
+  // debounce 泛型约束为 (...args: unknown[]) => unknown，回调需保持兼容
   const debouncedSave = debounce((...args: unknown[]) => {
     saveToStorage(STORAGE_KEY, args[0] as WaterfallPianoSettings);
   }, 300) as (s: WaterfallPianoSettings) => void;

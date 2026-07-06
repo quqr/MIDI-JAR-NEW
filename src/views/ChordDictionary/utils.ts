@@ -139,7 +139,7 @@ function buildGroupObject(
       (obj as GroupObject & { items?: ChordType[] }).items = ((
         obj as GroupObject & { items?: ChordType[] }
       ).items ?? []) as ChordType[];
-      (obj as GroupObject & { items?: ChordType[] }).items!.push(value);
+      (obj as GroupObject & { items: ChordType[] }).items.push(value);
 
       return obj;
     }

@@ -85,7 +85,8 @@ export class KeyboardRenderer {
   }
 
   draw(width: number, height: number) {
-    this.container.removeChildren();
+    // 销毁旧键的 Graphics，防止每次重绘泄漏 88+ 个对象
+    this.destroyChildren();
     this.whiteKeys.clear();
     this.blackKeys.clear();
     this.pressedKeys.clear();
@@ -108,13 +109,22 @@ export class KeyboardRenderer {
 
       const key = new PIXI.Graphics();
       if (this.config.keyCornerRadius > 0) {
-        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+        key.roundRect(
+          0,
+          0,
+          this.keyWidth - 1,
+          this.keyHeight,
+          this.config.keyCornerRadius,
+        );
       } else {
         key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
       }
       key.fill(this.config.whiteKeyColor);
       if (this.config.keyBorderWidth > 0) {
-        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+        key.stroke({
+          color: this.config.keyBorderColor,
+          width: this.config.keyBorderWidth,
+        });
       } else {
         key.stroke({ color: "#ccc", width: 1 });
       }
@@ -156,7 +166,10 @@ export class KeyboardRenderer {
       key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
       key.fill(this.config.blackKeyColor);
       if (this.config.keyBorderWidth > 0) {
-        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+        key.stroke({
+          color: this.config.keyBorderColor,
+          width: this.config.keyBorderWidth,
+        });
       }
       // 黑键位置：前一个白键的右边缘 - 黑键宽度/2
       key.x = prevWhiteX + this.keyWidth - blackKeyWidth / 2;
@@ -202,7 +215,13 @@ export class KeyboardRenderer {
       key.fill(this.config.pressedKeyColor);
     } else {
       if (this.config.keyCornerRadius > 0) {
-        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+        key.roundRect(
+          0,
+          0,
+          this.keyWidth - 1,
+          this.keyHeight,
+          this.config.keyCornerRadius,
+        );
       } else {
         key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
       }
@@ -227,17 +246,29 @@ export class KeyboardRenderer {
       key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
       key.fill(this.config.blackKeyColor);
       if (this.config.keyBorderWidth > 0) {
-        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+        key.stroke({
+          color: this.config.keyBorderColor,
+          width: this.config.keyBorderWidth,
+        });
       }
     } else {
       if (this.config.keyCornerRadius > 0) {
-        key.roundRect(0, 0, this.keyWidth - 1, this.keyHeight, this.config.keyCornerRadius);
+        key.roundRect(
+          0,
+          0,
+          this.keyWidth - 1,
+          this.keyHeight,
+          this.config.keyCornerRadius,
+        );
       } else {
         key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
       }
       key.fill(this.config.whiteKeyColor);
       if (this.config.keyBorderWidth > 0) {
-        key.stroke({ color: this.config.keyBorderColor, width: this.config.keyBorderWidth });
+        key.stroke({
+          color: this.config.keyBorderColor,
+          width: this.config.keyBorderWidth,
+        });
       } else {
         key.stroke({ color: "#ccc", width: 1 });
       }
@@ -310,6 +341,22 @@ export class KeyboardRenderer {
 
   getKeyWidth(): number {
     return this.keyWidth;
+  }
+
+  /** 销毁容器中所有子节点（Graphics/Text），防止内存泄漏 */
+  private destroyChildren() {
+    const children = this.container.removeChildren();
+    for (const child of children) {
+      child.destroy({ children: true });
+    }
+  }
+
+  /** 销毁所有资源，应在引擎 destroy() 中调用 */
+  destroy() {
+    this.destroyChildren();
+    this.whiteKeys.clear();
+    this.blackKeys.clear();
+    this.pressedKeys.clear();
   }
 }
 

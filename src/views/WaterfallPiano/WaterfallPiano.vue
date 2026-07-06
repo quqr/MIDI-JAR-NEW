@@ -6,6 +6,7 @@
       class="absolute inset-0"
       @note-on="onNoteOn"
       @note-off="onNoteOff"
+      @context-action="onContextAction"
     />
 
     <!-- 音域指示器 -->
@@ -274,6 +275,24 @@ function onNoteOff(midi: number) {
   }
 }
 
+// ─── 右键菜单动作 ───
+function onContextAction(action: "record" | "playback" | "settings" | "reset") {
+  switch (action) {
+    case "record":
+      toggleRecord();
+      break;
+    case "playback":
+      togglePlayback();
+      break;
+    case "settings":
+      settingsOpen.value = true;
+      break;
+    case "reset":
+      stopAll();
+      break;
+  }
+}
+
 // ─── 导入 MIDI ───
 async function importMidi(file: File) {
   try {
@@ -316,7 +335,7 @@ onUnmounted(() => {
   if (typeof window !== "undefined") {
     window.removeEventListener("keydown", handleKeyDown);
   }
-  recorder.stopPlayback();
+  recorder.dispose();
   midiPlayer.dispose();
 });
 </script>

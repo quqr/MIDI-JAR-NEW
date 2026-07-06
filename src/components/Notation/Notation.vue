@@ -114,18 +114,20 @@ function renderNotation() {
 function setupResizeObserver() {
   if (!containerRef.value || resizeObserver) return;
 
+  const handleResize = (entries: ResizeObserverEntry[]) => {
+    const entry = entries[0];
+    if (!entry) return;
+    const newWidth =
+      entry.contentBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+    // Only re-render on width change to break the height→resize→render loop
+    if (Math.abs(newWidth - lastWidth) > 1) {
+      lastWidth = newWidth;
+      renderNotation();
+    }
+  };
+
   resizeObserver = new ResizeObserver(
-    debounce((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const newWidth =
-        entry.contentBoxSize[0]?.inlineSize ?? entry.contentRect.width;
-      // Only re-render on width change to break the height→resize→render loop
-      if (Math.abs(newWidth - lastWidth) > 1) {
-        lastWidth = newWidth;
-        renderNotation();
-      }
-    }, 80),
+    debounce(handleResize as (...args: unknown[]) => unknown, 80),
   );
 
   resizeObserver.observe(containerRef.value);

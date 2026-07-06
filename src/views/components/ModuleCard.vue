@@ -1,55 +1,66 @@
 <template>
-  <RouterLink
-    :to="to"
-    class="module-card-link block h-full rounded-box transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-    role="link"
-    :aria-label="title"
+  <motion.div
+    :initial="{ opacity: 0, y: 12 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
+    :while-hover="{ y: -4 }"
+    :while-press="{ scale: 0.98 }"
+    class="h-full"
   >
-    <div
-      class="card bg-base-100 border border-base-200 h-full group transition-colors hover:border-primary/50 hover:shadow-md"
+    <RouterLink
+      :to="to"
+      class="module-card-link block h-full rounded-box group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      role="link"
+      :aria-label="title"
     >
-      <div class="card-body p-5 gap-4">
-        <div class="flex items-start gap-4 w-full">
-          <div
-            class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
-            aria-hidden="true"
-          >
-            <Icon :name="mapMdiToIcon(icon)" class="w-7 h-7" :size="28" />
-          </div>
-
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="text-lg font-semibold text-base-content truncate">
-                {{ title }}
-              </h3>
-
-              <RouterLink
-                v-if="settingsTo"
-                :to="settingsTo"
-                class="btn btn-ghost btn-xs btn-circle opacity-60 transition-all duration-300 group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0"
-                :aria-label="$t('common.settings')"
-                @click.stop
-              >
-                <Icon name="settings" :size="16" aria-hidden="true" />
-              </RouterLink>
+      <div
+        class="card bg-base-100 border border-base-200 h-full transition-colors duration-300 group-hover:border-primary/50 group-hover:shadow-lg"
+      >
+        <div class="card-body p-5 gap-4">
+          <div class="flex items-start gap-4 w-full">
+            <div
+              class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
+              aria-hidden="true"
+            >
+              <Icon :name="mapMdiToIcon(icon)" class="w-7 h-7" :size="28" />
             </div>
 
-            <p
-              v-if="description"
-              class="mt-2 text-sm text-base-content/70 line-clamp-2 leading-relaxed"
-            >
-              {{ description }}
-            </p>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="text-lg font-semibold text-base-content truncate">
+                  {{ title }}
+                </h3>
+
+                <RouterLink
+                  v-if="settingsTo"
+                  :to="settingsTo"
+                  class="btn btn-ghost btn-xs btn-circle opacity-60 transition-all duration-300 group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0"
+                  :aria-label="$t('common.settings')"
+                  @click.stop
+                >
+                  <Icon name="settings" :size="16" aria-hidden="true" />
+                </RouterLink>
+              </div>
+
+              <p
+                v-if="description"
+                class="mt-2 text-sm text-base-content/70 line-clamp-2 leading-relaxed"
+              >
+                {{ description }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </RouterLink>
+    </RouterLink>
+  </motion.div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
+import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
+import type { IconName } from "@/components/Icon/types";
 
 defineProps<{
   to: string;
@@ -68,7 +79,7 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-bug": "bug",
 };
 
-function mapMdiToIcon(mdiName: string): string {
-  return MDI_TO_ICON[mdiName] || "home";
+function mapMdiToIcon(mdiName: string): IconName {
+  return (MDI_TO_ICON[mdiName] || "home") as IconName;
 }
 </script>

@@ -17,7 +17,10 @@
     "learn": "Learn",
     "decrement": "decrement",
     "increment": "increment",
-    "name": "Name"
+    "name": "Name",
+    "clear": "Clear",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
   },
   "nav": {
     "home": "Home",
@@ -28,8 +31,7 @@
     "chordDictionary": "Chord Dictionary",
     "routing": "Routing",
     "debugger": "Debugger",
-    "waterfallPiano": "Waterfall Piano",
-    "blackhole": "Blackhole"
+    "waterfallPiano": "Waterfall Piano"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -45,8 +47,7 @@
       "waterfallPiano": "Interactive piano with waterfall particle effects",
       "chordDictionary": "Look up chord structures and voicings",
       "routing": "Route MIDI messages between devices",
-      "debugger": "Monitor and debug MIDI messages",
-      "blackhole": "Real-time WebGL black hole gravitational lensing simulation"
+      "debugger": "Monitor and debug MIDI messages"
     }
   },
   "layout": {
@@ -61,9 +62,9 @@
     "maximize": "Maximize",
     "averageRoutingLatency": "average routing latency",
     "highestRoutingLatency": "highest routing latency",
-    "collapseBottomBar": "Collapse bottom bar",
-    "expandBottomBar": "Expand bottom bar",
-    "unpin": "Unpin"
+    "unpin": "Unpin",
+    "latencyTooltip": "MIDI latency: {ms} ms",
+    "latencyAriaLabel": "Current MIDI latency {ms} milliseconds"
   },
   "topBar": {
     "noMidiDevices": "No MIDI devices detected",
@@ -163,10 +164,6 @@
     "chordDictionary": "Chord Dictionary",
     "chordDisplay": "Chord Display",
     "debugger": "Debugger",
-    "licenses": {
-      "title": "Licenses"
-    },
-    "about": "About",
     "cursor": "Cursor",
     "resetCurrent": "Reset Section",
     "resetAll": "Reset All",
@@ -174,6 +171,13 @@
     "resetConfirm": "Reset",
     "resetCurrentConfirmMessage": "Are you sure you want to reset {section} settings to defaults?",
     "resetAllConfirmMessage": "Are you sure you want to reset ALL settings to defaults? This cannot be undone.",
+    "searchPlaceholder": "Search settings...",
+    "noSearchResults": "No matching settings found",
+    "groups": {
+      "general": "General",
+      "display": "Display",
+      "advanced": "Advanced"
+    },
     "cursorSettings": {
       "general": "General",
       "enabled": "Enable Custom Cursor",
@@ -244,21 +248,19 @@
       "languageHint": "Choose the application language",
       "theme": "Theme",
       "themeHint": "Choose the application theme",
-      "toggleTheme": "Toggle theme",
-      "serverRunning": "Server is currently running on port {port}",
-      "serverStopped": "Server is currently stopped",
-      "serverErrored": "Server has errored: {error}",
-      "accessThrough": "You can access it through: ",
-      "startup": "Startup",
-      "launchAtStartup": "Launch At Startup",
-      "startMinimized": "Start Minimized",
-      "overlayServer": "Overlay server",
-      "enableHttpWs": "Enable HTTP & WS server",
-      "serverPort": "Server Port"
+      "toggleTheme": "Toggle theme"
     },
     "routingSettings": {
       "refreshDevices": "Refresh devices",
-      "clearAll": "Clear all"
+      "clearAll": "Clear all",
+      "viewMode": "View Mode",
+      "matrixView": "Matrix View",
+      "flowView": "Flow View",
+      "inputOutput": "Input / Output",
+      "noDevicesTitle": "No MIDI devices detected",
+      "noDevicesDesc": "Please connect a MIDI device and click refresh",
+      "clearConfirmTitle": "Confirm Clear Routes",
+      "confirmClear": "Are you sure you want to clear all route connections? This cannot be undone."
     },
     "notationSettings": {
       "title": "Notation Settings",
@@ -448,46 +450,6 @@
       "clearMessages": "Clear messages",
       "autoScroll": "Auto Scroll"
     },
-    "aboutSettings": {
-      "byAuthor": "by Rémi Jarasson / ",
-      "laJarreASon": "La Jarre à Son",
-      "windowsNote": "NOTE: Standard MIDI drivers are exclusive on Windows. To use MIDI Jar, I recommend using ",
-      "loopMidi": "LoopMidi",
-      "loopMidiNote": " by Tobias Erichsen to route your MIDI controller to a virtual device that can be connected to by other softwares like your DAW or standalone VST.",
-      "downloadLoopMidi": "Download LoopMIDI",
-      "features": "Features",
-      "featuresDescription": "This application regroups a set of features around MIDI:",
-      "featureRoute": "Route MIDI messages between devices",
-      "featureDisplay": "Display chords, notes and a piano as you play",
-      "featureIntegrate": "Integrate in OBS, or in your Web Browser",
-      "featureLearn": "Learn with tools like Chord Dictionary and Chord Display",
-      "planToAdd": "I plan to add new modules, so don't hesitate to ",
-      "reportBug": "Report a bug",
-      "or": " or ",
-      "requestFeature": "Request a feature",
-      "changelog": "Changelog",
-      "specialMentions": "Special mentions",
-      "specialMentionsDescription": "MIDI Jar is based on a collection of amazing open-source projects and resources that deserve special mentions:",
-      "credits": {
-        "name": "Name",
-        "description": "Description",
-        "links": "Links",
-        "github": "Github",
-        "website": "Website"
-      },
-      "creditDescriptions": {
-        "tonal": "A functional music theory library for Javascript, that enabled MIDI Jar to detect chords, and handle MIDI notes easily",
-        "vexflow": "A JavaScript library for rendering music notation and guitar tablature.",
-        "julusianMidi": "A node.js wrapper for the RtMidi C++ library that provides realtime MIDI I/O. Forked from @justinlatimer/node-midi.",
-        "reactFlow": "Highly customizable library for building interactive node-based UIs, editors, flow charts and diagrams. It allows MIDI Jar to have understandable MIDI routing with nodes and draggable edges.",
-        "electronBoilerplate": "A Foundation for Scalable Cross-Platform Apps in Electron, the base boilerplate for MIDI Jar.",
-        "flaticon": "Most MIDI Jar icons are based on the Flaticon's <uicons> icon pack."
-      }
-    },
-    "licensesSettings": {
-      "github": "Github",
-      "empty": "No license packages found"
-    },
     "notationOptions": {
       "long": "Long (min, maj, dom, aug, dim...)",
       "short": "Short (m, M, aug, dim...)",
@@ -534,6 +496,13 @@
     "play": "Play",
     "pause": "Pause",
     "importMidi": "Import MIDI file",
+    "toggleRecord": "Toggle Record",
+    "togglePlayback": "Toggle Playback",
+    "resetView": "Reset View",
+    "canvasPlaying": "Waterfall piano playing: {notes}",
+    "canvasIdle": "Waterfall piano ready",
+    "recording": "Recording",
+    "playing": "Playing",
     "showKeyboard": "Show Keyboard",
     "keyboardRange": "Keyboard Range",
     "keyLabel": "Key Label",
@@ -645,7 +614,8 @@
       "particlePhysics": "Particle Physics",
       "postProcessing": "Post-Processing",
       "noteTextures": "Note Textures",
-      "noteBlockParticles": "Note Block Particles"
+      "noteBlockParticles": "Note Block Particles",
+      "theme": "Theme"
     },
     "keyLabels": {
       "none": "None",
@@ -696,7 +666,8 @@
       "gradient": "Gradient",
       "preset": "Preset Theme",
       "image": "Custom Image",
-      "stars": "Starfield"
+      "stars": "Starfield",
+      "fluid": "Fluid"
     },
     "themes": {
       "nightSky": "Night Sky",
@@ -718,54 +689,61 @@
       "stretch": "Stretch",
       "center": "Center",
       "tile": "Tile"
-    }
-  },
-  "blackhole": {
-    "openSettings": "Open blackhole settings",
-    "settings": {
-      "title": "Blackhole Settings",
-      "general": "General",
-      "intensity": "Intensity",
-      "holeAndLens": "Hole & Lens",
-      "diskGeometry": "Disk Geometry",
-      "diskMatter": "Disk Matter & Light",
-      "lightAndScreen": "Light & Screen",
-      "background": "Custom Background"
     },
-    "params": {
-      "holeRadius": "Hole Radius",
-      "lensDepth": "Lens Depth",
-      "starGain": "Star Gain",
-      "diskInner": "Disk Inner",
-      "diskOuter": "Disk Outer",
-      "diskIncl": "Disk Inclination",
-      "diskRoll": "System Roll",
-      "diskGain": "Disk Gain",
-      "diskOpacity": "Disk Opacity",
-      "diskTemp": "Temperature (K)",
-      "dopplerMix": "Doppler Mix",
-      "diskBeam": "Beam Exponent",
-      "diskSpeed": "Streak Speed",
-      "diskWind": "Spiral Wind",
-      "diskContrast": "Streak Contrast",
-      "exposure": "Exposure",
-      "driftSpeed": "Drift Speed"
+    "visualTheme": "Visual Theme",
+    "particlePreset": "Particle Preset",
+    "styleParameters": "Style Parameters",
+    "themeImportExport": "Theme Import/Export",
+    "exportTheme": "Export Theme",
+    "importTheme": "Import Theme",
+    "advancedKeyboard": "Advanced Keyboard",
+    "staffVisible": "Show Staff",
+    "showNoteNames": "Show Note Names on Blocks",
+    "flowDirection": "Flow Direction",
+    "gradientDirection": "Gradient Direction",
+    "advancedBackground": "Advanced Background Effects",
+    "starfieldEnabled": "Enable Starfield",
+    "starfieldDensity": "Starfield Density",
+    "fluidEnabled": "Enable Fluid Simulation",
+    "fluidResolution": "Fluid Resolution",
+    "flowAnimation": "Gradient Flow Animation",
+    "flowSpeed": "Flow Speed",
+    "bloomMultiPass": "Multi-pass High Quality Bloom",
+    "motionBlurLayerOnly": "Apply Only to Note Block Layer",
+    "hitLineShaderGlow": "Hit Line Shader Glow",
+    "hitLineGlowEnabled": "Enable Glow",
+    "hitLineGlowShaderIntensity": "Glow Intensity",
+    "hitLineGlowShaderRadius": "Glow Radius",
+    "particleHardLimit": "Particle Hard Limit",
+    "autoDegrade": "Auto Degrade",
+    "minFps": "Minimum FPS Threshold",
+    "targetFps": "Target FPS",
+    "visualThemes": {
+      "classicGlow": "Classic Glow",
+      "neonParticles": "Neon Particles",
+      "minimalTutor": "Minimal Tutor",
+      "starlightMagic": "Starlight Magic",
+      "retroCrt": "Retro CRT"
     },
-    "background": {
-      "upload": "Upload Background Image",
-      "remove": "Remove Background",
-      "opacity": "Background Opacity",
-      "fitMode": "Fit Mode",
-      "fitModes": {
-        "cover": "Cover",
-        "stretch": "Stretch",
-        "center": "Center",
-        "tile": "Tile"
-      }
+    "particlePresets": {
+      "classic": "Classic",
+      "neon": "Neon",
+      "minimal": "Minimal",
+      "starlight": "Starlight",
+      "retroCrt": "Retro CRT"
     },
-    "globalBackground": {
-      "enable": "Enable Global Blackhole Background",
-      "disable": "Disable Global Blackhole Background"
+    "styleParams": {
+      "ambianceIntensity": "Ambiance Intensity",
+      "particleDensity": "Particle Density",
+      "burstForce": "Burst Force",
+      "floatSense": "Float Sense",
+      "glowIntensity": "Glow Intensity",
+      "colorTemperature": "Color Temperature"
+    },
+    "gradientDirections": {
+      "vertical": "Vertical",
+      "horizontal": "Horizontal",
+      "radial": "Radial"
     }
   }
 }

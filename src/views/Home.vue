@@ -21,12 +21,6 @@
             icon="mdi-piano"
           />
           <ModuleCard
-            to="/blackhole"
-            :title="$t('nav.blackhole')"
-            :description="$t('home.moduleDescriptions.blackhole')"
-            icon="mdi-black-hole"
-          />
-          <ModuleCard
             to="/chord-dictionary"
             settings-to="/settings/chord-dictionary"
             :title="$t('nav.chordDictionary')"

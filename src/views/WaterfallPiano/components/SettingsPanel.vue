@@ -1,5 +1,116 @@
 <template>
   <div class="p-4 space-y-3">
+    <!-- 主题系统 -->
+    <SettingsCollapse
+      :title="t('waterfallPiano.settingsGroups.theme')"
+      :default-open="true"
+    >
+      <!-- 主题预设选择 -->
+      <div class="form-control w-full mb-2">
+        <label class="label py-1">
+          <span class="label-text text-xs">{{
+            t("waterfallPiano.visualTheme")
+          }}</span>
+        </label>
+        <div class="grid grid-cols-1 gap-2">
+          <button
+            v-for="theme in availableThemes"
+            :key="theme.id"
+            class="btn btn-sm justify-start text-left"
+            :class="
+              store.settings.theme.current === theme.id
+                ? 'btn-primary'
+                : 'btn-ghost'
+            "
+            @click="applyTheme(theme.id)"
+          >
+            {{ t(theme.labelKey) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 粒子预设选择 -->
+      <SettingsSelect
+        :model-value="store.settings.particles.particlePreset"
+        :label="t('waterfallPiano.particlePreset')"
+        :options="particlePresetOptions"
+        @update:model-value="applyParticlePreset($event as ParticlePresetId)"
+      />
+
+      <!-- 风格参数滑块 -->
+      <div class="divider text-xs text-base-content/50 my-1">
+        {{ t("waterfallPiano.styleParameters") }}
+      </div>
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.ambianceIntensity"
+        :label="t('waterfallPiano.styleParams.ambianceIntensity')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('ambianceIntensity', $event)"
+      />
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.particleDensity"
+        :label="t('waterfallPiano.styleParams.particleDensity')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('particleDensity', $event)"
+      />
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.burstForce"
+        :label="t('waterfallPiano.styleParams.burstForce')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('burstForce', $event)"
+      />
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.floatSense"
+        :label="t('waterfallPiano.styleParams.floatSense')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('floatSense', $event)"
+      />
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.glowIntensity"
+        :label="t('waterfallPiano.styleParams.glowIntensity')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('glowIntensity', $event)"
+      />
+      <SettingsRange
+        :model-value="store.settings.theme.styleParameters.colorTemperature"
+        :label="t('waterfallPiano.styleParams.colorTemperature')"
+        :min="0"
+        :max="1"
+        :step="0.05"
+        @update:model-value="updateStyleParam('colorTemperature', $event)"
+      />
+
+      <!-- 导入/导出 -->
+      <div class="divider text-xs text-base-content/50 my-1">
+        {{ t("waterfallPiano.themeImportExport") }}
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-xs btn-ghost flex-1" @click="exportTheme">
+          {{ t("waterfallPiano.exportTheme") }}
+        </button>
+        <button class="btn btn-xs btn-ghost flex-1" @click="importTheme">
+          {{ t("waterfallPiano.importTheme") }}
+        </button>
+      </div>
+      <input
+        ref="themeFileInput"
+        type="file"
+        accept=".json"
+        class="hidden"
+        @change="onThemeFileSelected"
+      />
+    </SettingsCollapse>
+
     <!-- 视觉设置 -->
     <SettingsCollapse
       :title="t('waterfallPiano.settingsGroups.visual')"
@@ -523,6 +634,33 @@
         "
       />
 
+      <!-- 五线谱指示器 -->
+      <div class="divider text-xs text-base-content/50 my-1">
+        {{ t("waterfallPiano.advancedKeyboard") }}
+      </div>
+      <SettingsToggle
+        :model-value="store.settings.keyboard.staffVisible"
+        :label="t('waterfallPiano.staffVisible')"
+        @update:model-value="
+          store.updateSetting('keyboard', 'staffVisible', $event)
+        "
+      />
+      <SettingsToggle
+        :model-value="store.settings.keyboard.showNoteNames"
+        :label="t('waterfallPiano.showNoteNames')"
+        @update:model-value="
+          store.updateSetting('keyboard', 'showNoteNames', $event)
+        "
+      />
+      <SettingsSelect
+        :model-value="store.settings.keyboard.synthesiaFlowDirection"
+        :label="t('waterfallPiano.flowDirection')"
+        :options="flowDirectionOptions"
+        @update:model-value="
+          store.updateSetting('keyboard', 'synthesiaFlowDirection', $event)
+        "
+      />
+
       <!-- 分组重置 -->
       <button
         class="btn btn-xs btn-ghost w-full mt-2"
@@ -604,12 +742,23 @@
           store.updateSetting('background', 'presetTheme', $event)
         "
       />
+      <SettingsSelect
+        v-if="store.settings.background.type === 'gradient'"
+        :model-value="store.settings.background.gradientDirection"
+        :label="t('waterfallPiano.gradientDirection')"
+        :options="gradientDirectionOptions"
+        @update:model-value="
+          store.updateSetting('background', 'gradientDirection', $event)
+        "
+      />
 
       <!-- 自定义图片背景 -->
       <template v-if="store.settings.background.type === 'image'">
         <div class="form-control w-full">
           <label class="label py-1">
-            <span class="label-text text-xs">{{ t('waterfallPiano.uploadImage') }}</span>
+            <span class="label-text text-xs">{{
+              t("waterfallPiano.uploadImage")
+            }}</span>
           </label>
           <input
             type="file"
@@ -623,7 +772,7 @@
           class="btn btn-xs btn-ghost w-full"
           @click="store.updateSetting('background', 'imageFile', '')"
         >
-          {{ t('waterfallPiano.clearImage') }}
+          {{ t("waterfallPiano.clearImage") }}
         </button>
         <SettingsSelect
           :model-value="store.settings.background.imageFitMode"
@@ -644,6 +793,71 @@
           "
         />
       </template>
+
+      <!-- 高级背景效果 -->
+      <div class="divider text-xs text-base-content/50 my-1">
+        {{ t("waterfallPiano.advancedBackground") }}
+      </div>
+
+      <!-- 星空粒子 -->
+      <SettingsToggle
+        :model-value="store.settings.background.starfieldEnabled"
+        :label="t('waterfallPiano.starfieldEnabled')"
+        @update:model-value="
+          store.updateSetting('background', 'starfieldEnabled', $event)
+        "
+      />
+      <SettingsRange
+        v-if="store.settings.background.starfieldEnabled"
+        :model-value="store.settings.background.starfieldDensity"
+        :label="t('waterfallPiano.starfieldDensity')"
+        :min="0.1"
+        :max="1"
+        :step="0.05"
+        @update:model-value="
+          store.updateSetting('background', 'starfieldDensity', $event)
+        "
+      />
+
+      <!-- 流体模拟 -->
+      <SettingsToggle
+        :model-value="store.settings.background.fluidEnabled"
+        :label="t('waterfallPiano.fluidEnabled')"
+        @update:model-value="
+          store.updateSetting('background', 'fluidEnabled', $event)
+        "
+      />
+      <SettingsRange
+        v-if="store.settings.background.fluidEnabled"
+        :model-value="store.settings.background.fluidResolution"
+        :label="t('waterfallPiano.fluidResolution')"
+        :min="0.25"
+        :max="1"
+        :step="0.05"
+        @update:model-value="
+          store.updateSetting('background', 'fluidResolution', $event)
+        "
+      />
+
+      <!-- 渐变流动动画 -->
+      <SettingsToggle
+        :model-value="store.settings.background.flowAnimation"
+        :label="t('waterfallPiano.flowAnimation')"
+        @update:model-value="
+          store.updateSetting('background', 'flowAnimation', $event)
+        "
+      />
+      <SettingsRange
+        v-if="store.settings.background.flowAnimation"
+        :model-value="store.settings.background.flowSpeed"
+        :label="t('waterfallPiano.flowSpeed')"
+        :min="0.1"
+        :max="3"
+        :step="0.1"
+        @update:model-value="
+          store.updateSetting('background', 'flowSpeed', $event)
+        "
+      />
 
       <!-- 分组重置 -->
       <button
@@ -710,6 +924,16 @@
             })
           "
         />
+        <SettingsToggle
+          :model-value="store.settings.postProcessing.bloom.multiPass"
+          :label="t('waterfallPiano.bloomMultiPass')"
+          @update:model-value="
+            store.updateSetting('postProcessing', 'bloom', {
+              ...store.settings.postProcessing.bloom,
+              multiPass: $event,
+            })
+          "
+        />
       </template>
 
       <!-- Motion Blur -->
@@ -737,6 +961,17 @@
           })
         "
       />
+      <SettingsToggle
+        v-if="store.settings.postProcessing.motionBlur.enabled"
+        :model-value="store.settings.postProcessing.motionBlur.layerOnly"
+        :label="t('waterfallPiano.motionBlurLayerOnly')"
+        @update:model-value="
+          store.updateSetting('postProcessing', 'motionBlur', {
+            ...store.settings.postProcessing.motionBlur,
+            layerOnly: $event,
+          })
+        "
+      />
 
       <!-- Chromatic Aberration -->
       <SettingsToggle
@@ -751,7 +986,9 @@
       />
       <SettingsRange
         v-if="store.settings.postProcessing.chromaticAberration.enabled"
-        :model-value="store.settings.postProcessing.chromaticAberration.intensity"
+        :model-value="
+          store.settings.postProcessing.chromaticAberration.intensity
+        "
         :label="t('waterfallPiano.chromaticAberrationIntensity')"
         :min="0"
         :max="1"
@@ -804,6 +1041,49 @@
         />
       </template>
 
+      <!-- 命中线 Shader 泛光 -->
+      <div class="divider text-xs text-base-content/50 my-1">
+        {{ t("waterfallPiano.hitLineShaderGlow") }}
+      </div>
+      <SettingsToggle
+        :model-value="store.settings.postProcessing.hitLineGlow.enabled"
+        :label="t('waterfallPiano.hitLineGlowEnabled')"
+        @update:model-value="
+          store.updateSetting('postProcessing', 'hitLineGlow', {
+            ...store.settings.postProcessing.hitLineGlow,
+            enabled: $event,
+          })
+        "
+      />
+      <template v-if="store.settings.postProcessing.hitLineGlow.enabled">
+        <SettingsRange
+          :model-value="store.settings.postProcessing.hitLineGlow.intensity"
+          :label="t('waterfallPiano.hitLineGlowShaderIntensity')"
+          :min="0"
+          :max="2"
+          :step="0.05"
+          @update:model-value="
+            store.updateSetting('postProcessing', 'hitLineGlow', {
+              ...store.settings.postProcessing.hitLineGlow,
+              intensity: $event,
+            })
+          "
+        />
+        <SettingsRange
+          :model-value="store.settings.postProcessing.hitLineGlow.radius"
+          :label="t('waterfallPiano.hitLineGlowShaderRadius')"
+          :min="1"
+          :max="50"
+          :step="1"
+          @update:model-value="
+            store.updateSetting('postProcessing', 'hitLineGlow', {
+              ...store.settings.postProcessing.hitLineGlow,
+              radius: $event,
+            })
+          "
+        />
+      </template>
+
       <button
         class="btn btn-xs btn-ghost w-full mt-2"
         @click="store.resetGroup('postProcessing')"
@@ -821,7 +1101,9 @@
         :model-value="store.settings.noteTexture.preset"
         :label="t('waterfallPiano.texturePreset')"
         :options="texturePresetOptions"
-        @update:model-value="store.updateSetting('noteTexture', 'preset', $event)"
+        @update:model-value="
+          store.updateSetting('noteTexture', 'preset', $event)
+        "
       />
       <template v-if="store.settings.noteTexture.preset !== 'none'">
         <SettingsRange
@@ -830,7 +1112,9 @@
           :min="0.5"
           :max="3"
           :step="0.1"
-          @update:model-value="store.updateSetting('noteTexture', 'scale', $event)"
+          @update:model-value="
+            store.updateSetting('noteTexture', 'scale', $event)
+          "
         />
         <SettingsRange
           :model-value="store.settings.noteTexture.intensity"
@@ -838,7 +1122,9 @@
           :min="0"
           :max="1"
           :step="0.05"
-          @update:model-value="store.updateSetting('noteTexture', 'intensity', $event)"
+          @update:model-value="
+            store.updateSetting('noteTexture', 'intensity', $event)
+          "
         />
       </template>
 
@@ -866,7 +1152,9 @@
           })
         "
       />
-      <template v-if="store.settings.noteBlockParticles.surfaceEmission.enabled">
+      <template
+        v-if="store.settings.noteBlockParticles.surfaceEmission.enabled"
+      >
         <SettingsRange
           :model-value="store.settings.noteBlockParticles.surfaceEmission.rate"
           :label="t('waterfallPiano.surfaceEmissionRate')"
@@ -894,7 +1182,9 @@
           "
         />
         <SettingsRange
-          :model-value="store.settings.noteBlockParticles.surfaceEmission.lifetime"
+          :model-value="
+            store.settings.noteBlockParticles.surfaceEmission.lifetime
+          "
           :label="t('waterfallPiano.surfaceEmissionLifetime')"
           :min="5"
           :max="80"
@@ -1022,6 +1312,58 @@
       </button>
     </SettingsCollapse>
 
+    <!-- 性能设置 -->
+    <SettingsCollapse
+      :title="t('waterfallPiano.settingsGroups.performance')"
+      :default-open="false"
+    >
+      <SettingsRange
+        :model-value="store.settings.performance.particleHardLimit"
+        :label="t('waterfallPiano.particleHardLimit')"
+        :min="100"
+        :max="2000"
+        :step="100"
+        @update:model-value="
+          store.updateSetting('performance', 'particleHardLimit', $event)
+        "
+      />
+      <SettingsToggle
+        :model-value="store.settings.performance.autoDegrade"
+        :label="t('waterfallPiano.autoDegrade')"
+        @update:model-value="
+          store.updateSetting('performance', 'autoDegrade', $event)
+        "
+      />
+      <SettingsRange
+        v-if="store.settings.performance.autoDegrade"
+        :model-value="store.settings.performance.minFps"
+        :label="t('waterfallPiano.minFps')"
+        :min="15"
+        :max="60"
+        :step="5"
+        @update:model-value="
+          store.updateSetting('performance', 'minFps', $event)
+        "
+      />
+      <SettingsRange
+        :model-value="store.settings.performance.targetFps"
+        :label="t('waterfallPiano.targetFps')"
+        :min="30"
+        :max="120"
+        :step="5"
+        @update:model-value="
+          store.updateSetting('performance', 'targetFps', $event)
+        "
+      />
+
+      <button
+        class="btn btn-xs btn-ghost w-full mt-2"
+        @click="store.resetGroup('performance')"
+      >
+        {{ t("common.resetToDefaults") }}
+      </button>
+    </SettingsCollapse>
+
     <!-- 全局重置按钮 -->
     <div class="pt-2">
       <button
@@ -1035,8 +1377,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useWaterfallPianoStore } from "../stores/waterfallPiano";
+import { ThemeSystem } from "../engine/ThemeSystem";
+import type {
+  VisualThemeId,
+  ParticlePresetId,
+  StyleParameters,
+} from "../types";
 import {
   SettingsCollapse,
   SettingsToggle,
@@ -1047,6 +1396,8 @@ import {
 
 const { t } = useI18n();
 const store = useWaterfallPianoStore();
+
+const themeFileInput = ref<HTMLInputElement | null>(null);
 
 const visualStyleOptions = [
   { label: t("waterfallPiano.styles.blocks"), value: "blocks" },
@@ -1106,6 +1457,7 @@ const backgroundTypeOptions = [
   { label: t("waterfallPiano.bgTypes.preset"), value: "preset" },
   { label: t("waterfallPiano.bgTypes.image"), value: "image" },
   { label: t("waterfallPiano.bgTypes.stars"), value: "stars" },
+  { label: t("waterfallPiano.bgTypes.fluid"), value: "fluid" },
 ];
 
 const presetThemeOptions = [
@@ -1131,6 +1483,82 @@ const texturePresetOptions = [
   { label: t("waterfallPiano.texturePresets.glow"), value: "glow" },
   { label: t("waterfallPiano.texturePresets.metallic"), value: "metallic" },
 ];
+
+const gradientDirectionOptions = [
+  {
+    label: t("waterfallPiano.gradientDirections.vertical"),
+    value: "linear-vertical",
+  },
+  {
+    label: t("waterfallPiano.gradientDirections.horizontal"),
+    value: "linear-horizontal",
+  },
+  { label: t("waterfallPiano.gradientDirections.radial"), value: "radial" },
+];
+
+const flowDirectionOptions = [
+  { label: t("waterfallPiano.directions.down"), value: "down" },
+  { label: t("waterfallPiano.directions.up"), value: "up" },
+];
+
+const themeSystem = new ThemeSystem();
+
+const availableThemes = computed(() => themeSystem.getAvailableThemes());
+
+const particlePresetOptions = computed(() =>
+  themeSystem.getAvailableParticlePresets().map((p) => ({
+    label: t(p.labelKey),
+    value: p.id,
+  })),
+);
+
+function applyTheme(themeId: VisualThemeId) {
+  store.settings = themeSystem.applyTheme(themeId, store.settings);
+}
+
+function applyParticlePreset(presetId: ParticlePresetId) {
+  store.settings = themeSystem.applyParticlePreset(presetId, store.settings);
+}
+
+function updateStyleParam(key: keyof StyleParameters, value: number) {
+  const params = { ...store.settings.theme.styleParameters, [key]: value };
+  store.settings = themeSystem.applyStyleParameters(params, store.settings);
+}
+
+function exportTheme() {
+  const preset = themeSystem.exportTheme(`theme-${Date.now()}`, store.settings);
+  const json = themeSystem.serializeTheme(preset);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${preset.name}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importTheme() {
+  themeFileInput.value?.click();
+}
+
+function onThemeFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const json = e.target?.result as string;
+      const preset = themeSystem.deserializeTheme(json);
+      store.settings = themeSystem.importTheme(preset, store.settings);
+    } catch (err) {
+      console.error("Failed to import theme:", err);
+    }
+  };
+  reader.readAsText(file);
+  // 重置 input 以允许重复选择同一文件
+  input.value = "";
+}
 
 function onBackgroundImageUpload(event: Event) {
   const input = event.target as HTMLInputElement;

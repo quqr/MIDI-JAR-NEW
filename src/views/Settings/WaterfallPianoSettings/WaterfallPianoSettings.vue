@@ -2,7 +2,9 @@
   <div class="p-4 space-y-4">
     <!-- 基础设置 -->
     <div class="space-y-3">
-      <h2 class="text-lg font-bold">{{ t("waterfallPiano.settingsGroups.basic") }}</h2>
+      <h2 class="text-lg font-bold">
+        {{ t("waterfallPiano.settingsGroups.basic") }}
+      </h2>
 
       <!-- 视觉基础 -->
       <SettingsCollapse
@@ -13,7 +15,9 @@
           :model-value="store.settings.particles.style"
           :label="t('waterfallPiano.visualStyle')"
           :options="visualStyleOptions"
-          @update:model-value="store.updateSetting('particles', 'style', $event)"
+          @update:model-value="
+            store.updateSetting('particles', 'style', $event)
+          "
         />
         <SettingsSelect
           :model-value="store.settings.particles.colorScheme"
@@ -29,7 +33,9 @@
           :min="0.5"
           :max="8"
           :step="0.1"
-          @update:model-value="store.updateSetting('particles', 'speed', $event)"
+          @update:model-value="
+            store.updateSetting('particles', 'speed', $event)
+          "
         />
         <SettingsRange
           :model-value="store.settings.particles.opacity"
@@ -59,7 +65,9 @@
         <SettingsToggle
           :model-value="store.settings.keyboard.visible"
           :label="t('waterfallPiano.showKeyboard')"
-          @update:model-value="store.updateSetting('keyboard', 'visible', $event)"
+          @update:model-value="
+            store.updateSetting('keyboard', 'visible', $event)
+          "
         />
         <SettingsRange
           :model-value="store.settings.keyboard.heightRatio"
@@ -133,7 +141,9 @@
           :model-value="store.settings.background.type"
           :label="t('waterfallPiano.backgroundType')"
           :options="backgroundTypeOptions"
-          @update:model-value="store.updateSetting('background', 'type', $event)"
+          @update:model-value="
+            store.updateSetting('background', 'type', $event)
+          "
         />
         <SettingsColorPicker
           v-if="store.settings.background.type === 'solid'"
@@ -165,7 +175,9 @@
 
     <!-- 高级设置 -->
     <div class="space-y-3">
-      <h2 class="text-lg font-bold">{{ t("waterfallPiano.settingsGroups.advanced") }}</h2>
+      <h2 class="text-lg font-bold">
+        {{ t("waterfallPiano.settingsGroups.advanced") }}
+      </h2>
 
       <!-- 视觉高级 -->
       <SettingsCollapse
@@ -504,7 +516,9 @@
         <template v-if="store.settings.background.type === 'image'">
           <div class="form-control w-full">
             <label class="label py-1">
-              <span class="label-text text-xs">{{ t('waterfallPiano.uploadImage') }}</span>
+              <span class="label-text text-xs">{{
+                t("waterfallPiano.uploadImage")
+              }}</span>
             </label>
             <input
               type="file"
@@ -518,7 +532,7 @@
             class="btn btn-xs btn-ghost w-full"
             @click="store.updateSetting('background', 'imageFile', '')"
           >
-            {{ t('waterfallPiano.clearImage') }}
+            {{ t("waterfallPiano.clearImage") }}
           </button>
           <SettingsSelect
             :model-value="store.settings.background.imageFitMode"
@@ -570,7 +584,9 @@
             :min="2"
             :max="30"
             :step="1"
-            @update:model-value="store.updateSetting('particles', 'size', $event)"
+            @update:model-value="
+              store.updateSetting('particles', 'size', $event)
+            "
           />
           <SettingsRange
             :model-value="store.settings.particles.density"
@@ -822,7 +838,9 @@
 
         <!-- Chromatic Aberration -->
         <SettingsToggle
-          :model-value="store.settings.postProcessing.chromaticAberration.enabled"
+          :model-value="
+            store.settings.postProcessing.chromaticAberration.enabled
+          "
           :label="t('waterfallPiano.chromaticAberration')"
           @update:model-value="
             store.updateSetting('postProcessing', 'chromaticAberration', {
@@ -833,7 +851,9 @@
         />
         <SettingsRange
           v-if="store.settings.postProcessing.chromaticAberration.enabled"
-          :model-value="store.settings.postProcessing.chromaticAberration.intensity"
+          :model-value="
+            store.settings.postProcessing.chromaticAberration.intensity
+          "
           :label="t('waterfallPiano.chromaticAberrationIntensity')"
           :min="0"
           :max="1"
@@ -903,7 +923,9 @@
           :model-value="store.settings.noteTexture.preset"
           :label="t('waterfallPiano.texturePreset')"
           :options="texturePresetOptions"
-          @update:model-value="store.updateSetting('noteTexture', 'preset', $event)"
+          @update:model-value="
+            store.updateSetting('noteTexture', 'preset', $event)
+          "
         />
         <template v-if="store.settings.noteTexture.preset !== 'none'">
           <SettingsRange
@@ -912,7 +934,9 @@
             :min="0.5"
             :max="3"
             :step="0.1"
-            @update:model-value="store.updateSetting('noteTexture', 'scale', $event)"
+            @update:model-value="
+              store.updateSetting('noteTexture', 'scale', $event)
+            "
           />
           <SettingsRange
             :model-value="store.settings.noteTexture.intensity"
@@ -920,7 +944,9 @@
             :min="0"
             :max="1"
             :step="0.05"
-            @update:model-value="store.updateSetting('noteTexture', 'intensity', $event)"
+            @update:model-value="
+              store.updateSetting('noteTexture', 'intensity', $event)
+            "
           />
         </template>
 
@@ -939,7 +965,9 @@
       >
         <!-- 表面散发 -->
         <SettingsToggle
-          :model-value="store.settings.noteBlockParticles.surfaceEmission.enabled"
+          :model-value="
+            store.settings.noteBlockParticles.surfaceEmission.enabled
+          "
           :label="t('waterfallPiano.surfaceEmission')"
           @update:model-value="
             store.updateSetting('noteBlockParticles', 'surfaceEmission', {
@@ -948,9 +976,13 @@
             })
           "
         />
-        <template v-if="store.settings.noteBlockParticles.surfaceEmission.enabled">
+        <template
+          v-if="store.settings.noteBlockParticles.surfaceEmission.enabled"
+        >
           <SettingsRange
-            :model-value="store.settings.noteBlockParticles.surfaceEmission.rate"
+            :model-value="
+              store.settings.noteBlockParticles.surfaceEmission.rate
+            "
             :label="t('waterfallPiano.surfaceEmissionRate')"
             :min="0.05"
             :max="1"
@@ -963,7 +995,9 @@
             "
           />
           <SettingsRange
-            :model-value="store.settings.noteBlockParticles.surfaceEmission.speed"
+            :model-value="
+              store.settings.noteBlockParticles.surfaceEmission.speed
+            "
             :label="t('waterfallPiano.surfaceEmissionSpeed')"
             :min="0.2"
             :max="5"
@@ -976,7 +1010,9 @@
             "
           />
           <SettingsRange
-            :model-value="store.settings.noteBlockParticles.surfaceEmission.lifetime"
+            :model-value="
+              store.settings.noteBlockParticles.surfaceEmission.lifetime
+            "
             :label="t('waterfallPiano.surfaceEmissionLifetime')"
             :min="5"
             :max="80"
@@ -1029,7 +1065,9 @@
             "
           />
           <SettingsRange
-            :model-value="store.settings.noteBlockParticles.hitExplosion.lifetime"
+            :model-value="
+              store.settings.noteBlockParticles.hitExplosion.lifetime
+            "
             :label="t('waterfallPiano.hitExplosionLifetime')"
             :min="5"
             :max="80"
@@ -1103,7 +1141,6 @@
           {{ t("common.resetToDefaults") }}
         </button>
       </SettingsCollapse>
-
     </div>
 
     <!-- 全局重置按钮 -->

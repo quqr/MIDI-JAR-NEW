@@ -15,13 +15,42 @@
     </div>
     <QuickChangeKeyToolbar />
 
+    <!-- 延迟状态圆点（常驻） -->
+    <div
+      class="app-navbar__status"
+      :title="latencyTooltip"
+      role="status"
+      :aria-label="latencyAriaLabel"
+    >
+      <span class="latency-dot" :class="latencyClass"></span>
+    </div>
+
+    <!-- 录制/播放状态图标（常驻，仅在激活时显示） -->
+    <div
+      v-if="isRecording"
+      class="app-navbar__status"
+      :title="$t('waterfallPiano.recording')"
+      role="status"
+    >
+      <span class="status-pulse status-pulse--record"></span>
+    </div>
+    <div
+      v-if="isPlaying"
+      class="app-navbar__status"
+      :title="$t('waterfallPiano.playing')"
+      role="status"
+    >
+      <span class="status-pulse status-pulse--play"></span>
+    </div>
+
     <div class="app-navbar__actions">
       <RouterLink
         to="/settings"
         class="app-navbar__action-btn"
         :title="$t('settings.title')"
+        :aria-label="$t('settings.title')"
       >
-        <Icon name="settings" :size="20" />
+        <Icon name="settings" :size="20" aria-hidden="true" />
       </RouterLink>
 
       <ThemeSwitcher />
@@ -146,21 +175,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { useI18n } from "vue-i18n";
+import type { IconName } from "@/components/Icon/types";
 import { useRoute, RouterLink } from "vue-router";
 import AppBreadcrumb from "./AppBreadcrumb.vue";
 import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 import Icon from "@/components/Icon/Icon.vue";
 import { logger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
+import { useMidiLatency } from "@/composables/useMidiLatency";
+import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/waterfallPiano";
 
+const { t } = useI18n();
 const route = useRoute();
 
 const mobileMenuOpen = ref(false);
 const isMaximized = ref(false);
 const isMac = ref(false);
 
-const navItems = [
+// 延迟监控
+const { currentLatency } = useMidiLatency();
+
+// 录制/播放状态
+const waterfallStore = useWaterfallPianoStore();
+const isRecording = computed(() => waterfallStore.isRecording);
+const isPlaying = computed(() => waterfallStore.isPlaying);
+
+// 延迟状态分类：<10ms 绿，10-30ms 黄，>30ms 红
+const latencyClass = computed(() => {
+  if (currentLatency.value < 10) return "latency-dot--good";
+  if (currentLatency.value < 30) return "latency-dot--warn";
+  return "latency-dot--bad";
+});
+
+const latencyTooltip = computed(() =>
+  t("layout.latencyTooltip", { ms: currentLatency.value.toFixed(2) }),
+);
+
+const latencyAriaLabel = computed(() =>
+  t("layout.latencyAriaLabel", { ms: currentLatency.value.toFixed(2) }),
+);
+
+const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/home", label: "nav.home", icon: "home" },
   { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
 ];
@@ -295,6 +352,74 @@ onMounted(async () => {
 .app-navbar__action-icon {
   width: 1.2em;
   height: 1.2em;
+}
+
+/* 状态指示器（延迟圆点 + 录制/播放脉冲） */
+.app-navbar__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.latency-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.latency-dot--good {
+  background-color: oklch(70% 0.2 145);
+  box-shadow: 0 0 4px oklch(70% 0.2 145 / 0.5);
+}
+
+.latency-dot--warn {
+  background-color: oklch(75% 0.18 85);
+  box-shadow: 0 0 4px oklch(75% 0.18 85 / 0.5);
+}
+
+.latency-dot--bad {
+  background-color: oklch(65% 0.25 25);
+  box-shadow: 0 0 4px oklch(65% 0.25 25 / 0.5);
+}
+
+.status-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+.status-pulse--record {
+  background-color: oklch(65% 0.25 25);
+  box-shadow: 0 0 6px oklch(65% 0.25 25 / 0.6);
+}
+
+.status-pulse--play {
+  background-color: oklch(70% 0.2 250);
+  box-shadow: 0 0 6px oklch(70% 0.2 250 / 0.6);
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-pulse {
+    animation: none;
+  }
 }
 
 .app-navbar__window-controls {

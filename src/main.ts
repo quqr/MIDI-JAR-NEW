@@ -7,6 +7,7 @@ import "@/styles/tailwind.css";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 import { logger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
+import tauriAPI from "@/utils/tauri";
 
 logger.interceptConsole();
 
@@ -31,25 +32,29 @@ async function setupTauriListeners() {
     return;
   }
 
-  // 监听 contextmenu 事件（即右键菜单），并阻止其默认行为，以禁用右键菜单
-  document.addEventListener("contextmenu", (event) => event.preventDefault());
+  // 确保 tauriAPI 已初始化
+  if (!window.tauriAPI) {
+    window.tauriAPI = tauriAPI;
+  }
 
-  // 监听 copy 事件（即复制操作），并阻止其默认行为，以禁用复制功能
-  document.addEventListener("copy", (event) => event.preventDefault());
+  // 禁用右键菜单和复制功能
+  //document.addEventListener("contextmenu", (event) => event.preventDefault());
+  //document.addEventListener("copy", (event) => event.preventDefault());
+
   try {
-    const tauriAPI = getTauriAPI();
+    const api = getTauriAPI();
 
-    tauriAPI.on("file:opened", (data: any) => {
+    api.on("file:opened", (data: any) => {
       logger.info(`文件已打开: ${JSON.stringify(data)}`);
       app.config.globalProperties.$emit("file:opened", data);
     });
 
-    tauriAPI.on("midi:refresh-devices", () => {
+    api.on("midi:refresh-devices", () => {
       logger.info("收到 MIDI 设备刷新请求");
       initializeMidi();
     });
 
-    tauriAPI.on("midi:settings", (data: any) => {
+    api.on("midi:settings", (data: any) => {
       logger.info(`收到 MIDI 设置更新: ${JSON.stringify(data)}`);
       app.config.globalProperties.$emit("midi:settings", data);
     });
@@ -62,6 +67,10 @@ async function setupTauriListeners() {
 
 if (isTauri()) {
   logger.info("检测到 Tauri 环境");
+  // 确保 tauriAPI 已初始化
+  if (!window.tauriAPI) {
+    window.tauriAPI = tauriAPI;
+  }
 }
 
 initializeMidi();

@@ -348,6 +348,18 @@ pub fn run() {
 
             let window = app.get_webview_window("main").expect("no main window");
 
+            // 平台自适应窗口装饰：
+            // - macOS: 启用原生标题栏（红绿灯按钮，支持 Option 键排列等原生行为）
+            // - Windows/Linux: 保持无边框，使用前端自定义窗口控制按钮
+            #[cfg(target_os = "macos")]
+            {
+                let _ = window.set_decorations(true);
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = window.set_decorations(false);
+            }
+
             let app_handle_clone = app_handle.clone();
             let window_clone = window.clone();
             window.on_window_event(move |event| {

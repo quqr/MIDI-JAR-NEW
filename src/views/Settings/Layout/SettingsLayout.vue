@@ -7,28 +7,30 @@
       class="drawer-toggle"
     />
     <div class="drawer-content flex flex-col min-h-0">
-      <div class="navbar bg-base-300 w-full flex-none">
+      <div class="navbar bg-base-300 w-full flex-none glass">
         <label
           for="settings-drawer"
           :aria-label="t('common.openSidebar')"
           class="btn btn-square btn-ghost lg:hidden"
         >
-          <Icon name="menu" size="20" />
+          <Icon name="menu" :size="20" aria-hidden="true" />
         </label>
         <div class="px-4 font-semibold">{{ $t("settings.title") }}</div>
         <div class="flex-1"></div>
         <button
           class="btn btn-sm btn-ghost gap-1 text-base-content/70 hover:text-error"
+          :aria-label="t('settings.resetCurrent')"
           @click="handleResetCurrent"
         >
-          <Icon name="reset" size="16" />
+          <Icon name="reset" :size="16" aria-hidden="true" />
           <span class="hidden sm:inline">{{ t("settings.resetCurrent") }}</span>
         </button>
         <button
           class="btn btn-sm btn-ghost gap-1 text-base-content/70 hover:text-error"
+          :aria-label="t('settings.resetAll')"
           @click="handleResetAll"
         >
-          <Icon name="trash" size="16" />
+          <Icon name="trash" :size="16" aria-hidden="true" />
           <span class="hidden sm:inline">{{ t("settings.resetAll") }}</span>
         </button>
       </div>
@@ -45,24 +47,79 @@
       <div
         class="flex min-h-full flex-col bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64"
       >
+        <!-- 搜索框 -->
+        <div class="p-3 is-drawer-close:hidden">
+          <div class="relative">
+            <Icon
+              name="search"
+              :size="16"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40"
+              aria-hidden="true"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              class="input input-sm input-bordered w-full pl-9 bg-base-100/50"
+              :placeholder="t('settings.searchPlaceholder')"
+              :aria-label="t('settings.searchPlaceholder')"
+            />
+            <button
+              v-if="searchQuery"
+              class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
+              :aria-label="t('common.clear')"
+              @click="searchQuery = ''"
+            >
+              <Icon name="x" :size="14" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 折叠模式下的搜索图标 -->
+        <div class="px-3 pb-2 is-drawer-open:hidden hidden lg:block">
+          <button
+            class="btn btn-square btn-ghost btn-sm w-full"
+            :aria-label="t('settings.searchPlaceholder')"
+            @click="openSearch"
+          >
+            <Icon name="search" :size="18" aria-hidden="true" />
+          </button>
+        </div>
+
+        <!-- 分组导航 -->
         <ul
-          class="menu w-full grow gap-4 pt-4"
+          class="menu w-full grow gap-1 pt-2 overflow-y-auto"
           :aria-label="t('settings.navigation')"
         >
-          <li v-for="item in navItems" :key="item.to">
-            <RouterLink
-              :to="item.to"
-              class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
-              :class="
-                isActive(item.to)
-                  ? 'active bg-primary text-primary-content font-bold'
-                  : 'text-base-content/70'
-              "
-              :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
+          <template v-for="group in groupOrder" :key="group">
+            <li
+              v-if="getFilteredItems(group).length > 0"
+              class="menu-title is-drawer-close:hidden text-[10px] font-semibold uppercase tracking-wider text-base-content/40 px-4 pt-3 pb-1"
             >
-              <Icon :name="item.icon" size="20" />
-              <span class="is-drawer-close:hidden">{{ t(item.labelKey) }}</span>
-            </RouterLink>
+              {{ t(groupLabels[group]) }}
+            </li>
+            <li
+              v-for="item in getFilteredItems(group)"
+              :key="item.to"
+            >
+              <RouterLink
+                :to="item.to"
+                class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                :class="
+                  isActive(item.to)
+                    ? 'active bg-primary text-primary-content font-bold'
+                    : 'text-base-content/70 hover:bg-base-300/50'
+                "
+                :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
+              >
+                <Icon :name="item.icon" :size="20" aria-hidden="true" />
+                <span class="is-drawer-close:hidden">{{ t(item.labelKey) }}</span>
+              </RouterLink>
+            </li>
+          </template>
+
+          <!-- 无搜索结果 -->
+          <li v-if="searchQuery && filteredItems.length === 0" class="px-4 py-4 text-center text-xs text-base-content/40 is-drawer-close:hidden">
+            {{ t("settings.noSearchResults") }}
           </li>
         </ul>
       </div>
@@ -90,7 +147,8 @@
 
 <script setup lang="ts">
 import Icon from "@/components/Icon/Icon.vue";
-import { navItems } from "./constants";
+import { navItems, groupOrder, groupLabels } from "./constants";
+import type { SettingsGroup } from "./constants";
 import { useI18n } from "vue-i18n";
 import { useRoute, RouterLink } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
@@ -103,6 +161,7 @@ const settingsStore = useSettingsStore();
 const drawerOpen = ref(false);
 const resetDialog = ref<HTMLDialogElement>();
 const resetTarget = ref<"current" | "all">("current");
+const searchQuery = ref("");
 
 let mql: MediaQueryList | null = null;
 
@@ -136,6 +195,31 @@ const currentSectionLabel = computed(() => {
   };
   return labelMap[key] || key;
 });
+
+// 过滤搜索结果
+const filteredItems = computed(() => {
+  if (!searchQuery.value.trim()) return navItems;
+  const q = searchQuery.value.toLowerCase();
+  return navItems.filter((item) => {
+    const label = t(item.labelKey).toLowerCase();
+    return label.includes(q);
+  });
+});
+
+function getFilteredItems(group: SettingsGroup) {
+  return filteredItems.value.filter((item) => item.group === group);
+}
+
+function openSearch() {
+  // 触发 drawer 展开
+  drawerOpen.value = true;
+  // 聚焦搜索框
+  setTimeout(() => {
+    document
+      .querySelector<HTMLInputElement>('input[aria-label="' + t("settings.searchPlaceholder") + '"]')
+      ?.focus();
+  }, 100);
+}
 
 const resetConfirmMessage = computed(() => {
   if (resetTarget.value === "all") {

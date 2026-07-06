@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from "node:url";
 import { resolve } from "path";
 import { defineConfig } from "vite";
@@ -35,11 +36,19 @@ export default defineConfig(() => {
               if (/node_modules\/(tonal|@tonaljs)\//.test(id)) return "tonal";
               if (/node_modules\/vexflow\//.test(id)) return "vexflow";
               if (/node_modules\/@vue-flow\//.test(id)) return "vueflow";
+              if (/node_modules\/pixi\.js\//.test(id)) return "pixi";
+              if (/node_modules\/tone\//.test(id)) return "tone";
             }
           },
         },
       },
     },
     plugins: [Vue(), tailwindcss()],
+    test: {
+      environment: "jsdom",
+      globals: true,
+      include: ["src/**/*.test.ts", "src/**/__tests__/**/*.test.ts"],
+      exclude: ["node_modules", "dist"],
+    },
   };
 });

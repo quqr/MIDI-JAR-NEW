@@ -29,12 +29,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.waterfallPiano", icon: "piano" },
       },
       {
-        path: "blackhole",
-        name: "blackhole",
-        component: () => import("@/views/Blackhole/BlackholePage.vue"),
-        meta: { title: "nav.blackhole", icon: "star" },
-      },
-      {
         path: "chord-dictionary",
         name: "chord-dictionary",
         component: () => import("@/views/ChordDictionary/ChordDictionary.vue"),
@@ -129,18 +123,6 @@ const routes: RouteRecordRaw[] = [
             name: "settings-debug",
             component: () => import("@/views/Settings/Debugger/Debugger.vue"),
             meta: { title: "settings.debugger" },
-          },
-          {
-            path: "licenses",
-            name: "settings-licenses",
-            component: () => import("@/views/Settings/Licenses/Licenses.vue"),
-            meta: { title: "settings.licenses.title" },
-          },
-          {
-            path: "about",
-            name: "settings-about",
-            component: () => import("@/views/Settings/About/About.vue"),
-            meta: { title: "settings.about" },
           },
         ],
       },

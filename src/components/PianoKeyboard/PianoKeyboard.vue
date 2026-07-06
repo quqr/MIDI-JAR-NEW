@@ -168,23 +168,13 @@ function applyHighlights() {
 
   if (props.midi) {
     if (props.keyboard.wrap) {
-      if (props.keyboard.displaySustained) {
-        highlightWrapLabels(
-          el,
-          props.keySignature,
-          props.keyboard,
-          props.midi,
-          props.chord,
-        );
-      } else {
-        highlightWrapLabels(
-          el,
-          props.keySignature,
-          props.keyboard,
-          props.midi,
-          props.chord,
-        );
-      }
+      highlightWrapLabels(
+        el,
+        props.keySignature,
+        props.keyboard,
+        props.midi,
+        props.chord,
+      );
     }
 
     if (props.keyboard.displaySustained) {
@@ -290,11 +280,11 @@ function buildClassicKeys() {
   const toNote = Note.get(Note.simplify(props.keyboard.to) || "B5");
 
   const noteStart = fromNote.alt
-    ? (fromNote.midi as number) - 1
-    : (fromNote.midi as number);
+    ? (fromNote.midi ?? 0) - 1
+    : (fromNote.midi ?? 0);
   const noteEnd = toNote.alt
-    ? (toNote.midi as number) + 1
-    : (toNote.midi as number);
+    ? (toNote.midi ?? 0) + 1
+    : (toNote.midi ?? 0);
   const start = Math.min(noteStart, noteEnd);
   const end = Math.max(noteStart, noteEnd);
 
@@ -327,8 +317,8 @@ function buildClassicKeys() {
     const noteDefData = {
       displayName,
       name: noteDef.name,
-      chroma: noteDef.chroma as number,
-      midi: noteDef.midi as number,
+      chroma: noteDef.chroma ?? 0,
+      midi: noteDef.midi ?? 0,
     };
 
     if (noteDef.alt) {
@@ -368,8 +358,8 @@ function buildFlatKeys() {
   const fromNote = Note.get(Note.simplify(props.keyboard.from) || "C3");
   const toNote = Note.get(Note.simplify(props.keyboard.to) || "B5");
 
-  const noteStart = fromNote.midi as number;
-  const noteEnd = toNote.midi as number;
+  const noteStart = fromNote.midi ?? 0;
+  const noteEnd = toNote.midi ?? 0;
   const start = Math.min(noteStart, noteEnd);
   const end = Math.max(noteStart, noteEnd);
 
@@ -400,8 +390,8 @@ function buildFlatKeys() {
     const def: FlatNoteDef = {
       displayName,
       name: noteDef.name,
-      chroma: noteDef.chroma as number,
-      midi: noteDef.midi as number,
+      chroma: noteDef.chroma ?? 0,
+      midi: noteDef.midi ?? 0,
       offset: keys.width,
       labelOffset: keys.width + sizes.WIDTH / 2,
       isBlack: !!noteDef.alt,

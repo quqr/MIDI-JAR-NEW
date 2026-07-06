@@ -18,10 +18,12 @@ export class EventEmitter {
    * @returns 返回 this 以支持链式调用
    */
   on(event: string, listener: EventListener): this {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+    let listeners = this.listeners.get(event);
+    if (!listeners) {
+      listeners = new Set();
+      this.listeners.set(event, listeners);
     }
-    this.listeners.get(event)!.add(listener);
+    listeners.add(listener);
     return this;
   }
 

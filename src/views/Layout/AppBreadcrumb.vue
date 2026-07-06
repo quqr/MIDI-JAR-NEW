@@ -36,6 +36,7 @@ import { computed } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
+import type { IconName } from "@/components/Icon/types";
 
 interface Crumb {
   title: string;
@@ -55,8 +56,8 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-settings": "settings",
 };
 
-function mapMdiToIcon(mdiName: string): string {
-  return MDI_TO_ICON[mdiName] || "home";
+function mapMdiToIcon(mdiName: string): IconName {
+  return (MDI_TO_ICON[mdiName] || "home") as IconName;
 }
 
 const allCrumbs = computed<Crumb[]>(() => {
