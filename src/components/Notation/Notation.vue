@@ -5,6 +5,8 @@
     class="notation-base w-full min-w-0 overflow-visible"
     :class="className"
     :style="containerStyle"
+    role="img"
+    :aria-label="t('notation.ariaLabel')"
   />
 </template>
 

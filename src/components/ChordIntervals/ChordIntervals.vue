@@ -3,7 +3,7 @@
     <div
       v-for="(interval, index) in INTERVALS.BASE"
       :key="interval"
-      class="flex flex-col items-center justify-center rounded-md transition-all duration-200"
+      class="flex flex-col items-center justify-center rounded-md transition-all duration-hig-fast"
       :class="{
         'font-bold': activeAsMap[index] || targetAsMap[index],
         '': activeAsMap[index] || targetAsMap[index] || playedMap[index],

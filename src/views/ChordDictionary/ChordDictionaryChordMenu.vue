@@ -2,8 +2,9 @@
   <div class="chord-dictionary-chord-menu p-4 h-full">
     <ul
       class="menu bg-base-100"
-      role="navigation"
+      role="tree"
       :aria-label="t('chordDictionary.chordTypesNavigation')"
+      @keydown="handleKeydown"
     >
       <template v-for="item in groups" :key="getItemKey(item)">
         <ChordMenuItem
@@ -67,5 +68,93 @@ const groups = computed(() => {
 
 function getItemKey(item: ChordGroup | ChordItem): string {
   return item.type === "item" ? item.chordType.aliases[0] : item.value;
+}
+
+function getVisibleTreeitems(container: HTMLElement): HTMLElement[] {
+  const all = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="treeitem"]'),
+  );
+  return all.filter((el) => {
+    let parent = el.parentElement;
+    while (parent && parent !== container) {
+      if (parent.tagName === "DETAILS" && !parent.open) return false;
+      parent = parent.parentElement;
+    }
+    return true;
+  });
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  const target = e.target as HTMLElement;
+  if (!target || target.getAttribute("role") !== "treeitem") return;
+
+  const container = e.currentTarget as HTMLElement;
+  const items = getVisibleTreeitems(container);
+  const currentIndex = items.indexOf(target);
+  if (currentIndex === -1) return;
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      if (currentIndex < items.length - 1) {
+        items[currentIndex + 1].focus();
+      }
+      break;
+    case "ArrowUp":
+      e.preventDefault();
+      if (currentIndex > 0) {
+        items[currentIndex - 1].focus();
+      }
+      break;
+    case "ArrowRight": {
+      e.preventDefault();
+      if (target.tagName === "SUMMARY") {
+        const details = target.closest("details");
+        if (details && !details.open) {
+          details.open = true;
+          return;
+        }
+      }
+      if (currentIndex < items.length - 1) {
+        items[currentIndex + 1].focus();
+      }
+      break;
+    }
+    case "ArrowLeft": {
+      e.preventDefault();
+      if (target.tagName === "SUMMARY") {
+        const details = target.closest("details");
+        if (details && details.open) {
+          details.open = false;
+          return;
+        }
+      }
+      let parent = target.parentElement;
+      while (parent && parent !== container) {
+        if (parent.tagName === "DETAILS") {
+          const summary = parent.querySelector("summary");
+          if (summary) {
+            (summary as HTMLElement).focus();
+            return;
+          }
+        }
+        parent = parent.parentElement;
+      }
+      break;
+    }
+    case "Home":
+      e.preventDefault();
+      if (items.length > 0) items[0].focus();
+      break;
+    case "End":
+      e.preventDefault();
+      if (items.length > 0) items[items.length - 1].focus();
+      break;
+    case "Enter":
+    case " ":
+      e.preventDefault();
+      target.click();
+      break;
+  }
 }
 </script>

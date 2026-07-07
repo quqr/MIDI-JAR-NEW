@@ -153,7 +153,8 @@
   },
   "notation": {
     "key": "Key: {tonic}",
-    "semitone": "st"
+    "semitone": "st",
+    "ariaLabel": "Music notation"
   },
   "settings": {
     "title": "Settings",
@@ -448,7 +449,8 @@
     "debuggerSettings": {
       "midiClock": "MIDI Clock",
       "clearMessages": "Clear messages",
-      "autoScroll": "Auto Scroll"
+      "autoScroll": "Auto Scroll",
+      "messageLog": "MIDI message log"
     },
     "notationOptions": {
       "long": "Long (min, maj, dom, aug, dim...)",
@@ -501,6 +503,12 @@
     "resetView": "Reset View",
     "canvasPlaying": "Waterfall piano playing: {notes}",
     "canvasIdle": "Waterfall piano ready",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "shortcutRecord": "Record",
+    "shortcutPlay": "Play/Pause",
+    "shortcutOctaveDown": "Octave Down",
+    "shortcutOctaveUp": "Octave Up",
+    "shortcutToggleKeyboard": "Toggle Keyboard",
     "recording": "Recording",
     "playing": "Playing",
     "showKeyboard": "Show Keyboard",

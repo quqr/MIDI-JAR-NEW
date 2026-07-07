@@ -1,6 +1,6 @@
 <template>
   <label
-    class="swap swap-rotate btn btn-ghost btn-sm btn-circle transition-all duration-200 hover:bg-base-200"
+    class="swap swap-rotate btn btn-ghost btn-sm btn-circle transition-all duration-hig-fast hover:bg-base-200"
     :aria-label="t('settings.generalSettings.toggleTheme')"
   >
     <input
@@ -10,7 +10,7 @@
       @change="themeStore.toggleTheme()"
     />
     <svg
-      class="swap-off h-5 w-5 fill-current transition-transform duration-300"
+      class="swap-off h-5 w-5 fill-current transition-transform duration-hig-normal"
       viewBox="0 0 24 24"
     >
       <path
@@ -18,7 +18,7 @@
       />
     </svg>
     <svg
-      class="swap-on h-5 w-5 fill-current transition-transform duration-300"
+      class="swap-on h-5 w-5 fill-current transition-transform duration-hig-normal"
       viewBox="0 0 24 24"
     >
       <path

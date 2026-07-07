@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDI-JAR HIG 人机界面优化全案</title>
+<style>
+  :root {
+    --c-bg: #f7f8fa;
+    --c-surface: #ffffff;
+    --c-surface-2: #f0f2f5;
+    --c-border: #e2e5ea;
+    --c-text: #1a1d23;
+    --c-text-2: #5a6070;
+    --c-text-3: #8b91a0;
+    --c-primary: #4f6df5;
+    --c-primary-bg: #eef1fe;
+    --c-success: #1a9d6b;
+    --c-success-bg: #e7f6ef;
+    --c-warn: #d97706;
+    --c-warn-bg: #fef3e2;
+    --c-danger: #dc2626;
+    --c-danger-bg: #fdeaea;
+    --c-info: #0891b2;
+    --c-info-bg: #e6f6fb;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* ---- nav ---- */
+  .topnav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--c-border);
+    padding: 10px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .topnav h1 { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .topnav .spacer { flex: 1; }
+  .topnav nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .topnav nav a {
+    text-decoration: none; color: var(--c-text-2);
+    font-size: 13px; padding: 4px 10px; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .topnav nav a:hover { background: var(--c-surface-2); color: var(--c-text); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ---- typography ---- */
+  h2 {
+    font-size: 26px; font-weight: 700; margin: 48px 0 8px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--c-primary);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .num {
+    background: var(--c-primary); color: #fff;
+    width: 32px; height: 32px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  h3 { font-size: 19px; font-weight: 700; margin: 32px 0 10px; color: var(--c-text); }
+  h4 { font-size: 16px; font-weight: 600; margin: 22px 0 8px; color: var(--c-text); }
+  p { margin: 8px 0; color: var(--c-text-2); }
+  p.lead { font-size: 16px; color: var(--c-text); margin: 12px 0 20px; }
+  ul, ol { margin: 8px 0 8px 22px; color: var(--c-text-2); }
+  li { margin: 4px 0; }
+  strong { color: var(--c-text); }
+  code {
+    font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
+    font-size: 0.88em;
+    background: var(--c-surface-2);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--c-primary);
+  }
+  pre {
+    background: #1e2230; color: #e2e8f0;
+    padding: 16px 20px; border-radius: 8px;
+    overflow-x: auto; margin: 12px 0;
+    font-size: 13px; line-height: 1.55;
+    font-family: "JetBrains Mono", "Consolas", monospace;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  .kw { color: #c792ea; }
+  .str { color: #c3e88d; }
+  .com { color: #676e95; font-style: italic; }
+  .num2 { color: #f78c6c; }
+  .prop { color: #82aaff; }
+
+  /* ---- cards / blocks ---- */
+  .card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: var(--radius); padding: 20px 24px; margin: 16px 0;
+    box-shadow: var(--shadow-sm);
+  }
+  .card.tight { padding: 14px 18px; }
+  .callout {
+    border-left: 4px solid; padding: 12px 16px; border-radius: 0 8px 8px 0;
+    margin: 14px 0; font-size: 14px;
+  }
+  .callout.danger { border-color: var(--c-danger); background: var(--c-danger-bg); }
+  .callout.warn { border-color: var(--c-warn); background: var(--c-warn-bg); }
+  .callout.success { border-color: var(--c-success); background: var(--c-success-bg); }
+  .callout.info { border-color: var(--c-info); background: var(--c-info-bg); }
+  .callout strong { display: block; margin-bottom: 2px; }
+
+  /* ---- tables ---- */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--c-border); vertical-align: top; }
+  th { background: var(--c-surface-2); font-weight: 600; color: var(--c-text); font-size: 13px; }
+  td code { font-size: 0.82em; }
+
+  /* ---- badges ---- */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+    line-height: 1.6;
+  }
+  .badge.p0 { background: var(--c-danger); color: #fff; }
+  .badge.p1 { background: var(--c-warn); color: #fff; }
+  .badge.p2 { background: var(--c-info); color: #fff; }
+  .badge.ok { background: var(--c-success); color: #fff; }
+  .badge.dim { background: var(--c-surface-2); color: var(--c-text-2); border: 1px solid var(--c-border); }
+
+  /* ---- dimension grid ---- */
+  .dim-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0;
+  }
+  .dim-item {
+    border: 1px solid var(--c-border); border-radius: 8px; padding: 10px 14px;
+    background: var(--c-surface); font-size: 13px;
+  }
+  .dim-item .dt { font-weight: 700; color: var(--c-text); margin-bottom: 3px; font-size: 13px; }
+  .dim-item .dt .badge { margin-left: 6px; }
+  .dim-item .dd { color: var(--c-text-2); font-size: 12.5px; line-height: 1.5; }
+
+  /* ---- SVG mockup wrapper ---- */
+  .mockup-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0;
+  }
+  .mockup-box {
+    border: 1px solid var(--c-border); border-radius: 10px; overflow: hidden;
+    background: var(--c-surface);
+  }
+  .mockup-box .mh {
+    padding: 7px 12px; font-size: 12px; font-weight: 700;
+    background: var(--c-surface-2); border-bottom: 1px solid var(--c-border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mockup-box.before .mh { color: var(--c-danger); }
+  .mockup-box.after .mh { color: var(--c-success); }
+  .mockup-box svg { display: block; width: 100%; height: auto; }
+
+  /* ---- TOC ---- */
+  .toc {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 10px; padding: 20px 28px; margin: 24px 0;
+  }
+  .toc h3 { margin-top: 0; }
+  .toc ol { columns: 2; column-gap: 32px; }
+  .toc li { margin: 5px 0; break-inside: avoid; }
+  .toc a { text-decoration: none; color: var(--c-text-2); font-size: 14px; }
+  .toc a:hover { color: var(--c-primary); }
+
+  /* ---- stats ---- */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0;
+  }
+  .stat {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .stat .sv { font-size: 28px; font-weight: 800; color: var(--c-primary); }
+  .stat .sl { font-size: 12px; color: var(--c-text-2); margin-top: 2px; }
+
+  /* ---- opt list ---- */
+  .opt-list { margin: 12px 0; }
+  .opt-item {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px dashed var(--c-border); font-size: 14px;
+  }
+  .opt-item:last-child { border-bottom: none; }
+  .opt-item .badge { flex-shrink: 0; margin-top: 1px; }
+  .opt-item .oc { flex: 1; }
+  .opt-item .oc strong { display: block; font-size: 14px; }
+  .opt-item .oc span { color: var(--c-text-2); font-size: 13px; }
+
+  .page-anchor { scroll-margin-top: 70px; }
+  hr.sep { border: none; border-top: 1px solid var(--c-border); margin: 40px 0; }
+  .note { font-size: 12px; color: var(--c-text-3); font-style: italic; margin-top: 6px; }
+
+  @media (max-width: 720px) {
+    .dim-grid, .mockup-row, .stats { grid-template-columns: 1fr; }
+    .toc ol { columns: 1; }
+    .topnav nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <h1>MIDI-JAR · HIG 人机界面优化全案</h1>
+  <div class="spacer"></div>
+  <nav>
+    <a href="#summary">总览</a>
+    <a href="#framework">六维度框架</a>
+    <a href="#audit">现状审计</a>
+    <a href="#tokens">Token 规范</a>
+    <a href="#pages">逐页分析</a>
+    <a href="#roadmap">路线图</a>
+  </nav>
+</div>
+
+<div class="container">
+
+<!-- ============ 1. 总览 ============ -->
+<section id="summary">
+  <div class="stats">
+    <div class="stat"><div class="sv">15</div><div class="sl">受检页面 / 组件</div></div>
+    <div class="stat"><div class="sv">63</div><div class="sl">优化条目</div></div>
+    <div class="stat"><div class="sv">5</div><div class="sl">P0 阻断级缺陷</div></div>
+    <div class="stat"><div class="sv">24</div><div class="sl">P1 高优先级</div></div>
+  </div>
+
+  <p class="lead">
+    本文档基于对 <code>src/views/</code> 下全部 15 个页面级组件的逐行源码审计，
+    依据 <strong>Apple HIG</strong> 与 <strong>Material Design 3</strong> 通用原则，
+    从「视觉层级 · 间距节奏 · 触达与无障碍 · 动效反馈 · 深浅色适配 · 响应式与密度」六个维度，
+    产出可落地的 Token 规范、逐页 before/after 标注图与分优先级实施清单。
+  </p>
+
+  <div class="callout danger">
+    <strong>最严重的系统性问题：DaisyUI v4 变量误用</strong>
+    多处直接写 <code>oklch(var(--b2))</code> / <code>oklch(var(--bc) / 0.7)</code>。
+    DaisyUI v4 的 CSS 变量是<strong>不含百分号的纯数字</strong>（如 <code>--b2: 90%</code>），
+    正确写法是 <code>oklch(var(--b2) / 1)</code> 或使用语义类 <code>bg-base-200</code>。
+    当前写法会导致<strong>背景透明 / 文字不可见</strong>，属 P0。
+  </div>
+
+  <div class="callout warn">
+    <strong>最普遍的一致性问题：Magic Number 泛滥</strong>
+    <code>text-3xl</code>、<code>gap-6 md:gap-20</code>、<code>min-h-[150px]</code>、<code>text-[10px]</code>
+    等硬编码值散落在各页面，既无语义也无统一节奏。
+    <code>text-[10px]</code> 更直接违反 HIG 最小可读字号（13px）底线。
+  </div>
+
+  <div class="callout success">
+    <strong>已有的良好基础</strong>
+    项目已具备 i18n 全覆盖、<code>prefers-reduced-motion</code> 降级、
+    语义化 <code>role="status"</code> / <code>aria-label</code> 广泛使用、
+    Tauri 拖拽区与窗口控制完善。优化以「补齐 Token 层 + 修 Bug + 统一节奏」为主，非推倒重来。
+  </div>
+</section>
+
+<!-- ============ 2. 六维度框架 ============ -->
+<section id="framework">
+  <h2><span class="num">2</span>HIG 六维度评估框架</h2>
+  <p>每个页面将按以下六个维度逐一评估，每维度给出「现状 → 问题 → 建议」：</p>
+
+  <div class="dim-grid">
+    <div class="dim-item">
+      <div class="dt">① 视觉层级 <span class="badge dim">Visual Hierarchy</span></div>
+      <div class="dd">字号阶梯、字重对比、色彩权重是否引导用户注意力到正确位置。核心：标题/正文/辅助文字的 3 级以上可感知差异。</div>
+    </div>
+    <div class="dim-item">
+      <div class="dt">② 间距节奏 <span class="badge dim">Spacing Rhythm</span></div>
+      <div class="dd">内/外边距是否基于统一基线（4px 或 8px 倍数），卡片间距、列表行距、区块留白是否形成可预测的节奏感。</div>
+    </div>
+    <div class="dim-item">
+      <div class="dt">③ 触达与无障碍 <span class="badge dim">Touch &amp; A11y</span></div>
+      <div class="dd">点击目标 ≥ 40px（桌面可放宽至 32px）、键盘可达、焦点可见、aria 语义完整、对比度 ≥ 4.5:1、最小字号 ≥ 13px。</div>
+    </div>
+    <div class="dim-item">
+      <div class="dt">④ 动效反馈 <span class="badge dim">Motion</span></div>
+      <div class="dd">交互态（hover/press/focus）有即时反馈，过渡时长在 100–250ms 区间，动效遵循缓动曲线，且尊重 reduced-motion。</div>
+    </div>
+    <div class="dim-item">
+      <div class="dt">⑤ 深浅色适配 <span class="badge dim">Theming</span></div>
+      <div class="dd">所有颜色通过语义变量引用，无硬编码色值（除语义状态色），深色模式下对比度与可读性自动保持。</div>
+    </div>
+    <div class="dim-item">
+      <div class="dt">⑥ 响应式与密度 <span class="badge dim">Responsive</span></div>
+      <div class="dd">断点切换平滑，窄屏不裁剪关键信息，宽屏不浪费空间；信息密度随视口自适应。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 现状审计 ============ -->
+<section id="audit">
+  <h2><span class="num">3</span>现状审计与已知缺陷</h2>
+
+  <h3>3.1 系统级缺陷（影响全局）</h3>
+  <table>
+    <tr><th>缺陷</th><th>位置</th><th>级别</th><th>影响</th></tr>
+    <tr><td><code>oklch(var(--b2))</code> 等缺 alpha 通道</td><td>AppNavbar.vue L290,348,449；AppBreadcrumb.vue</td><td><span class="badge p0">P0</span></td><td>背景/文字色解析失败，元素透明或不可见</td></tr>
+    <tr><td><code>oklch(var(--bc) / 0.7)</code> 语法错误</td><td>AppNavbar.vue L341,440</td><td><span class="badge p0">P0</span></td><td>同上，按钮文字色失效</td></tr>
+    <tr><td>Wire 连线用 <code>hsl()</code> 而非 oklch</td><td>Routing/Wire.vue</td><td><span class="badge p0">P0</span></td><td>色彩空间不一致，深色模式下连线不可见</td></tr>
+    <tr><td>状态圆点硬编码 <code>oklch(70% 0.2 145)</code></td><td>AppNavbar.vue L376-405</td><td><span class="badge p1">P1</span></td><td>无法随主题切换，深色模式对比不足</td></tr>
+    <tr><td>关闭按钮 <code>#e81123</code> 硬编码</td><td>AppNavbar.vue L454</td><td><span class="badge p2">P2</span></td><td>Windows 红可接受，但应走 token</td></tr>
+  </table>
+
+  <h3>3.2 全局 Magic Number 清单</h3>
+  <table>
+    <tr><th>类型</th><th>示例</th><th>出现位置</th><th>问题</th></tr>
+    <tr><td>字号</td><td><code>text-[10px]</code></td><td>SettingsLayout L96, ChordOverview</td><td>低于 13px 最小可读字号</td></tr>
+    <tr><td>字号</td><td><code>text-3xl md:text-5xl</code></td><td>ChordDisplay L28</td><td>未走 HIG type scale</td></tr>
+    <tr><td>字号</td><td><code>text-[min(64px,6vw)]</code></td><td>ChordDetail</td><td>fluid 字号无 token 约束</td></tr>
+    <tr><td>间距</td><td><code>gap-6 md:gap-20</code></td><td>ChordDisplay L23</td><td>gap-20=80px 打破节奏</td></tr>
+    <tr><td>尺寸</td><td><code>min-h-[150px] md:min-h-[200px]</code></td><td>ChordDisplay L83</td><td>钢琴键盘高度 magic</td></tr>
+    <tr><td>透明度</td><td><code>bg-base-300/30</code>, <code>/20</code>, <code>/50</code></td><td>ChordDetail, SettingsLayout</td><td>opacity 变体不统一</td></tr>
+    <tr><td>圆角</td><td><code>rounded-lg</code> 混用 <code>rounded-2xl</code></td><td>多处</td><td>无语义圆角层</td></tr>
+    <tr><td>时长</td><td><code>duration-200</code>, <code>0.3s</code>, <code>0.15s</code>, <code>0.12s</code></td><td>AppNavbar, ModuleCard, 各处</td><td>动效时长无标准</td></tr>
+  </table>
+
+  <h3>3.3 无障碍审计</h3>
+  <table>
+    <tr><th>问题</th><th>位置</th><th>级别</th></tr>
+    <tr><td>RouterLink active 缺 <code>aria-current="page"</code></td><td>SettingsLayout, ChordDisplayList tabs</td><td><span class="badge p1">P1</span></td></tr>
+    <tr><td>dialog/modal 缺 <code>aria-labelledby</code> 指向标题</td><td>SettingsLayout resetDialog</td><td><span class="badge p1">P1</span></td></tr>
+    <tr><td><code>btn-xs</code> (24px) 点击目标过小</td><td>Routing, ChordDictionarySettings</td><td><span class="badge p1">P1</span></td></tr>
+    <tr><td>侧栏菜单无键盘方向键导航</td><td>SettingsLayout</td><td><span class="badge p2">P2</span></td></tr>
+    <tr><td>Canvas 内容无文字替代</td><td>WaterfallPiano</td><td><span class="badge p2">P2</span></td></tr>
+    <tr><td>移动端菜单 <code>role="menu"</code> 缺失</td><td>AppNavbar mobile dropdown</td><td><span class="badge p2">P2</span></td></tr>
+  </table>
+</section>
+
+<!-- ============ 4. Token 规范 ============ -->
+<section id="tokens">
+  <h2><span class="num">4</span>Token 扩展规范</h2>
+  <p>在现有 DaisyUI 主题基础上，扩展以下语义 Token 层。所有页面应<strong>只引用 Token，禁止裸值</strong>。</p>
+
+  <h3>4.1 字号阶梯（Type Scale）</h3>
+  <pre><code><span class="com">/* src/styles/hig-tokens.css — 追加到现有主题 */</span>
+<span class="prop">:root</span> {
+  <span class="com">/* 字号：12 级阶梯，最小 13px 保证可读 */</span>
+  <span class="prop">--hig-text-2xs</span>: 11px;   <span class="com">/* 仅用于 label tag / 胶囊角标，不可用于正文 */</span>
+  <span class="prop">--hig-text-xs</span>:  12px;   <span class="com">/* 辅助提示 */</span>
+  <span class="prop">--hig-text-sm</span>:  13px;   <span class="com">/* 次要正文、表格单元格 */</span>
+  <span class="prop">--hig-text-base</span>: 14px;  <span class="com">/* 正文基准 */</span>
+  <span class="prop">--hig-text-md</span>:  16px;   <span class="com">/* 强调正文 */</span>
+  <span class="prop">--hig-text-lg</span>:  18px;   <span class="com">/* 小标题 */</span>
+  <span class="prop">--hig-text-xl</span>:  22px;   <span class="com">/* 区块标题 */</span>
+  <span class="prop">--hig-text-2xl</span>: 28px;   <span class="com">/* 页面标题 */</span>
+  <span class="prop">--hig-text-3xl</span>: 36px;   <span class="com">/* 展示型标题 */</span>
+  <span class="prop">--hig-text-4xl</span>: 48px;   <span class="com">/* 焦点展示（和弦名） */</span>
+  <span class="prop">--hig-text-5xl</span>: 64px;   <span class="com">/* 全屏 hero（fluid clamp 下限） */</span>
+
+  <span class="com">/* 行高 */</span>
+  <span class="prop">--hig-leading-tight</span>: 1.2;   <span class="com">/* 大标题 */</span>
+  <span class="prop">--hig-leading-normal</span>: 1.5;  <span class="com">/* 正文 */</span>
+  <span class="prop">--hig-leading-relaxed</span>: 1.65; <span class="com">/* 长文阅读 */</span>
+}</code></pre>
+
+  <h3>4.2 间距尺度（Spacing Scale）</h3>
+  <pre><code><span class="prop">:root</span> {
+  <span class="com">/* 基于 4px 基线，8 级节奏 */</span>
+  <span class="prop">--hig-space-1</span>: 4px;   <span class="com">/* 紧凑内间距、图标内边距 */</span>
+  <span class="prop">--hig-space-2</span>: 8px;   <span class="com">/* 控件间距 */</span>
+  <span class="prop">--hig-space-3</span>: 12px;  <span class="com">/* 卡片内边距、列表行距 */</span>
+  <span class="prop">--hig-space-4</span>: 16px;  <span class="com">/* 区块间距 */</span>
+  <span class="prop">--hig-space-5</span>: 24px;  <span class="com">/* 大区块间距 */</span>
+  <span class="prop">--hig-space-6</span>: 32px;  <span class="com">/* 页面级留白 */</span>
+  <span class="prop">--hig-space-7</span>: 48px;  <span class="com">/* 分区间距 */</span>
+  <span class="prop">--hig-space-8</span>: 64px;  <span class="com">/* hero 级留白 */</span>
+}</code></pre>
+
+  <h3>4.3 圆角层级（Radius）</h3>
+  <pre><code><span class="prop">:root</span> {
+  <span class="prop">--hig-radius-sm</span>: 6px;   <span class="com">/* 输入框、小按钮、badge */</span>
+  <span class="prop">--hig-radius-md</span>: 10px;  <span class="com">/* 按钮、卡片内元素 */</span>
+  <span class="prop">--hig-radius-lg</span>: 14px;  <span class="com">/* 卡片、面板 */</span>
+  <span class="prop">--hig-radius-xl</span>: 20px;  <span class="com">/* 大型容器、模态 */</span>
+  <span class="prop">--hig-radius-full</span>: 9999px;
+}</code></pre>
+
+  <h3>4.4 触达尺寸（Touch Target）</h3>
+  <pre><code><span class="prop">:root</span> {
+  <span class="com">/* 点击目标尺寸下限 */</span>
+  <span class="prop">--hig-target-min</span>: 32px;  <span class="com">/* 桌面图标按钮 */</span>
+  <span class="prop">--hig-target-sm</span>: 36px;  <span class="com">/* 紧凑按钮 */</span>
+  <span class="prop">--hig-target-md</span>: 40px;  <span class="com">/* 标准按钮 */</span>
+  <span class="prop">--hig-target-lg</span>: 44px;  <span class="com">/* 触屏优先按钮 */</span>
+}</code></pre>
+
+  <h3>4.5 动效曲线与时长（Motion）</h3>
+  <pre><code><span class="prop">:root</span> {
+  <span class="com">/* 时长 */</span>
+  <span class="prop">--hig-duration-instant</span>: 80ms;   <span class="com">/* 颜色变化 */</span>
+  <span class="prop">--hig-duration-fast</span>: 150ms;    <span class="com">/* hover、小型过渡 */</span>
+  <span class="prop">--hig-duration-normal</span>: 220ms;   <span class="com">/* 标准过渡 */</span>
+  <span class="prop">--hig-duration-slow</span>: 320ms;     <span class="com">/* 入场动画、大型位移 */</span>
+
+  <span class="com">/* 缓动曲线 */</span>
+  <span class="prop">--hig-ease-standard</span>: cubic-bezier(0.2, 0, 0, 1);      <span class="com">/* 默认 */</span>
+  <span class="prop">--hig-ease-emphasized</span>: cubic-bezier(0.3, 0, 0, 1);   <span class="com">/* 强调入场 */</span>
+  <span class="prop">--hig-ease-exit</span>: cubic-bezier(0.4, 0, 1, 1);          <span class="com">/* 退场 */</span>
+}
+
+<span class="prop">@media</span> (prefers-reduced-motion: reduce) {
+  <span class="prop">*</span> { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}</code></pre>
+
+  <h3>4.6 语义状态色（Semantic Status）</h3>
+  <pre><code><span class="prop">:root</span> {
+  <span class="com">/* 语义状态色——通过 oklch 保证深浅色自动适配 */</span>
+  <span class="prop">--hig-success</span>: oklch(62% 0.17 145);
+  <span class="prop">--hig-success-container</span>: oklch(95% 0.03 145);
+  <span class="prop">--hig-warning</span>: oklch(72% 0.16 70);
+  <span class="prop">--hig-warning-container</span>: oklch(95% 0.04 70);
+  <span class="prop">--hig-error</span>: oklch(58% 0.22 25);
+  <span class="prop">--hig-error-container</span>: oklch(95% 0.03 25);
+  <span class="prop">--hig-info</span>: oklch(60% 0.13 230);
+  <span class="prop">--hig-info-container</span>: oklch(95% 0.02 230);
+}
+<span class="com">/* 深色模式自动反转 container 明度 */</span>
+<span class="prop">[data-theme="dark"]</span> {
+  <span class="prop">--hig-success-container</span>: oklch(30% 0.05 145);
+  <span class="prop">--hig-warning-container</span>: oklch(30% 0.05 70);
+  <span class="prop">--hig-error-container</span>: oklch(30% 0.06 25);
+  <span class="prop">--hig-info-container</span>: oklch(30% 0.04 230);
+}</code></pre>
+
+  <div class="callout info">
+    <strong>Tailwind 集成方式</strong>
+    在 <code>tailwind.config.js</code> 的 <code>theme.extend</code> 中映射以上变量，
+    即可用 <code>text-hig-lg</code>、<code>gap-hig-4</code>、<code>rounded-hig-md</code> 等语义类替代裸值。
+  </div>
+</section>
+
+<!-- ============ 5. 逐页分析 ============ -->
+<section id="pages">
+  <h2><span class="num">5</span>逐页深度分析</h2>
+  <p>以下按「全局外壳 → 主要功能页 → 设置页」顺序，逐页给出 before/after 标注图与六维度评估表。</p>
+
+<!-- ===== 5.1 全局外壳 ===== -->
+<div class="page-anchor" id="page-shell">
+  <h3>5.1 全局外壳 — AppNavbar / AppBreadcrumb / AppLayout</h3>
+  <p><code>src/views/Layout/AppNavbar.vue</code> · <code>AppBreadcrumb.vue</code> · <code>AppLayout.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — 现状（oklch 变量 Bug 导致背景透明）</div>
+      <svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="120" fill="#f7f8fa"/>
+        <!-- navbar 透明背景 -->
+        <rect x="0" y="0" width="520" height="40" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="10" y="16" font-size="9" fill="#dc2626" font-weight="700">⚠ bg 透明 (oklch bug)</text>
+        <rect x="8" y="8" width="120" height="24" rx="4" fill="#fff" stroke="#e2e5ea"/>
+        <text x="14" y="24" font-size="9" fill="#5a6070">首页 / 和弦显示</text>
+        <line x1="180" y1="20" x2="300" y2="20" stroke="#8b91a0" stroke-dasharray="2 2"/>
+        <text x="180" y="14" font-size="8" fill="#8b91a0">drag region</text>
+        <circle cx="340" cy="20" r="4" fill="#1a9d6b"/>
+        <text x="350" y="23" font-size="8" fill="#5a6070">硬编码色</text>
+        <rect x="400" y="8" width="24" height="24" rx="5" fill="none" stroke="#dc2626" stroke-dasharray="2 2"/>
+        <text x="400" y="46" font-size="8" fill="#dc2626">32px ok</text>
+        <rect x="430" y="10" width="36" height="20" rx="3" fill="none" stroke="#5a6070"/>
+        <rect x="466" y="10" width="36" height="20" rx="3" fill="none" stroke="#5a6070"/>
+        <rect x="502" y="10" width="14" height="20" rx="3" fill="none" stroke="#dc2626"/>
+        <text x="466" y="46" font-size="8" fill="#5a6070">36×28 win-ctrl</text>
+        <text x="490" y="14" font-size="7" fill="#dc2626">×</text>
+        <!-- 注释标注 -->
+        <text x="10" y="70" font-size="9" fill="#dc2626" font-weight="600">P0: oklch(var(--b2)) 缺 alpha → 背景不渲染</text>
+        <text x="10" y="84" font-size="9" fill="#dc2626" font-weight="600">P0: oklch(var(--bc)/0.7) 语法错误 → 文字色失效</text>
+        <text x="10" y="98" font-size="9" fill="#d97706" font-weight="600">P1: 延迟圆点硬编码 oklch 不随主题</text>
+        <text x="10" y="112" font-size="9" fill="#0891b2" font-weight="600">P2: 40px 高度未走 token</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — 修复后（语义背景 + Token 化）</div>
+      <svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="120" fill="#f7f8fa"/>
+        <rect x="0" y="0" width="520" height="40" fill="#eef0f3"/>
+        <text x="10" y="16" font-size="9" fill="#1a9d6b" font-weight="700">✓ bg-base-200 语义类</text>
+        <rect x="8" y="8" width="120" height="24" rx="4" fill="#fff" stroke="#e2e5ea"/>
+        <text x="14" y="24" font-size="9" fill="#1a1d23">首页 / 和弦显示</text>
+        <line x1="180" y1="20" x2="300" y2="20" stroke="#8b91a0" stroke-dasharray="2 2"/>
+        <circle cx="340" cy="20" r="4" fill="oklch(62% 0.17 145)"/>
+        <text x="350" y="23" font-size="8" fill="#5a6070">语义状态色</text>
+        <rect x="400" y="8" width="24" height="24" rx="6" fill="none" stroke="#4f6df5"/>
+        <text x="400" y="46" font-size="8" fill="#4f6df5">--hig-target-min</text>
+        <rect x="430" y="10" width="36" height="20" rx="4" fill="none" stroke="#5a6070"/>
+        <rect x="466" y="10" width="36" height="20" rx="4" fill="none" stroke="#5a6070"/>
+        <rect x="502" y="10" width="14" height="20" rx="4" fill="none" stroke="#5a6070"/>
+        <text x="430" y="56" font-size="8" fill="#1a9d6b">✓ duration-fast token</text>
+        <text x="10" y="70" font-size="9" fill="#1a9d6b" font-weight="600">✓ P0 修复：改用 bg-base-200 / text-base-content/70</text>
+        <text x="10" y="84" font-size="9" fill="#1a9d6b" font-weight="600">✓ 延迟圆点走 --hig-success/warning/error</text>
+        <text x="10" y="98" font-size="9" fill="#1a9d6b" font-weight="600">✓ 高度 40px → --hig-navbar-height token</text>
+        <text x="10" y="112" font-size="9" fill="#1a9d6b" font-weight="600">✓ 所有 transition → --hig-duration-fast</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">40px 导航栏高度合理，图标 20px + 文字层级清晰。面包屑路径递进缩进 OK。但字号 <code>0.8125rem</code>（AppBreadcrumb）硬编码，应走 <code>--hig-text-sm</code>。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">gap 4px / padding 8px 基本符合 4px 基线。但 <code>margin-left: 4px</code>（窗口控制组）与 <code>gap: 2px</code>（actions）混用，建议统一到 <code>--hig-space-1</code> / <code>--hig-space-2</code>。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd">action-btn 32px 达桌面下限 ✓。窗口控制 36×28 略小但可接受。<strong>缺失</strong>：移动端下拉菜单无 <code>role="menu"</code>；延迟状态仅有 <code>title</code> 无 <code>aria-live</code> 实时通告。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge ok">优秀</span></div><div class="dd">hover 过渡 150ms ✓，status-pulse 1.5s 呼吸动画 ✓，<code>prefers-reduced-motion</code> 已降级 ✓。仅时长值 <code>0.15s</code>/<code>0.12s</code>/<code>0.3s</code> 应统一到 token。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p0">阻断</span></div><div class="dd"><strong>P0</strong>：<code>oklch(var(--b2))</code> 等写法导致背景透明。延迟圆点硬编码色不随主题。关闭按钮 <code>#e81123</code> 可保留（Windows 约定）但应走 token。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">768px 断点切换 40→36px、32→28px、78→68px spacer，平滑。macOS 红绿灯区 78px spacer 正确处理。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p0">P0</span><div class="oc"><strong>修复 oklch 变量语法</strong><span>AppNavbar.vue 所有 <code>oklch(var(--b2))</code> → <code>oklch(var(--b2) / 1)</code> 或直接用 <code>bg-base-200</code> 语义类；<code>oklch(var(--bc) / 0.7)</code> → <code>oklch(var(--bc) / 0.7)</code>（确认 v4 变量含 %，需改写为 <code>color-mix(in oklch, var(--bc) 70%, transparent)</code>）。AppBreadcrumb 同理。</span></div></div>
+    <div class="opt-item"><span class="badge p0">P0</span><div class="oc"><strong>Wire.vue hsl → oklch</strong><span>连线颜色统一到 oklch 色彩空间，避免深色模式不可见。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>延迟圆点语义化</strong><span><code>oklch(70% 0.2 145)</code> → <code>var(--hig-success)</code>，warn/bad 同理映射到 <code>--hig-warning</code>/<code>--hig-error</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>移动端菜单补 role</strong><span>下拉 <code>&lt;ul&gt;</code> 加 <code>role="menu"</code>，<code>&lt;li&gt;</code> 加 <code>role="menuitem"</code>，并支持 Escape 关闭。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>时长 Token 化</strong><span><code>0.15s</code>/<code>0.12s</code>/<code>0.3s</code> → <code>var(--hig-duration-fast)</code> 等。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>延迟状态 aria-live</strong><span>延迟区域加 <code>aria-live="polite"</code>，状态变化时屏幕阅读器可感知。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.2 Home ===== -->
+<div class="page-anchor" id="page-home">
+  <h3>5.2 首页 — Home / ModuleCard</h3>
+  <p><code>src/views/Home.vue</code> · <code>src/views/components/ModuleCard.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — 模块卡片网格</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <text x="10" y="14" font-size="9" fill="#5a6070">grid 1/2/3/4 cols · gap-4 · p-4</text>
+        <g transform="translate(16,28)">
+          <rect width="115" height="70" rx="8" fill="#fff" stroke="#e2e5ea"/>
+          <rect x="10" y="10" width="40" height="40" rx="10" fill="#f0f2f5"/>
+          <text x="58" y="20" font-size="9" fill="#1a1d23" font-weight="700">和弦显示</text>
+          <text x="58" y="34" font-size="7" fill="#8b91a0">和弦显示</text>
+          <text x="10" y="62" font-size="6.5" fill="#5a6070">实时识别 MIDI 和弦</text>
+          <circle cx="105" cy="12" r="5" fill="none" stroke="#8b91a0"/>
+          <text x="103" y="15" font-size="6" fill="#8b91a0">⚙</text>
+        </g>
+        <g transform="translate(139,28)">
+          <rect width="115" height="70" rx="8" fill="#fff" stroke="#e2e5ea"/>
+          <rect x="10" y="10" width="40" height="40" rx="10" fill="#f0f2f5"/>
+          <text x="58" y="20" font-size="9" fill="#1a1d23" font-weight="700">瀑布钢琴</text>
+        </g>
+        <g transform="translate(262,28)"><rect width="115" height="70" rx="8" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="9" fill="#1a1d23">和弦词典</text></g>
+        <g transform="translate(385,28)"><rect width="115" height="70" rx="8" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="9" fill="#1a1d23">路由</text></g>
+        <g transform="translate(16,108)"><rect width="115" height="70" rx="8" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="9" fill="#1a1d23">调试器</text></g>
+        <text x="10" y="150" font-size="9" fill="#d97706" font-weight="600">P1: motion-v duration 0.3 硬编码</text>
+        <text x="10" y="164" font-size="9" fill="#0891b2" font-weight="600">P2: 图标 wrapper rounded-2xl 无 token</text>
+        <text x="10" y="178" font-size="9" fill="#0891b2" font-weight="600">P2: 标题 text-lg / 描述 text-sm 未走 HIG scale</text>
+        <text x="10" y="192" font-size="9" fill="#1a9d6b" font-weight="600">✓ focus-visible:ring-2 ✓ auto-rows-fr</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — Token 化 + 入场节奏</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <text x="10" y="14" font-size="9" fill="#5a6070">gap-hig-4 · p-hig-4 · stagger 入场</text>
+        <g transform="translate(16,28)">
+          <rect width="115" height="70" rx="14" fill="#fff" stroke="#e2e5ea"/>
+          <rect x="10" y="10" width="40" height="40" rx="10" fill="#eef1fe"/>
+          <text x="58" y="20" font-size="10" fill="#1a1d23" font-weight="700">和弦显示</text>
+          <text x="58" y="34" font-size="7.5" fill="#8b91a0">ID: 1</text>
+          <text x="10" y="62" font-size="7" fill="#5a6070">实时识别 MIDI 和弦</text>
+          <rect x="100" y="8" width="8" height="14" rx="4" fill="#4f6df5" opacity="0.1"/>
+          <text x="102" y="18" font-size="7" fill="#4f6df5">⚙</text>
+        </g>
+        <g transform="translate(139,28)"><rect width="115" height="70" rx="14" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="10" fill="#1a1d23" font-weight="700">瀑布钢琴</text></g>
+        <g transform="translate(262,28)"><rect width="115" height="70" rx="14" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="10" fill="#1a1d23" font-weight="700">和弦词典</text></g>
+        <g transform="translate(385,28)"><rect width="115" height="70" rx="14" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="10" fill="#1a1d23" font-weight="700">路由</text></g>
+        <g transform="translate(16,108)"><rect width="115" height="70" rx="14" fill="#fff" stroke="#e2e5ea"/><text x="10" y="40" font-size="10" fill="#1a1d23" font-weight="700">调试器</text></g>
+        <text x="10" y="150" font-size="9" fill="#1a9d6b" font-weight="600">✓ duration → --hig-duration-slow + ease-emphasized</text>
+        <text x="10" y="164" font-size="9" fill="#1a9d6b" font-weight="600">✓ stagger 50ms 错峰入场</text>
+        <text x="10" y="178" font-size="9" fill="#1a9d6b" font-weight="600">✓ rounded-hig-lg · text-hig-lg / text-hig-sm</text>
+        <text x="10" y="192" font-size="9" fill="#1a9d6b" font-weight="600">✓ hover 微抬升 translateY(-2px) + shadow-md</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">标题 <code>text-lg</code> + 描述 <code>text-sm</code> + ID <code>text-xs</code> 形成三级层级。图标 wrapper 56px 与文字比例协调。但 <code>text-lg</code>/<code>text-sm</code> 未映射到 HIG scale。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge ok">优秀</span></div><div class="dd"><code>gap-4</code> + <code>p-4</code> + <code>auto-rows-fr</code> 等高网格，节奏统一。卡片内 padding 一致。仅 <code>gap-4</code> 应映射 <code>--hig-space-4</code>。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge ok">优秀</span></div><div class="dd"><code>focus-visible:ring-2 ring-primary</code> 焦点环 ✓，RouterLink 语义化 ✓，设置按钮独立可点 ✓。<code>aria-label</code> 覆盖良好。建议补卡片整体 <code>role="link"</code> 语义。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p1">待改进</span></div><div class="dd">motion-v 入场动画存在但 <code>duration: 0.3</code> 硬编码，无 stagger 错峰，hover 缺微反馈。建议 stagger 50ms + hover translateY(-2px)。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge ok">优秀</span></div><div class="dd">全部用 <code>bg-base-100</code>/<code>border-base-200</code>/<code>text-base-content</code> 语义类，深浅色自动适配 ✓。无硬编码色值。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge ok">优秀</span></div><div class="dd"><code>grid-cols-1 sm:2 lg:3 xl:4</code> 四档断点平滑，窄屏单列不裁剪。完美。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>motion-v 入场动画 Token 化 + stagger</strong><span>duration <code>0.3</code> → <code>var(--hig-duration-slow)</code>，增加 50ms/项错峰，缓动用 <code>--hig-ease-emphasized</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>卡片 hover 微交互</strong><span>增加 <code>hover:-translate-y-0.5 hover:shadow-md transition</code>，提供"可点击"暗示。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>字号映射 HIG scale</strong><span><code>text-lg</code> → <code>text-hig-lg</code>(18px)，<code>text-sm</code> → <code>text-hig-sm</code>(13px)，<code>text-xs</code> → <code>text-hig-xs</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>图标 wrapper 圆角 Token 化</strong><span><code>rounded-2xl</code> → <code>rounded-hig-lg</code>(14px)，与卡片圆角形成嵌套关系。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.3 ChordDisplay ===== -->
+<div class="page-anchor" id="page-chorddisplay">
+  <h3>5.3 和弦显示页 — ChordDisplay</h3>
+  <p><code>src/views/ChordDisplay/ChordDisplay.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — Magic Number 泛滥</div>
+      <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#f7f8fa"/>
+        <rect x="8" y="8" width="504" height="140" rx="8" fill="#fff" stroke="#e2e5ea"/>
+        <text x="16" y="24" font-size="8" fill="#8b91a0">五线谱区</text>
+        <text x="270" y="60" font-size="28" fill="#1a1d23" font-weight="700" text-anchor="middle">Cmaj7</text>
+        <text x="270" y="82" font-size="11" fill="#5a6070" text-anchor="middle">C 大七和弦</text>
+        <text x="270" y="104" font-size="9" fill="#8b91a0" text-anchor="middle">C E G B</text>
+        <rect x="480" y="16" width="24" height="24" rx="6" fill="none" stroke="#5a6070"/>
+        <text x="488" y="32" font-size="9" fill="#5a6070">⚙</text>
+        <rect x="470" y="46" width="40" height="50" rx="6" fill="#fff" opacity="0.6"/>
+        <text x="475" y="60" font-size="7" fill="#8b91a0">Dm7</text>
+        <text x="475" y="76" font-size="7" fill="#8b91a0">Em7</text>
+        <rect x="8" y="156" width="504" height="56" rx="8" fill="#fff" stroke="#e2e5ea"/>
+        <text x="16" y="172" font-size="8" fill="#8b91a0">钢琴键盘 min-h-[150px]</text>
+        <rect x="20" y="180" width="180" height="24" fill="#1a1d23"/>
+        <rect x="200" y="180" width="180" height="24" fill="#1a1d23"/>
+        <text x="270" y="212" font-size="7" fill="#d97706" font-weight="600">⚠ gap-20=80px 打破节奏</text>
+        <text x="16" y="212" font-size="7" fill="#dc2626" font-weight="600">⚠ text-3xl/5xl · gap-6/20 · min-h-[150px] 全是 magic</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — HIG Token 驱动</div>
+      <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#f7f8fa"/>
+        <rect x="8" y="8" width="504" height="140" rx="14" fill="#fff" stroke="#e2e5ea"/>
+        <text x="16" y="24" font-size="8" fill="#8b91a0">五线谱区</text>
+        <text x="270" y="62" font-size="32" fill="#1a1d23" font-weight="700" text-anchor="middle">Cmaj7</text>
+        <text x="270" y="84" font-size="11" fill="#5a6070" text-anchor="middle">C 大七和弦</text>
+        <text x="270" y="104" font-size="9" fill="#8b91a0" text-anchor="middle">C E G B</text>
+        <rect x="480" y="16" width="24" height="24" rx="6" fill="none" stroke="#4f6df5"/>
+        <text x="488" y="32" font-size="9" fill="#4f6df5">⚙</text>
+        <rect x="466" y="44" width="42" height="54" rx="10" fill="#eef1fe" opacity="0.9"/>
+        <text x="471" y="60" font-size="7" fill="#5a6070">Dm7</text>
+        <text x="471" y="76" font-size="7" fill="#5a6070">Em7</text>
+        <rect x="8" y="156" width="504" height="56" rx="14" fill="#fff" stroke="#e2e5ea"/>
+        <text x="16" y="172" font-size="8" fill="#1a9d6b">--hig-keyboard-height</text>
+        <rect x="20" y="180" width="180" height="24" fill="#1a1d23"/>
+        <rect x="200" y="180" width="180" height="24" fill="#1a1d23"/>
+        <text x="16" y="212" font-size="7" fill="#1a9d6b" font-weight="600">✓ text-hig-3xl · gap-hig-6 · min-h via token</text>
+        <text x="270" y="212" font-size="7" fill="#1a9d6b" font-weight="600">✓ alt 和弦用 container 色</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p1">待改进</span></div><div class="dd">和弦名 <code>text-3xl md:text-5xl</code>(30→48px) 作为视觉焦点 OK，但与名称 <code>text-xl</code>(20px) 跨度过大且无中间阶梯。应映射 <code>--hig-text-4xl</code>(48) → <code>--hig-text-xl</code>(22)。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p1">待改进</span></div><div class="dd"><code>gap-6 md:gap-20</code>(24→80px) 跳跃过大，80px 打破 4px 基线节奏。建议 <code>gap-hig-5</code>(24) → <code>gap-hig-6</code>(32)。<code>min-h-[150px] md:min-h-[200px]</code> 应走 <code>--hig-keyboard-height</code>。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p2">良好</span></div><div class="dd">SettingsButton 有 aria-label ✓。alt 和弦可点击链接。建议五线谱/键盘区补 <code>role="img"</code> + <code>aria-label</code> 描述当前和弦。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">有 <code>group</code> 交互分组，hover 场景存在。和弦切换建议加 150ms 淡入过渡。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">主色用语义类。但 <code>backdrop-blur-sm</code> 的 alt 和弦容器在深色下对比不足，建议改用 <code>bg-base-200/80</code> 语义半透明。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge ok">优秀</span></div><div class="dd"><code>flex-col md:flex-row</code> 竖屏堆叠→横屏并排，<code>text-3xl md:text-5xl</code> 响应式字号，键盘高度响应式。合理。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>消除 Magic Number</strong><span><code>text-3xl md:text-5xl</code> → <code>text-hig-3xl md:text-hig-4xl</code>；<code>gap-6 md:gap-20</code> → <code>gap-hig-5 md:gap-hig-6</code>；<code>min-h-[150px] md:min-h-[200px]</code> → <code>min-h-[var(--hig-keyboard-height)]</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>alt 和弦容器语义化</strong><span><code>backdrop-blur-sm</code> 裸容器 → <code>bg-base-200/80 backdrop-blur-sm rounded-hig-md p-hig-2</code>，深色模式可读。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>和弦切换过渡</strong><span>和弦名变化时加 <code>transition-opacity duration-hig-fast</code> 淡入。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>五线谱/键盘 ARIA</strong><span>补 <code>role="img"</code> + 动态 <code>aria-label</code>（如"当前和弦 Cmaj7，包含音符 C E G B"）。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.4 WaterfallPiano ===== -->
+<div class="page-anchor" id="page-waterfall">
+  <h3>5.4 瀑布钢琴页 — WaterfallPiano</h3>
+  <p><code>src/views/WaterfallPiano/WaterfallPiano.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — 全屏 Canvas + 浮动控件</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#0d1117"/>
+        <text x="10" y="14" font-size="8" fill="#8b91a0">Canvas 全屏（引擎自绘颜色）</text>
+        <rect x="200" y="20" width="120" height="80" rx="4" fill="#1a9d6b" opacity="0.3"/>
+        <text x="230" y="60" font-size="9" fill="#1a9d6b">音符块</text>
+        <rect x="0" y="150" width="520" height="40" fill="#1a1d23"/>
+        <text x="10" y="172" font-size="8" fill="#8b91a0">键盘</text>
+        <circle cx="490" cy="20" r="14" fill="rgba(255,255,255,0.1)"/>
+        <text x="486" y="24" font-size="9" fill="#fff">▶</text>
+        <circle cx="490" cy="50" r="14" fill="rgba(255,255,255,0.1)"/>
+        <text x="485" y="54" font-size="9" fill="#fff">⏸</text>
+        <rect x="430" y="14" width="50" height="20" rx="10" fill="rgba(255,255,255,0.1)"/>
+        <text x="437" y="28" font-size="8" fill="#fff" font-family="monospace">01:23</text>
+        <text x="10" y="190" font-size="8" fill="#d97706" font-weight="600">⚠ btn-sm 可能 <28px · badge 字号未 token</text>
+        <text x="200" y="190" font-size="8" fill="#0891b2" font-weight="600">P2: 键盘快捷键无屏显提示</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — 控件 Token 化 + 快捷键提示</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#0d1117"/>
+        <text x="10" y="14" font-size="8" fill="#8b91a0">Canvas（引擎颜色走主题系统）</text>
+        <rect x="200" y="20" width="120" height="80" rx="6" fill="#1a9d6b" opacity="0.3"/>
+        <text x="230" y="60" font-size="9" fill="#1a9d6b">音符块</text>
+        <rect x="0" y="150" width="520" height="40" fill="#1a1d23"/>
+        <text x="10" y="172" font-size="8" fill="#8b91a0">键盘</text>
+        <rect x="474" y="6" width="32" height="32" rx="8" fill="rgba(255,255,255,0.12)"/>
+        <text x="486" y="27" font-size="10" fill="#fff">▶</text>
+        <rect x="474" y="42" width="32" height="32" rx="8" fill="rgba(255,255,255,0.12)"/>
+        <text x="485" y="63" font-size="10" fill="#fff">⏸</text>
+        <rect x="420" y="10" width="50" height="24" rx="12" fill="rgba(255,255,255,0.12)"/>
+        <text x="427" y="26" font-size="9" fill="#fff" font-family="monospace">01:23</text>
+        <rect x="10" y="180" width="180" height="14" rx="7" fill="rgba(255,255,255,0.08)"/>
+        <text x="16" y="190" font-size="7" fill="#8b91a0">⌨ Space 播放 · Esc 停止</text>
+        <text x="10" y="172" font-size="8" fill="#1a9d6b" font-weight="600">✓ 32px target · badge text-hig-sm</text>
+        <text x="200" y="172" font-size="8" fill="#1a9d6b" font-weight="600">✓ 快捷键浮层提示</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge ok">优秀</span></div><div class="dd">全屏沉浸式 Canvas，浮动控件用半透明 backdrop-blur，不干扰主内容。badge <code>font-mono</code> 显示时间，技术感与可读性兼顾。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">浮动控件 <code>gap-2</code>(8px) 紧凑合理。SidebarDrawer 抽屉宽度需确认一致性。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>btn-sm</code>(32px) 达桌面下限 ✓。键盘快捷键 Space/Enter/Escape 完善且 onUnmounted 清理 ✓。<strong>缺失</strong>：Canvas 无文字替代；快捷键无屏显提示。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge ok">优秀</span></div><div class="dd">引擎内含粒子、流体、辉光等多层动效系统，PerformanceMonitor 帧率监控。键盘按下视觉反馈即时。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p1">待改进</span></div><div class="dd">Canvas 引擎颜色需通过 ThemeSystem 与 DaisyUI 主题同步。需确认深色/浅色主题切换时引擎颜色正确跟随。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">全屏 Canvas 自适应。SidebarDrawer 移动端抽屉。键盘高度随窗口缩放。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>浮动按钮确认 ≥32px</strong><span><code>btn-sm btn-circle</code> 确认渲染为 32px；若为 28px 则升级 <code>btn-md</code>。所有 <code>btn-ghost</code> 加 <code>backdrop-blur</code> 在深色 Canvas 上可读。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>Canvas ARIA 替代</strong><span>Canvas 容器加 <code>role="img"</code> + <code>aria-label</code> 描述当前播放状态（"正在播放：音符瀑布动画"）。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>快捷键屏显提示</strong><span>首次进入时浮层提示 "Space 播放 · Esc 停止 · S 设置"，3 秒后淡出。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>badge 字号 Token 化</strong><span><code>badge-lg</code> 内文字映射 <code>--hig-text-sm</code>，<code>font-mono</code> 保留。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>主题系统联调</strong><span>确认 ThemeSystem 在 DaisyUI 主题切换时正确更新引擎 oklch 颜色。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.5 ChordOverview ===== -->
+<div class="page-anchor" id="page-overview">
+  <h3>5.5 和弦词典总览 — ChordOverview</h3>
+  <p><code>src/views/ChordDictionary/Detail/ChordOverview.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — text-[10px] 违反可读性下限</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <text x="260" y="30" font-size="32" fill="#4f6df5" opacity="0.4" text-anchor="middle">♪</text>
+        <text x="260" y="54" font-size="14" fill="#1a1d23" font-weight="700" text-anchor="middle">和弦词典</text>
+        <text x="260" y="72" font-size="9" fill="#8b91a0" text-anchor="middle">探索和弦世界</text>
+        <rect x="180" y="86" width="160" height="24" rx="12" fill="#eef1fe"/>
+        <text x="200" y="101" font-size="9" fill="#5a6070">最近：Cmaj7  Am7  G7</text>
+        <text x="16" y="130" font-size="11" fill="#1a1d23" font-weight="700">常用和弦</text>
+        <g transform="translate(16,138)">
+          <rect width="48" height="22" rx="4" fill="#fff" stroke="#e2e5ea"/>
+          <text x="24" y="15" font-size="8" fill="#1a1d23" text-anchor="middle">Cmaj7</text>
+          <text x="24" y="28" font-size="6" fill="#dc2626" text-anchor="middle">C E G B</text>
+          <text x="60" y="14" font-size="6" fill="#dc2626">⚠10px</text>
+        </g>
+        <g transform="translate(72,138)"><rect width="48" height="22" rx="4" fill="#fff" stroke="#e2e5ea"/><text x="24" y="15" font-size="8" fill="#1a1d23" text-anchor="middle">Dm7</text></g>
+        <text x="16" y="186" font-size="8" fill="#dc2626" font-weight="600">⚠ text-[10px] 音符标签 &lt; 13px 最小可读</text>
+        <text x="260" y="186" font-size="8" fill="#0891b2" font-weight="600">P2: max-w-[1200px] 硬编码</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — 最小字号修复 + Token 化</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <text x="260" y="30" font-size="32" fill="#4f6df5" opacity="0.4" text-anchor="middle">♪</text>
+        <text x="260" y="56" font-size="16" fill="#1a1d23" font-weight="700" text-anchor="middle">和弦词典</text>
+        <text x="260" y="74" font-size="10" fill="#8b91a0" text-anchor="middle">探索和弦世界</text>
+        <rect x="180" y="86" width="160" height="26" rx="13" fill="#eef1fe"/>
+        <text x="200" y="103" font-size="10" fill="#5a6070">最近：Cmaj7  Am7  G7</text>
+        <text x="16" y="130" font-size="11" fill="#1a1d23" font-weight="700">常用和弦</text>
+        <g transform="translate(16,138)">
+          <rect width="52" height="26" rx="6" fill="#fff" stroke="#e2e5ea"/>
+          <text x="26" y="16" font-size="9" fill="#1a1d23" text-anchor="middle">Cmaj7</text>
+          <text x="26" y="30" font-size="8" fill="#8b91a0" text-anchor="middle">C E G B</text>
+          <text x="64" y="18" font-size="7" fill="#1a9d6b">✓13px</text>
+        </g>
+        <g transform="translate(76,138)"><rect width="52" height="26" rx="6" fill="#fff" stroke="#e2e5ea"/><text x="26" y="16" font-size="9" fill="#1a1d23" text-anchor="middle">Dm7</text></g>
+        <text x="16" y="186" font-size="8" fill="#1a9d6b" font-weight="600">✓ 音符标签 → text-hig-xs(12px) 辅助级</text>
+        <text x="260" y="186" font-size="8" fill="#1a9d6b" font-weight="600">✓ max-w 走 --hig-container-max</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">居中布局，图标→标题→描述→最近→分类，层级递进清晰。<code>uppercase tracking-wide</code> 分类标签有节奏感。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">居中 + <code>max-w-[1200px]</code> 容器约束合理。卡片网格 gap 一致。仅 max-w 应走 token。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p0">阻断</span></div><div class="dd"><strong>P0</strong>：<code>text-[10px]</code> 音程标签低于 13px 最小可读字号。<code>btn-sm</code> 和弦卡片点击目标需确认 ≥32px。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">chord-card 有 hover 反馈。建议加 <code>active:scale-95</code> 按压反馈。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge ok">优秀</span></div><div class="dd">全语义类，<code>text-primary/60</code> 图标色优雅。深浅色自动适配。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge ok">优秀</span></div><div class="dd">分类网格自适应列数，居中容器窄屏不溢出。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p0">P0</span><div class="oc"><strong>修复最小字号</strong><span><code>text-[10px]</code> → <code>text-hig-xs</code>(12px) 作为辅助标签；若为正文则 <code>text-hig-sm</code>(13px)。全项目搜索 <code>text-[10px]</code> / <code>text-[11px]</code> 统一修复。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>容器宽度 Token 化</strong><span><code>max-w-[1200px]</code> → <code>max-w-[var(--hig-container-max)]</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>和弦卡片按压反馈</strong><span>加 <code>active:scale-95 transition-transform duration-hig-instant</code>。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.6 ChordDetail ===== -->
+<div class="page-anchor" id="page-detail">
+  <h3>5.6 和弦详情页 — ChordDetail</h3>
+  <p><code>src/views/ChordDictionary/Detail/ChordDetail.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — fluid 字号 + 透明度变体混乱</div>
+      <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#f7f8fa"/>
+        <text x="260" y="50" font-size="40" fill="#1a1d23" font-weight="700" text-anchor="middle">Cmaj7</text>
+        <text x="260" y="64" font-size="7" fill="#d97706" text-anchor="middle">⚠ text-[min(64px,6vw)] fluid 无 token</text>
+        <rect x="160" y="76" width="200" height="20" rx="10" fill="#f0f2f5"/>
+        <text x="260" y="90" font-size="8" fill="#5a6070" text-anchor="middle">概览 · 音符 · 转位</text>
+        <rect x="16" y="106" width="488" height="40" rx="6" fill="#f0f2f5" opacity="0.3"/>
+        <text x="24" y="124" font-size="9" fill="#1a1d23" font-weight="700">音符构成</text>
+        <text x="24" y="138" font-size="8" fill="#5a6070">C E G B</text>
+        <text x="440" y="124" font-size="6" fill="#dc2626">⚠/30 透明度</text>
+        <rect x="16" y="154" width="488" height="40" rx="6" fill="#f0f2f5" opacity="0.2"/>
+        <text x="24" y="172" font-size="9" fill="#1a1d23" font-weight="700">转位</text>
+        <text x="440" y="172" font-size="6" fill="#dc2626">⚠/20 透明度</text>
+        <rect x="490" y="158" width="14" height="14" rx="3" fill="none" stroke="#5a6070"/>
+        <text x="494" y="168" font-size="7" fill="#5a6070">★</text>
+        <text x="470" y="210" font-size="6" fill="#dc2626">⚠ btn-xs 20px</text>
+        <text x="16" y="210" font-size="8" fill="#d97706" font-weight="600">⚠ border-b-2 border-base-content/10 透明度变体不统一</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — Token 化 + 透明度统一</div>
+      <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="220" fill="#f7f8fa"/>
+        <text x="260" y="50" font-size="40" fill="#1a1d23" font-weight="700" text-anchor="middle">Cmaj7</text>
+        <text x="260" y="64" font-size="7" fill="#1a9d6b" text-anchor="middle">✓ clamp(var(--hig-text-4xl), 6vw)</text>
+        <rect x="160" y="76" width="200" height="22" rx="11" fill="#eef1fe"/>
+        <text x="260" y="91" font-size="8" fill="#5a6070" text-anchor="middle">概览 · 音符 · 转位</text>
+        <rect x="16" y="106" width="488" height="40" rx="10" fill="#f0f2f5"/>
+        <text x="24" y="124" font-size="9" fill="#1a1d23" font-weight="700">音符构成</text>
+        <text x="24" y="138" font-size="8" fill="#5a6070">C E G B</text>
+        <text x="440" y="124" font-size="6" fill="#1a9d6b">✓ container</text>
+        <rect x="16" y="154" width="488" height="40" rx="10" fill="#f0f2f5"/>
+        <text x="24" y="172" font-size="9" fill="#1a1d23" font-weight="700">转位</text>
+        <text x="440" y="172" font-size="6" fill="#1a9d6b">✓ 统一</text>
+        <rect x="486" y="158" width="20" height="20" rx="5" fill="none" stroke="#4f6df5"/>
+        <text x="491" y="171" font-size="8" fill="#4f6df5">★</text>
+        <text x="470" y="210" font-size="6" fill="#1a9d6b">✓ 32px target</text>
+        <text x="16" y="210" font-size="8" fill="#1a9d6b" font-weight="600">✓ border-base-200 统一边框</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">和弦名 fluid 大字作为焦点，分区 collapse 层级清晰。但 <code>text-[min(64px,6vw)]</code> 无 token 约束，应 <code>clamp(var(--hig-text-4xl), 6vw, var(--hig-text-5xl))</code>。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p1">待改进</span></div><div class="dd">分区 <code>bg-base-300/30</code> 与 <code>/20</code> 透明度不统一，破坏一致性。应统一到 <code>bg-base-200</code> 实色或 <code>bg-base-200/50</code> 单一透明度。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd">别名收藏 <code>btn-xs btn-circle</code>(24px) 过小。<code>details</code> 折叠原生可访问 ✓。建议 <code>role="tablist"</code> 给分区切换。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd"><code>details</code> 原生展开动效。toggle 切换有过渡。建议和弦名变化加淡入。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">主要语义类。透明度变体在深色下对比不一致，需统一。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge ok">优秀</span></div><div class="dd">fluid 字号随视口缩放，分区全宽自适应。合理。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>透明度变体统一</strong><span><code>bg-base-300/30</code>、<code>/20</code>、<code>/50</code> 统一为 <code>bg-base-200</code>（实色）或 <code>bg-base-200/60</code>（单一透明度），全项目一致。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>收藏按钮放大</strong><span><code>btn-xs</code> → <code>btn-sm</code>，确保 ≥32px 点击目标。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>fluid 字号 Token 化</strong><span><code>text-[min(64px,6vw)]</code> → <code>text-[clamp(var(--hig-text-3xl),6vw,var(--hig-text-5xl))]</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>边框统一</strong><span><code>border-b-2 border-base-content/10</code> → <code>border-b border-base-200</code>，走语义边框 token。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.7 SettingsLayout ===== -->
+<div class="page-anchor" id="page-settings-layout">
+  <h3>5.7 设置外壳 — SettingsLayout</h3>
+  <p><code>src/views/Settings/Layout/SettingsLayout.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — 侧栏 + 缺 aria-current</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <rect x="0" y="0" width="140" height="200" fill="#f0f2f5"/>
+        <text x="8" y="16" font-size="7" fill="#8b91a0">menu-title text-[10px]</text>
+        <text x="40" y="16" font-size="6" fill="#dc2626">⚠10px</text>
+        <rect x="8" y="24" width="124" height="20" rx="4" fill="#4f6df5"/>
+        <text x="16" y="38" font-size="8" fill="#fff">⚙ 通用</text>
+        <text x="100" y="38" font-size="6" fill="#fff">无aria-current</text>
+        <rect x="8" y="48" width="124" height="20" rx="4" fill="none"/>
+        <text x="16" y="62" font-size="8" fill="#5a6070">🎹 光标</text>
+        <rect x="0" y="76" width="140" height="24" fill="#fff"/>
+        <rect x="12" y="82" width="116" height="16" rx="4" fill="#f7f8fa" stroke="#e2e5ea"/>
+        <text x="20" y="93" font-size="7" fill="#8b91a0">🔍 搜索设置...</text>
+        <rect x="140" y="0" width="380" height="28" fill="#eef0f3"/>
+        <text x="148" y="18" font-size="9" fill="#1a1d23" font-weight="700">设置</text>
+        <rect x="400" y="6" width="50" height="16" rx="3" fill="none" stroke="#5a6070"/>
+        <text x="406" y="17" font-size="6" fill="#5a6070">↻ 重置</text>
+        <rect x="160" y="40" width="340" height="150" rx="6" fill="#fff"/>
+        <text x="168" y="60" font-size="8" fill="#8b91a0">RouterView 内容区</text>
+        <text x="168" y="186" font-size="6.5" fill="#dc2626" font-weight="600">⚠ menu-title 10px · RouterLink 无 aria-current · dialog 无 aria-labelledby</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — ARIA 补全 + 字号修复</div>
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="200" fill="#f7f8fa"/>
+        <rect x="0" y="0" width="140" height="200" fill="#f0f2f5"/>
+        <text x="8" y="16" font-size="8" fill="#8b91a0">menu-title text-hig-xs</text>
+        <text x="48" y="16" font-size="6" fill="#1a9d6b">✓12px</text>
+        <rect x="8" y="24" width="124" height="22" rx="6" fill="#4f6df5"/>
+        <text x="16" y="39" font-size="8" fill="#fff">⚙ 通用</text>
+        <text x="96" y="39" font-size="6" fill="#fff">✓aria-current</text>
+        <rect x="8" y="50" width="124" height="22" rx="6" fill="none"/>
+        <text x="16" y="65" font-size="8" fill="#5a6070">🎹 光标</text>
+        <rect x="0" y="78" width="140" height="26" fill="#fff"/>
+        <rect x="12" y="84" width="116" height="18" rx="5" fill="#f7f8fa" stroke="#e2e5ea"/>
+        <text x="20" y="96" font-size="8" fill="#8b91a0">🔍 搜索设置...</text>
+        <rect x="140" y="0" width="380" height="30" fill="#eef0f3"/>
+        <text x="148" y="19" font-size="9" fill="#1a1d23" font-weight="700">设置</text>
+        <rect x="398" y="7" width="54" height="18" rx="5" fill="none" stroke="#5a6070"/>
+        <text x="404" y="19" font-size="7" fill="#5a6070">↻ 重置</text>
+        <rect x="160" y="40" width="340" height="150" rx="10" fill="#fff"/>
+        <text x="168" y="60" font-size="8" fill="#8b91a0">RouterView 内容区</text>
+        <text x="168" y="186" font-size="6.5" fill="#1a9d6b" font-weight="600">✓ 12px · aria-current="page" · dialog aria-labelledby</text>
+      </svg>
+    </div>
+  </div>
+
+  <h4>六维度评估</h4>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">侧栏分组 + menu-title 标签 + 图标导航，层级清晰。active 项 <code>bg-primary</code> 高对比。折叠态 tooltip 补全文字。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd"><code>w-14</code>(56px) 折叠 / <code>w-64</code>(256px) 展开，<code>gap-1</code> 菜单项紧凑。<code>p-3</code> 搜索区一致。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><strong>缺失</strong>：RouterLink 无 <code>aria-current="page"</code>；reset dialog 无 <code>aria-labelledby</code>；<code>menu-title text-[10px]</code> 违反最小字号；菜单无键盘方向键导航。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">drawer 展开有过渡。<code>transition-all duration-200</code> 存在但时长应 token 化。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge ok">优秀</span></div><div class="dd">全语义类 <code>bg-base-200</code>/<code>bg-base-300</code>/<code>bg-primary</code>，glass 效果。深浅色自动适配。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge ok">优秀</span></div><div class="dd"><code>drawer lg:drawer-open</code> 桌面常驻/移动抽屉，<code>is-drawer-close</code> 折叠态。设计完善。</div></div>
+  </div>
+
+  <h4>优化清单</h4>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>补 aria-current</strong><span>active RouterLink 加 <code>aria-current="page"</code>，屏幕阅读器可识别当前位置。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>menu-title 字号修复</strong><span><code>text-[10px]</code> → <code>text-hig-xs</code>(12px)，作为分组标签可接受。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>dialog aria-labelledby</strong><span>resetDialog 的 <code>modal-box</code> 内 <code>h3</code> 加 id，dialog 加 <code>aria-labelledby</code> 指向它。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>菜单键盘导航</strong><span>支持 ↑↓ 方向键在菜单项间移动，Enter 激活。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>btn-sm 确认尺寸</strong><span>重置按钮 <code>btn-sm</code> 确认 ≥32px。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.8 GeneralSettings ===== -->
+<div class="page-anchor" id="page-general">
+  <h3>5.8 通用设置 — GeneralSettings</h3>
+  <p><code>src/views/Settings/GeneralSettings/GeneralSettings.vue</code></p>
+
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge ok">优秀</span></div><div class="dd">SettingsCollapse 分组（语言/主题），default-open 首屏展开，SettingsSelect + ThemePicker 组件化层级清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p1">待改进</span></div><div class="dd"><code>grid gap-4 m-4</code> 中 <code>m-4</code>(16px) 外边距硬编码，应走 <code>p-hig-4</code> 内边距统一。gap-4 合理。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p2">良好</span></div><div class="dd">依赖 SettingsSection/Collapse/Select 组件的内置 ARIA。SettingsSection on-reset 有语义。需确认 Collapse 可键盘展开。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">Collapse 折叠动效由组件提供。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge ok">优秀</span></div><div class="dd">全组件化语义类，ThemePicker 主题切换核心。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd"><code>grid-cols-1</code> 单列，移动端友好。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>m-4 → p-hig-4</strong><span>外边距改内边距走 token，避免与 SettingsSection 容器冲突。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>确认 Collapse 键盘可达</strong><span>验证 SettingsCollapse 的触发器是 <code>button</code> 且可 Enter/Space 展开。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.9 CursorSettings ===== -->
+<div class="page-anchor" id="page-cursor">
+  <h3>5.9 光标设置 — CursorSettings</h3>
+  <p><code>src/views/Settings/CursorSettings/CursorSettings.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge ok">优秀</span></div><div class="dd">多 SettingsCollapse 分组（通用/悬停/尺寸/颜色/高级），每组内 Toggle/Select/Range/ColorPicker 组件化，层级清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">依赖 SettingsSection 统一容器间距。需确认 ColorPicker/Range 控件间距一致。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p2">良好</span></div><div class="dd">Range 滑块原生可键盘操作 ✓。ColorPicker 需确认有文字标签而非纯色块。Toggle 有 <code>role="switch"</code>。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">Toggle/Select 状态切换有过渡。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">ThemeColorPicker 支持主题色选择。需确认自定义色在深色下可读。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">单列纵向堆叠，移动端友好。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>ColorPicker 文字标签</strong><span>确认每个颜色选择器有关联 <code>label</code> 或 <code>aria-label</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>Range 滑块 aria-valuetext</strong><span>滑块补 <code>aria-valuetext</code> 描述当前值含义（如"12px"而非纯数字）。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.10 Routing ===== -->
+<div class="page-anchor" id="page-routing">
+  <h3>5.10 路由设置 — Routing</h3>
+  <p><code>src/views/Settings/Routing/Routing.vue</code> · <code>Wire.vue</code></p>
+
+  <div class="mockup-row">
+    <div class="mockup-box before">
+      <div class="mh">● BEFORE — Wire hsl Bug + btn-xs</div>
+      <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="180" fill="#f7f8fa"/>
+        <rect x="8" y="8" width="504" height="164" rx="8" fill="#fff" stroke="#e2e5ea"/>
+        <rect x="16" y="16" width="80" height="16" rx="3" fill="#eef1fe"/>
+        <text x="20" y="27" font-size="7" fill="#4f6df5">视图切换 btn-xs</text>
+        <text x="100" y="27" font-size="6" fill="#dc2626">⚠24px</text>
+        <circle cx="80" cy="70" r="20" fill="#eef1fe" stroke="#4f6df5"/>
+        <text x="80" y="74" font-size="8" fill="#4f6df5" text-anchor="middle">IN</text>
+        <circle cx="440" cy="70" r="20" fill="#eef1fe" stroke="#1a9d6b"/>
+        <text x="440" y="74" font-size="8" fill="#1a9d6b" text-anchor="middle">OUT</text>
+        <path d="M100,70 Q260,40 420,70" stroke="hsl(220,70%,50%)" stroke-width="2" fill="none"/>
+        <text x="200" y="56" font-size="6.5" fill="#dc2626">⚠ hsl() 深色不可见</text>
+        <text x="16" y="120" font-size="8" fill="#8b91a0">矩阵表格 table-zebra</text>
+        <rect x="16" y="126" width="488" height="14" fill="#f0f2f5"/>
+        <rect x="16" y="140" width="488" height="14" fill="#fff"/>
+        <text x="16" y="166" font-size="7" fill="#d97706" font-weight="600">⚠ toggle-sm 目标小 · btn-xs 24px</text>
+      </svg>
+    </div>
+    <div class="mockup-box after">
+      <div class="mh">✓ AFTER — oklch 连线 + 目标放大</div>
+      <svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+        <rect width="520" height="180" fill="#f7f8fa"/>
+        <rect x="8" y="8" width="504" height="164" rx="10" fill="#fff" stroke="#e2e5ea"/>
+        <rect x="16" y="16" width="84" height="20" rx="5" fill="#eef1fe"/>
+        <text x="20" y="29" font-size="7" fill="#4f6df5">视图切换 btn-sm</text>
+        <text x="106" y="29" font-size="6" fill="#1a9d6b">✓32px</text>
+        <circle cx="80" cy="70" r="20" fill="#eef1fe" stroke="#4f6df5"/>
+        <text x="80" y="74" font-size="8" fill="#4f6df5" text-anchor="middle">IN</text>
+        <circle cx="440" cy="70" r="20" fill="#eef1fe" stroke="#1a9d6b"/>
+        <text x="440" y="74" font-size="8" fill="#1a9d6b" text-anchor="middle">OUT</text>
+        <path d="M100,70 Q260,40 420,70" stroke="oklch(55% 0.2 260)" stroke-width="2.5" fill="none"/>
+        <text x="200" y="56" font-size="6.5" fill="#1a9d6b">✓ oklch 深色可见</text>
+        <text x="16" y="120" font-size="8" fill="#8b91a0">矩阵表格 table-zebra</text>
+        <rect x="16" y="126" width="488" height="14" fill="#f0f2f5"/>
+        <rect x="16" y="140" width="488" height="14" fill="#fff"/>
+        <text x="16" y="166" font-size="7" fill="#1a9d6b" font-weight="600">✓ toggle-md · btn-sm 32px</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">流程图节点 IN/OUT + 连线，矩阵表 table-zebra，视图切换 tab。层级清晰。<code>role="tablist"</code> + <code>aria-selected</code> 做得规范 ✓。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">节点间距、表格行距一致。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>btn-xs</code>(24px) 视图切换过小；<code>toggle-sm</code> 目标小。tablist/tab/tabpanel ARIA 规范 ✓。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">连线拖拽有实时反馈。建议连线加流动动画表示信号方向。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p0">阻断</span></div><div class="dd"><strong>P0</strong>：Wire.vue 用 <code>hsl()</code> 硬编码色，深色模式不可见。应改 oklch + 语义变量。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">流程图/矩阵双视图切换适应不同密度需求。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p0">P0</span><div class="oc"><strong>Wire.vue hsl → oklch</strong><span>连线颜色全部改 <code>oklch()</code> 并引用语义变量，深色模式可见。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>btn-xs → btn-sm</strong><span>视图切换、工具栏按钮统一 ≥32px。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>toggle-sm → toggle-md</strong><span>矩阵切换 toggle 目标 ≥36px。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>连线流动动画</strong><span>激活连线上加 dashed 流动动画表示信号方向，<code>prefers-reduced-motion</code> 降级为静态。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.11 NotationSettings ===== -->
+<div class="page-anchor" id="page-notation">
+  <h3>5.11 乐谱设置 — NotationSettings</h3>
+  <p><code>src/views/Settings/NotationSettings/NotationSettings.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge ok">优秀</span></div><div class="dd">SettingsCollapse 分组（标题/显示选项），InputNote + Select/Range/Toggle + NotationLayout/StyleSettings 子组件，层级清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">组件化间距统一。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p2">良好</span></div><div class="dd">InputNote 输入框需确认 label 关联。Select/Range 原生可访问。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">Collapse + 状态切换过渡。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge ok">优秀</span></div><div class="dd">全语义类。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">单列堆叠。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>InputNote label 关联</strong><span>确认输入框有 <code>label</code> 或 <code>aria-label</code>。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.12 ChordDictionarySettings ===== -->
+<div class="page-anchor" id="page-chord-dict-settings">
+  <h3>5.12 和弦词典设置 — ChordDictionarySettings</h3>
+  <p><code>src/views/Settings/ChordDictionarySettings/ChordDictionarySettings.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">SettingsCollapse 分组（浏览/禁用和弦/偏好记法），SettingsRadioGroup + 列表 + code 标签，层级清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">列表 <code>bg-base-200/50</code> 条目统一。code 元素内联合理。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>btn-sm btn-ghost btn-square</code> 删除按钮约 32px ✓ 但图标 14px 偏小。RadioGroup 需确认 <code>role="radiogroup"</code>。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">hover/active 反馈存在。删除建议加确认或 undo。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd"><code>text-error</code> 删除色语义 ✓。code <code>bg-base-200</code> ✓。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">单列堆叠。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>RadioGroup ARIA</strong><span>确认 <code>role="radiogroup"</code> + <code>role="radio"</code> + <code>aria-checked</code>，支持方向键切换。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>删除图标放大</strong><span>14px → 16px，与 32px 按钮比例协调。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.13 ChordDisplayList ===== -->
+<div class="page-anchor" id="page-chord-list">
+  <h3>5.13 和弦显示列表 — ChordDisplayList</h3>
+  <p><code>src/views/Settings/ChordDisplaySettings/ChordDisplayList.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd"><code>tabs-boxed</code> 标签页 + <code>btn-success</code> 新增按钮，层级清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">tabs 间距一致。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>tab-sm</code> 点击目标小；RouterLink tab 缺 <code>aria-current="page"</code>。建议补 <code>role="tablist"</code> 语义。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">tab 切换有过渡。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p1">待改进</span></div><div class="dd"><code>btn-success</code>（绿色）用于"新增"——在中文语境绿色=涨/新增可接受，但 HIG 建议主操作用 <code>primary</code>，success 保留给成功状态反馈。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">tabs 横向可滚动。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>tab ARIA 补全</strong><span>补 <code>role="tablist"</code>/<code>role="tab"</code> + <code>aria-selected</code> + <code>aria-current="page"</code>。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>新增按钮语义</strong><span><code>btn-success</code> → <code>btn-primary</code>，success 色保留给操作成功后的 toast/反馈。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>tab-sm 放大</strong><span>确认 tab 点击区域 ≥32px。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.14 ChordDisplayModuleSettings ===== -->
+<div class="page-anchor" id="page-chord-module-settings">
+  <h3>5.14 和弦显示模块设置 — ChordDisplayModuleSettings</h3>
+  <p><code>src/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">大量 SettingsCollapse 分组（和弦/附加信息/键盘/皮肤/颜色），每组内 Toggle/Select/Range/TextInput/ColorPicker，层级清晰但内容极多。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">组件化间距统一。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd">表单极长，缺乏锚点跳转。ColorPicker/TextInput 需确认 label。建议加分组锚点目录。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">Collapse 折叠展开。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">全语义类。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p1">待改进</span></div><div class="dd">长表单在窄屏需大量滚动，建议加分组锚点 TOC 或手风琴单开模式。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>分组锚点 TOC</strong><span>顶部加分组锚点链接，点击跳转到对应 Collapse，长表单导航友好。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>表单 label 审计</strong><span>确认所有 TextInput/ColorPicker 有关联 label。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.15 WaterfallPianoSettings ===== -->
+<div class="page-anchor" id="page-waterfall-settings">
+  <h3>5.15 瀑布钢琴设置 — WaterfallPianoSettings</h3>
+  <p><code>src/views/Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue</code>（1268 行，最大设置页）</p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge p2">良好</span></div><div class="dd">基础/高级两大分组，h2 <code>text-lg font-bold</code> 标题。但 h2 未走 HIG scale，内容极多需锚点。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">SettingsCollapse 统一间距。file-input 图片上传区域需确认尺寸。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>btn-xs btn-ghost</code> 重置按钮 24px 过小。file-input 需确认可键盘操作。1268 行表单无锚点。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">Collapse 折叠。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">全语义类。主题色选择需确认深色对比。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p1">待改进</span></div><div class="dd">超长表单窄屏体验差，急需锚点 TOC + 搜索（已有 SettingsLayout 全局搜索，但页内无锚点）。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>页内锚点 TOC</strong><span>1268 行设置页必须在顶部加分组锚点目录，点击跳转 + 滚动高亮。</span></div></div>
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>btn-xs → btn-sm</strong><span>重置按钮 ≥32px。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>h2 字号 Token 化</strong><span><code>text-lg</code> → <code>text-hig-lg</code>(18px)。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>file-input ARIA</strong><span>图片上传确认 <code>aria-label</code> 描述用途。</span></div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ===== 5.16 Debugger ===== -->
+<div class="page-anchor" id="page-debugger">
+  <h3>5.16 调试器 — Debugger</h3>
+  <p><code>src/views/Settings/Debugger/Debugger.vue</code></p>
+  <div class="dim-grid">
+    <div class="dim-item"><div class="dt">① 视觉层级 <span class="badge ok">优秀</span></div><div class="dd">工具栏 + 过滤器 + 日志列表，badge <code>text-info/warning/error/success</code> 语义色标注级别，清晰。</div></div>
+    <div class="dim-item"><div class="dt">② 间距节奏 <span class="badge p2">良好</span></div><div class="dd">日志条目间距一致。</div></div>
+    <div class="dim-item"><div class="dt">③ 触达与无障碍 <span class="badge p1">待改进</span></div><div class="dd"><code>badge-sm</code> 级别标签小。日志列表需确认 <code>role="log"</code> + <code>aria-live</code>。过滤器 btn-sm 需确认 ≥32px。</div></div>
+    <div class="dim-item"><div class="dt">④ 动效反馈 <span class="badge p2">良好</span></div><div class="dd">autoScroll 自动滚动。新日志建议加淡入。</div></div>
+    <div class="dim-item"><div class="dt">⑤ 深浅色适配 <span class="badge p2">良好</span></div><div class="dd">语义状态色 ✓。建议日志数据用 <code>font-mono</code> 提升可读性。</div></div>
+    <div class="dim-item"><div class="dt">⑥ 响应式 <span class="badge p2">良好</span></div><div class="dd">工具栏窄屏可换行。</div></div>
+  </div>
+  <div class="opt-list">
+    <div class="opt-item"><span class="badge p1">P1</span><div class="oc"><strong>日志列表 ARIA</strong><span>补 <code>role="log"</code> + <code>aria-live="polite"</code>，新日志屏幕阅读器可感知。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>日志数据 monospace</strong><span>MIDI 数据/时间戳用 <code>font-mono</code>，提升技术数据可读性。</span></div></div>
+    <div class="opt-item"><span class="badge p2">P2</span><div class="oc"><strong>新日志淡入</strong><span>新增日志条目加 <code>animate-fade-in</code>，视觉锚点。</span></div></div>
+  </div>
+</div>
+
+</section>
+
+<!-- ============ 6. 跨页面模式 ============ -->
+<section id="patterns">
+  <h2><span class="num">6</span>跨页面通用模式</h2>
+
+  <h3>6.1 SettingsCollapse 复用模式</h3>
+  <p>设置页大量复用 <code>SettingsCollapse</code> + <code>SettingsToggle/Select/Range/ColorPicker</code> 组件体系。这是<strong>最佳实践</strong>，应确保：</p>
+  <ul>
+    <li>所有子控件 label 关联（<code>aria-label</code> 或 <code>&lt;label for&gt;</code>）</li>
+    <li>Collapse 触发器是 <code>button</code> 元素，<code>aria-expanded</code> 联动</li>
+    <li>Toggle 用 <code>role="switch"</code> + <code>aria-checked</code></li>
+    <li>Range 补 <code>aria-valuetext</code></li>
+    <li>RadioGroup 用 <code>role="radiogroup"</code> + 方向键支持</li>
+  </ul>
+
+  <h3>6.2 长表单导航模式</h3>
+  <p>ChordDisplayModuleSettings、WaterfallPianoSettings（1268 行）是超长表单。建议统一引入<strong>页内锚点 TOC</strong>模式：</p>
+  <div class="card tight">
+    <p><strong>方案</strong>：顶部 sticky 横向锚点条，点击跳转到对应 SettingsCollapse 分组，滚动时高亮当前分组（IntersectionObserver）。</p>
+  </div>
+
+  <h3>6.3 状态色统一</h3>
+  <p>当前状态色分散：AppNavbar 硬编码 oklch、Debugger 用 <code>text-info/warning/error/success</code>、Routing Wire 用 hsl。应统一到 <code>--hig-success/warning/error/info</code> 四色体系。</p>
+
+  <h3>6.4 点击目标底线</h3>
+  <p>全项目 <code>btn-xs</code>(24px) 应替换为 <code>btn-sm</code>(32px) 起步。仅在空间极度受限的工具栏内保留 <code>btn-sm</code>，绝不使用 <code>btn-xs</code> 作为可交互目标。</p>
+</section>
+
+<!-- ============ 7. 路线图 ============ -->
+<section id="roadmap">
+  <h2><span class="num">7</span>实施路线图</h2>
+
+  <h3>阶段一：P0 阻断修复（立即）</h3>
+  <div class="callout danger">
+    <strong>目标：消除导致界面不可见的 Bug</strong>
+  </div>
+  <table>
+    <tr><th>任务</th><th>文件</th><th>预估</th></tr>
+    <tr><td>oklch 变量语法修复</td><td>AppNavbar.vue, AppBreadcrumb.vue</td><td>1h</td></tr>
+    <tr><td>Wire.vue hsl → oklch</td><td>Routing/Wire.vue</td><td>0.5h</td></tr>
+    <tr><td>text-[10px] 最小字号修复</td><td>SettingsLayout, ChordOverview（全项目搜索）</td><td>0.5h</td></tr>
+  </table>
+
+  <h3>阶段二：Token 层建设（1-2 天）</h3>
+  <div class="callout info">
+    <strong>目标：建立 HIG Token 基础设施</strong>
+  </div>
+  <table>
+    <tr><th>任务</th><th>产出</th></tr>
+    <tr><td>创建 hig-tokens.css</td><td>字号/间距/圆角/触达/动效/状态色变量</td></tr>
+    <tr><td>tailwind.config.js 映射</td><td>text-hig-* / gap-hig-* / rounded-hig-* 工具类</td></tr>
+    <tr><td>深浅色容器色反转</td><td>[data-theme="dark"] container 明度反转</td></tr>
+  </table>
+
+  <h3>阶段三：P1 高优先级（3-5 天）</h3>
+  <div class="callout warn">
+    <strong>目标：无障碍合规 + 交互一致性</strong>
+  </div>
+  <table>
+    <tr><th>任务</th><th>范围</th></tr>
+    <tr><td>aria-current="page" 补全</td><td>SettingsLayout, ChordDisplayList, 所有 RouterLink 导航</td></tr>
+    <tr><td>dialog aria-labelledby</td><td>SettingsLayout resetDialog + 全项目 modal</td></tr>
+    <tr><td>btn-xs → btn-sm 全局替换</td><td>Routing, ChordDictionarySettings, WaterfallPianoSettings</td></tr>
+    <tr><td>状态色语义化</td><td>AppNavbar 延迟圆点 → --hig-success/warning/error</td></tr>
+    <tr><td>长表单锚点 TOC</td><td>ChordDisplayModuleSettings, WaterfallPianoSettings</td></tr>
+    <tr><td>日志列表 ARIA</td><td>Debugger role="log" + aria-live</td></tr>
+    <tr><td>透明度变体统一</td><td>ChordDetail /30 /20 /50 → 统一</td></tr>
+  </table>
+
+  <h3>阶段四：P2 打磨（持续）</h3>
+  <div class="callout success">
+    <strong>目标：Magic Number 全消除 + 动效统一</strong>
+  </div>
+  <table>
+    <tr><th>任务</th><th>范围</th></tr>
+    <tr><td>Magic Number → Token</td><td>全项目 text-3xl/5xl, gap-20, min-h-[150px] 等</td></tr>
+    <tr><td>动效时长 Token 化</td><td>0.15s/0.12s/0.3s → --hig-duration-*</td></tr>
+    <tr><td>hover 微交互补全</td><td>ModuleCard translateY, chord-card active:scale</td></tr>
+    <tr><td>Canvas ARIA 替代</td><td>WaterfallPiano role="img" + aria-label</td></tr>
+    <tr><td>键盘快捷键提示</td><td>WaterfallPiano 首次浮层</td></tr>
+    <tr><td>菜单键盘方向键导航</td><td>SettingsLayout 侧栏</td></tr>
+  </table>
+</section>
+
+<!-- ============ 8. 成功指标 ============ -->
+<section id="metrics">
+  <h2><span class="num">8</span>成功指标</h2>
+  <div class="stats">
+    <div class="stat"><div class="sv">0</div><div class="sl">P0 阻断缺陷</div></div>
+    <div class="stat"><div class="sv">0</div><div class="sl">text-[10px] 违规</div></div>
+    <div class="stat"><div class="sv">100%</div><div class="sl">aria-current 覆盖</div></div>
+    <div class="stat"><div class="sv">0</div><div class="sl">裸 oklch/hsl 硬编码</div></div>
+  </div>
+  <table>
+    <tr><th>指标</th><th>现状</th><th>目标</th><th>验证方式</th></tr>
+    <tr><td>P0 缺陷数</td><td>5</td><td>0</td><td>本报告清单逐项验收</td></tr>
+    <tr><td>最小字号</td><td>10px</td><td>≥12px（辅助）/ ≥13px（正文）</td><td>全局搜索 text-[10px]/text-[11px]</td></tr>
+    <tr><td>点击目标</td><td>24px (btn-xs)</td><td>≥32px (btn-sm)</td><td>全局搜索 btn-xs</td></tr>
+    <tr><td>硬编码色值</td><td>~8 处</td><td>0（除 Windows 红外）</td><td>搜索 oklch(数字 / hsl( / #hex</td></tr>
+    <tr><td>aria-current 覆盖</td><td>0%</td><td>100% RouterLink</td><td>Lighthouse / axe 检测</td></tr>
+    <tr><td>Token 覆盖率</td><td>0%</td><td>≥80% Magic Number 替换</td><td>grep 裸值统计</td></tr>
+    <tr><td>Lighthouse A11y</td><td>待测</td><td>≥95</td><td>Chrome DevTools</td></tr>
+  </table>
+</section>
+
+<!-- ============ 9. 附录 ============ -->
+<section id="appendix">
+  <h2><span class="num">9</span>附录</h2>
+
+  <h3>9.1 受检文件清单</h3>
+  <pre><code><span class="com"># 全局外壳</span>
+src/views/Layout/AppNavbar.vue          <span class="com"># oklch bug P0</span>
+src/views/Layout/AppBreadcrumb.vue      <span class="com"># oklch bug P0</span>
+src/views/Layout/AppLayout.vue
+src/views/Layout/LatencyMonitor.vue
+src/views/Layout/QuickChangeKeyToolbar.vue
+
+<span class="com"># 主要功能页</span>
+src/views/Home.vue
+src/views/components/ModuleCard.vue
+src/views/ChordDisplay/ChordDisplay.vue
+src/views/WaterfallPiano/WaterfallPiano.vue
+src/views/ChordDictionary/Detail/ChordOverview.vue
+src/views/ChordDictionary/Detail/ChordDetail.vue
+src/views/ChordDictionary/Detail/EmptyChordDetail.vue
+
+<span class="com"># 设置页</span>
+src/views/Settings/Layout/SettingsLayout.vue
+src/views/Settings/GeneralSettings/GeneralSettings.vue
+src/views/Settings/CursorSettings/CursorSettings.vue
+src/views/Settings/Routing/Routing.vue + Wire.vue   <span class="com"># hsl bug P0</span>
+src/views/Settings/NotationSettings/NotationSettings.vue
+src/views/Settings/ChordDictionarySettings/ChordDictionarySettings.vue
+src/views/Settings/ChordDisplaySettings/ChordDisplayList.vue
+src/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue
+src/views/Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue  <span class="com"># 1268行</span>
+src/views/Settings/Debugger/Debugger.vue</code></pre>
+
+  <h3>9.2 快速修复命令参考</h3>
+  <pre><code><span class="com"># 搜索所有 P0 问题位置</span>
+grep -rn "oklch(var(--b" src/views/ src/components/
+grep -rn "hsl(" src/views/Settings/Routing/
+grep -rn "text-\[10px\]\|text-\[11px\]" src/
+
+<span class="com"># 搜索所有 btn-xs（P1 点击目标）</span>
+grep -rn "btn-xs" src/views/ src/components/
+
+<span class="com"># 搜索 Magic Number</span>
+grep -rn "text-3xl\|text-5xl\|gap-20\|min-h-\[" src/views/
+grep -rn "duration-[0-9]\|0\.1[0-9]s\|0\.[2-3][0-9]s" src/views/</code></pre>
+
+  <h3>9.3 Token 引用速查</h3>
+  <table>
+    <tr><th>场景</th><th>旧写法</th><th>新写法（Token）</th></tr>
+    <tr><td>背景色</td><td><code>oklch(var(--b2))</code></td><td><code>bg-base-200</code> 或 <code>oklch(var(--b2) / 1)</code></td></tr>
+    <tr><td>文字色 70%</td><td><code>oklch(var(--bc) / 0.7)</code></td><td><code>text-base-content/70</code> 或 <code>color-mix(in oklch, var(--bc) 70%, transparent)</code></td></tr>
+    <tr><td>连线色</td><td><code>hsl(220,70%,50%)</code></td><td><code>oklch(var(--p) / 1)</code> 或 <code>var(--hig-info)</code></td></tr>
+    <tr><td>状态绿</td><td><code>oklch(70% 0.2 145)</code></td><td><code>var(--hig-success)</code></td></tr>
+    <tr><td>字号-标题</td><td><code>text-3xl</code></td><td><code>text-hig-2xl</code> (28px)</td></tr>
+    <tr><td>字号-展示</td><td><code>text-5xl</code></td><td><code>text-hig-4xl</code> (48px)</td></tr>
+    <tr><td>间距-区块</td><td><code>gap-4</code></td><td><code>gap-hig-4</code> (16px)</td></tr>
+    <tr><td>圆角-卡片</td><td><code>rounded-lg</code></td><td><code>rounded-hig-lg</code> (14px)</td></tr>
+    <tr><td>动效-标准</td><td><code>duration-200</code></td><td><code>duration-[var(--hig-duration-normal)]</code> (220ms)</td></tr>
+    <tr><td>点击目标</td><td><code>btn-xs</code> (24px)</td><td><code>btn-sm</code> (32px) 起步</td></tr>
+  </table>
+
+  <div class="callout info" style="margin-top:32px">
+    <strong>文档说明</strong>
+    本报告基于 <code>src/views/</code> 下全部 15 个页面级组件的源码审计生成。
+    所有 before/after 标注图为示意性 SVG，用于直观展示优化要点；
+    六维度评估表与优化清单均对应具体源码行，可直接作为实施工单拆分依据。
+    建议按「阶段一 P0 → 阶段二 Token → 阶段三 P1 → 阶段四 P2」顺序推进。
+  </div>
+</section>
+
+</div>
+</body>
+</html>

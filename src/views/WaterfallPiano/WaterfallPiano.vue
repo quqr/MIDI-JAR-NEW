@@ -18,9 +18,49 @@
 
     <!-- 右上角浮动按钮 -->
     <div class="absolute top-4 right-4 z-10 flex gap-2">
+      <div class="dropdown dropdown-end">
+        <button
+          tabindex="0"
+          class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
+          :aria-label="t('waterfallPiano.keyboardShortcuts')"
+        >
+          <Icon name="help-circle" :size="16" />
+        </button>
+        <div
+          tabindex="0"
+          class="dropdown-content z-50 mt-2 p-3 rounded-lg bg-base-100 shadow-xl border border-base-200 w-56"
+        >
+          <h3 class="text-sm font-semibold mb-2">
+            {{ t("waterfallPiano.keyboardShortcuts") }}
+          </h3>
+          <ul class="space-y-1.5 text-xs">
+            <li class="flex items-center justify-between">
+              <span class="text-base-content/70">{{ t("waterfallPiano.shortcutRecord") }}</span>
+              <kbd class="kbd kbd-xs">Space</kbd>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="text-base-content/70">{{ t("waterfallPiano.shortcutPlay") }}</span>
+              <kbd class="kbd kbd-xs">Enter</kbd>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="text-base-content/70">{{ t("waterfallPiano.shortcutOctaveDown") }}</span>
+              <kbd class="kbd kbd-xs">Z</kbd>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="text-base-content/70">{{ t("waterfallPiano.shortcutOctaveUp") }}</span>
+              <kbd class="kbd kbd-xs">X</kbd>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="text-base-content/70">{{ t("waterfallPiano.shortcutToggleKeyboard") }}</span>
+              <kbd class="kbd kbd-xs">O</kbd>
+            </li>
+          </ul>
+        </div>
+      </div>
       <button
         class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
         :aria-label="t('waterfallPiano.openSettings')"
+        :title="t('waterfallPiano.openSettings') + ' (Esc)'"
         @click="settingsOpen = true"
       >
         <Icon name="settings" :size="16" />
@@ -28,6 +68,7 @@
       <button
         class="btn btn-circle btn-sm btn-ghost backdrop-blur-sm bg-base-100/30"
         :aria-label="t('waterfallPiano.playbackControls')"
+        :title="t('waterfallPiano.playbackControls')"
         @click="sidebarOpen = !sidebarOpen"
       >
         <Icon name="music" :size="16" />

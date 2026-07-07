@@ -65,7 +65,7 @@
             />
             <button
               v-if="searchQuery"
-              class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
+              class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
               :aria-label="t('common.clear')"
               @click="searchQuery = ''"
             >
@@ -93,7 +93,7 @@
           <template v-for="group in groupOrder" :key="group">
             <li
               v-if="getFilteredItems(group).length > 0"
-              class="menu-title is-drawer-close:hidden text-[10px] font-semibold uppercase tracking-wider text-base-content/40 px-4 pt-3 pb-1"
+              class="menu-title is-drawer-close:hidden text-xs font-semibold uppercase tracking-wider text-base-content/40 px-4 pt-3 pb-1"
             >
               {{ t(groupLabels[group]) }}
             </li>
@@ -107,9 +107,10 @@
                 :class="
                   isActive(item.to)
                     ? 'active bg-primary text-primary-content font-bold'
-                    : 'text-base-content/70 hover:bg-base-300/50'
+                    : 'text-base-content/70 hover:bg-base-300'
                 "
                 :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
+                :aria-current="isActive(item.to) ? 'page' : undefined"
               >
                 <Icon :name="item.icon" :size="20" aria-hidden="true" />
                 <span class="is-drawer-close:hidden">{{ t(item.labelKey) }}</span>
@@ -125,9 +126,9 @@
       </div>
     </div>
 
-    <dialog ref="resetDialog" class="modal">
+    <dialog ref="resetDialog" class="modal" aria-labelledby="reset-dialog-title">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ t("settings.resetConfirmTitle") }}</h3>
+        <h3 id="reset-dialog-title" class="font-bold text-lg">{{ t("settings.resetConfirmTitle") }}</h3>
         <p class="py-4">{{ resetConfirmMessage }}</p>
         <div class="modal-action">
           <button class="btn btn-sm" @click="closeDialog">

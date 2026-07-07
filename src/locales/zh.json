@@ -153,7 +153,8 @@
   },
   "notation": {
     "key": "调: {tonic}",
-    "semitone": "半音"
+    "semitone": "半音",
+    "ariaLabel": "乐谱"
   },
   "settings": {
     "title": "设置",
@@ -449,7 +450,8 @@
     "debuggerSettings": {
       "midiClock": "MIDI时钟",
       "clearMessages": "清除消息",
-      "autoScroll": "自动滚动"
+      "autoScroll": "自动滚动",
+      "messageLog": "MIDI 消息日志"
     },
     "notationOptions": {
       "long": "长格式 (min, maj, dom, aug, dim...)",
@@ -502,6 +504,12 @@
     "resetView": "重置视图",
     "canvasPlaying": "瀑布流钢琴正在播放: {notes}",
     "canvasIdle": "瀑布流钢琴就绪",
+    "keyboardShortcuts": "键盘快捷键",
+    "shortcutRecord": "录制",
+    "shortcutPlay": "播放/暂停",
+    "shortcutOctaveDown": "降八度",
+    "shortcutOctaveUp": "升八度",
+    "shortcutToggleKeyboard": "切换键盘显示",
     "recording": "录制中",
     "playing": "播放中",
     "showKeyboard": "显示键盘",

@@ -9,6 +9,7 @@
           class="btn btn-circle btn-sm"
           :class="{ 'btn-error': isRecording }"
           :aria-label="t('waterfallPiano.record')"
+          :title="t('waterfallPiano.record') + ' (Space)'"
           @click="$emit('toggleRecord')"
         >
           <span class="text-xs">●</span>
@@ -16,6 +17,7 @@
         <button
           class="btn btn-circle btn-sm btn-ghost"
           :aria-label="t('waterfallPiano.stop')"
+          :title="t('waterfallPiano.stop')"
           @click="$emit('stopAll')"
         >
           <span class="text-xs">■</span>
@@ -27,9 +29,13 @@
           :aria-label="
             isPlaying ? t('waterfallPiano.pause') : t('waterfallPiano.play')
           "
+          :title="
+            (isPlaying ? t('waterfallPiano.pause') : t('waterfallPiano.play')) +
+            ' (Enter)'
+          "
           @click="$emit('togglePlayback')"
         >
-          <span class="text-xs">{{ isPlaying ? "❚❚" : "▶" }}</span>
+          <span class="text-xs">{{ isPlaying ? '❚❚' : '▶' }}</span>
         </button>
       </div>
 

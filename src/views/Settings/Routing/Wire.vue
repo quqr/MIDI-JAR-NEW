@@ -22,8 +22,8 @@
     >
       <circle
         r="12"
-        fill="hsl(var(--color-error) / 0.85)"
-        stroke="hsl(var(--color-error) / 0.5)"
+        fill="color-mix(in oklch, var(--color-error) 85%, transparent)"
+        stroke="color-mix(in oklch, var(--color-error) 50%, transparent)"
         :stroke-width="1.5"
       />
       <text
@@ -43,8 +43,8 @@
     >
       <circle
         r="14"
-        fill="hsl(var(--color-error) / 0.85)"
-        stroke="hsl(var(--color-error) / 0.5)"
+        fill="color-mix(in oklch, var(--color-error) 85%, transparent)"
+        stroke="color-mix(in oklch, var(--color-error) 50%, transparent)"
         :stroke-width="1.5"
       />
       <text
@@ -87,9 +87,9 @@ const currentStrokeWidth = computed(() => {
 <style scoped>
 .wire-delete-btn:hover {
   opacity: 1;
-  filter: drop-shadow(0 0 6px hsl(var(--color-error) / 0.6));
+  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--color-error) 60%, transparent));
 }
 .wire-delete-btn:hover circle {
-  fill: hsl(var(--color-error));
+  fill: var(--color-error);
 }
 </style>

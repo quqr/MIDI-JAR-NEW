@@ -33,7 +33,7 @@
 
       <Background
         :gap="20"
-        pattern-color="hsl(var(--color-base-content) / 0.06)"
+        pattern-color="color-mix(in oklch, var(--color-base-content) 6%, transparent)"
       />
 
       <Controls position="top-right">
@@ -160,7 +160,7 @@ function handleConnect(connection: Connection) {
       animated: true,
       markerEnd: {
         type: "arrowclosed" as MarkerType,
-        color: "hsl(var(--color-base-content) / 0.5)",
+        color: "color-mix(in oklch, var(--color-base-content) 50%, transparent)",
       },
       style: { strokeWidth: 2.5 },
       data: { route },

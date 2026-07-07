@@ -2,10 +2,13 @@
   <div class="h-full flex flex-col overflow-hidden">
     <div
       class="flex items-center border-b px-2 py-1 gap-2 flex-wrap flex-shrink-0"
+      role="toolbar"
+      :aria-label="t('settings.debugger')"
     >
       <button
         class="btn btn-sm"
         :class="displayTimingClock ? 'btn-primary' : 'btn-outline'"
+        :aria-pressed="displayTimingClock"
         @click="displayTimingClock = !displayTimingClock"
       >
         <Icon name="clock" size="16" class="mr-1" />
@@ -19,6 +22,7 @@
         :key="filter.value"
         class="btn btn-sm"
         :class="activeFilter === filter.value ? 'btn-primary' : 'btn-outline'"
+        :aria-pressed="activeFilter === filter.value"
         @click="activeFilter = filter.value"
       >
         {{ filter.label }}
@@ -36,7 +40,14 @@
       </label>
     </div>
 
-    <div class="flex-1 min-h-0 p-2 overflow-auto" ref="logContainer">
+    <div
+      class="flex-1 min-h-0 p-2 overflow-auto"
+      ref="logContainer"
+      role="log"
+      aria-live="polite"
+      aria-atomic="false"
+      :aria-label="t('settings.debuggerSettings.messageLog')"
+    >
       <div
         v-for="log in filteredLogs"
         :key="log.id"

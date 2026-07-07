@@ -1,5 +1,6 @@
 <template>
-  <div class="p-4 space-y-4">
+  <SettingsSection :show-reset="false">
+    <div class="space-y-4">
     <!-- 基础设置 -->
     <div class="space-y-3">
       <h2 class="text-lg font-bold">
@@ -50,7 +51,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('particles')"
         >
           {{ t("common.resetToDefaults") }}
@@ -96,7 +97,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('keyboard')"
         >
           {{ t("common.resetToDefaults") }}
@@ -125,7 +126,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('audio')"
         >
           {{ t("common.resetToDefaults") }}
@@ -165,7 +166,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('background')"
         >
           {{ t("common.resetToDefaults") }}
@@ -380,7 +381,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('particles')"
         >
           {{ t("common.resetToDefaults") }}
@@ -470,7 +471,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('keyboard')"
         >
           {{ t("common.resetToDefaults") }}
@@ -500,7 +501,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('audio')"
         >
           {{ t("common.resetToDefaults") }}
@@ -529,7 +530,7 @@
           </div>
           <button
             v-if="store.settings.background.imageFile"
-            class="btn btn-xs btn-ghost w-full"
+            class="btn btn-sm btn-ghost w-full"
             @click="store.updateSetting('background', 'imageFile', '')"
           >
             {{ t("waterfallPiano.clearImage") }}
@@ -556,7 +557,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('background')"
         >
           {{ t("common.resetToDefaults") }}
@@ -745,7 +746,7 @@
 
         <!-- 分组重置 -->
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('particles')"
         >
           {{ t("common.resetToDefaults") }}
@@ -907,7 +908,7 @@
         </template>
 
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('postProcessing')"
         >
           {{ t("common.resetToDefaults") }}
@@ -951,7 +952,7 @@
         </template>
 
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('noteTexture')"
         >
           {{ t("common.resetToDefaults") }}
@@ -1135,7 +1136,7 @@
         </template>
 
         <button
-          class="btn btn-xs btn-ghost w-full mt-2"
+          class="btn btn-sm btn-ghost w-full mt-2"
           @click="store.resetGroup('noteBlockParticles')"
         >
           {{ t("common.resetToDefaults") }}
@@ -1153,6 +1154,7 @@
       </button>
     </div>
   </div>
+  </SettingsSection>
 </template>
 
 <script setup lang="ts">
@@ -1164,6 +1166,7 @@ import {
   SettingsSelect,
   SettingsRange,
   SettingsColorPicker,
+  SettingsSection,
 } from "@/components/Settings";
 
 const { t } = useI18n();

@@ -95,10 +95,10 @@
         {{ t("waterfallPiano.themeImportExport") }}
       </div>
       <div class="flex gap-2">
-        <button class="btn btn-xs btn-ghost flex-1" @click="exportTheme">
+        <button class="btn btn-sm btn-ghost flex-1" @click="exportTheme">
           {{ t("waterfallPiano.exportTheme") }}
         </button>
-        <button class="btn btn-xs btn-ghost flex-1" @click="importTheme">
+        <button class="btn btn-sm btn-ghost flex-1" @click="importTheme">
           {{ t("waterfallPiano.importTheme") }}
         </button>
       </div>
@@ -517,7 +517,7 @@
 
       <!-- 分组重置 -->
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('particles')"
       >
         {{ t("common.resetToDefaults") }}
@@ -663,7 +663,7 @@
 
       <!-- 分组重置 -->
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('keyboard')"
       >
         {{ t("common.resetToDefaults") }}
@@ -707,7 +707,7 @@
 
       <!-- 分组重置 -->
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('audio')"
       >
         {{ t("common.resetToDefaults") }}
@@ -769,7 +769,7 @@
         </div>
         <button
           v-if="store.settings.background.imageFile"
-          class="btn btn-xs btn-ghost w-full"
+          class="btn btn-sm btn-ghost w-full"
           @click="store.updateSetting('background', 'imageFile', '')"
         >
           {{ t("waterfallPiano.clearImage") }}
@@ -861,7 +861,7 @@
 
       <!-- 分组重置 -->
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('background')"
       >
         {{ t("common.resetToDefaults") }}
@@ -1085,7 +1085,7 @@
       </template>
 
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('postProcessing')"
       >
         {{ t("common.resetToDefaults") }}
@@ -1129,7 +1129,7 @@
       </template>
 
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('noteTexture')"
       >
         {{ t("common.resetToDefaults") }}
@@ -1305,7 +1305,7 @@
       </template>
 
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('noteBlockParticles')"
       >
         {{ t("common.resetToDefaults") }}
@@ -1357,7 +1357,7 @@
       />
 
       <button
-        class="btn btn-xs btn-ghost w-full mt-2"
+        class="btn btn-sm btn-ghost w-full mt-2"
         @click="store.resetGroup('performance')"
       >
         {{ t("common.resetToDefaults") }}

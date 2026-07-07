@@ -60,6 +60,7 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+
         :title="t('settings.chordDisplaySettings.additionalInfo')"
         icon="info"
         :default-open="true"
@@ -79,6 +80,7 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+
         :title="t('settings.chordDisplaySettings.keyboard')"
         icon="keyboard"
         :default-open="true"
@@ -152,6 +154,7 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+
         :title="t('settings.chordDisplaySettings.keyboardSkin')"
         icon="palette"
         :default-open="true"
@@ -219,6 +222,7 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+
         :title="t('settings.chordDisplaySettings.keyboardColors')"
         icon="palette"
         :default-open="true"

@@ -158,7 +158,7 @@
       <li v-for="item in navItems" :key="item.path">
         <RouterLink
           :to="item.path"
-          class="flex items-center gap-2 transition-all duration-200"
+          class="flex items-center gap-2 transition-all duration-hig-fast"
           :class="[
             isActive(item.path)
               ? 'btn btn-primary'
@@ -287,7 +287,7 @@ onMounted(async () => {
   align-items: center;
   height: 40px;
   min-height: 40px;
-  background-color: oklch(var(--b2));
+  background-color: var(--color-base-200);
   padding: 0 8px;
   gap: 4px;
   user-select: none;
@@ -338,15 +338,15 @@ onMounted(async () => {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  color: oklch(var(--bc) / 0.7);
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   transition:
     background-color 0.15s,
     color 0.15s;
 }
 
 .app-navbar__action-btn:hover {
-  background-color: oklch(var(--b1));
-  color: oklch(var(--bc));
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
 }
 
 .app-navbar__action-icon {
@@ -373,18 +373,18 @@ onMounted(async () => {
 }
 
 .latency-dot--good {
-  background-color: oklch(70% 0.2 145);
-  box-shadow: 0 0 4px oklch(70% 0.2 145 / 0.5);
+  background-color: var(--hig-success);
+  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-success) 50%, transparent);
 }
 
 .latency-dot--warn {
-  background-color: oklch(75% 0.18 85);
-  box-shadow: 0 0 4px oklch(75% 0.18 85 / 0.5);
+  background-color: var(--hig-warning);
+  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-warning) 50%, transparent);
 }
 
 .latency-dot--bad {
-  background-color: oklch(65% 0.25 25);
-  box-shadow: 0 0 4px oklch(65% 0.25 25 / 0.5);
+  background-color: var(--hig-error);
+  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-error) 50%, transparent);
 }
 
 .status-pulse {
@@ -395,13 +395,13 @@ onMounted(async () => {
 }
 
 .status-pulse--record {
-  background-color: oklch(65% 0.25 25);
-  box-shadow: 0 0 6px oklch(65% 0.25 25 / 0.6);
+  background-color: var(--hig-error);
+  box-shadow: 0 0 6px color-mix(in oklch, var(--hig-error) 60%, transparent);
 }
 
 .status-pulse--play {
-  background-color: oklch(70% 0.2 250);
-  box-shadow: 0 0 6px oklch(70% 0.2 250 / 0.6);
+  background-color: var(--hig-info);
+  box-shadow: 0 0 6px color-mix(in oklch, var(--hig-info) 60%, transparent);
 }
 
 @keyframes status-pulse {
@@ -437,7 +437,7 @@ onMounted(async () => {
   height: 28px;
   border: none;
   background: transparent;
-  color: oklch(var(--bc) / 0.7);
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   cursor: pointer;
   transition:
     background-color 0.12s,
@@ -446,8 +446,8 @@ onMounted(async () => {
 }
 
 .win-ctrl-btn:hover {
-  background-color: oklch(var(--b1));
-  color: oklch(var(--bc));
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
 }
 
 .win-ctrl-btn--close:hover {

@@ -1,6 +1,6 @@
 <template>
   <li
-    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors hover:bg-base-300/40 flex items-center justify-between"
+    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors hover:bg-base-300 flex items-center justify-between"
     :class="{ 'bg-primary/10 text-primary font-semibold': selected }"
     @click="$emit('select', chord.tonic + chord.aliases[0])"
   >

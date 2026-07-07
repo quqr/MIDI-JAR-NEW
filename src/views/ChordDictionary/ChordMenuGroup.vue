@@ -1,7 +1,10 @@
 <template>
-  <details class="group" open>
+  <details ref="detailsRef" class="group" open @toggle="isOpen = detailsRef?.open ?? true">
     <summary
-      class="flex items-center px-3 py-1.5 rounded-lg cursor-pointer text-sm font-semibold text-base-content/70 hover:bg-base-300/40 list-none marker:content-['']"
+      role="treeitem"
+      tabindex="0"
+      :aria-expanded="isOpen"
+      class="flex items-center px-3 py-1.5 rounded-lg cursor-pointer text-sm font-semibold text-base-content/70 hover:bg-base-300 list-none marker:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <Icon
         name="angle-right"
@@ -10,7 +13,7 @@
       />
       {{ group.label }}
     </summary>
-    <ul class="ml-4">
+    <ul class="ml-4" role="group">
       <template v-for="child in group.items" :key="getChildKey(child)">
         <ChordMenuItem
           v-if="child.type === 'item'"
@@ -30,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import type { ChordGroup, ChordItem } from "./utils";
 import ChordMenuItem from "./ChordMenuItem.vue";
 import ChordMenuGroup from "./ChordMenuGroup.vue";
@@ -43,6 +47,9 @@ defineProps<{
 defineEmits<{
   (e: "select", value: string): void;
 }>();
+
+const detailsRef = ref<HTMLDetailsElement | null>(null);
+const isOpen = ref(true);
 
 function getChildKey(child: ChordGroup | ChordItem): string {
   return child.type === "item" ? child.chordType.aliases[0] : child.value;

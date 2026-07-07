@@ -25,7 +25,7 @@
           <div
             v-if="displayChord"
             id="chord"
-            class="w-full flex items-center justify-center text-3xl md:text-5xl font-bold group relative"
+            class="w-full flex items-center justify-center text-hig-3xl md:text-hig-4xl font-bold group relative"
           >
             <ChordNameLink
               :chord="chords[0]"

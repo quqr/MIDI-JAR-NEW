@@ -14,12 +14,12 @@
       :aria-label="title"
     >
       <div
-        class="card bg-base-100 border border-base-200 h-full transition-colors duration-300 group-hover:border-primary/50 group-hover:shadow-lg"
+        class="card bg-base-100 border border-base-200 h-full transition-colors duration-hig-normal group-hover:border-primary/50 group-hover:shadow-lg"
       >
         <div class="card-body p-5 gap-4">
           <div class="flex items-start gap-4 w-full">
             <div
-              class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
+              class="icon-wrapper flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary transition-all duration-hig-normal group-hover:bg-primary group-hover:text-primary-content group-hover:scale-110 flex-shrink-0"
               aria-hidden="true"
             >
               <Icon :name="mapMdiToIcon(icon)" class="w-7 h-7" :size="28" />
@@ -34,7 +34,7 @@
                 <RouterLink
                   v-if="settingsTo"
                   :to="settingsTo"
-                  class="btn btn-ghost btn-xs btn-circle opacity-60 transition-all duration-300 group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0"
+                  class="btn btn-ghost btn-sm btn-circle opacity-60 transition-all duration-hig-normal group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0"
                   :aria-label="$t('common.settings')"
                   @click.stop
                 >

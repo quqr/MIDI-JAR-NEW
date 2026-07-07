@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center p-4 max-w-[1200px] mx-auto">
+  <div class="flex flex-col items-center p-4 max-w-[var(--hig-container-max)] mx-auto">
     <!-- Header -->
     <div class="text-center mb-6">
       <Icon
@@ -59,7 +59,7 @@
         >
           <span class="truncate font-medium text-sm">{{ entry.display }}</span>
           <span
-            class="text-[10px] text-base-content/50 font-mono ml-auto whitespace-nowrap"
+            class="text-xs text-base-content/50 font-mono ml-auto whitespace-nowrap"
           >
             {{ entry.intervals }}
           </span>

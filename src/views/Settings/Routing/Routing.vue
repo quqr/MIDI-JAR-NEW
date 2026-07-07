@@ -24,7 +24,7 @@
         :aria-label="t('settings.routingSettings.viewMode')"
       >
         <button
-          class="btn btn-xs"
+          class="btn btn-sm"
           :class="viewMode === 'matrix' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'matrix'"
@@ -34,7 +34,7 @@
           {{ t("settings.routingSettings.matrixView") }}
         </button>
         <button
-          class="btn btn-xs"
+          class="btn btn-sm"
           :class="viewMode === 'flow' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'flow'"

@@ -173,7 +173,7 @@ function resolveFullPath(
   display: flex;
   align-items: center;
   justify-content: center;
-  color: oklch(var(--bc) / 0.3);
+  color: color-mix(in oklch, var(--color-base-content) 30%, transparent);
   margin: 0 2px;
   flex-shrink: 0;
 }
@@ -185,7 +185,7 @@ function resolveFullPath(
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 0.8125rem;
-  color: oklch(var(--bc) / 0.7);
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -195,8 +195,8 @@ function resolveFullPath(
 }
 
 .breadcrumb-nav__link:hover {
-  background-color: oklch(var(--b2));
-  color: oklch(var(--bc));
+  background-color: var(--color-base-200);
+  color: var(--color-base-content);
 }
 
 .breadcrumb-nav__current {
@@ -207,8 +207,8 @@ function resolveFullPath(
   border-radius: 6px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: oklch(var(--p));
-  background-color: oklch(var(--p) / 0.1);
+  color: var(--color-primary);
+  background-color: color-mix(in oklch, var(--color-primary) 10%, transparent);
   white-space: nowrap;
   min-width: 0;
 }

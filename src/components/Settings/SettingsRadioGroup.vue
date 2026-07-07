@@ -7,7 +7,7 @@
       <label
         v-for="option in options"
         :key="String(option.value)"
-        class="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-base-200/50 transition-colors"
+        class="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-base-200 transition-colors"
       >
         <input
           type="radio"

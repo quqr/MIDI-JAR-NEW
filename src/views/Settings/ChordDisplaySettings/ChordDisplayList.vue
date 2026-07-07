@@ -9,12 +9,15 @@
         :class="
           currentRoute === `/settings/chords/${moduleId}` ? 'tab-active' : ''
         "
+        :aria-current="
+          currentRoute === `/settings/chords/${moduleId}` ? 'page' : undefined
+        "
       >
         {{ moduleId }}
       </RouterLink>
     </div>
     <button
-      class="btn btn-sm btn-success"
+      class="btn btn-sm btn-primary"
       :aria-label="t('settings.chordDisplaySettings.addSession')"
       @click="addModalOpen = true"
     >

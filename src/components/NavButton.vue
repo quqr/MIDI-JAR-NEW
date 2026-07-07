@@ -2,7 +2,7 @@
   <RouterLink :to="to" custom v-slot="{ navigate, href, isActive }">
     <a
       :href="href"
-      class="btn btn-ghost btn-sm rounded-lg normal-case font-inherit transition-all duration-200"
+      class="btn btn-ghost btn-sm rounded-lg normal-case font-inherit transition-all duration-hig-fast"
       :class="{ 'bg-primary/10 text-primary font-semibold': isActive }"
       @click="navigate"
     >

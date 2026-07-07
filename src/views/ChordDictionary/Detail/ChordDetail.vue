@@ -8,7 +8,7 @@
     <template v-else>
       <!-- Core: Chord name + toggle -->
       <h1
-        class="flex justify-center items-center border-b-2 border-base-content/10 mb-1 py-2 w-full flex-wrap gap-3"
+        class="flex justify-center items-center border-b border-base-200 mb-1 py-2 w-full flex-wrap gap-3"
       >
         <ChordName
           :chord="chord"
@@ -39,7 +39,7 @@
 
       <!-- Core: Piano keyboard -->
       <PianoKeyboard
-        class="w-full my-4 p-3 sm:p-4 bg-base-300/30 rounded-lg"
+        class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-lg"
         :targets="midi"
         :played="playedMidiNotes"
         :sustained="sustainedMidiNotes"
@@ -49,7 +49,7 @@
       />
 
       <!-- Core: Intervals (full width) -->
-      <section class="w-full p-3 bg-base-300/30 rounded-lg mb-4">
+      <section class="w-full p-3 bg-base-200 rounded-lg mb-4">
         <h3
           class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
         >
@@ -66,7 +66,7 @@
 
       <!-- Core: Notation (full width) -->
       <section
-        class="w-full min-w-0 p-3 bg-base-300/30 rounded-lg mb-4 overflow-visible"
+        class="w-full min-w-0 p-3 bg-base-200 rounded-lg mb-4 overflow-visible"
       >
         <h3
           class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
@@ -85,7 +85,7 @@
 
       <!-- Secondary: Aliases - always visible, compact -->
       <div class="w-full mb-4">
-        <details class="collapse collapse-arrow bg-base-300/20 rounded-lg" open>
+        <details class="collapse collapse-arrow bg-base-200 rounded-lg" open>
           <summary
             class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
           >
@@ -96,11 +96,11 @@
               <li
                 v-for="(alias, index) in chord.aliases"
                 :key="index"
-                class="flex items-center justify-between px-3 py-1.5 hover:bg-base-300/40 rounded-lg text-sm"
+                class="flex items-center justify-between px-3 py-1.5 hover:bg-base-300 rounded-lg text-sm"
                 :class="{
-                  'border-l-[3px] border-l-warning bg-base-300/30':
+                  'border-l-[3px] border-l-warning bg-base-300':
                     isPreferred(index),
-                  'border-l-[3px] border-l-info bg-base-300/20':
+                  'border-l-[3px] border-l-info bg-base-200':
                     isDefault(index) && !isPreferred(index),
                 }"
               >
@@ -126,7 +126,7 @@
                   <ChordName :chord="chord" :notation="index" />
                 </div>
                 <button
-                  class="btn btn-xs btn-ghost btn-circle"
+                  class="btn btn-sm btn-ghost btn-circle"
                   :class="
                     isPreferred(index) || isDefault(index) ? 'text-warning' : ''
                   "
@@ -160,7 +160,7 @@
 
       <!-- Tertiary: Other interpretations - collapsed by default -->
       <div v-if="alternativeChords.length" class="w-full mb-4">
-        <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
+        <details class="collapse collapse-arrow bg-base-200 rounded-lg">
           <summary
             class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
           >
@@ -171,7 +171,7 @@
               <li
                 v-for="altChord in alternativeChords"
                 :key="altChord.symbol"
-                class="px-3 py-1.5 hover:bg-base-300/40 rounded-lg cursor-pointer text-sm"
+                class="px-3 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer text-sm"
                 @click="goToChordDetail(altChord.tonic + altChord.aliases[0])"
               >
                 <ChordName :chord="altChord" />
@@ -183,7 +183,7 @@
 
       <!-- Tertiary: Inversions - collapsed by default -->
       <div class="w-full mb-4">
-        <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
+        <details class="collapse collapse-arrow bg-base-200 rounded-lg">
           <summary
             class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
           >
@@ -193,7 +193,7 @@
             <template v-for="(_, index) in chord.intervals" :key="index">
               <div
                 v-if="index > 0"
-                class="flex flex-row items-center flex-wrap w-full gap-3 p-3 mb-2 bg-base-300/30 rounded-lg"
+                class="flex flex-row items-center flex-wrap w-full gap-3 p-3 mb-2 bg-base-200 rounded-lg"
               >
                 <div class="flex-basis-[200px] flex-grow-0">
                   <ChordName
@@ -249,7 +249,7 @@
         v-if="subsetChords.length || supersetChords.length"
         class="w-full mb-4"
       >
-        <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
+        <details class="collapse collapse-arrow bg-base-200 rounded-lg">
           <summary
             class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
           >
@@ -267,7 +267,7 @@
                 <button
                   v-for="(c, index) in subsetChords"
                   :key="index"
-                  class="btn btn-xs btn-primary rounded-full"
+                  class="btn btn-sm btn-primary rounded-full"
                   @click="goToChordDetail(c.tonic + c.aliases[0])"
                 >
                   <ChordName :chord="c" />
@@ -284,7 +284,7 @@
                 <button
                   v-for="(c, index) in supersetChords"
                   :key="index"
-                  class="btn btn-xs btn-primary rounded-full"
+                  class="btn btn-sm btn-primary rounded-full"
                   @click="goToChordDetail(c.tonic + c.aliases[0])"
                 >
                   <ChordName :chord="c" />

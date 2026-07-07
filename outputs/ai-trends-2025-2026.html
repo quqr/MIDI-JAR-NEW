@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 发展趋势 · 2025–2026 最新趋势分析</title>
+<meta name="description" content="AI 发展趋势 2025–2026：Agent 化跃迁、推理成本崩塌、多模态融合、端侧智能爆发、垂直行业深耕、治理与对齐。数据参照 Stanford HAI、McKinsey、a16z、Gartner、IDC。" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #08090a;
+    --bg-elev: #0d0e10;
+    --bg-elev-2: #131417;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text: #ededf0;
+    --text-muted: #8a8f98;
+    --text-dim: #5c6068;
+    --accent: #5e6ad2;
+    --accent-soft: #7c83f3;
+    --accent-glow: rgba(94, 106, 210, 0.45);
+    --hi: #4ed6a0;
+    --mid: #e6b450;
+    --lo: #ef6a6a;
+    --maxw: 1120px;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Engineering grid + ambient glow */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    top: -20vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    height: 70vh;
+    background: radial-gradient(ellipse at center, var(--accent-glow), transparent 60%);
+    opacity: 0.22;
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; }
+
+  /* Scroll progress */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+    z-index: 100; box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(8, 9, 10, 0.72);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: var(--maxw); margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: 0.02em; }
+  .brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .brand .yr { font-family: var(--mono); font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .nav-links { display: flex; gap: 26px; }
+  .nav-links a {
+    color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500;
+    transition: color 0.2s; letter-spacing: 0.01em;
+  }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  .container { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* Hero */
+  .hero { padding: 130px 24px 96px; text-align: center; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    color: var(--text-muted); text-transform: uppercase;
+    border: 1px solid var(--border); border-radius: 100px;
+    padding: 6px 14px; margin-bottom: 28px;
+  }
+  .eyebrow .pulse {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--hi);
+    box-shadow: 0 0 8px var(--hi); animation: pulse 2.4s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .hero h1 {
+    font-size: clamp(38px, 6.4vw, 76px); line-height: 1.04; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 22px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(120deg, #fff 0%, var(--accent-soft) 60%, var(--accent) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.sub {
+    max-width: 640px; margin: 0 auto; color: var(--text-muted); font-size: 17px;
+  }
+  .hero .meta {
+    margin-top: 34px; font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+    display: flex; gap: 22px; justify-content: center; flex-wrap: wrap;
+  }
+  .hero .meta span b { color: var(--text-muted); font-weight: 500; }
+
+  /* Section heading */
+  .sec { padding: 80px 0; border-top: 1px solid var(--border); }
+  .sec-head { margin-bottom: 44px; }
+  .sec-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em;
+    color: var(--accent-soft); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .sec-head h2 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 600; letter-spacing: -0.015em; }
+  .sec-head p { color: var(--text-muted); margin-top: 10px; max-width: 640px; font-size: 15px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .stat { background: var(--bg-elev); padding: 28px 24px; }
+  .stat .num {
+    font-family: var(--mono); font-size: clamp(26px, 3.2vw, 36px); font-weight: 600;
+    color: #fff; letter-spacing: -0.01em; line-height: 1.1;
+  }
+  .stat .num .u { font-size: 0.55em; color: var(--text-muted); margin-left: 2px; }
+  .stat .lbl { color: var(--text); font-size: 14px; font-weight: 500; margin-top: 10px; }
+  .stat .src { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+  @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 460px) { .stats { grid-template-columns: 1fr; } }
+
+  /* Six slices */
+  .grid6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid6 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid6 { grid-template-columns: 1fr; } }
+  .card {
+    background: linear-gradient(180deg, var(--bg-elev) 0%, #0a0b0d 100%);
+    border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px;
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(120% 80% at 50% -10%, rgba(94,106,210,0.10), transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover { border-color: var(--border-strong); transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0,0,0,0.5); }
+  .card:hover::before { opacity: 1; }
+  .card .idx { font-family: var(--mono); font-size: 12px; color: var(--accent-soft); letter-spacing: 0.1em; }
+  .card h3 { font-size: 19px; font-weight: 600; margin: 12px 0 8px; letter-spacing: -0.01em; }
+  .card .en { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .card p { color: var(--text-muted); font-size: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* Three-pole */
+  .poles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; position: relative; }
+  @media (max-width: 820px) { .poles { grid-template-columns: 1fr; } }
+  .pole {
+    border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px;
+    background: linear-gradient(180deg, var(--bg-elev) 0%, #0a0b0d 100%);
+  }
+  .pole .flag { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .pole .flag .code {
+    font-family: var(--mono); font-weight: 600; font-size: 14px;
+    width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px;
+    border: 1px solid var(--border-strong);
+  }
+  .pole.us .flag .code { color: #7aa2ff; border-color: rgba(122,162,255,0.3); background: rgba(122,162,255,0.06); }
+  .pole.cn .flag .code { color: #ff8a8a; border-color: rgba(255,138,138,0.3); background: rgba(255,138,138,0.06); }
+  .pole.eu .flag .code { color: #9d8aff; border-color: rgba(157,138,255,0.3); background: rgba(157,138,255,0.06); }
+  .pole .flag .name { font-size: 16px; font-weight: 600; }
+  .pole .row { padding: 12px 0; border-top: 1px solid var(--border); }
+  .pole .row:first-of-type { border-top: none; }
+  .pole .row .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
+  .pole .row .v { font-size: 13.5px; color: var(--text); }
+  .pole .row .v small { color: var(--text-muted); display: block; margin-top: 3px; font-size: 12.5px; }
+
+  /* Predictions */
+  .pred { display: flex; flex-direction: column; gap: 12px; }
+  .pred-item {
+    display: flex; gap: 18px; align-items: flex-start;
+    border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px;
+    background: var(--bg-elev); transition: border-color 0.2s, background 0.2s;
+  }
+  .pred-item:hover { border-color: var(--border-strong); background: var(--bg-elev-2); }
+  .pred-item .pnum { font-family: var(--mono); font-size: 13px; color: var(--text-dim); padding-top: 2px; min-width: 28px; }
+  .pred-item .pbody { flex: 1; }
+  .pred-item .ptxt { font-size: 15px; color: var(--text); }
+  .pred-item .psrc { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+  .conf {
+    font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    padding: 4px 10px; border-radius: 100px; white-space: nowrap; margin-top: 1px;
+  }
+  .conf.hi { color: var(--hi); background: rgba(78,214,160,0.10); border: 1px solid rgba(78,214,160,0.28); }
+  .conf.mid { color: var(--mid); background: rgba(230,180,80,0.10); border: 1px solid rgba(230,180,80,0.28); }
+  .conf.lo { color: var(--lo); background: rgba(239,106,106,0.10); border: 1px solid rgba(239,106,106,0.28); }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 56px 24px 72px; margin-top: 40px; }
+  .foot-inner { max-width: var(--maxw); margin: 0 auto; }
+  .foot-sources { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .src-chip {
+    font-family: var(--mono); font-size: 11.5px; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 7px; padding: 5px 11px;
+    background: rgba(255,255,255,0.02);
+  }
+  .foot-note { color: var(--text-dim); font-size: 12.5px; max-width: 720px; line-height: 1.7; }
+  .foot-bottom {
+    margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--text-dim);
+  }
+
+  /* Three-pole divergence diagram */
+  .pole-diagram { margin-bottom: 36px; }
+  .pole-diagram svg { width: 100%; height: auto; display: block; }
+  .pd-line { stroke: var(--border-strong); stroke-width: 1.2; fill: none; }
+  .pd-axis { stroke: var(--border); stroke-width: 1; }
+  .pd-core { fill: var(--accent); }
+  .pd-core-ring { fill: none; stroke: var(--accent-soft); stroke-width: 1.2; }
+  .pd-label { font-family: var(--mono); font-size: 10.5px; fill: var(--text-muted); letter-spacing: 0.04em; }
+  .pd-cap { font-family: var(--mono); font-size: 9.5px; fill: var(--text-dim); letter-spacing: 0.06em; }
+  .pd-us { stroke: #7aa2ff; }
+  .pd-cn { stroke: #ff8a8a; }
+  .pd-eu { stroke: #9d8aff; }
+  .pd-dot-us { fill: #7aa2ff; }
+  .pd-dot-cn { fill: #ff8a8a; }
+  .pd-dot-eu { fill: #9d8aff; }
+
+  /* Predictions timeline */
+  .timeline { position: relative; }
+  .timeline::before { content: ""; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 1px; background: linear-gradient(var(--border-strong), transparent); }
+  .tl-item { position: relative; padding-left: 36px; margin-bottom: 14px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-node { position: absolute; left: 0; top: 18px; width: 17px; height: 17px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border-strong); display: grid; place-items: center; z-index: 1; }
+  .tl-node::after { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+  .tl-node.hi { border-color: var(--hi); } .tl-node.hi::after { background: var(--hi); box-shadow: 0 0 8px var(--hi); }
+  .tl-node.mid { border-color: var(--mid); } .tl-node.mid::after { background: var(--mid); box-shadow: 0 0 8px var(--mid); }
+  .tl-node.lo { border-color: var(--lo); } .tl-node.lo::after { background: var(--lo); box-shadow: 0 0 8px var(--lo); }
+  .tl-card { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg-elev); transition: border-color 0.2s, background 0.2s; }
+  .tl-card:hover { border-color: var(--border-strong); background: var(--bg-elev-2); }
+  .tl-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
+  .tl-top .pnum { font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+
+  /* Reveal animation */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="nav-inner">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>AI TRENDS</span>
+        <span class="yr">2025—2026</span>
+      </div>
+      <div class="nav-links">
+        <a href="#data">关键数据</a>
+        <a href="#slices">六大切片</a>
+        <a href="#poles">三极格局</a>
+        <a href="#predict">2026 预测</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="eyebrow reveal"><span class="pulse"></span> AI LANDSCAPE REPORT · 2025—2026</div>
+    <h1 class="reveal">AI 发展趋势<br /><span class="grad">2025–2026 最新趋势分析</span></h1>
+    <p class="sub reveal">从工具到主体，从云端到端侧，从狂热到治理。一份关于智能范式迁移的冷峻切片。</p>
+    <div class="meta reveal">
+      <span><b>SCOPE</b> 全球 · 六切片</span>
+      <span><b>DATA</b> Stanford HAI · McKinsey · a16z · Gartner · IDC</span>
+      <span><b>UPDATED</b> 2026.07</span>
+    </div>
+  </header>
+
+  <!-- KEY DATA -->
+  <section class="sec" id="data">
+    <div class="container">
+      <div class="sec-head reveal">
+        <div class="sec-label">// 01 — KEY METRICS</div>
+        <h2>关键数据</h2>
+        <p>支撑趋势判断的四条主线指标，均取自权威机构 2025–2026 年公开发布。</p>
+      </div>
+      <div class="stats reveal">
+        <div class="stat">
+          <div class="num">$2.52<span class="u">T</span></div>
+          <div class="lbl">全球 AI 总支出（2026E）</div>
+          <div class="src">Gartner · +44% YoY</div>
+        </div>
+        <div class="stat">
+          <div class="num">78<span class="u">%</span></div>
+          <div class="lbl">企业 AI 采用率</div>
+          <div class="src">McKinsey State of AI 2025</div>
+        </div>
+        <div class="stat">
+          <div class="num">~10<span class="u">x/yr</span></div>
+          <div class="lbl">Token 等效价格年降幅</div>
+          <div class="src">a16z · LLMflation</div>
+        </div>
+        <div class="stat">
+          <div class="num">~99<span class="u">%</span></div>
+          <div class="lbl">2023→2025 累计降幅</div>
+          <div class="src">等效能力口径</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIX SLICES -->
+  <section class="sec" id="slices">
+    <div class="container">
+      <div class="sec-head reveal">
+        <div class="sec-label">// 02 — SIX SLICES</div>
+        <h2>六大核心切片</h2>
+        <p>2025–2026 定义产业走向的六个结构性方向。</p>
+      </div>
+      <div class="grid6">
+        <div class="card reveal">
+          <div class="idx">01</div>
+          <div class="en">Agent Leap</div>
+          <h3>Agent 化跃迁</h3>
+          <p>从"问答工具"到"执行主体"。多 Agent 编排、工具调用、长程任务自治，企业从试点走向生产部署。</p>
+          <div class="tags"><span class="tag">Multi-Agent</span><span class="tag">Tool-use</span><span class="tag">Autonomy</span></div>
+        </div>
+        <div class="card reveal">
+          <div class="idx">02</div>
+          <div class="en">Cost Collapse</div>
+          <h3>推理成本崩塌</h3>
+          <p>等效推理成本约 10x/年下降，三年累计降幅约 99%。成本不再是鸿沟，使用成为常态，能力被商品化。</p>
+          <div class="tags"><span class="tag">LLMflation</span><span class="tag">10x/yr</span><span class="tag">Commodity</span></div>
+        </div>
+        <div class="card reveal">
+          <div class="idx">03</div>
+          <div class="en">Multimodal Fusion</div>
+          <h3>多模态融合</h3>
+          <p>文本 / 视觉 / 语音 / 视频统一表征。原生多模态模型成为默认交互层，具身与实时理解持续升温。</p>
+          <div class="tags"><span class="tag">Vision</span><span class="tag">Voice</span><span class="tag">Realtime</span></div>
+        </div>
+        <div class="card reveal">
+          <div class="idx">04</div>
+          <div class="en">Edge Intelligence</div>
+          <h3>端侧智能爆发</h3>
+          <p>小模型 + NPU + 端云协同。隐私、延迟、离线三大驱动，手机 / 车 / IoT 成为 AI 的新入口。</p>
+          <div class="tags"><span class="tag">On-device</span><span class="tag">NPU</span><span class="tag">&lt;10B</span></div>
+        </div>
+        <div class="card reveal">
+          <div class="idx">05</div>
+          <div class="en">Vertical Depth</div>
+          <h3>垂直行业深耕</h3>
+          <p>通用能力商品化，价值向行业纵深迁移。医疗 / 金融 / 制造 / 法律的专用模型与数据壁垒成为护城河。</p>
+          <div class="tags"><span class="tag">Domain LLM</span><span class="tag">Data moat</span><span class="tag">RAG</span></div>
+        </div>
+        <div class="card reveal">
+          <div class="idx">06</div>
+          <div class="en">Governance &amp; Alignment</div>
+          <h3>治理与对齐</h3>
+          <p>从软倡议到硬约束。风险评估、可解释、对齐认证进入采购门槛，三极监管框架加速分化。</p>
+          <div class="tags"><span class="tag">AI Act</span><span class="tag">Alignment</span><span class="tag">Audit</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THREE POLES -->
+  <section class="sec" id="poles">
+    <div class="container">
+      <div class="sec-head reveal">
+        <div class="sec-label">// 03 — THREE POLES</div>
+        <h2>中美欧三极格局</h2>
+        <p>同一项技术，三条治理路径。监管分化正在重塑全球 AI 的供给与边界。</p>
+      </div>
+      <div class="pole-diagram reveal">
+        <svg viewBox="0 0 680 168" role="img" aria-label="中美欧三极格局发散示意图">
+          <!-- main axis -->
+          <line class="pd-axis" x1="40" y1="84" x2="240" y2="84" />
+          <!-- core node -->
+          <circle class="pd-core-ring" cx="40" cy="84" r="14" />
+          <circle class="pd-core" cx="40" cy="84" r="6" />
+          <text class="pd-label" x="40" y="118" text-anchor="middle">AI · 2025</text>
+          <!-- diverging paths -->
+          <path class="pd-line pd-us" d="M240,84 C 360,84 410,34 560,34" />
+          <path class="pd-line pd-cn" d="M240,84 L 560,84" />
+          <path class="pd-line pd-eu" d="M240,84 C 360,84 410,134 560,134" />
+          <!-- end dots -->
+          <circle class="pd-dot-us" cx="560" cy="34" r="5" />
+          <circle class="pd-dot-cn" cx="560" cy="84" r="5" />
+          <circle class="pd-dot-eu" cx="560" cy="134" r="5" />
+          <!-- path labels -->
+          <text class="pd-label pd-dot-us" x="300" y="26">US · 市场驱动 / 去监管</text>
+          <text class="pd-label pd-dot-cn" x="300" y="78">CN · 国家统筹 / 开放权重</text>
+          <text class="pd-label pd-dot-eu" x="300" y="130">EU · 风险立法 / 可信 AI</text>
+          <!-- end captions -->
+          <text class="pd-cap" x="576" y="38">WIN</text>
+          <text class="pd-cap" x="576" y="88">SCALE</text>
+          <text class="pd-cap" x="576" y="138">RULES</text>
+        </svg>
+      </div>
+      <div class="poles">
+        <div class="pole us reveal">
+          <div class="flag"><span class="code">US</span><span class="name">美国 · 市场驱动</span></div>
+          <div class="row"><div class="k">Path</div><div class="v">去监管 · 赢者通吃<small>松绑创新，以出口管制维系算力领先</small></div></div>
+          <div class="row"><div class="k">Flagship</div><div class="v">America's AI Action Plan<small>2025.07 发布，强调速度与主导权</small></div></div>
+          <div class="row"><div class="k">Posture</div><div class="v">领跑基础模型与算力<small>前沿模型 + 云生态双引擎</small></div></div>
+        </div>
+        <div class="pole cn reveal">
+          <div class="flag"><span class="code">CN</span><span class="name">中国 · 国家统筹</span></div>
+          <div class="row"><div class="k">Path</div><div class="v">快速落地 · 开放权重<small>国家"AI+"行动，规模部署</small></div></div>
+          <div class="row"><div class="k">Flagship</div><div class="v">生成式 AI 服务管理暂行办法<small>备案制 + "AI+" 行动计划</small></div></div>
+          <div class="row"><div class="k">Posture</div><div class="v">开源生态崛起<small>Qwen / DeepSeek 等开放权重领跑</small></div></div>
+        </div>
+        <div class="pole eu reveal">
+          <div class="flag"><span class="code">EU</span><span class="name">欧盟 · 风险立法</span></div>
+          <div class="row"><div class="k">Path</div><div class="v">风险分级 · 权利优先<small>可信 AI，合规即门槛</small></div></div>
+          <div class="row"><div class="k">Flagship</div><div class="v">EU AI Act<small>2025–2027 分阶段生效</small></div></div>
+          <div class="row"><div class="k">Posture</div><div class="v">规则输出者<small>以立法塑造全球合规基线</small></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREDICTIONS -->
+  <section class="sec" id="predict">
+    <div class="container">
+      <div class="sec-head reveal">
+        <div class="sec-label">// 04 — 2026 FORECAST</div>
+        <h2>2026 五条关键预测</h2>
+        <p>标注高 / 中 / 低信度，反映判断的确定性梯度。</p>
+      </div>
+      <div class="timeline">
+        <div class="tl-item reveal">
+          <div class="tl-node hi"></div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="pnum">P1</span><span class="conf hi">高信度</span></div>
+            <div class="ptxt">推理成本延续约 10x/年下降，端侧小模型（&lt;10B）在消费设备中大规模默认启用。</div>
+            <div class="psrc">Basis: a16z LLMflation · 硬件 NPU 普及</div>
+          </div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-node hi"></div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="pnum">P2</span><span class="conf hi">高信度</span></div>
+            <div class="ptxt">企业级 Agent 从 PoC 进入生产，多 Agent 编排成为标准软件架构。</div>
+            <div class="psrc">Basis: McKinsey · 头部厂商 Agent 平台化</div>
+          </div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-node mid"></div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="pnum">P3</span><span class="conf mid">中信度</span></div>
+            <div class="ptxt">多模态成为主流应用默认交互层，纯文本入口退居次要。</div>
+            <div class="psrc">Basis: 原生多模态模型成熟度 · 终端传感普及</div>
+          </div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-node mid"></div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="pnum">P4</span><span class="conf mid">中信度</span></div>
+            <div class="ptxt">中美欧监管分化固化，形成三套互不兼容的合规体系与数据边界。</div>
+            <div class="psrc">Basis: EU AI Act 节点 · 美中政策走向</div>
+          </div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-node lo"></div>
+          <div class="tl-card">
+            <div class="tl-top"><span class="pnum">P5</span><span class="conf lo">低信度</span></div>
+            <div class="ptxt">出现首个通过严格对齐认证的"通用级"自主 Agent，进入强监管关键场景。</div>
+            <div class="psrc">Basis: 对齐研究进展 · 认证框架尚在早期</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="foot-inner">
+      <div class="sec-label reveal">// DATA SOURCES</div>
+      <div class="foot-sources reveal">
+        <span class="src-chip">Stanford HAI · AI Index 2025/26</span>
+        <span class="src-chip">McKinsey · State of AI 2025</span>
+        <span class="src-chip">a16z · LLMflation</span>
+        <span class="src-chip">Gartner · AI Spending Forecast</span>
+        <span class="src-chip">IDC · Worldwide AI Spending</span>
+      </div>
+      <p class="foot-note reveal">
+        本页数据为公开机构预测的汇总与转述，用于趋势示意，不构成投资建议。具体数值以各机构原始报告为准；部分指标因口径差异可能存在出入（如 Gartner 总支出 $2.52T 与 IDC 基础设施 $487B、Stanford 投资 $581B 口径不同）。信度评级为编辑判断。
+      </p>
+      <div class="foot-bottom reveal">
+        <span>AI TRENDS · 2025—2026</span>
+        <span>BUILT WITH LINEAR-AESTHETIC SYSTEM · ENGINEERED COLD</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Scroll progress
+  const progress = document.getElementById('progress');
+  const onScroll = () => {
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight);
+    progress.style.width = (scrolled * 100) + '%';
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = (Math.min(i % 6, 5) * 60) + 'ms';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>

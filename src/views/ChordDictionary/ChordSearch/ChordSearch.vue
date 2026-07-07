@@ -11,7 +11,7 @@
         ref="inputRef"
         v-model="search"
         type="text"
-        class="input input-sm input-bordered w-48 pl-8 pr-8 focus:w-64 transition-all duration-200"
+        class="input input-sm input-bordered w-48 pl-8 pr-8 focus:w-64 transition-all duration-hig-fast"
         :placeholder="t('chordDictionary.searchChord')"
         :aria-label="t('chordDictionary.searchChord')"
         @focus="menuOpen = true"
