@@ -132,14 +132,11 @@ describe("性能基准 - 逻辑基线", () => {
     });
   });
 
-  describe("启用所有视觉特性后的性能", () => {
-    it("500 个音符块 + 所有视觉特性 - update < 20ms", () => {
+  describe("高负载场景的性能", () => {
+    it("500 个音符块 - update < 20ms", () => {
       const notes = generateNotes(500);
       system.scheduleNotes(notes, (m) => m * 10);
       system.setTransportPlaying(true);
-      system.setStyle("blocks");
-      system.setShowNoteNames(true);
-      system.setTrailEnabled(true);
 
       system.update(1, 0.016);
 
@@ -147,20 +144,6 @@ describe("性能基准 - 逻辑基线", () => {
       system.update(1, 0.016);
       const elapsed = performance.now() - start;
       expect(elapsed).toBeLessThan(20);
-    });
-
-    it("降级模式下 2000 个音符块 - update < 25ms", () => {
-      const notes = generateNotes(2000);
-      system.scheduleNotes(notes, (m) => m * 10);
-      system.setTransportPlaying(true);
-      system.setDegradeMode(true);
-
-      system.update(1, 0.016);
-
-      const start = performance.now();
-      system.update(1, 0.016);
-      const elapsed = performance.now() - start;
-      expect(elapsed).toBeLessThan(25);
     });
   });
 

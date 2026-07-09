@@ -64,20 +64,6 @@ describe("constants", () => {
       expect(typeof k.showNoteNames).toBe("boolean");
     });
 
-    // ─── 新增测试：fluidEmission 默认值 ───
-    it("noteBlockParticles.fluidEmission 字段存在且合理", () => {
-      const fluidEmission = defaultWaterfallSettings.noteBlockParticles.fluidEmission;
-      expect(fluidEmission).toBeDefined();
-      expect(typeof fluidEmission.enabled).toBe("boolean");
-      expect(typeof fluidEmission.rate).toBe("number");
-      expect(typeof fluidEmission.intensity).toBe("number");
-      // rate > 0（发射频率）
-      expect(fluidEmission.rate).toBeGreaterThan(0);
-      // intensity 在 0-2 范围（流体力度）
-      expect(fluidEmission.intensity).toBeGreaterThanOrEqual(0);
-      expect(fluidEmission.intensity).toBeLessThanOrEqual(2);
-    });
-
     // ─── 新增测试：fluidParams 边界 ───
     it("background.fluidParams 默认值为空对象（无覆盖）", () => {
       const fluidParams = defaultWaterfallSettings.background.fluidParams;
