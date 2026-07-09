@@ -306,6 +306,7 @@ import { Chord, Note } from "tonal";
 import type { Chord as TChord } from "@tonaljs/chord";
 
 import { useSettingsStore } from "@/stores/settings";
+import { useChordDictionaryStore } from "@/stores/chordDictionary";
 import { useChordDictionaryModule } from "../ChordDictionaryModuleProvider";
 import {
   getChordInversion,
@@ -313,11 +314,7 @@ import {
   getSubsetChords,
   getSupersetChords,
 } from "./utils";
-import {
-  ALIAS_NOTATION,
-  getChordDegrees,
-  getNoteInKeySignature,
-} from "@/helpers";
+import { getChordDegrees, getNoteInKeySignature } from "@/helpers";
 import Icon from "@/components/Icon/Icon.vue";
 import ChordName from "@/components/ChordName/ChordName.vue";
 import ChordIntervals from "@/components/ChordIntervals/ChordIntervals.vue";
@@ -357,6 +354,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const settingsStore = useSettingsStore();
+const chordDictionaryStore = useChordDictionaryStore();
 
 const {
   keySignature,
@@ -384,14 +382,6 @@ const isDisabled = computed(
       )
     ),
 );
-
-const preferredAlias = computed(() => {
-  if (!chord.value) return null;
-  const alias = settingsStore.settings.chordDictionary.aliases.find(
-    (a) => a[0] === chord.value!.aliases[0],
-  );
-  return alias ? alias[1] : null;
-});
 
 const staffClef = computed(() => settingsStore.settings.notation.staffClef);
 const staffTranspose = computed(
@@ -462,33 +452,26 @@ function toggleDisabled(isEnabled: boolean | null) {
 }
 
 function toggleAlias(isPreferred: boolean, alias: string) {
-  const aliases = settingsStore.settings.chordDictionary.aliases.filter(
-    (a) => a[0] !== chord.value!.aliases[0],
-  );
+  if (!chord.value) return;
 
-  if (!isPreferred) {
-    settingsStore.updateSetting("chordDictionary.aliases", [
-      ...aliases,
-      [chord.value!.aliases[0], alias],
-    ]);
+  if (isPreferred) {
+    chordDictionaryStore.removePreferredAlias(chord.value.aliases[0]);
   } else {
-    settingsStore.updateSetting("chordDictionary.aliases", aliases);
+    chordDictionaryStore.setPreferredAlias(chord.value.aliases[0], alias);
   }
 }
 
 function isPreferred(index: number): boolean {
-  return preferredAlias.value === chord.value!.aliases[index];
+  if (!chord.value) return false;
+  return chordDictionaryStore.isPreferredAlias(
+    chord.value.aliases[0],
+    chord.value.aliases[index],
+  );
 }
 
 function isDefault(index: number): boolean {
-  return (
-    preferredAlias.value === null &&
-    index ===
-      ALIAS_NOTATION[
-        settingsStore.settings.chordDictionary.defaultNotation ||
-          ("long" as keyof typeof ALIAS_NOTATION)
-      ]
-  );
+  if (!chord.value) return false;
+  return chordDictionaryStore.isDefaultAlias(chord.value.aliases[0], index);
 }
 
 function getSlashChord(index: number): TChord {

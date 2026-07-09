@@ -1,125 +1,77 @@
-import * as PIXI from "pixi.js";
+// Canvas 2D 瀑布流引擎（从 PixiJS 重写）
+
 import { KeyboardRenderer } from "./KeyboardRenderer";
-import { NoteBlockSystem } from "./NoteBlockSystem";
-import type { NoteBlockCallbacks } from "./NoteBlockSystem";
-import { BackgroundRenderer } from "./BackgroundRenderer";
-import { PostProcessingRenderer } from "./PostProcessingRenderer";
-import { StaffRenderer } from "./StaffRenderer";
-import { PerformanceMonitor } from "./PerformanceMonitor";
+import { NoteBlockSystem, type NoteBlockCallbacks } from "./NoteBlockSystem";
 import { AudioEngine } from "../audio/AudioEngine";
-import { clearGlowTextureCache } from "./GlowTexture";
-import type {
-  WaterfallPianoSettings,
-  ScheduledNote,
-  FlowDirection,
-} from "../types";
+import { PhysicalPianoEngine } from "../audio/PhysicalPianoEngine";
+import { OutputChain } from "../audio/OutputChain";
+import type { SoundEngine } from "../audio/SoundEngine";
+import * as Tone from "tone";
+import type { FluidSimulation } from "./fluid";
+import type { WaterfallPianoSettings, ScheduledNote, FlowDirection, AudioPreset } from "../types";
 
 export class WaterfallEngine {
-  app: PIXI.Application | null = null;
+  private canvas: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
+
   keyboardRenderer: KeyboardRenderer | null = null;
   noteBlockSystem: NoteBlockSystem | null = null;
-  backgroundRenderer: BackgroundRenderer | null = null;
-  postProcessingRenderer: PostProcessingRenderer | null = null;
-  staffRenderer: StaffRenderer | null = null;
-  performanceMonitor: PerformanceMonitor | null = null;
-  audioEngine: AudioEngine;
-
-  // 分层容器
-  private backgroundContainer: PIXI.Container | null = null;
-  private sceneContainer: PIXI.Container | null = null;
-  private noteBlockContainer: PIXI.Container | null = null;
-  private hitLineContainer: PIXI.Container | null = null;
-  private keyboardContainer: PIXI.Container | null = null;
-  private uiContainer: PIXI.Container | null = null;
 
   private settings: WaterfallPianoSettings | null = null;
-  private tickHandler: ((ticker: PIXI.Ticker) => void) | null = null;
+  private animationId: number | null = null;
   private isDestroyed = false;
+  private lastTime = 0;
+
+  // 流体模拟（独立 WebGL canvas，由 WaterfallCanvas 注入）
+  private fluidSimulation: FluidSimulation | null = null;
 
   private mode: "realtime" | "synthesia" = "realtime";
   private pointerToMidi = new Map<number, number>();
 
-  // 保存 PIXI 事件处理函数引用，以便 destroy 时移除
-  private stagePointerDownHandler:
-    | ((e: PIXI.FederatedPointerEvent) => void)
-    | null = null;
-  private stagePointerMoveHandler:
-    | ((e: PIXI.FederatedPointerEvent) => void)
-    | null = null;
-  private stagePointerUpHandler:
-    | ((e: PIXI.FederatedPointerEvent) => void)
-    | null = null;
+  private audioEngine: AudioEngine;
+  private outputChain: OutputChain;
+  private engine!: SoundEngine;
+
+  // 布局参数
+  private canvasWidth = 0;
+  private canvasHeight = 0;
+  private keyboardHeight = 0;
+  private keyboardY = 0;
 
   constructor() {
-    this.audioEngine = new AudioEngine();
+    this.outputChain = new OutputChain();
+    this.audioEngine = new AudioEngine(this.outputChain);
+    this.engine = this.audioEngine;
   }
 
   async init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings) {
     this.settings = settings;
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    if (!this.ctx) {
+      throw new Error("Failed to get 2D context");
+    }
 
-    this.app = new PIXI.Application();
-    await this.app.init({
-      canvas,
-      background: "#1a1a2e",
-      resizeTo: canvas.parentElement || canvas,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-    });
+    // 初始化渲染器
+    this.keyboardRenderer = new KeyboardRenderer();
+    this.noteBlockSystem = new NoteBlockSystem();
 
-    // ─── 分层架构：背景层 → 场景层（音符块/命中线/键盘）→ UI 层 ───
-    this.backgroundContainer = new PIXI.Container();
-    this.sceneContainer = new PIXI.Container();
-    this.noteBlockContainer = new PIXI.Container();
-    this.hitLineContainer = new PIXI.Container();
-    this.keyboardContainer = new PIXI.Container();
-    this.uiContainer = new PIXI.Container();
-
-    this.sceneContainer.addChild(this.noteBlockContainer);
-    this.sceneContainer.addChild(this.hitLineContainer);
-    this.sceneContainer.addChild(this.keyboardContainer);
-
-    this.app.stage.addChild(this.backgroundContainer);
-    this.app.stage.addChild(this.sceneContainer);
-    this.app.stage.addChild(this.uiContainer);
-
-    this.keyboardRenderer = new KeyboardRenderer(this.keyboardContainer);
-    this.noteBlockSystem = new NoteBlockSystem(
-      this.noteBlockContainer,
-      this.hitLineContainer,
-    );
-    this.backgroundRenderer = new BackgroundRenderer(this.backgroundContainer);
-    this.backgroundRenderer.setApp(this.app);
-    this.postProcessingRenderer = new PostProcessingRenderer(
-      this.app,
-      this.sceneContainer,
-      this.noteBlockContainer,
-      this.hitLineContainer,
-    );
-    this.staffRenderer = new StaffRenderer(this.uiContainer);
-    this.performanceMonitor = new PerformanceMonitor(
-      settings.performance.minFps,
-      settings.performance.targetFps,
-    );
-
-    // setCallbacks 在 await 之前调用，避免 async 竞态条件
-    // （若 await 期间 destroy() 被调用，noteBlockSystem 会变为 null）
+    // 设置回调
     this.noteBlockSystem.setCallbacks({
       onNoteTrigger: (midi, velocity, _hand) => {
         this.audioEngine.noteOn(midi, velocity);
         this.keyboardRenderer?.highlightNote(midi);
-        this.staffRenderer?.onNoteOn(midi);
       },
       onNoteEnd: (midi) => {
         this.audioEngine.noteOff(midi);
         this.keyboardRenderer?.clearHighlight(midi);
-        this.staffRenderer?.onNoteOff(midi);
       },
     } as NoteBlockCallbacks);
 
+    await Tone.start();
+    await this.outputChain.init();
     await this.audioEngine.init();
 
-    // 守卫：若 await 期间组件被卸载（HMR/路由切换），停止后续初始化
     if (this.isDestroyed) return;
 
     this.applySettings(settings);
@@ -128,25 +80,25 @@ export class WaterfallEngine {
   }
 
   private setupKeyboardInteraction() {
-    if (!this.app || !this.keyboardRenderer) return;
+    if (!this.canvas || !this.keyboardRenderer) return;
 
-    this.app.stage.eventMode = "static";
-    this.app.stage.hitArea = this.app.screen;
-
-    this.stagePointerDownHandler = (e: PIXI.FederatedPointerEvent) => {
-      const point = e.global;
-      const midi = this.keyboardRenderer!.getNoteAtPoint(point.x, point.y);
+    const handlePointerDown = (e: PointerEvent) => {
+      const rect = this.canvas!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const midi = this.keyboardRenderer!.getNoteAtPoint(x, y);
       if (midi !== null) {
         this.pointerToMidi.set(e.pointerId, midi);
         this.playRealtimeNote(midi, 100);
       }
     };
-    this.app.stage.on("pointerdown", this.stagePointerDownHandler);
 
-    this.stagePointerMoveHandler = (e: PIXI.FederatedPointerEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (!this.pointerToMidi.has(e.pointerId)) return;
-      const point = e.global;
-      const newMidi = this.keyboardRenderer!.getNoteAtPoint(point.x, point.y);
+      const rect = this.canvas!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const newMidi = this.keyboardRenderer!.getNoteAtPoint(x, y);
       const oldMidi = this.pointerToMidi.get(e.pointerId);
 
       if (newMidi !== null && newMidi !== oldMidi) {
@@ -157,42 +109,58 @@ export class WaterfallEngine {
         this.playRealtimeNote(newMidi, 100);
       }
     };
-    this.app.stage.on("pointermove", this.stagePointerMoveHandler);
 
-    this.stagePointerUpHandler = (e: PIXI.FederatedPointerEvent) => {
+    const handlePointerUp = (e: PointerEvent) => {
       const midi = this.pointerToMidi.get(e.pointerId);
       if (midi !== undefined) {
         this.releaseRealtimeNote(midi);
         this.pointerToMidi.delete(e.pointerId);
       }
     };
-    this.app.stage.on("pointerup", this.stagePointerUpHandler);
-    this.app.stage.on("pointerupoutside", this.stagePointerUpHandler);
+
+    this.canvas.addEventListener("pointerdown", handlePointerDown);
+    this.canvas.addEventListener("pointermove", handlePointerMove);
+    this.canvas.addEventListener("pointerup", handlePointerUp);
+    this.canvas.addEventListener("pointerleave", handlePointerUp);
   }
 
   private startGameLoop() {
-    if (!this.app) return;
+    this.lastTime = performance.now();
 
-    this.tickHandler = (ticker: PIXI.Ticker) => {
-      const deltaSeconds = ticker.deltaMS / 1000;
-      const activeNoteCount = this.noteBlockSystem?.getActiveBlockCount() ?? 0;
-      const fps = ticker.FPS;
+    const loop = (time: number) => {
+      if (this.isDestroyed) return;
 
-      this.noteBlockSystem?.update(ticker.deltaTime, deltaSeconds);
-      this.backgroundRenderer?.update(deltaSeconds, activeNoteCount, fps);
-      this.staffRenderer?.update(deltaSeconds);
+      const delta = time - this.lastTime;
+      this.lastTime = time;
+      const deltaSeconds = delta / 1000;
 
-      // 自动降级
-      if (this.performanceMonitor && this.settings?.performance.autoDegrade) {
-        const action = this.performanceMonitor.update(fps);
-        if (action === "degrade") {
-          this.applyAutoDegrade();
-        } else if (action === "recover") {
-          this.applyAutoRecover();
-        }
-      }
+      this.update(delta, deltaSeconds);
+      this.render();
+
+      this.animationId = requestAnimationFrame(loop);
     };
-    this.app.ticker.add(this.tickHandler);
+
+    this.animationId = requestAnimationFrame(loop);
+  }
+
+  private update(delta: number, deltaSeconds: number) {
+    this.noteBlockSystem?.update(delta, deltaSeconds);
+    this.emitBlockCoverage();
+  }
+
+  private render() {
+    if (!this.ctx || !this.canvas) return;
+
+    // 清空画布
+    this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+
+    // 绘制音符块
+    this.noteBlockSystem?.render(this.ctx);
+
+    // 绘制键盘
+    if (this.settings?.keyboard.visible) {
+      this.keyboardRenderer?.render(this.ctx, this.keyboardY);
+    }
   }
 
   applySettings(settings: WaterfallPianoSettings) {
@@ -212,130 +180,113 @@ export class WaterfallEngine {
         separatorColor: settings.keyboard.separatorColor,
         separatorThickness: settings.keyboard.separatorThickness,
       });
-
-      if (settings.keyboard.visible) {
-        this.drawKeyboard();
-      } else {
-        this.keyboardContainer?.removeChildren();
-        this.updateNoteBlockLayout();
-      }
     }
 
     if (this.noteBlockSystem) {
       this.noteBlockSystem.setRealtimeSpeed(settings.particles.speed);
       this.noteBlockSystem.setLookAhead(settings.particles.lookAhead);
-      this.noteBlockSystem.setStyle(settings.particles.style);
       this.noteBlockSystem.setColorScheme(settings.particles.colorScheme);
       this.noteBlockSystem.setOpacity(settings.particles.opacity);
       this.noteBlockSystem.setCornerRadius(settings.particles.cornerRadius);
-      this.noteBlockSystem.setParticleShape(settings.particles.shape);
-      this.noteBlockSystem.setParticleSize(settings.particles.size);
-      this.noteBlockSystem.setTrailEnabled(settings.particles.trail);
-      this.noteBlockSystem.setDensity(settings.particles.density);
-      this.noteBlockSystem.setHitLineConfig(settings.particles.hitLine);
-      this.noteBlockSystem.setNoteBlockConfig(settings.particles.noteBlock);
-      this.noteBlockSystem.setTrailParticleConfig(
-        settings.particles.trailParticle,
-      );
-      this.noteBlockSystem.setHitParticleConfig(settings.particles.hitParticle);
-      this.noteBlockSystem.setPhysicsConfig(settings.particles.physics);
-      this.noteBlockSystem.setNoteTextureConfig(settings.noteTexture);
-      this.noteBlockSystem.setNoteBlockParticleConfig(
-        settings.noteBlockParticles,
-      );
-      this.noteBlockSystem.setShowNoteNames(
-        settings.keyboard.showNoteNames || settings.midiFile.showNoteNames,
-      );
-      this.noteBlockSystem.setFlowDirection(
-        settings.keyboard.synthesiaFlowDirection,
-      );
-      this.noteBlockSystem.setParticleHardLimit(
-        settings.performance.particleHardLimit,
-      );
-      this.noteBlockSystem.setLifecycleCurve(settings.particles.lifecycleCurve);
-      this.updateNoteBlockLayout();
+      this.noteBlockSystem.setFlowDirection(settings.keyboard.synthesiaFlowDirection);
+      this.noteBlockSystem.setHitLineConfig({
+        visible: settings.particles.hitLine.visible,
+        color: settings.particles.hitLine.color,
+        thickness: settings.particles.hitLine.thickness,
+      });
     }
 
-    if (this.backgroundRenderer && this.app) {
-      this.backgroundRenderer.applyConfig(
-        settings.background,
-        this.app.screen.width,
-        this.app.screen.height,
-      );
+    // 引擎切换
+    const targetPreset = settings.audio.preset;
+    const currentEngineIsPhysical = this.engine instanceof PhysicalPianoEngine;
+    const needPhysical = targetPreset === "physical-piano";
+
+    if (needPhysical !== currentEngineIsPhysical) {
+      this.switchEngine(targetPreset);
+    } else if (needPhysical) {
+      // 物理引擎：更新配置
+      this.engine.setConfig(settings.physicalPiano);
+    } else {
+      // Tone 引擎：切换预设
+      this.engine.applyPreset(targetPreset);
     }
 
-    if (this.postProcessingRenderer && this.app) {
-      this.postProcessingRenderer.applyConfig(
-        settings.postProcessing,
-        this.app.screen.width,
-        this.app.screen.height,
-      );
-    }
-
-    if (this.staffRenderer) {
-      this.staffRenderer.setVisible(settings.keyboard.staffVisible);
-      if (this.app) {
-        this.staffRenderer.resize(
-          this.app.screen.width,
-          this.app.screen.height,
-        );
-      }
-    }
-
-    if (this.performanceMonitor) {
-      this.performanceMonitor.setThresholds(
-        settings.performance.minFps,
-        settings.performance.targetFps,
-      );
-    }
-
-    this.audioEngine.applyPreset(settings.audio.preset);
+    // 音量 / 混响延用 outputChain
     const volumeDb = (settings.audio.volume / 100) * 30 - 30;
-    this.audioEngine.setVolume(volumeDb);
-    this.audioEngine.setReverbWet(settings.audio.reverbAmount / 100);
-    this.audioEngine.setSustain(settings.audio.sustain);
+    this.outputChain.setVolume(volumeDb);
+    this.outputChain.setReverbWet(settings.audio.reverbAmount / 100);
+
+    if (this.engine !== this.audioEngine) {
+      this.engine.setVolume(volumeDb);
+      this.engine.setReverbWet(settings.audio.reverbAmount / 100);
+    }
+
+    this.engine.setSustain(settings.audio.sustain);
+
+    this.resize();
+  }
+
+  private switchEngine(preset: AudioPreset) {
+    // 销毁旧引擎
+    this.engine.disconnect();
+    this.engine.dispose();
+
+    if (preset === "physical-piano") {
+      const physical = new PhysicalPianoEngine(this.outputChain);
+      this.engine = physical;
+    } else {
+      this.audioEngine.applyPreset(preset);
+      this.engine = this.audioEngine;
+    }
+
+    this.engine.init().then(() => {
+      this.engine.connect(this.outputChain.rawInput!);
+      if (this.settings) {
+        this.engine.setSustain(this.settings.audio.sustain);
+        if (preset === "physical-piano") {
+          this.engine.setConfig(this.settings.physicalPiano);
+        }
+      }
+    });
+  }
+
+  resize() {
+    if (!this.canvas || !this.settings) return;
+
+    const parent = this.canvas.parentElement;
+    if (!parent) return;
+
+    this.canvasWidth = parent.clientWidth;
+    this.canvasHeight = parent.clientHeight;
+    this.canvas.width = this.canvasWidth;
+    this.canvas.height = this.canvasHeight;
+
+    const keyboardVisible = this.settings.keyboard.visible;
+    this.keyboardHeight = keyboardVisible ? this.canvasHeight * this.settings.keyboard.heightRatio : 0;
+    this.keyboardY = this.canvasHeight - this.keyboardHeight;
+
+    // 更新渲染器布局
+    if (this.noteBlockSystem) {
+      this.noteBlockSystem.setCanvasSize(this.canvasWidth, this.canvasHeight);
+      this.noteBlockSystem.setKeyboardY(this.keyboardY);
+    }
+
+    if (this.keyboardRenderer) {
+      this.keyboardRenderer.containerOffsetY = this.keyboardY;
+      this.keyboardRenderer.computeKeyPositions(this.canvasWidth, this.keyboardHeight);
+    }
+
+    // 更新键宽
+    this.updateNoteBlockLayout();
   }
 
   private updateNoteBlockLayout() {
-    if (!this.app || !this.noteBlockSystem || !this.settings) return;
+    if (!this.keyboardRenderer || !this.noteBlockSystem || !this.settings) return;
 
-    const h = this.app.screen.height;
-    const w = this.app.screen.width;
-    const keyboardVisible = this.settings.keyboard.visible;
-    const keyboardHeight = keyboardVisible
-      ? h * this.settings.keyboard.heightRatio
-      : 0;
-    const keyboardY = h - keyboardHeight;
-
-    this.noteBlockSystem.setCanvasSize(w, h);
-    this.noteBlockSystem.setKeyboardY(keyboardY);
-
-    if (this.keyboardRenderer) {
-      const keyW = this.keyboardRenderer.getKeyWidth();
-      if (keyW > 0) {
-        this.noteBlockSystem.setKeyWidth(keyW);
-      }
+    const keyW = this.keyboardRenderer.getKeyWidth();
+    if (keyW > 0) {
+      this.noteBlockSystem.setKeyWidth(keyW);
     }
-
-    const range = this.settings.keyboard.range;
-    const keyCount =
-      range === "88" ? 88 : range === "61" ? 61 : range === "49" ? 49 : 88;
-    const whiteKeyCount = Math.ceil((keyCount * 7) / 12);
-    this.noteBlockSystem.setKeyWidth(w / whiteKeyCount);
-  }
-
-  drawKeyboard() {
-    if (!this.app || !this.keyboardRenderer || !this.settings) return;
-
-    const w = this.app.screen.width;
-    const h = this.app.screen.height;
-    const keyboardHeight = h * this.settings.keyboard.heightRatio;
-    const keyboardY = h - keyboardHeight;
-
-    this.keyboardContainer!.y = keyboardY;
-    this.keyboardRenderer.containerOffsetY = keyboardY;
-    this.keyboardRenderer.draw(w, keyboardHeight);
-    this.updateNoteBlockLayout();
   }
 
   setMode(mode: "realtime" | "synthesia") {
@@ -350,11 +301,118 @@ export class WaterfallEngine {
     return this.mode;
   }
 
+  // 注入流体模拟实例
+  setFluidSimulation(fluid: FluidSimulation | null) {
+    this.fluidSimulation = fluid;
+  }
+
+  // 命中爆炸：命中线位置爆发一团
+  private triggerHitExplosion(midi: number, velocity: number) {
+    if (!this.fluidSimulation || !this.settings) return;
+
+    const fluidParams = this.settings.background?.fluidParams;
+    if (!fluidParams?.HIT_EXPLOSION) return;
+
+    const x = (midi - 21) / (108 - 21);
+    const keyboardY = this.noteBlockSystem?.getKeyboardY() ?? this.keyboardY;
+    const y = this.canvasHeight > 0 ? keyboardY / this.canvasHeight : 0.95;
+
+    const force = (velocity / 127) * 8000;
+    const dx = (Math.random() - 0.5) * 1000;
+    const dy = force;
+
+    const brightness = 1.5;
+    const hue = this.resolveSplatHue(midi);
+    const c = this.hsvToRgb(hue, 1.0, 1.0);
+
+    this.fluidSimulation.splat(
+      Math.max(0, Math.min(1, x)),
+      Math.max(0, Math.min(1, y)),
+      dx,
+      dy,
+      { r: c.r * brightness, g: c.g * brightness, b: c.b * brightness }
+    );
+  }
+
+  // 块体覆盖：每帧遍历块渗流体，限流 K=8
+  private emitBlockCoverage() {
+    if (!this.fluidSimulation || !this.settings) return;
+    const fluidParams = this.settings.background?.fluidParams;
+    if (!fluidParams?.BLOCK_COVERAGE) return;
+    if (!this.noteBlockSystem || this.canvasHeight === 0) return;
+
+    const blocks = this.noteBlockSystem.getBlocks();
+    if (blocks.length === 0) return;
+
+    const MAX_PER_FRAME = 8;
+    let count = 0;
+    // 轮流采样：从随机起点开始遍历，避免总偏向前面的块
+    const start = Math.floor(Math.random() * blocks.length);
+    for (let i = 0; i < blocks.length && count < MAX_PER_FRAME; i++) {
+      const block = blocks[(start + i) % blocks.length];
+      this.emitBlockSplat(block);
+      count++;
+    }
+  }
+
+  private emitBlockSplat(block: {
+    midi: number; x: number; y: number; width: number; height: number;
+    active: boolean; hasEnded: boolean; velocity: number;
+  }) {
+    if (!this.fluidSimulation || this.canvasWidth === 0 || this.canvasHeight === 0) return;
+
+    // 块中心 + 小随机扰动
+    const cx = block.x + block.width * 0.5 + (Math.random() - 0.5) * block.width * 0.4;
+    const cy = block.y + block.height * 0.5 + (Math.random() - 0.5) * block.height * 0.4;
+    const nx = Math.max(0, Math.min(1, cx / this.canvasWidth));
+    const ny = Math.max(0, Math.min(1, cy / this.canvasHeight));
+
+    // active 强、释放后减弱
+    const intensity = block.active ? 1.0 : 0.3;
+    const baseForce = (block.velocity / 127) * 1500;
+    const dx = (Math.random() - 0.5) * 600;
+    const dy = -baseForce * intensity;
+
+    const hue = this.resolveSplatHue(block.midi);
+    const c = this.hsvToRgb(hue, 1.0, 1.0);
+    const brightness = 1.0 * intensity;
+
+    this.fluidSimulation.splat(nx, ny, dx, dy, {
+      r: c.r * brightness,
+      g: c.g * brightness,
+      b: c.b * brightness,
+    });
+  }
+
+  private resolveSplatHue(midi: number): number {
+    const fluidParams = this.settings?.background?.fluidParams;
+    const customHue = fluidParams?.SPLAT_COLOR_HUE;
+    return customHue !== undefined && customHue >= 0 ? customHue : (midi - 21) / 87;
+  }
+
+  private hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    let r = 0, g = 0, b = 0;
+    switch (i % 6) {
+      case 0: r = v; g = t; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = t; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = t; g = p; b = v; break;
+      case 5: r = v; g = p; b = q; break;
+    }
+    return { r, g, b };
+  }
+
   playRealtimeNote(midi: number, velocity = 100) {
     if (this.mode !== "realtime") return;
-    this.audioEngine.noteOn(midi, velocity);
+    this.engine.noteOn(midi, velocity);
     this.keyboardRenderer?.highlightNote(midi);
-    this.staffRenderer?.onNoteOn(midi);
+    this.triggerHitExplosion(midi, velocity);
 
     if (this.noteBlockSystem && this.keyboardRenderer) {
       const x = this.keyboardRenderer.getNoteX(midi);
@@ -366,9 +424,8 @@ export class WaterfallEngine {
 
   releaseRealtimeNote(midi: number) {
     if (this.mode !== "realtime") return;
-    this.audioEngine.noteOff(midi);
+    this.engine.noteOff(midi);
     this.keyboardRenderer?.clearHighlight(midi);
-    this.staffRenderer?.onNoteOff(midi);
     this.noteBlockSystem?.endRealtimeNote(midi);
   }
 
@@ -388,15 +445,14 @@ export class WaterfallEngine {
   }
 
   triggerSynthesiaNote(midi: number, velocity: number) {
-    this.audioEngine.noteOn(midi, velocity);
+    this.engine.noteOn(midi, velocity);
     this.keyboardRenderer?.highlightNote(midi);
-    this.staffRenderer?.onNoteOn(midi);
+    this.triggerHitExplosion(midi, velocity);
   }
 
   releaseSynthesiaNote(midi: number) {
-    this.audioEngine.noteOff(midi);
+    this.engine.noteOff(midi);
     this.keyboardRenderer?.clearHighlight(midi);
-    this.staffRenderer?.onNoteOff(midi);
   }
 
   clearNoteBlocks() {
@@ -407,103 +463,25 @@ export class WaterfallEngine {
     this.noteBlockSystem?.setFlowDirection(direction);
   }
 
-  resize() {
-    if (!this.app) return;
-    const parent = (this.app.canvas as HTMLCanvasElement).parentElement;
-    if (parent) {
-      this.app.renderer.resize(parent.clientWidth, parent.clientHeight);
-      this.drawKeyboard();
-      this.backgroundRenderer?.resize(parent.clientWidth, parent.clientHeight);
-      this.postProcessingRenderer?.resize(
-        parent.clientWidth,
-        parent.clientHeight,
-      );
-      this.staffRenderer?.resize(parent.clientWidth, parent.clientHeight);
-    }
-  }
-
-  getNoteBlockContainer(): PIXI.Container | null {
-    return this.noteBlockContainer;
-  }
-
-  getHitLineContainer(): PIXI.Container | null {
-    return this.hitLineContainer;
-  }
-
-  // ─── 自动降级 ───
-  private degraded = false;
-  private applyAutoDegrade() {
-    if (this.degraded) return;
-    this.degraded = true;
-    this.noteBlockSystem?.setDegradeMode(true);
-    this.backgroundRenderer?.setDegradeMode(true);
-    this.postProcessingRenderer?.setDegradeMode(true);
-  }
-
-  private applyAutoRecover() {
-    if (!this.degraded) return;
-    this.degraded = false;
-    this.noteBlockSystem?.setDegradeMode(false);
-    this.backgroundRenderer?.setDegradeMode(false);
-    this.postProcessingRenderer?.setDegradeMode(false);
-  }
-
   destroy() {
     this.isDestroyed = true;
 
-    // 移除 PIXI stage 事件监听器（防止闭包泄漏阻止 GC）
-    if (this.app) {
-      if (this.stagePointerDownHandler)
-        this.app.stage.off("pointerdown", this.stagePointerDownHandler);
-      if (this.stagePointerMoveHandler)
-        this.app.stage.off("pointermove", this.stagePointerMoveHandler);
-      if (this.stagePointerUpHandler) {
-        this.app.stage.off("pointerup", this.stagePointerUpHandler);
-        this.app.stage.off("pointerupoutside", this.stagePointerUpHandler);
-      }
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
     }
-    this.stagePointerDownHandler = null;
-    this.stagePointerMoveHandler = null;
-    this.stagePointerUpHandler = null;
 
-    // 移除 ticker
-    if (this.tickHandler && this.app) {
-      this.app.ticker.remove(this.tickHandler);
-    }
-    this.tickHandler = null;
+    this.engine.dispose();
+    this.outputChain.dispose();
 
-    // 销毁音频引擎
-    this.audioEngine.dispose();
-
-    // 按依赖顺序销毁各渲染器
     this.noteBlockSystem?.destroy();
-    this.postProcessingRenderer?.destroy();
-    this.staffRenderer?.destroy();
-    this.backgroundRenderer?.destroy();
     this.keyboardRenderer?.destroy();
 
-    // 清理模块级纹理缓存（防止 HMR/路由切换时 GPU 纹理泄漏）
-    clearGlowTextureCache();
-
-    // 销毁 PIXI Application（true = 同时销毁所有 stage 子元素）
-    if (this.app) {
-      this.app.destroy(true);
-      this.app = null;
-    }
-
-    // 释放所有引用
-    this.keyboardRenderer = null;
     this.noteBlockSystem = null;
-    this.backgroundRenderer = null;
-    this.postProcessingRenderer = null;
-    this.staffRenderer = null;
-    this.performanceMonitor = null;
-    this.sceneContainer = null;
-    this.backgroundContainer = null;
-    this.noteBlockContainer = null;
-    this.hitLineContainer = null;
-    this.keyboardContainer = null;
-    this.uiContainer = null;
+    this.keyboardRenderer = null;
+    this.fluidSimulation = null;
+    this.canvas = null;
+    this.ctx = null;
     this.pointerToMidi.clear();
   }
 }

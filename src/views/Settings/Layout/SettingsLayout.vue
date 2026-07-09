@@ -153,11 +153,15 @@ import type { SettingsGroup } from "./constants";
 import { useI18n } from "vue-i18n";
 import { useRoute, RouterLink } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
+import { useThemeStore } from "@/stores/theme";
+import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/waterfallPiano";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const route = useRoute();
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
+const themeStore = useThemeStore();
+const waterfallPianoStore = useWaterfallPianoStore();
 
 const drawerOpen = ref(false);
 const resetDialog = ref<HTMLDialogElement>();
@@ -249,6 +253,8 @@ function closeDialog() {
 function confirmReset() {
   if (resetTarget.value === "all") {
     settingsStore.resetSettings();
+    themeStore.setTheme("light");
+    waterfallPianoStore.resetSettings();
   } else if (currentSettingKey.value) {
     settingsStore.resetSetting(currentSettingKey.value as any);
   }

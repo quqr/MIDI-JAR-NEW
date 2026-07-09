@@ -60,7 +60,7 @@ export const useSettingsStore = defineStore("settings", () => {
   }
 
   function resetSettings(): Promise<void> {
-    settings.value = { ...defaultSettings };
+    settings.value = JSON.parse(JSON.stringify(defaultSettings));
     return Promise.resolve();
   }
 

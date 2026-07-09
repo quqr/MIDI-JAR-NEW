@@ -105,6 +105,7 @@ import Icon from "@/components/Icon/Icon.vue";
 import { useWaterfallPianoStore } from "./stores/waterfallPiano";
 import { Recorder } from "./audio/Recorder";
 import { MidiFilePlayer } from "./midi/MidiFilePlayer";
+import { useRealtimeMidi } from "./composables/useRealtimeMidi";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
 import SidebarDrawer from "./components/SidebarDrawer.vue";
 import PlaybackPanel from "./components/PlaybackPanel.vue";
@@ -130,8 +131,8 @@ let scheduledNotes: ScheduledNote[] = [];
 
 // 音域指示器
 const rangeText = computed(() => {
-  const engine = canvasRef.value?.getEngine();
-  const kr = engine?.keyboardRenderer;
+  const eng = canvasRef.value?.engine;
+  const kr = eng?.keyboardRenderer;
   return kr ? kr.getRangeText() : "A0 - C8";
 });
 
@@ -188,7 +189,7 @@ midiPlayer.setCallbacks({
 });
 
 function engine() {
-  return canvasRef.value!.getEngine()!;
+  return canvasRef.value!.engine!;
 }
 
 defineExpose({ canvasRef });
@@ -371,6 +372,26 @@ function handleKeyDown(e: KeyboardEvent) {
 if (typeof window !== "undefined") {
   window.addEventListener("keydown", handleKeyDown);
 }
+
+// ─── 实时 MIDI 接入 ───
+// 监听 chord-display/default namespace，将外部 MIDI 键盘事件转发到当前引擎
+useRealtimeMidi({
+  onNoteOn: (midi, velocity) => {
+    const eng = engine();
+    if (eng.getMode() === "realtime") {
+      eng.playRealtimeNote(midi, velocity);
+    }
+  },
+  onNoteOff: (midi) => {
+    const eng = engine();
+    if (eng.getMode() === "realtime") {
+      eng.releaseRealtimeNote(midi);
+    }
+  },
+  onSustain: (enabled) => {
+    engine().engine.setSustain(enabled);
+  },
+});
 
 onUnmounted(() => {
   if (typeof window !== "undefined") {

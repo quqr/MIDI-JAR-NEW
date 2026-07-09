@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed } from "vue";
 import { useSettingsStore } from "@/stores/settings";
+import { ALIAS_NOTATION } from "@/helpers";
 
 export const useChordDictionaryStore = defineStore("chordDictionary", () => {
   const settingsStore = useSettingsStore();
@@ -99,6 +100,36 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     return chordName;
   }
 
+  function getPreferredAlias(chordAlias: string): string | null {
+    const alias = aliases.value.get(chordAlias);
+    return alias !== undefined ? alias : null;
+  }
+
+  function setPreferredAlias(chordAlias: string, preferredAlias: string): void {
+    addAlias(chordAlias, preferredAlias);
+  }
+
+  function removePreferredAlias(chordAlias: string): void {
+    removeAlias(chordAlias);
+  }
+
+  function isPreferredAlias(chordAlias: string, alias: string): boolean {
+    return getPreferredAlias(chordAlias) === alias;
+  }
+
+  function getDefaultAliasIndex(): number {
+    const notation =
+      settingsStore.settings.chordDictionary.defaultNotation || "long";
+    return ALIAS_NOTATION[notation];
+  }
+
+  function isDefaultAlias(chordAlias: string, index: number): boolean {
+    return (
+      getPreferredAlias(chordAlias) === null &&
+      index === getDefaultAliasIndex()
+    );
+  }
+
   return {
     aliases,
     defaultNotation,
@@ -117,5 +148,11 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     setGroupBy,
     isChordDisabled,
     resolveChordName,
+    getPreferredAlias,
+    setPreferredAlias,
+    removePreferredAlias,
+    isPreferredAlias,
+    getDefaultAliasIndex,
+    isDefaultAlias,
   };
 });

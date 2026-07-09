@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js";
+// Canvas 2D 键盘渲染器（从 PixiJS 重写）
 
 const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
   "88": { from: 21, to: 108 },
@@ -7,18 +7,7 @@ const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
 };
 
 const NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
+  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
 ];
 
 export function isBlackKey(midi: number): boolean {
@@ -45,19 +34,32 @@ export interface KeyboardConfig {
   separatorThickness: number;
 }
 
+// 键位置缓存（用于快速查找）
+interface KeyPosition {
+  midi: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isBlack: boolean;
+}
+
 export class KeyboardRenderer {
-  private container: PIXI.Container;
-  private whiteKeys: Map<number, PIXI.Graphics> = new Map();
-  private blackKeys: Map<number, PIXI.Graphics> = new Map();
-  private pressedKeys = new Set<number>();
   private config: KeyboardConfig;
   private keyWidth = 0;
   private keyHeight = 0;
   private whiteKeyCount = 0;
   containerOffsetY = 0;
 
-  constructor(container: PIXI.Container) {
-    this.container = container;
+  // 键位置缓存
+  private whiteKeyPositions: Map<number, KeyPosition> = new Map();
+  private blackKeyPositions: Map<number, KeyPosition> = new Map();
+  private pressedKeys = new Set<number>();
+
+  // 绘制参数缓存
+  private width = 0;
+
+  constructor() {
     this.config = {
       from: 21,
       to: 108,
@@ -84,15 +86,14 @@ export class KeyboardRenderer {
     this.config.to = r.to;
   }
 
-  draw(width: number, height: number) {
-    // 销毁旧键的 Graphics，防止每次重绘泄漏 88+ 个对象
-    this.destroyChildren();
-    this.whiteKeys.clear();
-    this.blackKeys.clear();
-    this.pressedKeys.clear();
-
+  // 预计算键位置（在初始化或 resize 时调用）
+  computeKeyPositions(width: number, height: number) {
+    this.width = width;
     this.keyHeight = height;
     this.whiteKeyCount = 0;
+    this.whiteKeyPositions.clear();
+    this.blackKeyPositions.clear();
+
     for (let midi = this.config.from; midi <= this.config.to; midi++) {
       if (!isBlackKey(midi)) this.whiteKeyCount++;
     }
@@ -101,59 +102,23 @@ export class KeyboardRenderer {
     const blackKeyWidth = this.keyWidth * 0.6;
     const blackKeyHeight = this.keyHeight * 0.6;
 
-    // 先画白键
+    // 先计算白键位置
     let x = 0;
-    let whiteIndex = 0;
     for (let midi = this.config.from; midi <= this.config.to; midi++) {
       if (isBlackKey(midi)) continue;
 
-      const key = new PIXI.Graphics();
-      if (this.config.keyCornerRadius > 0) {
-        key.roundRect(
-          0,
-          0,
-          this.keyWidth - 1,
-          this.keyHeight,
-          this.config.keyCornerRadius,
-        );
-      } else {
-        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
-      }
-      key.fill(this.config.whiteKeyColor);
-      if (this.config.keyBorderWidth > 0) {
-        key.stroke({
-          color: this.config.keyBorderColor,
-          width: this.config.keyBorderWidth,
-        });
-      } else {
-        key.stroke({ color: "#ccc", width: 1 });
-      }
-      key.x = x;
-      key.y = 0;
-      (key as { __midi?: number }).__midi = midi;
-
-      if (this.config.showLabels) {
-        const label = new PIXI.Text({
-          text: noteToName(midi),
-          style: {
-            fontSize: 10,
-            fill: "#666",
-            align: "center",
-          },
-        });
-        label.anchor.set(0.5, 1);
-        label.x = this.keyWidth / 2;
-        label.y = this.keyHeight - 5;
-        key.addChild(label);
-      }
-
-      this.whiteKeys.set(midi, key);
-      this.container.addChild(key);
+      this.whiteKeyPositions.set(midi, {
+        midi,
+        x,
+        y: 0,
+        width: this.keyWidth - 1,
+        height: this.keyHeight,
+        isBlack: false,
+      });
       x += this.keyWidth;
-      whiteIndex++;
     }
 
-    // 再画黑键
+    // 再计算黑键位置
     let prevWhiteX = 0;
     for (let midi = this.config.from; midi <= this.config.to; midi++) {
       if (!isBlackKey(midi)) {
@@ -161,149 +126,112 @@ export class KeyboardRenderer {
         continue;
       }
 
-      const key = new PIXI.Graphics();
-      const r = Math.max(3, this.config.keyCornerRadius);
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
-      key.fill(this.config.blackKeyColor);
-      if (this.config.keyBorderWidth > 0) {
-        key.stroke({
-          color: this.config.keyBorderColor,
-          width: this.config.keyBorderWidth,
-        });
-      }
-      // 黑键位置：前一个白键的右边缘 - 黑键宽度/2
-      key.x = prevWhiteX + this.keyWidth - blackKeyWidth / 2;
-      key.y = 0;
-      (key as { __midi?: number }).__midi = midi;
+      this.blackKeyPositions.set(midi, {
+        midi,
+        x: prevWhiteX + this.keyWidth - blackKeyWidth / 2,
+        y: 0,
+        width: blackKeyWidth,
+        height: blackKeyHeight,
+        isBlack: true,
+      });
+    }
+  }
 
-      this.blackKeys.set(midi, key);
-      this.container.addChild(key);
+  // 渲染到 Canvas
+  render(ctx: CanvasRenderingContext2D, offsetY: number) {
+    ctx.save();
+    ctx.translate(0, offsetY);
+
+    // 绘制分隔线
+    if (this.config.separatorEnabled && this.config.separatorThickness > 0) {
+      ctx.fillStyle = this.config.separatorColor;
+      ctx.fillRect(0, -this.config.separatorThickness, this.width, this.config.separatorThickness);
     }
 
-    // 绘制键盘分隔线
-    if (this.config.separatorEnabled && this.config.separatorThickness > 0) {
-      const separator = new PIXI.Graphics();
-      separator.rect(0, 0, width, this.config.separatorThickness);
-      separator.fill(this.config.separatorColor);
-      separator.y = -this.config.separatorThickness;
-      this.container.addChild(separator);
+    // 先绘制白键
+    for (const [midi, pos] of this.whiteKeyPositions) {
+      this.drawKey(ctx, pos, midi);
+    }
+
+    // 再绘制黑键（在上层）
+    for (const [midi, pos] of this.blackKeyPositions) {
+      this.drawKey(ctx, pos, midi);
+    }
+
+    ctx.restore();
+  }
+
+  private drawKey(ctx: CanvasRenderingContext2D, pos: KeyPosition, midi: number) {
+    const isPressed = this.pressedKeys.has(midi);
+    const fillColor = isPressed ? this.config.pressedKeyColor :
+      (pos.isBlack ? this.config.blackKeyColor : this.config.whiteKeyColor);
+
+    ctx.fillStyle = fillColor;
+
+    // 圆角矩形
+    const r = Math.min(this.config.keyCornerRadius, pos.width / 2, pos.height / 2);
+    if (r > 0) {
+      ctx.beginPath();
+      ctx.roundRect(pos.x, pos.y, pos.width, pos.height, r);
+      ctx.fill();
+    } else {
+      ctx.fillRect(pos.x, pos.y, pos.width, pos.height);
+    }
+
+    // 边框
+    if (this.config.keyBorderWidth > 0 || !pos.isBlack) {
+      ctx.strokeStyle = this.config.keyBorderWidth > 0 ?
+        this.config.keyBorderColor : "#ccc";
+      ctx.lineWidth = this.config.keyBorderWidth > 0 ?
+        this.config.keyBorderWidth : 1;
+      ctx.stroke();
+    }
+
+    // 标签
+    if (this.config.showLabels && !pos.isBlack) {
+      ctx.fillStyle = "#666";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(noteToName(midi), pos.x + pos.width / 2, pos.y + pos.height - 5);
     }
   }
 
   private getWhiteKeyX(midi: number): number {
-    let x = 0;
-    for (let m = this.config.from; m < midi; m++) {
-      if (!isBlackKey(m)) x += this.keyWidth;
-    }
-    return x;
+    const pos = this.whiteKeyPositions.get(midi);
+    return pos ? pos.x : 0;
   }
 
   highlightNote(midi: number) {
-    if (this.pressedKeys.has(midi)) return;
     this.pressedKeys.add(midi);
-
-    const key = this.whiteKeys.get(midi) || this.blackKeys.get(midi);
-    if (!key) return;
-
-    const isBlack = isBlackKey(midi);
-    key.clear();
-    if (isBlack) {
-      const blackKeyWidth = this.keyWidth * 0.6;
-      const blackKeyHeight = this.keyHeight * 0.6;
-      const r = Math.max(3, this.config.keyCornerRadius);
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
-      key.fill(this.config.pressedKeyColor);
-    } else {
-      if (this.config.keyCornerRadius > 0) {
-        key.roundRect(
-          0,
-          0,
-          this.keyWidth - 1,
-          this.keyHeight,
-          this.config.keyCornerRadius,
-        );
-      } else {
-        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
-      }
-      key.fill(this.config.pressedKeyColor);
-      key.stroke({ color: "#aaa", width: 1 });
-    }
   }
 
   clearHighlight(midi: number) {
-    if (!this.pressedKeys.has(midi)) return;
     this.pressedKeys.delete(midi);
-
-    const isBlack = isBlackKey(midi);
-    const key = isBlack ? this.blackKeys.get(midi) : this.whiteKeys.get(midi);
-    if (!key) return;
-
-    key.clear();
-    if (isBlack) {
-      const blackKeyWidth = this.keyWidth * 0.6;
-      const blackKeyHeight = this.keyHeight * 0.6;
-      const r = Math.max(3, this.config.keyCornerRadius);
-      key.roundRect(0, 0, blackKeyWidth, blackKeyHeight, r);
-      key.fill(this.config.blackKeyColor);
-      if (this.config.keyBorderWidth > 0) {
-        key.stroke({
-          color: this.config.keyBorderColor,
-          width: this.config.keyBorderWidth,
-        });
-      }
-    } else {
-      if (this.config.keyCornerRadius > 0) {
-        key.roundRect(
-          0,
-          0,
-          this.keyWidth - 1,
-          this.keyHeight,
-          this.config.keyCornerRadius,
-        );
-      } else {
-        key.rect(0, 0, this.keyWidth - 1, this.keyHeight);
-      }
-      key.fill(this.config.whiteKeyColor);
-      if (this.config.keyBorderWidth > 0) {
-        key.stroke({
-          color: this.config.keyBorderColor,
-          width: this.config.keyBorderWidth,
-        });
-      } else {
-        key.stroke({ color: "#ccc", width: 1 });
-      }
-    }
   }
 
   clearAllHighlights() {
-    for (const midi of this.pressedKeys) {
-      this.clearHighlight(midi);
-    }
+    this.pressedKeys.clear();
   }
 
   getNoteX(midi: number): number {
-    // 检查是否在范围内
     if (midi < this.config.from || midi > this.config.to) return -1;
 
     if (isBlackKey(midi)) {
-      // getWhiteKeyX(midi) 对于黑键天然返回其中心位置
-      // 因为黑键不计入白键累加，结果等于前一个白键右边缘 = 黑键中心
-      return this.getWhiteKeyX(midi);
+      const pos = this.blackKeyPositions.get(midi);
+      return pos ? pos.x + pos.width / 2 : -1;
     }
-    return this.getWhiteKeyX(midi) + this.keyWidth / 2;
+    const pos = this.whiteKeyPositions.get(midi);
+    return pos ? pos.x + pos.width / 2 : -1;
   }
 
   getNoteAtPoint(x: number, y: number): number | null {
-    // 将全局坐标转换为键盘容器的本地坐标
     const localY = y - this.containerOffsetY;
 
     // 先检查黑键（在上层）
-    const blackKeyWidth = this.keyWidth * 0.6;
-    const blackKeyHeight = this.keyHeight * 0.6;
-
-    if (localY >= 0 && localY <= blackKeyHeight) {
-      for (const [midi, key] of this.blackKeys) {
-        if (x >= key.x && x <= key.x + blackKeyWidth) {
+    if (localY >= 0 && localY <= this.keyHeight * 0.6) {
+      for (const [midi, pos] of this.blackKeyPositions) {
+        if (x >= pos.x && x <= pos.x + pos.width) {
           return midi;
         }
       }
@@ -311,15 +239,9 @@ export class KeyboardRenderer {
 
     // 再检查白键
     if (localY >= 0 && localY <= this.keyHeight) {
-      const whiteIndex = Math.floor(x / this.keyWidth);
-      if (whiteIndex >= 0 && whiteIndex < this.whiteKeyCount) {
-        // 找到第 whiteIndex 个白键的 midi
-        let count = 0;
-        for (let midi = this.config.from; midi <= this.config.to; midi++) {
-          if (!isBlackKey(midi)) {
-            if (count === whiteIndex) return midi;
-            count++;
-          }
+      for (const [midi, pos] of this.whiteKeyPositions) {
+        if (x >= pos.x && x <= pos.x + pos.width) {
+          return midi;
         }
       }
     }
@@ -343,19 +265,9 @@ export class KeyboardRenderer {
     return this.keyWidth;
   }
 
-  /** 销毁容器中所有子节点（Graphics/Text），防止内存泄漏 */
-  private destroyChildren() {
-    const children = this.container.removeChildren();
-    for (const child of children) {
-      child.destroy({ children: true });
-    }
-  }
-
-  /** 销毁所有资源，应在引擎 destroy() 中调用 */
   destroy() {
-    this.destroyChildren();
-    this.whiteKeys.clear();
-    this.blackKeys.clear();
+    this.whiteKeyPositions.clear();
+    this.blackKeyPositions.clear();
     this.pressedKeys.clear();
   }
 }

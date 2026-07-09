@@ -29,6 +29,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.waterfallPiano", icon: "piano" },
       },
       {
+        path: "fluid-test",
+        name: "fluid-test",
+        component: () => import("@/views/FluidTest.vue"),
+        meta: { title: "流体测试", icon: "water" },
+      },
+      {
         path: "chord-dictionary",
         name: "chord-dictionary",
         component: () => import("@/views/ChordDictionary/ChordDictionary.vue"),

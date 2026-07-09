@@ -1,54 +1,48 @@
 import * as Tone from "tone";
-import type { AudioPreset } from "../types";
+import type { AudioPreset, PhysicalPianoConfig } from "../types";
+import type { SoundEngine, SoundEngineCallbacks } from "./SoundEngine";
+import type { OutputChain } from "./OutputChain";
 
-export interface AudioEngineCallbacks {
-  onNoteOn?: (midi: number, velocity: number) => void;
-  onNoteOff?: (midi: number) => void;
-}
-
-export class AudioEngine {
+export class AudioEngine implements SoundEngine {
   private synth: Tone.PolySynth | null = null;
-  private reverb: Tone.Reverb | null = null;
-  private volume: Tone.Volume | null = null;
-  private compressor: Tone.Compressor | null = null;
-  private filter: Tone.Filter | null = null;
   currentPreset: AudioPreset = "grand-piano";
   private sustainEnabled = false;
   private sustainedNotes = new Set<number>();
   private activeNotes = new Map<number, string>();
-  private callbacks: AudioEngineCallbacks = {};
+  private callbacks: SoundEngineCallbacks = {};
+  private outputChain: OutputChain;
 
-  setCallbacks(callbacks: AudioEngineCallbacks) {
+  constructor(outputChain: OutputChain) {
+    this.outputChain = outputChain;
+  }
+
+  setCallbacks(callbacks: SoundEngineCallbacks) {
     this.callbacks = callbacks;
   }
 
   async init() {
     await Tone.start();
-
-    // Create audio chain: synth → filter → compressor → reverb → volume → destination
-    this.volume = new Tone.Volume(-6).toDestination();
-    this.reverb = new Tone.Reverb({ wet: 0.25, decay: 2.5 }).connect(
-      this.volume,
-    );
-    await this.reverb.generate();
-
-    this.compressor = new Tone.Compressor({
-      threshold: -24,
-      ratio: 4,
-      attack: 0.003,
-      release: 0.25,
-    }).connect(this.reverb);
-
-    this.filter = new Tone.Filter({
-      frequency: 8000,
-      type: "lowpass",
-      rolloff: -12,
-    }).connect(this.compressor);
-
     this.applyPreset("grand-piano");
   }
 
+  connect(output: AudioNode): void {
+    if (this.synth) {
+      this.synth.connect(output);
+    }
+  }
+
+  disconnect(): void {
+    if (this.synth) {
+      this.synth.disconnect();
+    }
+  }
+
   applyPreset(preset: AudioPreset) {
+    if (preset === "physical-piano") {
+      // PhysicalPianoEngine handles this preset
+      return;
+    }
+
     this.currentPreset = preset;
 
     // Dispose previous synth
@@ -59,7 +53,6 @@ export class AudioEngine {
 
     switch (preset) {
       case "grand-piano":
-        // Rich piano with harmonics
         this.synth = new Tone.PolySynth(Tone.Synth, {
           oscillator: {
             type: "fmtriangle",
@@ -75,11 +68,10 @@ export class AudioEngine {
           },
           volume: -8,
         });
-        if (this.filter) this.filter.frequency.value = 6000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 6000;
         break;
 
       case "electric-piano":
-        // Classic Rhodes-style EP
         this.synth = new Tone.PolySynth(Tone.FMSynth, {
           harmonicity: 3,
           modulationIndex: 8,
@@ -99,11 +91,10 @@ export class AudioEngine {
           },
           volume: -10,
         });
-        if (this.filter) this.filter.frequency.value = 5000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 5000;
         break;
 
       case "bright-piano":
-        // Bright, shimmering piano
         this.synth = new Tone.PolySynth(Tone.Synth, {
           oscillator: {
             type: "fmsquare",
@@ -119,11 +110,10 @@ export class AudioEngine {
           },
           volume: -12,
         });
-        if (this.filter) this.filter.frequency.value = 10000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 10000;
         break;
 
       case "mellow-piano":
-        // Warm, soft piano
         this.synth = new Tone.PolySynth(Tone.Synth, {
           oscillator: {
             type: "fmtriangle",
@@ -139,11 +129,10 @@ export class AudioEngine {
           },
           volume: -6,
         });
-        if (this.filter) this.filter.frequency.value = 4000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 4000;
         break;
 
       case "organ":
-        // Organ with drawbar-like harmonics
         this.synth = new Tone.PolySynth(Tone.Synth, {
           oscillator: {
             type: "fatcustom",
@@ -159,11 +148,10 @@ export class AudioEngine {
           },
           volume: -12,
         });
-        if (this.filter) this.filter.frequency.value = 8000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 8000;
         break;
 
       case "synth-pad":
-        // Lush ambient pad
         this.synth = new Tone.PolySynth(Tone.Synth, {
           oscillator: {
             type: "fatcustom",
@@ -179,13 +167,13 @@ export class AudioEngine {
           },
           volume: -15,
         });
-        if (this.filter) this.filter.frequency.value = 3000;
+        if (this.outputChain?.filter) this.outputChain.filter.frequency.value = 3000;
         break;
     }
 
     // Connect synth through the audio chain
-    if (this.synth && this.filter) {
-      this.synth.connect(this.filter);
+    if (this.synth && this.outputChain?.filter) {
+      this.synth.connect(this.outputChain.filter);
     }
   }
 
@@ -195,7 +183,6 @@ export class AudioEngine {
     const note = Tone.Frequency(midi, "midi").toNote();
     const vel = velocity / 127;
 
-    // If already playing, release first
     if (this.activeNotes.has(midi)) {
       this.synth.triggerRelease([note], Tone.now());
     }
@@ -221,7 +208,30 @@ export class AudioEngine {
     }
   }
 
-  releaseSustainedNotes() {
+  setSustain(enabled: boolean) {
+    this.sustainEnabled = enabled;
+    if (!enabled) {
+      this.releaseSustainedNotes();
+    }
+  }
+
+  setVolume(db: number): void {
+    this.outputChain?.setVolume(db);
+  }
+
+  setReverbWet(wet: number): void {
+    this.outputChain?.setReverbWet(wet);
+  }
+
+  setReverbDecay(decay: number): void {
+    this.outputChain?.setReverbDecay(decay);
+  }
+
+  setConfig(_cfg: PhysicalPianoConfig): void {
+    // Tone.js engine does not support physical config
+  }
+
+  private releaseSustainedNotes() {
     if (!this.synth) return;
     for (const midi of this.sustainedNotes) {
       const note = this.activeNotes.get(midi);
@@ -232,39 +242,6 @@ export class AudioEngine {
       }
     }
     this.sustainedNotes.clear();
-  }
-
-  setVolume(db: number) {
-    if (this.volume) {
-      this.volume.volume.value = db;
-    }
-  }
-
-  setReverbWet(wet: number) {
-    if (this.reverb) {
-      this.reverb.wet.value = wet;
-    }
-  }
-
-  setReverbDecay(decay: number) {
-    if (this.reverb) {
-      const wet = this.reverb.wet.value;
-      this.reverb.dispose();
-      this.reverb = new Tone.Reverb({ wet, decay });
-      this.reverb.connect(this.volume!);
-      this.reverb.generate();
-      if (this.compressor) {
-        this.compressor.disconnect();
-        this.compressor.connect(this.reverb);
-      }
-    }
-  }
-
-  setSustain(enabled: boolean) {
-    this.sustainEnabled = enabled;
-    if (!enabled) {
-      this.releaseSustainedNotes();
-    }
   }
 
   isNoteActive(midi: number): boolean {
@@ -280,22 +257,6 @@ export class AudioEngine {
       this.synth.disconnect();
       this.synth.dispose();
       this.synth = null;
-    }
-    if (this.reverb) {
-      this.reverb.dispose();
-      this.reverb = null;
-    }
-    if (this.volume) {
-      this.volume.dispose();
-      this.volume = null;
-    }
-    if (this.compressor) {
-      this.compressor.dispose();
-      this.compressor = null;
-    }
-    if (this.filter) {
-      this.filter.dispose();
-      this.filter = null;
     }
     this.activeNotes.clear();
     this.sustainedNotes.clear();

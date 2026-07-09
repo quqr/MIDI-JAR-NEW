@@ -13,131 +13,10 @@
 //
 // 这些 FPS 指标需要在真实浏览器中验证，本文件验证对应的逻辑性能基线。
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-
-// Mock PIXI（同其他测试文件）
-vi.mock("pixi.js", () => {
-  class MockContainer {
-    children: unknown[] = [];
-    filters: unknown[] | null = null;
-    addChild(child: unknown) {
-      this.children.push(child);
-    }
-    removeChild(child: unknown) {
-      const idx = this.children.indexOf(child);
-      if (idx >= 0) this.children.splice(idx, 1);
-    }
-    removeChildren() {
-      this.children = [];
-    }
-  }
-  class MockGraphics {
-    clear() {}
-    rect() {
-      return this;
-    }
-    roundRect() {
-      return this;
-    }
-    circle() {
-      return this;
-    }
-    ellipse() {
-      return this;
-    }
-    moveTo() {
-      return this;
-    }
-    lineTo() {
-      return this;
-    }
-    closePath() {
-      return this;
-    }
-    fill() {}
-    stroke() {}
-    addChild(_child: unknown) {}
-    destroy() {}
-  }
-  class MockText {
-    anchor = { set() {} };
-    resolution = 1;
-    x = 0;
-    y = 0;
-    alpha = 1;
-    visible = true;
-    style: unknown = null;
-    destroy() {}
-  }
-  class MockSprite {
-    anchor = { set() {} };
-    scale = { set() {} };
-    x = 0;
-    y = 0;
-    tint = 0;
-    alpha = 1;
-    visible = true;
-    texture = null;
-    destroy() {}
-  }
-  const MockTexture = {
-    from: () => ({}),
-    EMPTY: {},
-  };
-  return {
-    Container: MockContainer,
-    Graphics: MockGraphics,
-    Text: MockText,
-    Sprite: MockSprite,
-    Texture: MockTexture,
-  };
-});
-
-vi.mock("../../engine/ParticleSystem", () => ({
-  ParticleSystem: class {
-    setTrailConfig() {}
-    setHitConfig() {}
-    setPhysicsConfig() {}
-    setShape() {}
-    setUseGlowTexture() {}
-    setLifecycleEnabled() {}
-    setHardLimit() {}
-    setDegradeMode() {}
-    spawnTrail() {}
-    spawnHitExplosion() {}
-    spawnSurfaceEmission() {}
-    update() {}
-    clear() {}
-    destroy() {}
-  },
-}));
-
-vi.mock("../../engine/GlowTexture", () => ({
-  getGlowTexture: () => ({}),
-  getStarTexture: () => ({}),
-  clearGlowTextureCache: () => {},
-  lifecycleCurve: (t: number) =>
-    Math.sin(Math.PI * Math.max(0, Math.min(1, t))),
-  lifecyclePeaked: (t: number, peak = 0.3) => {
-    const x = Math.max(0, Math.min(1, t));
-    if (x < peak) return x / peak;
-    return 1 - (x - peak) / (1 - peak);
-  },
-}));
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { NoteBlockSystem } from "../../engine/NoteBlockSystem";
-import type * as PIXI from "pixi.js";
 import type { ScheduledNote } from "../../types";
-
-function createMockContainer() {
-  return {
-    filters: null,
-    addChild: (_c: unknown) => {},
-    removeChild: (_c: unknown) => {},
-    removeChildren: () => {},
-    children: [],
-  } as unknown as PIXI.Container;
-}
 
 function makeNote(
   midi: number,
@@ -164,7 +43,7 @@ describe("性能基准 - 逻辑基线", () => {
   let system: NoteBlockSystem;
 
   beforeEach(() => {
-    system = new NoteBlockSystem(createMockContainer(), createMockContainer());
+    system = new NoteBlockSystem();
     system.setCanvasSize(1920, 1080);
     system.setKeyboardY(900);
     system.setKeyWidth(24);

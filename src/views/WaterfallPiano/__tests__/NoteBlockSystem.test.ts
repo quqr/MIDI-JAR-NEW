@@ -1,120 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-
-// Mock PIXI 以避免 jsdom 环境下 WebGL 不可用
-vi.mock("pixi.js", () => {
-  class MockContainer {
-    children: unknown[] = [];
-    addChild(child: unknown) {
-      this.children.push(child);
-    }
-    removeChild(child: unknown) {
-      const idx = this.children.indexOf(child);
-      if (idx >= 0) this.children.splice(idx, 1);
-    }
-    removeChildren() {
-      this.children = [];
-    }
-  }
-  class MockGraphics {
-    clear() {}
-    circle() {
-      return this;
-    }
-    rect() {
-      return this;
-    }
-    roundRect() {
-      return this;
-    }
-    ellipse() {
-      return this;
-    }
-    moveTo() {
-      return this;
-    }
-    lineTo() {
-      return this;
-    }
-    closePath() {
-      return this;
-    }
-    fill() {}
-    stroke() {}
-    addChild(_child: unknown) {}
-    destroy() {}
-  }
-  class MockText {
-    anchor = { set() {} };
-    resolution = 1;
-    x = 0;
-    y = 0;
-    alpha = 1;
-    visible = true;
-    style: unknown = null;
-    destroy() {}
-  }
-  class MockSprite {
-    anchor = { set() {} };
-    scale = { set() {} };
-    x = 0;
-    y = 0;
-    tint = 0;
-    alpha = 1;
-    visible = true;
-    texture = null;
-    destroy() {}
-  }
-  const MockTexture = {
-    from: () => ({}),
-    EMPTY: {},
-  };
-  return {
-    Container: MockContainer,
-    Graphics: MockGraphics,
-    Text: MockText,
-    Sprite: MockSprite,
-    Texture: MockTexture,
-  };
-});
-
-// Mock ParticleSystem 以隔离 NoteBlockSystem 测试
-vi.mock("../engine/ParticleSystem", () => {
-  return {
-    ParticleSystem: class {
-      setTrailConfig() {}
-      setHitConfig() {}
-      setPhysicsConfig() {}
-      setShape() {}
-      setUseGlowTexture() {}
-      setLifecycleEnabled() {}
-      setHardLimit() {}
-      setDegradeMode() {}
-      spawnTrail() {}
-      spawnHitExplosion() {}
-      spawnSurfaceEmission() {}
-      update() {}
-      clear() {}
-      destroy() {}
-    },
-  };
-});
-
-// Mock GlowTexture
-vi.mock("../engine/GlowTexture", () => ({
-  getGlowTexture: () => ({}),
-  getStarTexture: () => ({}),
-  clearGlowTextureCache: () => {},
-  lifecycleCurve: (t: number) =>
-    Math.sin(Math.PI * Math.max(0, Math.min(1, t))),
-  lifecyclePeaked: (t: number, peak = 0.3) => {
-    const x = Math.max(0, Math.min(1, t));
-    if (x < peak) return x / peak;
-    return 1 - (x - peak) / (1 - peak);
-  },
-}));
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { NoteBlockSystem } from "../engine/NoteBlockSystem";
-import type * as PIXI from "pixi.js";
 import type { ScheduledNote } from "../types";
 
 // 辅助：构建 ScheduledNote
@@ -128,25 +14,11 @@ function makeNote(
   return { midi, time, duration, velocity: 100, hand, trackIndex };
 }
 
-// 辅助：创建 mock 容器
-function createMockContainer() {
-  return {
-    addChild: (_c: unknown) => {},
-    removeChild: (_c: unknown) => {},
-    removeChildren: () => {},
-    children: [],
-  } as unknown as PIXI.Container;
-}
-
 describe("NoteBlockSystem", () => {
   let system: NoteBlockSystem;
-  let blockContainer: PIXI.Container;
-  let hitLineContainer: PIXI.Container;
 
   beforeEach(() => {
-    blockContainer = createMockContainer();
-    hitLineContainer = createMockContainer();
-    system = new NoteBlockSystem(blockContainer, hitLineContainer);
+    system = new NoteBlockSystem();
     system.setCanvasSize(800, 600);
     system.setKeyboardY(500);
     system.setKeyWidth(20);
@@ -154,9 +26,7 @@ describe("NoteBlockSystem", () => {
 
   describe("构造与配置", () => {
     it("构造不抛出错误", () => {
-      expect(
-        () => new NoteBlockSystem(createMockContainer(), createMockContainer()),
-      ).not.toThrow();
+      expect(() => new NoteBlockSystem()).not.toThrow();
     });
 
     it("setMode 不抛出错误", () => {
@@ -176,12 +46,6 @@ describe("NoteBlockSystem", () => {
       expect(() => system.setLookAhead(5)).not.toThrow();
     });
 
-    it("setStyle 不抛出错误", () => {
-      expect(() => system.setStyle("blocks")).not.toThrow();
-      expect(() => system.setStyle("hybrid")).not.toThrow();
-      expect(() => system.setStyle("particles")).not.toThrow();
-    });
-
     it("setColorScheme 不抛出错误", () => {
       for (const scheme of [
         "pitch",
@@ -198,16 +62,6 @@ describe("NoteBlockSystem", () => {
     it("setFlowDirection 不抛出错误", () => {
       expect(() => system.setFlowDirection("up")).not.toThrow();
       expect(() => system.setFlowDirection("down")).not.toThrow();
-    });
-
-    it("setShowNoteNames 不抛出错误", () => {
-      expect(() => system.setShowNoteNames(true)).not.toThrow();
-      expect(() => system.setShowNoteNames(false)).not.toThrow();
-    });
-
-    it("setDegradeMode 不抛出错误", () => {
-      expect(() => system.setDegradeMode(true)).not.toThrow();
-      expect(() => system.setDegradeMode(false)).not.toThrow();
     });
   });
 
@@ -249,6 +103,63 @@ describe("NoteBlockSystem", () => {
       system.startRealtimeNote(64, 200, 100);
       system.endRealtimeNote(60);
       expect(system.getActiveBlockCount()).toBe(1);
+    });
+
+    // ─── 新增测试：endRealtimeNote ───
+    describe("endRealtimeNote 边界条件", () => {
+      it("midi 超出范围时不抛错", () => {
+        expect(() => system.endRealtimeNote(-1)).not.toThrow();
+        expect(() => system.endRealtimeNote(200)).not.toThrow();
+      });
+
+      it("blocks 数组为空时不抛错", () => {
+        expect(system.getBlockCount()).toBe(0);
+        expect(() => system.endRealtimeNote(60)).not.toThrow();
+        expect(system.getBlockCount()).toBe(0);
+      });
+
+      it("重复释放同一 midi 不抛错", () => {
+        system.startRealtimeNote(60, 100, 100);
+        system.endRealtimeNote(60);
+        expect(() => system.endRealtimeNote(60)).not.toThrow();
+        expect(system.getActiveBlockCount()).toBe(0);
+      });
+
+      it("正常释放设置 endTime 和 hasEnded", () => {
+        system.startRealtimeNote(60, 100, 100);
+        // const beforeEnd = performance.now(); // unused variable
+        system.endRealtimeNote(60);
+        // 通过 update 循环后验证块状态（间接验证）
+        system.update(1, 0.016);
+        // endTime 应接近当前时间，hasEnded 应为 true
+        expect(system.getActiveBlockCount()).toBe(0);
+      });
+    });
+
+    // ─── 新增测试：startRealtimeNote ───
+    describe("startRealtimeNote 边界验证", () => {
+      it("velocity 为 0 时仍能创建块", () => {
+        system.startRealtimeNote(60, 100, 0);
+        expect(system.getBlockCount()).toBe(1);
+      });
+
+      it("velocity 为 127 时能创建块", () => {
+        system.startRealtimeNote(60, 100, 127);
+        expect(system.getBlockCount()).toBe(1);
+      });
+
+      it("重复激活同一 midi 创建多个块（允许复音）", () => {
+        system.startRealtimeNote(60, 100, 100);
+        system.startRealtimeNote(60, 100, 100);
+        expect(system.getBlockCount()).toBe(2);
+      });
+
+      it("x 坐标可以是任意值（由外部计算）", () => {
+        system.startRealtimeNote(60, -100, 100);
+        expect(system.getBlockCount()).toBe(1);
+        system.startRealtimeNote(60, 10000, 100);
+        expect(system.getBlockCount()).toBe(2);
+      });
     });
   });
 
@@ -363,10 +274,7 @@ describe("NoteBlockSystem", () => {
       expect(() => system.update(1, 0.016)).not.toThrow();
     });
 
-    it("启用所有视觉特性后 update 不抛出错误", () => {
-      system.setStyle("blocks");
-      system.setShowNoteNames(true);
-      system.setTrailEnabled(true);
+    it("启用视觉特性后 update 不抛出错误", () => {
       system.startRealtimeNote(60, 100, 100);
       expect(() => system.update(1, 0.016)).not.toThrow();
     });
@@ -390,35 +298,13 @@ describe("NoteBlockSystem", () => {
     });
   });
 
-  describe("降级模式", () => {
-    it("启用降级模式后 update 不抛出错误", () => {
-      system.setMode("realtime");
-      system.setDegradeMode(true);
-      system.startRealtimeNote(60, 100, 100);
-      expect(() => system.update(1, 0.016)).not.toThrow();
-    });
-
-    it("降级模式下 Synthesia update 不抛出错误", () => {
-      system.setMode("synthesia");
-      system.setDegradeMode(true);
-      system.scheduleNotes([makeNote(60, 0, 1)], () => 100);
-      system.setTransportPlaying(true);
-      expect(() => system.update(1, 0.016)).not.toThrow();
-    });
-  });
-
   describe("hitLineConfig", () => {
     it("setHitLineConfig 不抛出错误", () => {
       expect(() =>
         system.setHitLineConfig({
           color: "#ff0000",
-          glow: true,
           thickness: 3,
-          glowRadius: 20,
-          glowIntensity: 0.5,
-          style: "dashed",
           visible: true,
-          shaderGlow: false,
         }),
       ).not.toThrow();
     });
@@ -426,15 +312,23 @@ describe("NoteBlockSystem", () => {
     it("隐藏命中线时 update 不抛出错误", () => {
       system.setHitLineConfig({
         color: "#ffffff",
-        glow: true,
         thickness: 2,
-        glowRadius: 15,
-        glowIntensity: 0.8,
-        style: "solid",
         visible: false,
-        shaderGlow: false,
       });
       expect(() => system.update(1, 0.016)).not.toThrow();
+    });
+  });
+
+  describe("getBlocks / getKeyboardY", () => {
+    it("getBlocks 返回只读块数组", () => {
+      expect(system.getBlocks()).toEqual([]);
+      system.startRealtimeNote(60, 100, 100);
+      expect(system.getBlocks().length).toBe(1);
+    });
+
+    it("getKeyboardY 返回键盘 y 坐标", () => {
+      system.setKeyboardY(540);
+      expect(system.getKeyboardY()).toBe(540);
     });
   });
 });

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { loadFromStorage, saveToStorage } from "@/helpers/storage";
 import { debounce } from "@/helpers/debounce";
-import { defaultWaterfallSettings, STORAGE_KEY } from "../constants";
+import { defaultWaterfallSettings, defaultPhysicalPianoConfig, STORAGE_KEY } from "../constants";
 import type { WaterfallPianoSettings, RecordedNote } from "../types";
 
 function loadSettings(): WaterfallPianoSettings {
@@ -16,62 +16,18 @@ function loadSettings(): WaterfallPianoSettings {
       background: {
         ...defaultWaterfallSettings.background,
         ...stored.background,
+        fluidParams: {
+          ...defaultWaterfallSettings.background.fluidParams,
+          ...stored.background?.fluidParams,
+        },
       },
       keyboard: { ...defaultWaterfallSettings.keyboard, ...stored.keyboard },
       audio: { ...defaultWaterfallSettings.audio, ...stored.audio },
+      physicalPiano: {
+        ...defaultPhysicalPianoConfig,
+        ...stored.physicalPiano,
+      },
       midiFile: { ...defaultWaterfallSettings.midiFile, ...stored.midiFile },
-      postProcessing: {
-        ...defaultWaterfallSettings.postProcessing,
-        ...stored.postProcessing,
-        bloom: {
-          ...defaultWaterfallSettings.postProcessing.bloom,
-          ...stored.postProcessing?.bloom,
-        },
-        motionBlur: {
-          ...defaultWaterfallSettings.postProcessing.motionBlur,
-          ...stored.postProcessing?.motionBlur,
-        },
-        chromaticAberration: {
-          ...defaultWaterfallSettings.postProcessing.chromaticAberration,
-          ...stored.postProcessing?.chromaticAberration,
-        },
-        vignette: {
-          ...defaultWaterfallSettings.postProcessing.vignette,
-          ...stored.postProcessing?.vignette,
-        },
-      },
-      noteTexture: {
-        ...defaultWaterfallSettings.noteTexture,
-        ...stored.noteTexture,
-      },
-      noteBlockParticles: {
-        ...defaultWaterfallSettings.noteBlockParticles,
-        ...stored.noteBlockParticles,
-        surfaceEmission: {
-          ...defaultWaterfallSettings.noteBlockParticles.surfaceEmission,
-          ...stored.noteBlockParticles?.surfaceEmission,
-        },
-        hitExplosion: {
-          ...defaultWaterfallSettings.noteBlockParticles.hitExplosion,
-          ...stored.noteBlockParticles?.hitExplosion,
-        },
-        orbiting: {
-          ...defaultWaterfallSettings.noteBlockParticles.orbiting,
-          ...stored.noteBlockParticles?.orbiting,
-        },
-      },
-      performance: {
-        ...defaultWaterfallSettings.performance,
-        ...stored.performance,
-      },
-      theme: {
-        current:
-          stored.theme?.current ?? defaultWaterfallSettings.theme.current,
-        styleParameters: {
-          ...defaultWaterfallSettings.theme.styleParameters,
-          ...stored.theme?.styleParameters,
-        },
-      },
     };
   }
   return { ...defaultWaterfallSettings };

@@ -1,0 +1,21 @@
+// Shader 模块统一导出
+export { baseVertexShader } from "./baseVertex";
+export { blurVertexShader } from "./blurVertex";
+export { blurShader } from "./blur";
+export { copyShader } from "./copy";
+export { clearShader } from "./clear";
+export { colorShader } from "./color";
+export { checkerboardShader } from "./checkerboard";
+export { splatShader } from "./splat";
+export { advectionShader } from "./advection";
+export { divergenceShader } from "./divergence";
+export { curlShader } from "./curl";
+export { vorticityShader } from "./vorticity";
+export { pressureShader } from "./pressure";
+export { gradientSubtractShader } from "./gradientSubtract";
+export { displayShaderSource } from "./display";
+export { bloomPrefilterShader } from "./bloomPrefilter";
+export { bloomBlurShader } from "./bloomBlur";
+export { bloomFinalShader } from "./bloomFinal";
+export { sunraysMaskShader } from "./sunraysMask";
+export { sunraysShader } from "./sunrays";
