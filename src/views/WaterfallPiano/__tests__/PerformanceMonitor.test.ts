@@ -1,211 +1,72 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { PerformanceMonitor } from "../engine/PerformanceMonitor";
 
-// 测试自动降级逻辑：
-// 1. 帧率持续低于 minFps 时触发降级
-// 2. 帧率恢复到 targetFps 后自动恢复
-// 3. 中间区间不触发任何动作
-
-// 辅助：运行指定帧数，返回期间出现过的所有 action
-function runFrames(
-  monitor: PerformanceMonitor,
-  fps: number,
-  frames: number,
-  deltaSeconds = 1 / 60,
-): Set<string> {
-  const actions = new Set<string>();
-  for (let i = 0; i < frames; i++) {
-    const action = monitor.update(fps, deltaSeconds);
-    actions.add(action);
-  }
-  return actions;
-}
-
 describe("PerformanceMonitor", () => {
-  let monitor: PerformanceMonitor;
-
-  beforeEach(() => {
-    // minFps=45, targetFps=55（与 spec 一致）
-    monitor = new PerformanceMonitor(45, 55);
+  it("60 帧 16.67ms → FPS ≈ 60", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 60; i++) pm.recordFrame(16.67);
+    const fps = pm.getFps();
+    expect(fps).toBeGreaterThan(58);
+    expect(fps).toBeLessThan(62);
   });
 
-  describe("构造与配置", () => {
-    it("构造不抛出错误", () => {
-      expect(() => new PerformanceMonitor(45, 55)).not.toThrow();
-    });
-
-    it("初始状态未降级", () => {
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("setThresholds 不抛出错误", () => {
-      expect(() => monitor.setThresholds(30, 50)).not.toThrow();
-    });
+  it("30 帧 50ms（20fps）→ shouldDegrade 为 true", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 30; i++) pm.recordFrame(50);
+    expect(pm.shouldDegrade()).toBe(true);
   });
 
-  describe("降级触发", () => {
-    it("单次低帧率不触发降级", () => {
-      const action = monitor.update(30, 1 / 60);
-      expect(action).toBe("idle");
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("持续低帧率超过 3 秒触发降级", () => {
-      // 200 帧 ≈ 3.33 秒，超过 3 秒阈值
-      const actions = runFrames(monitor, 30, 200);
-      expect(actions.has("degrade")).toBe(true);
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("持续低帧率 2 秒不触发降级", () => {
-      const actions = runFrames(monitor, 30, 120); // 2 秒
-      expect(actions.has("degrade")).toBe(false);
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("fps = minFps 时不触发降级（严格小于）", () => {
-      const actions = runFrames(monitor, 45, 300); // 等于 minFps
-      expect(actions.has("degrade")).toBe(false);
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("fps = minFps - 1 时触发降级", () => {
-      const actions = runFrames(monitor, 44, 200);
-      expect(actions.has("degrade")).toBe(true);
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("已降级后不再重复返回 degrade", () => {
-      runFrames(monitor, 30, 200); // 触发降级
-      expect(monitor.isDegraded()).toBe(true);
-
-      // 继续低帧率，应返回 idle（不再重复 degrade）
-      const actions = runFrames(monitor, 30, 100);
-      expect(actions.has("degrade")).toBe(false);
-      expect(actions.has("idle")).toBe(true);
-    });
+  it("30 帧低 fps 后 5 帧 60fps → shouldDegrade 回到 false", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 30; i++) pm.recordFrame(50);
+    expect(pm.shouldDegrade()).toBe(true);
+    for (let i = 0; i < 5; i++) pm.recordFrame(16.67);
+    expect(pm.shouldDegrade()).toBe(false);
   });
 
-  describe("恢复触发", () => {
-    beforeEach(() => {
-      // 先触发降级
-      runFrames(monitor, 30, 200);
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("单次高帧率不触发恢复", () => {
-      const action = monitor.update(60, 1 / 60);
-      expect(action).toBe("idle");
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("持续高帧率超过 5 秒触发恢复", () => {
-      // 320 帧 ≈ 5.33 秒，超过 5 秒阈值
-      const actions = runFrames(monitor, 60, 320);
-      expect(actions.has("recover")).toBe(true);
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("持续高帧率 4 秒不触发恢复", () => {
-      const actions = runFrames(monitor, 60, 240); // 4 秒
-      expect(actions.has("recover")).toBe(false);
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("fps = targetFps 时触发恢复", () => {
-      const actions = runFrames(monitor, 55, 320); // 等于 targetFps
-      expect(actions.has("recover")).toBe(true);
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("fps = targetFps - 1 时不触发恢复（中间区间）", () => {
-      const actions = runFrames(monitor, 54, 500); // 中间区间
-      expect(actions.has("recover")).toBe(false);
-      expect(monitor.isDegraded()).toBe(true);
-    });
+  it("29 帧低 fps 不足 30 → shouldDegrade 仍为 false", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 29; i++) pm.recordFrame(50);
+    expect(pm.shouldDegrade()).toBe(false);
   });
 
-  describe("中间区间（minFps ≤ fps < targetFps）", () => {
-    it("中间区间不触发任何动作", () => {
-      const actions = runFrames(monitor, 50, 500); // 45 ≤ 50 < 55
-      expect(actions.has("degrade")).toBe(false);
-      expect(actions.has("recover")).toBe(false);
-      expect(monitor.isDegraded()).toBe(false);
-    });
-
-    it("中间区间缓慢重置累计计数", () => {
-      // 累计 2 秒低帧率
-      runFrames(monitor, 30, 120);
-      // 切换到中间区间 4 秒（缓慢重置）
-      runFrames(monitor, 50, 240);
-      // 再回到低帧率 2 秒，不应触发降级（计数已被重置）
-      const actions = runFrames(monitor, 30, 120);
-      expect(actions.has("degrade")).toBe(false);
-      expect(monitor.isDegraded()).toBe(false);
-    });
+  it("窗口大小 60：超过 60 帧后 getFps 只反映最近 60 帧", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 60; i++) pm.recordFrame(16.67);
+    expect(pm.getFps()).toBeGreaterThan(58);
+    for (let i = 0; i < 60; i++) pm.recordFrame(50);
+    const fps = pm.getFps();
+    expect(fps).toBeGreaterThan(18);
+    expect(fps).toBeLessThan(22);
   });
 
-  describe("降级与恢复交替", () => {
-    it("降级后恢复，再次降级", () => {
-      // 第一次降级
-      let actions = runFrames(monitor, 30, 200);
-      expect(actions.has("degrade")).toBe(true);
-      expect(monitor.isDegraded()).toBe(true);
-
-      // 恢复
-      actions = runFrames(monitor, 60, 320);
-      expect(actions.has("recover")).toBe(true);
-      expect(monitor.isDegraded()).toBe(false);
-
-      // 再次降级
-      actions = runFrames(monitor, 30, 200);
-      expect(actions.has("degrade")).toBe(true);
-      expect(monitor.isDegraded()).toBe(true);
-    });
+  it("reset 后 shouldDegrade 为 false 且 getFps 为 0", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 30; i++) pm.recordFrame(50);
+    expect(pm.shouldDegrade()).toBe(true);
+    pm.reset();
+    expect(pm.shouldDegrade()).toBe(false);
+    expect(pm.getFps()).toBe(0);
   });
 
-  describe("reset", () => {
-    it("reset 清除所有状态", () => {
-      runFrames(monitor, 30, 100);
-      monitor.reset();
-      expect(monitor.isDegraded()).toBe(false);
-
-      // reset 后需要重新累计 3 秒以上才能降级
-      const actions = runFrames(monitor, 30, 150); // 2.5 秒
-      expect(actions.has("degrade")).toBe(false);
-    });
+  it("deltaTime <= 0 时使用默认 16.67ms 不报错", () => {
+    const pm = new PerformanceMonitor();
+    pm.recordFrame(0);
+    pm.recordFrame(-5);
+    expect(pm.getFps()).toBeGreaterThan(0);
   });
 
-  describe("自定义阈值", () => {
-    it("setThresholds 后使用新阈值", () => {
-      monitor.setThresholds(30, 50);
-      // minFps=30, 30 fps 不触发降级
-      let actions = runFrames(monitor, 30, 200);
-      expect(actions.has("degrade")).toBe(false);
-      expect(monitor.isDegraded()).toBe(false);
-
-      // 29 fps 触发降级
-      actions = runFrames(monitor, 29, 200);
-      expect(actions.has("degrade")).toBe(true);
-    });
+  it("getFrameTime 返回平均帧时间", () => {
+    const pm = new PerformanceMonitor();
+    for (let i = 0; i < 60; i++) pm.recordFrame(16.67);
+    const ft = pm.getFrameTime();
+    expect(ft).toBeGreaterThan(16);
+    expect(ft).toBeLessThan(17.5);
   });
 
-  describe("checklist 验证：帧率低于 45fps 时自动降级生效", () => {
-    it("fps < 45 持续超过 3 秒触发降级", () => {
-      const actions = runFrames(monitor, 44, 200);
-      expect(actions.has("degrade")).toBe(true);
-      expect(monitor.isDegraded()).toBe(true);
-    });
-
-    it("帧率恢复后效果自动恢复", () => {
-      // 先降级
-      runFrames(monitor, 44, 200);
-      expect(monitor.isDegraded()).toBe(true);
-
-      // 恢复
-      const actions = runFrames(monitor, 55, 320);
-      expect(actions.has("recover")).toBe(true);
-      expect(monitor.isDegraded()).toBe(false);
-    });
+  it("空状态下 getFps 和 getFrameTime 返回 0", () => {
+    const pm = new PerformanceMonitor();
+    expect(pm.getFps()).toBe(0);
+    expect(pm.getFrameTime()).toBe(0);
   });
 });

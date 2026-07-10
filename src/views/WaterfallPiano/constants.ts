@@ -1,9 +1,7 @@
 import type {
   WaterfallPianoSettings,
-  AudioPreset,
   PresetTheme,
   GradientStop,
-  PhysicalPianoConfig,
 } from "./types";
 
 // ─── 多色渐变预设主题 ───
@@ -63,21 +61,6 @@ export const presetThemes: Record<PresetTheme, PresetThemePalette> = {
   },
 };
 
-
-// ─── 物理建模钢琴默认参数 ───
-export const defaultPhysicalPianoConfig: PhysicalPianoConfig = {
-  brightness: 0.6,
-  resonance: 0.4,
-  sustain: 0.3,
-  decay: 0.5,
-  hammerHardness: 0.5,
-  velocitySensitivity: 0.7,
-  inharmonicity: 0.2,
-  strikePosition: 0.125,
-  polyphony: 16,
-  masterGain: 0.9,
-};
-
 // ─── 默认设置 ───
 export const defaultWaterfallSettings: WaterfallPianoSettings = {
   particles: {
@@ -85,7 +68,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     customColors: { low: "#6366f1", mid: "#14b8a6", high: "#f59e0b" },
     speed: 2,
     lookAhead: 3,
-    opacity: 0.9,
+    opacity: 1.0,
     cornerRadius: 3,
     hitLine: {
       visible: true,
@@ -112,11 +95,10 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     starfieldEnabled: true,
     starfieldDensity: 0.5,
     fluidEnabled: false,
-    fluidResolution: 0.5,
     fluidQuality: "medium",
     fluidStyle: "standard",
     fluidAdvanced: false,
-    fluidParams: { HIT_EXPLOSION: true, BLOCK_COVERAGE: false },
+    fluidParams: { hitExplosion: true, blockCoverage: false, splatRadius: 0.005 },
     flowAnimation: true,
     flowSpeed: 1,
   },
@@ -131,8 +113,9 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     pressedKeyColor: "#6366f1",
     heightRatio: 0.3,
     keyCornerRadius: 0,
-    keyBorderWidth: 0,
+    keyBorderWidth: 1,
     keyBorderColor: "#333333",
+    gapBlur: 6,
     separatorEnabled: true,
     separatorColor: "#ffffff",
     separatorThickness: 2,
@@ -140,15 +123,6 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     synthesiaFlowDirection: "down",
     showNoteNames: false,
   },
-  audio: {
-    preset: "grand-piano",
-    volume: 80,
-    reverbAmount: 30,
-    reverbDecay: 2,
-    sustain: false,
-    velocitySensitivity: true,
-  },
-  physicalPiano: { ...defaultPhysicalPianoConfig },
   midiFile: {
     playbackSpeed: 1,
     selectedTracks: [],
@@ -167,42 +141,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
   },
 };
 
-// ─── 音色预设信息 ───
-export const audioPresets: Record<
-  AudioPreset,
-  { labelKey: string; description: string }
-> = {
-  "grand-piano": {
-    labelKey: "waterfallPiano.presets.grandPiano",
-    description: "Classic piano sound",
-  },
-  "electric-piano": {
-    labelKey: "waterfallPiano.presets.electricPiano",
-    description: "FM synthesis electric piano",
-  },
-  "bright-piano": {
-    labelKey: "waterfallPiano.presets.brightPiano",
-    description: "Bright and clear piano",
-  },
-  "mellow-piano": {
-    labelKey: "waterfallPiano.presets.mellowPiano",
-    description: "Soft and warm piano",
-  },
-  organ: {
-    labelKey: "waterfallPiano.presets.organ",
-    description: "Classic organ sound",
-  },
-  "synth-pad": {
-    labelKey: "waterfallPiano.presets.synthPad",
-    description: "Ambient synth pad",
-  },
-  "physical-piano": {
-    labelKey: "waterfallPiano.presets.physicalPiano",
-    description: "Physical modeling piano",
-  },
-};
-
-// ─── 键盘快捷键映射 ───
+// ─── 键盘快捷键映射（A-K → C4-C5） ───
 export const keyboardMap: Record<string, number> = {
   a: 60, // C4
   w: 61, // C#4
@@ -223,9 +162,38 @@ export const keyboardMap: Record<string, number> = {
 export const STORAGE_KEY = "waterfall-piano-settings";
 export const RECORDING_STORAGE_KEY = "waterfall-piano-recordings";
 
+// ─── MIDI 路由 namespace ───
+export const MIDI_NAMESPACE = "waterfall-piano/default";
+
 // ─── 键盘范围定义 ───
 export const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
   "88": { from: 21, to: 108 },
   "61": { from: 36, to: 96 },
   "49": { from: 36, to: 84 },
 };
+
+// ─── 响应式断点 ───
+export const NARROW_BREAKPOINT = 768;
+
+// ─── 窄屏收束范围（C2-C6，49 键） ───
+export const NARROW_RANGE = { from: 36, to: 84 };
+
+// ─── 音名 ↔ MIDI 工具 ───
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+export function midiToNoteName(midi: number): string {
+  const octave = Math.floor(midi / 12) - 1;
+  return NOTE_NAMES[midi % 12] + octave;
+}
+
+export function noteNameToMidi(name: string): number {
+  const match = name.match(/^([A-G]#?)(-?\d+)$/);
+  if (!match) return 60;
+  const idx = NOTE_NAMES.indexOf(match[1]);
+  if (idx < 0) return 60;
+  return (parseInt(match[2], 10) + 1) * 12 + idx;
+}
+
+export function midiToPitchClass(midi: number): string {
+  return NOTE_NAMES[midi % 12];
+}

@@ -1,487 +1,281 @@
-// Canvas 2D 瀑布流引擎（从 PixiJS 重写）
-
+import type { WaterfallPianoSettings } from "../types";
 import { KeyboardRenderer } from "./KeyboardRenderer";
-import { NoteBlockSystem, type NoteBlockCallbacks } from "./NoteBlockSystem";
-import { AudioEngine } from "../audio/AudioEngine";
-import { PhysicalPianoEngine } from "../audio/PhysicalPianoEngine";
-import { OutputChain } from "../audio/OutputChain";
+import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
+import { BackgroundRenderer } from "./BackgroundRenderer";
+import { PerformanceMonitor } from "./PerformanceMonitor";
+import { noteToColor } from "./NoteColorMapper";
 import type { SoundEngine } from "../audio/SoundEngine";
-import * as Tone from "tone";
-import type { FluidSimulation } from "./fluid";
-import type { WaterfallPianoSettings, ScheduledNote, FlowDirection, AudioPreset } from "../types";
+import {
+  FluidSimulation,
+  resolveConfig,
+  type FluidSimulationConfig,
+} from "@/engine/fluid";
+
+export interface WaterfallCanvases {
+  background: HTMLCanvasElement;
+  fluid: HTMLCanvasElement;
+  waterfall: HTMLCanvasElement;
+  keyboard: HTMLCanvasElement;
+}
+
+interface EngineCallbacks {
+  onNoteOn?: (midi: number, velocity: number) => void;
+  onNoteOff?: (midi: number) => void;
+}
+
+const DEFAULT_VELOCITY = 90;
 
 export class WaterfallEngine {
-  private canvas: HTMLCanvasElement | null = null;
-  private ctx: CanvasRenderingContext2D | null = null;
-
-  keyboardRenderer: KeyboardRenderer | null = null;
-  noteBlockSystem: NoteBlockSystem | null = null;
-
+  private canvases: WaterfallCanvases | null = null;
   private settings: WaterfallPianoSettings | null = null;
-  private animationId: number | null = null;
-  private isDestroyed = false;
+  private keyboardRenderer = new KeyboardRenderer();
+  private noteBlockSystem = new NoteBlockSystem();
+  private backgroundRenderer = new BackgroundRenderer();
+  private perfMonitor = new PerformanceMonitor();
+  private fluid: FluidSimulation | null = null;
+  private soundEngine: SoundEngine | null = null;
+  private rafId: number | null = null;
   private lastTime = 0;
-
-  // 流体模拟（独立 WebGL canvas，由 WaterfallCanvas 注入）
-  private fluidSimulation: FluidSimulation | null = null;
-
-  private mode: "realtime" | "synthesia" = "realtime";
-  private pointerToMidi = new Map<number, number>();
-
-  private audioEngine: AudioEngine;
-  private outputChain: OutputChain;
-  private engine!: SoundEngine;
-
-  // 布局参数
-  private canvasWidth = 0;
-  private canvasHeight = 0;
+  private width = 0;
+  private height = 0;
   private keyboardHeight = 0;
-  private keyboardY = 0;
+  private dpr = 1;
+  private pointerDown = false;
+  private activePointerMidi: number | null = null;
+  callbacks: EngineCallbacks = {};
 
-  constructor() {
-    this.outputChain = new OutputChain();
-    this.audioEngine = new AudioEngine(this.outputChain);
-    this.engine = this.audioEngine;
-  }
-
-  async init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings) {
+  init(canvases: WaterfallCanvases, settings: WaterfallPianoSettings): void {
+    this.canvases = canvases;
     this.settings = settings;
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
-    if (!this.ctx) {
-      throw new Error("Failed to get 2D context");
+    this.keyboardRenderer.init(canvases.keyboard, settings);
+    this.noteBlockSystem.init(canvases.waterfall, settings);
+    this.backgroundRenderer.init(canvases.background, settings);
+    this.noteBlockSystem.callbacks = {
+      onNoteTrigger: (midi, vel) => this.onSynthesiaTrigger(midi, vel),
+      onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
+    };
+    this.maybeInitFluid();
+    this.bindPointerEvents();
+    this.startLoop();
+  }
+
+  setSoundEngine(engine: SoundEngine): void {
+    this.soundEngine = engine;
+  }
+
+  setSustain(enabled: boolean): void {
+    this.soundEngine?.setSustain(enabled);
+  }
+
+  applySettings(settings: WaterfallPianoSettings): void {
+    const prevFluidEnabled = this.settings?.background.fluidEnabled;
+    this.settings = settings;
+    this.keyboardRenderer.resize(this.width, this.keyboardHeight, this.dpr);
+    this.noteBlockSystem.setSettings(settings);
+    this.backgroundRenderer.setSettings(settings);
+    if (settings.background.fluidEnabled && !prevFluidEnabled) {
+      this.maybeInitFluid();
+    } else if (!settings.background.fluidEnabled && prevFluidEnabled && this.fluid) {
+      this.fluid.destroy();
+      this.fluid = null;
+    } else if (this.fluid && settings.background.fluidEnabled) {
+      this.fluid.updateConfig(this.buildFluidConfig());
     }
-
-    // 初始化渲染器
-    this.keyboardRenderer = new KeyboardRenderer();
-    this.noteBlockSystem = new NoteBlockSystem();
-
-    // 设置回调
-    this.noteBlockSystem.setCallbacks({
-      onNoteTrigger: (midi, velocity, _hand) => {
-        this.audioEngine.noteOn(midi, velocity);
-        this.keyboardRenderer?.highlightNote(midi);
-      },
-      onNoteEnd: (midi) => {
-        this.audioEngine.noteOff(midi);
-        this.keyboardRenderer?.clearHighlight(midi);
-      },
-    } as NoteBlockCallbacks);
-
-    await Tone.start();
-    await this.outputChain.init();
-    await this.audioEngine.init();
-
-    if (this.isDestroyed) return;
-
-    this.applySettings(settings);
-    this.setupKeyboardInteraction();
-    this.startGameLoop();
   }
 
-  private setupKeyboardInteraction() {
-    if (!this.canvas || !this.keyboardRenderer) return;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      const rect = this.canvas!.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const midi = this.keyboardRenderer!.getNoteAtPoint(x, y);
-      if (midi !== null) {
-        this.pointerToMidi.set(e.pointerId, midi);
-        this.playRealtimeNote(midi, 100);
-      }
-    };
-
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!this.pointerToMidi.has(e.pointerId)) return;
-      const rect = this.canvas!.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const newMidi = this.keyboardRenderer!.getNoteAtPoint(x, y);
-      const oldMidi = this.pointerToMidi.get(e.pointerId);
-
-      if (newMidi !== null && newMidi !== oldMidi) {
-        if (oldMidi !== undefined) {
-          this.releaseRealtimeNote(oldMidi);
-        }
-        this.pointerToMidi.set(e.pointerId, newMidi);
-        this.playRealtimeNote(newMidi, 100);
-      }
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-      const midi = this.pointerToMidi.get(e.pointerId);
-      if (midi !== undefined) {
-        this.releaseRealtimeNote(midi);
-        this.pointerToMidi.delete(e.pointerId);
-      }
-    };
-
-    this.canvas.addEventListener("pointerdown", handlePointerDown);
-    this.canvas.addEventListener("pointermove", handlePointerMove);
-    this.canvas.addEventListener("pointerup", handlePointerUp);
-    this.canvas.addEventListener("pointerleave", handlePointerUp);
+  setMode(mode: NoteBlockMode): void {
+    this.noteBlockSystem.setMode(mode);
   }
 
-  private startGameLoop() {
+  resize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const kbRatio = this.settings?.keyboard.heightRatio ?? 0.3;
+    this.keyboardHeight = Math.max(80, Math.floor(height * kbRatio));
+    const waterfallHeight = height - this.keyboardHeight;
+    this.keyboardRenderer.resize(width, this.keyboardHeight, this.dpr);
+    this.noteBlockSystem.resize(width, waterfallHeight, this.dpr, this.keyboardRenderer);
+    this.backgroundRenderer.resize(width, height, this.dpr);
+    this.layoutCanvases(waterfallHeight);
+    if (this.fluid) {
+      this.fluid.resize();
+    }
+  }
+
+  private layoutCanvases(waterfallHeight: number): void {
+    if (!this.canvases) return;
+    const setBox = (c: HTMLCanvasElement, top: number, h: number) => {
+      c.style.position = "absolute";
+      c.style.top = `${top}px`;
+      c.style.left = "0";
+      c.style.width = `${this.width}px`;
+      c.style.height = `${h}px`;
+    };
+    setBox(this.canvases.background, 0, this.height);
+    setBox(this.canvases.fluid, 0, this.height);
+    setBox(this.canvases.waterfall, 0, waterfallHeight);
+    setBox(this.canvases.keyboard, waterfallHeight, this.keyboardHeight);
+  }
+
+  private buildFluidConfig(): Partial<FluidSimulationConfig> {
+    if (!this.settings) return {};
+    const bg = this.settings.background;
+    return resolveConfig(bg.fluidQuality, bg.fluidStyle, bg.fluidAdvanced, bg.fluidParams);
+  }
+
+  private maybeInitFluid(): void {
+    if (!this.canvases || !this.settings) return;
+    if (!this.settings.background.fluidEnabled) return;
+    if (this.fluid) return;
+    try {
+      this.fluid = new FluidSimulation(this.canvases.fluid, this.buildFluidConfig());
+      this.fluid.start();
+    } catch {
+      this.fluid = null;
+    }
+  }
+
+  private bindPointerEvents(): void {
+    if (!this.canvases) return;
+    const kb = this.canvases.keyboard;
+    kb.style.touchAction = "none";
+    kb.addEventListener("pointerdown", this.onPointerDown);
+    kb.addEventListener("pointermove", this.onPointerMove);
+    kb.addEventListener("pointerup", this.onPointerUp);
+    kb.addEventListener("pointercancel", this.onPointerUp);
+    kb.addEventListener("pointerleave", this.onPointerUp);
+  }
+
+  private unbindPointerEvents(): void {
+    if (!this.canvases) return;
+    const kb = this.canvases.keyboard;
+    kb.removeEventListener("pointerdown", this.onPointerDown);
+    kb.removeEventListener("pointermove", this.onPointerMove);
+    kb.removeEventListener("pointerup", this.onPointerUp);
+    kb.removeEventListener("pointercancel", this.onPointerUp);
+    kb.removeEventListener("pointerleave", this.onPointerUp);
+  }
+
+  private onPointerDown = (e: PointerEvent): void => {
+    this.pointerDown = true;
+    const midi = this.keyboardRenderer.xToMidi(e.offsetX);
+    if (midi !== null) {
+      this.activePointerMidi = midi;
+      this.triggerNoteOn(midi, DEFAULT_VELOCITY);
+    }
+  };
+
+  private onPointerMove = (e: PointerEvent): void => {
+    if (!this.pointerDown) return;
+    const midi = this.keyboardRenderer.xToMidi(e.offsetX);
+    if (midi !== null && midi !== this.activePointerMidi) {
+      if (this.activePointerMidi !== null) {
+        this.triggerNoteOff(this.activePointerMidi);
+      }
+      this.activePointerMidi = midi;
+      this.triggerNoteOn(midi, DEFAULT_VELOCITY);
+    }
+  };
+
+  private onPointerUp = (): void => {
+    this.pointerDown = false;
+    if (this.activePointerMidi !== null) {
+      this.triggerNoteOff(this.activePointerMidi);
+      this.activePointerMidi = null;
+    }
+  };
+
+  triggerNoteOn(midi: number, velocity: number): void {
+    if (!this.settings) return;
+    this.soundEngine?.noteOn(midi, velocity);
+    if (this.noteBlockSystem.getMode() === "realtime") {
+      this.noteBlockSystem.playRealtimeNote(midi, velocity);
+    }
+    this.keyboardRenderer.highlightNote(midi);
+    this.fluidSplat(midi);
+    this.callbacks.onNoteOn?.(midi, velocity);
+  }
+
+  triggerNoteOff(midi: number): void {
+    this.soundEngine?.noteOff(midi);
+    if (this.noteBlockSystem.getMode() === "realtime") {
+      this.noteBlockSystem.releaseRealtimeNote(midi);
+    }
+    this.keyboardRenderer.clearHighlight(midi);
+    this.callbacks.onNoteOff?.(midi);
+  }
+
+  private onSynthesiaTrigger(midi: number, velocity: number): void {
+    this.soundEngine?.noteOn(midi, velocity);
+    this.keyboardRenderer.highlightNote(midi);
+    this.fluidSplat(midi);
+  }
+
+  private onSynthesiaEnd(midi: number): void {
+    this.soundEngine?.noteOff(midi);
+    this.keyboardRenderer.clearHighlight(midi);
+  }
+
+  private fluidSplat(midi: number): void {
+    if (!this.fluid || !this.canvases) return;
+    const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
+    const y = 1 - this.keyboardHeight / Math.max(1, this.height);
+    const colorHex = noteToColor(midi, this.settings?.particles.colorScheme ?? "pitch", undefined, this.settings?.particles.customColors);
+    const rgb = hexToRgbNorm(colorHex);
+    this.fluid.splat(x, y, 0, -200, rgb);
+  }
+
+  private startLoop(): void {
     this.lastTime = performance.now();
-
-    const loop = (time: number) => {
-      if (this.isDestroyed) return;
-
-      const delta = time - this.lastTime;
-      this.lastTime = time;
-      const deltaSeconds = delta / 1000;
-
-      this.update(delta, deltaSeconds);
-      this.render();
-
-      this.animationId = requestAnimationFrame(loop);
+    const loop = (now: number) => {
+      const dt = now - this.lastTime;
+      this.lastTime = now;
+      this.perfMonitor.recordFrame(dt);
+      this.backgroundRenderer.render(now);
+      this.noteBlockSystem.update(dt / 1000);
+      this.noteBlockSystem.render();
+      this.keyboardRenderer.render();
+      this.rafId = requestAnimationFrame(loop);
     };
-
-    this.animationId = requestAnimationFrame(loop);
+    this.rafId = requestAnimationFrame(loop);
   }
 
-  private update(delta: number, deltaSeconds: number) {
-    this.noteBlockSystem?.update(delta, deltaSeconds);
-    this.emitBlockCoverage();
+  get keyboardRendererRef(): KeyboardRenderer {
+    return this.keyboardRenderer;
   }
 
-  private render() {
-    if (!this.ctx || !this.canvas) return;
+  get noteBlockSystemRef(): NoteBlockSystem {
+    return this.noteBlockSystem;
+  }
 
-    // 清空画布
-    this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+  get backgroundRendererRef(): BackgroundRenderer {
+    return this.backgroundRenderer;
+  }
 
-    // 绘制音符块
-    this.noteBlockSystem?.render(this.ctx);
+  getPerformanceFps(): number {
+    return this.perfMonitor.getFps();
+  }
 
-    // 绘制键盘
-    if (this.settings?.keyboard.visible) {
-      this.keyboardRenderer?.render(this.ctx, this.keyboardY);
+  dispose(): void {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
     }
+    this.unbindPointerEvents();
+    this.fluid?.destroy();
+    this.fluid = null;
+    this.noteBlockSystem.dispose();
+    this.backgroundRenderer.dispose();
+    this.keyboardRenderer.clearAllHighlights();
   }
+}
 
-  applySettings(settings: WaterfallPianoSettings) {
-    this.settings = settings;
-
-    if (this.keyboardRenderer) {
-      this.keyboardRenderer.setRange(settings.keyboard.range);
-      this.keyboardRenderer.setConfig({
-        showLabels: settings.keyboard.keyLabel !== "none",
-        whiteKeyColor: settings.keyboard.whiteKeyColor,
-        blackKeyColor: settings.keyboard.blackKeyColor,
-        pressedKeyColor: settings.keyboard.pressedKeyColor,
-        keyCornerRadius: settings.keyboard.keyCornerRadius,
-        keyBorderWidth: settings.keyboard.keyBorderWidth,
-        keyBorderColor: settings.keyboard.keyBorderColor,
-        separatorEnabled: settings.keyboard.separatorEnabled,
-        separatorColor: settings.keyboard.separatorColor,
-        separatorThickness: settings.keyboard.separatorThickness,
-      });
-    }
-
-    if (this.noteBlockSystem) {
-      this.noteBlockSystem.setRealtimeSpeed(settings.particles.speed);
-      this.noteBlockSystem.setLookAhead(settings.particles.lookAhead);
-      this.noteBlockSystem.setColorScheme(settings.particles.colorScheme);
-      this.noteBlockSystem.setOpacity(settings.particles.opacity);
-      this.noteBlockSystem.setCornerRadius(settings.particles.cornerRadius);
-      this.noteBlockSystem.setFlowDirection(settings.keyboard.synthesiaFlowDirection);
-      this.noteBlockSystem.setHitLineConfig({
-        visible: settings.particles.hitLine.visible,
-        color: settings.particles.hitLine.color,
-        thickness: settings.particles.hitLine.thickness,
-      });
-    }
-
-    // 引擎切换
-    const targetPreset = settings.audio.preset;
-    const currentEngineIsPhysical = this.engine instanceof PhysicalPianoEngine;
-    const needPhysical = targetPreset === "physical-piano";
-
-    if (needPhysical !== currentEngineIsPhysical) {
-      this.switchEngine(targetPreset);
-    } else if (needPhysical) {
-      // 物理引擎：更新配置
-      this.engine.setConfig(settings.physicalPiano);
-    } else {
-      // Tone 引擎：切换预设
-      this.engine.applyPreset(targetPreset);
-    }
-
-    // 音量 / 混响延用 outputChain
-    const volumeDb = (settings.audio.volume / 100) * 30 - 30;
-    this.outputChain.setVolume(volumeDb);
-    this.outputChain.setReverbWet(settings.audio.reverbAmount / 100);
-
-    if (this.engine !== this.audioEngine) {
-      this.engine.setVolume(volumeDb);
-      this.engine.setReverbWet(settings.audio.reverbAmount / 100);
-    }
-
-    this.engine.setSustain(settings.audio.sustain);
-
-    this.resize();
-  }
-
-  private switchEngine(preset: AudioPreset) {
-    // 销毁旧引擎
-    this.engine.disconnect();
-    this.engine.dispose();
-
-    if (preset === "physical-piano") {
-      const physical = new PhysicalPianoEngine(this.outputChain);
-      this.engine = physical;
-    } else {
-      this.audioEngine.applyPreset(preset);
-      this.engine = this.audioEngine;
-    }
-
-    this.engine.init().then(() => {
-      this.engine.connect(this.outputChain.rawInput!);
-      if (this.settings) {
-        this.engine.setSustain(this.settings.audio.sustain);
-        if (preset === "physical-piano") {
-          this.engine.setConfig(this.settings.physicalPiano);
-        }
-      }
-    });
-  }
-
-  resize() {
-    if (!this.canvas || !this.settings) return;
-
-    const parent = this.canvas.parentElement;
-    if (!parent) return;
-
-    this.canvasWidth = parent.clientWidth;
-    this.canvasHeight = parent.clientHeight;
-    this.canvas.width = this.canvasWidth;
-    this.canvas.height = this.canvasHeight;
-
-    const keyboardVisible = this.settings.keyboard.visible;
-    this.keyboardHeight = keyboardVisible ? this.canvasHeight * this.settings.keyboard.heightRatio : 0;
-    this.keyboardY = this.canvasHeight - this.keyboardHeight;
-
-    // 更新渲染器布局
-    if (this.noteBlockSystem) {
-      this.noteBlockSystem.setCanvasSize(this.canvasWidth, this.canvasHeight);
-      this.noteBlockSystem.setKeyboardY(this.keyboardY);
-    }
-
-    if (this.keyboardRenderer) {
-      this.keyboardRenderer.containerOffsetY = this.keyboardY;
-      this.keyboardRenderer.computeKeyPositions(this.canvasWidth, this.keyboardHeight);
-    }
-
-    // 更新键宽
-    this.updateNoteBlockLayout();
-  }
-
-  private updateNoteBlockLayout() {
-    if (!this.keyboardRenderer || !this.noteBlockSystem || !this.settings) return;
-
-    const keyW = this.keyboardRenderer.getKeyWidth();
-    if (keyW > 0) {
-      this.noteBlockSystem.setKeyWidth(keyW);
-    }
-  }
-
-  setMode(mode: "realtime" | "synthesia") {
-    this.mode = mode;
-    this.noteBlockSystem?.setMode(mode);
-    if (mode === "synthesia") {
-      this.noteBlockSystem?.clearBlocksOnly();
-    }
-  }
-
-  getMode(): "realtime" | "synthesia" {
-    return this.mode;
-  }
-
-  // 注入流体模拟实例
-  setFluidSimulation(fluid: FluidSimulation | null) {
-    this.fluidSimulation = fluid;
-  }
-
-  // 命中爆炸：命中线位置爆发一团
-  private triggerHitExplosion(midi: number, velocity: number) {
-    if (!this.fluidSimulation || !this.settings) return;
-
-    const fluidParams = this.settings.background?.fluidParams;
-    if (!fluidParams?.HIT_EXPLOSION) return;
-
-    const x = (midi - 21) / (108 - 21);
-    const keyboardY = this.noteBlockSystem?.getKeyboardY() ?? this.keyboardY;
-    const y = this.canvasHeight > 0 ? keyboardY / this.canvasHeight : 0.95;
-
-    const force = (velocity / 127) * 8000;
-    const dx = (Math.random() - 0.5) * 1000;
-    const dy = force;
-
-    const brightness = 1.5;
-    const hue = this.resolveSplatHue(midi);
-    const c = this.hsvToRgb(hue, 1.0, 1.0);
-
-    this.fluidSimulation.splat(
-      Math.max(0, Math.min(1, x)),
-      Math.max(0, Math.min(1, y)),
-      dx,
-      dy,
-      { r: c.r * brightness, g: c.g * brightness, b: c.b * brightness }
-    );
-  }
-
-  // 块体覆盖：每帧遍历块渗流体，限流 K=8
-  private emitBlockCoverage() {
-    if (!this.fluidSimulation || !this.settings) return;
-    const fluidParams = this.settings.background?.fluidParams;
-    if (!fluidParams?.BLOCK_COVERAGE) return;
-    if (!this.noteBlockSystem || this.canvasHeight === 0) return;
-
-    const blocks = this.noteBlockSystem.getBlocks();
-    if (blocks.length === 0) return;
-
-    const MAX_PER_FRAME = 8;
-    let count = 0;
-    // 轮流采样：从随机起点开始遍历，避免总偏向前面的块
-    const start = Math.floor(Math.random() * blocks.length);
-    for (let i = 0; i < blocks.length && count < MAX_PER_FRAME; i++) {
-      const block = blocks[(start + i) % blocks.length];
-      this.emitBlockSplat(block);
-      count++;
-    }
-  }
-
-  private emitBlockSplat(block: {
-    midi: number; x: number; y: number; width: number; height: number;
-    active: boolean; hasEnded: boolean; velocity: number;
-  }) {
-    if (!this.fluidSimulation || this.canvasWidth === 0 || this.canvasHeight === 0) return;
-
-    // 块中心 + 小随机扰动
-    const cx = block.x + block.width * 0.5 + (Math.random() - 0.5) * block.width * 0.4;
-    const cy = block.y + block.height * 0.5 + (Math.random() - 0.5) * block.height * 0.4;
-    const nx = Math.max(0, Math.min(1, cx / this.canvasWidth));
-    const ny = Math.max(0, Math.min(1, cy / this.canvasHeight));
-
-    // active 强、释放后减弱
-    const intensity = block.active ? 1.0 : 0.3;
-    const baseForce = (block.velocity / 127) * 1500;
-    const dx = (Math.random() - 0.5) * 600;
-    const dy = -baseForce * intensity;
-
-    const hue = this.resolveSplatHue(block.midi);
-    const c = this.hsvToRgb(hue, 1.0, 1.0);
-    const brightness = 1.0 * intensity;
-
-    this.fluidSimulation.splat(nx, ny, dx, dy, {
-      r: c.r * brightness,
-      g: c.g * brightness,
-      b: c.b * brightness,
-    });
-  }
-
-  private resolveSplatHue(midi: number): number {
-    const fluidParams = this.settings?.background?.fluidParams;
-    const customHue = fluidParams?.SPLAT_COLOR_HUE;
-    return customHue !== undefined && customHue >= 0 ? customHue : (midi - 21) / 87;
-  }
-
-  private hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-    let r = 0, g = 0, b = 0;
-    switch (i % 6) {
-      case 0: r = v; g = t; b = p; break;
-      case 1: r = q; g = v; b = p; break;
-      case 2: r = p; g = v; b = t; break;
-      case 3: r = p; g = q; b = v; break;
-      case 4: r = t; g = p; b = v; break;
-      case 5: r = v; g = p; b = q; break;
-    }
-    return { r, g, b };
-  }
-
-  playRealtimeNote(midi: number, velocity = 100) {
-    if (this.mode !== "realtime") return;
-    this.engine.noteOn(midi, velocity);
-    this.keyboardRenderer?.highlightNote(midi);
-    this.triggerHitExplosion(midi, velocity);
-
-    if (this.noteBlockSystem && this.keyboardRenderer) {
-      const x = this.keyboardRenderer.getNoteX(midi);
-      if (x >= 0) {
-        this.noteBlockSystem.startRealtimeNote(midi, x, velocity);
-      }
-    }
-  }
-
-  releaseRealtimeNote(midi: number) {
-    if (this.mode !== "realtime") return;
-    this.engine.noteOff(midi);
-    this.keyboardRenderer?.clearHighlight(midi);
-    this.noteBlockSystem?.endRealtimeNote(midi);
-  }
-
-  scheduleSynthesiaNotes(notes: ScheduledNote[]) {
-    if (!this.noteBlockSystem || !this.keyboardRenderer) return;
-    this.noteBlockSystem.scheduleNotes(notes, (midi) => {
-      return this.keyboardRenderer!.getNoteX(midi);
-    });
-  }
-
-  setTransportTime(time: number) {
-    this.noteBlockSystem?.setTransportTime(time);
-  }
-
-  setTransportPlaying(playing: boolean) {
-    this.noteBlockSystem?.setTransportPlaying(playing);
-  }
-
-  triggerSynthesiaNote(midi: number, velocity: number) {
-    this.engine.noteOn(midi, velocity);
-    this.keyboardRenderer?.highlightNote(midi);
-    this.triggerHitExplosion(midi, velocity);
-  }
-
-  releaseSynthesiaNote(midi: number) {
-    this.engine.noteOff(midi);
-    this.keyboardRenderer?.clearHighlight(midi);
-  }
-
-  clearNoteBlocks() {
-    this.noteBlockSystem?.clear();
-  }
-
-  setFlowDirection(direction: FlowDirection) {
-    this.noteBlockSystem?.setFlowDirection(direction);
-  }
-
-  destroy() {
-    this.isDestroyed = true;
-
-    if (this.animationId !== null) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
-
-    this.engine.dispose();
-    this.outputChain.dispose();
-
-    this.noteBlockSystem?.destroy();
-    this.keyboardRenderer?.destroy();
-
-    this.noteBlockSystem = null;
-    this.keyboardRenderer = null;
-    this.fluidSimulation = null;
-    this.canvas = null;
-    this.ctx = null;
-    this.pointerToMidi.clear();
-  }
+function hexToRgbNorm(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.replace("#", "").padEnd(6, "0");
+  return {
+    r: (parseInt(normalized.slice(0, 2), 16) || 0) / 255,
+    g: (parseInt(normalized.slice(2, 4), 16) || 0) / 255,
+    b: (parseInt(normalized.slice(4, 6), 16) || 0) / 255,
+  };
 }

@@ -1,128 +1,177 @@
 <template>
-  <div class="waterfall-canvas-wrapper" ref="wrapperRef">
-    <!-- 流体 WebGL Canvas（底层） -->
-    <canvas ref="fluidCanvasRef" class="fluid-canvas" />
-    <!-- Canvas 2D（上层） -->
-    <canvas ref="mainCanvasRef" class="main-canvas" />
+  <div ref="containerRef" class="absolute inset-0 overflow-hidden">
+    <canvas ref="bgRef" class="absolute inset-0" />
+    <canvas ref="fluidRef" class="absolute inset-0 pointer-events-none" />
+    <canvas ref="waterfallRef" class="absolute" />
+    <canvas ref="keyboardRef" class="absolute" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, onUnmounted, watch, computed } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { WaterfallEngine } from "../engine/WaterfallEngine";
-import { FluidSimulation } from "../engine/fluid";
-import { resolveConfig } from "../engine/fluid/FluidConfig";
-import { useWaterfallPianoStore } from "../stores/waterfallPiano";
+import { SoundEngine } from "../audio/SoundEngine";
+import { keyboardMap } from "../constants";
+import type { WaterfallPianoSettings } from "../types";
+import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 
-const wrapperRef = ref<HTMLDivElement | null>(null);
-const fluidCanvasRef = ref<HTMLCanvasElement | null>(null);
-const mainCanvasRef = ref<HTMLCanvasElement | null>(null);
+const props = defineProps<{
+  settings: WaterfallPianoSettings;
+  mode: NoteBlockMode;
+  octaveOffset?: number;
+}>();
 
-const store = useWaterfallPianoStore();
-const settings = computed(() => store.settings);
+const emit = defineEmits<{
+  (e: "noteOn", midi: number, velocity: number): void;
+  (e: "noteOff", midi: number): void;
+  (e: "ready", engine: WaterfallEngine): void;
+}>();
 
-const engine = shallowRef<WaterfallEngine | null>(null);
-const fluidSimulation = shallowRef<FluidSimulation | null>(null);
+const containerRef = ref<HTMLDivElement>();
+const bgRef = ref<HTMLCanvasElement>();
+const fluidRef = ref<HTMLCanvasElement>();
+const waterfallRef = ref<HTMLCanvasElement>();
+const keyboardRef = ref<HTMLCanvasElement>();
+
+let engine: WaterfallEngine | null = null;
+let soundEngine: SoundEngine | null = null;
 let resizeObserver: ResizeObserver | null = null;
+const heldKeys = new Set<string>();
 
-// ─── 初始化 ───
-onMounted(async () => {
-  if (!wrapperRef.value || !fluidCanvasRef.value || !mainCanvasRef.value) return;
+function midiFromKey(key: string): number | null {
+  const base = keyboardMap[key.toLowerCase()];
+  if (base === undefined) return null;
+  return base + (props.octaveOffset ?? 0) * 12;
+}
 
-  // 初始化流体模拟
-  if (settings.value.background?.type === "fluid") {
-    try {
-      fluidSimulation.value = new FluidSimulation(fluidCanvasRef.value);
-      fluidSimulation.value.start();
-    } catch (e) {
-      console.warn("Fluid simulation init failed:", e);
+function onKeyDown(e: KeyboardEvent): void {
+  if (e.repeat) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const target = e.target;
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  ) {
+    return;
+  }
+  const midi = midiFromKey(e.key);
+  if (midi === null) return;
+  e.preventDefault();
+  const key = e.key.toLowerCase();
+  if (heldKeys.has(key)) return;
+  heldKeys.add(key);
+  engine?.triggerNoteOn(midi, 90);
+  emit("noteOn", midi, 90);
+}
+
+function onKeyUp(e: KeyboardEvent): void {
+  const midi = midiFromKey(e.key);
+  if (midi === null) return;
+  const key = e.key.toLowerCase();
+  if (!heldKeys.has(key)) return;
+  heldKeys.delete(key);
+  engine?.triggerNoteOff(midi);
+  emit("noteOff", midi);
+}
+
+function clearAllHeld(): void {
+  for (const key of heldKeys) {
+    const midi = midiFromKey(key);
+    if (midi !== null) {
+      engine?.triggerNoteOff(midi);
+      emit("noteOff", midi);
     }
   }
+  heldKeys.clear();
+}
 
-  // 初始化引擎
-  engine.value = new WaterfallEngine();
-  if (fluidSimulation.value) {
-    engine.value.setFluidSimulation(fluidSimulation.value);
+onMounted(async () => {
+  if (!containerRef.value || !bgRef.value || !fluidRef.value || !waterfallRef.value || !keyboardRef.value) {
+    return;
   }
-  await engine.value.init(mainCanvasRef.value, settings.value);
 
-  // 监听尺寸变化
-  resizeObserver = new ResizeObserver(() => {
-    engine.value?.resize();
-    fluidSimulation.value?.resize();
-  });
-  resizeObserver.observe(wrapperRef.value);
+  soundEngine = new SoundEngine();
+  try {
+    await soundEngine.init();
+  } catch {
+    // 浏览器自动播放策略可能阻止；首次交互时重试
+  }
+
+  engine = new WaterfallEngine();
+  engine.init(
+    {
+      background: bgRef.value,
+      fluid: fluidRef.value,
+      waterfall: waterfallRef.value,
+      keyboard: keyboardRef.value,
+    },
+    props.settings,
+  );
+  engine.setSoundEngine(soundEngine);
+  engine.setMode(props.mode);
+  engine.callbacks = {
+    onNoteOn: (midi, vel) => emit("noteOn", midi, vel),
+    onNoteOff: (midi) => emit("noteOff", midi),
+  };
+
+  const container = containerRef.value;
+  const doResize = () => {
+    if (!engine || !container) return;
+    const rect = container.getBoundingClientRect();
+    engine.resize(Math.max(1, rect.width), Math.max(1, rect.height));
+  };
+  doResize();
+  resizeObserver = new ResizeObserver(doResize);
+  resizeObserver.observe(container);
+
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", clearAllHeld);
+
+  emit("ready", engine);
 });
+
+watch(
+  () => props.settings,
+  (s) => engine?.applySettings(s),
+  { deep: true },
+);
+
+watch(
+  () => props.mode,
+  (m) => engine?.setMode(m),
+);
+
+watch(
+  () => props.octaveOffset,
+  () => clearAllHeld(),
+);
 
 onUnmounted(() => {
+  window.removeEventListener("keydown", onKeyDown);
+  window.removeEventListener("keyup", onKeyUp);
+  window.removeEventListener("blur", clearAllHeld);
   resizeObserver?.disconnect();
   resizeObserver = null;
-
-  fluidSimulation.value?.destroy();
-  fluidSimulation.value = null;
-
-  engine.value?.destroy();
-  engine.value = null;
+  clearAllHeld();
+  engine?.dispose();
+  engine = null;
+  soundEngine?.dispose();
+  soundEngine = null;
 });
 
-// ─── 监听设置变化 ───
-watch(settings, (newSettings) => {
-  engine.value?.applySettings(newSettings);
-
-  // 将流体参数同步到 FluidSimulation
-  if (fluidSimulation.value && newSettings.background?.type === "fluid") {
-    const fluidConfig = resolveConfig(
-      newSettings.background.fluidQuality ?? "medium",
-      newSettings.background.fluidStyle ?? "standard",
-      newSettings.background.fluidAdvanced ?? false,
-      newSettings.background.fluidParams ?? {},
-    );
-    fluidSimulation.value.updateConfig(fluidConfig);
-  }
-}, { deep: true });
-
-// ─── 暴露方法 ───
 defineExpose({
-  engine,
-  fluidSimulation,
-  playRealtimeNote: (midi: number, velocity = 100) => engine.value?.playRealtimeNote(midi, velocity),
-  releaseRealtimeNote: (midi: number) => engine.value?.releaseRealtimeNote(midi),
-  scheduleSynthesiaNotes: (notes: any[]) => engine.value?.scheduleSynthesiaNotes(notes),
-  setTransportTime: (time: number) => engine.value?.setTransportTime(time),
-  setTransportPlaying: (playing: boolean) => engine.value?.setTransportPlaying(playing),
-  triggerSynthesiaNote: (midi: number, velocity: number) => engine.value?.triggerSynthesiaNote(midi, velocity),
-  releaseSynthesiaNote: (midi: number) => engine.value?.releaseSynthesiaNote(midi),
-  clearNoteBlocks: () => engine.value?.clearNoteBlocks(),
-  setMode: (mode: "realtime" | "synthesia") => engine.value?.setMode(mode),
-  getMode: () => engine.value?.getMode(),
+  getEngine: () => engine,
+  getSoundEngine: () => soundEngine,
+  retryAudio: async () => {
+    if (soundEngine) {
+      try {
+        await soundEngine.init();
+      } catch {
+        // ignore
+      }
+    }
+  },
 });
 </script>
-
-<style scoped>
-.waterfall-canvas-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-}
-
-.fluid-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-.main-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: auto;
-}
-</style>

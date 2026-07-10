@@ -23,13 +23,13 @@
           )
         "
       />
-      <span class="badge badge-sm badge-ghost">{{ modelValue }}</span>
+      <span class="badge badge-sm badge-ghost">{{ displayValue }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useId } from "vue";
+import { useId, computed } from "vue";
 
 const id = useId();
 const rangeLabelId = `range-label-${id}`;
@@ -44,9 +44,17 @@ interface Props {
   disabled?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 defineEmits<{
   "update:modelValue": [value: number];
 }>();
+
+// 由 step 推导小数位，消除 3.0000000001 类浮点误差
+const displayValue = computed(() => {
+  const { step, modelValue } = props;
+  if (modelValue == null) return "—";
+  const precision = step >= 1 ? 0 : Math.max(0, Math.ceil(-Math.log10(step)));
+  return modelValue.toFixed(precision);
+});
 </script>

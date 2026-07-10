@@ -3,6 +3,7 @@ export type {
   FluidSimulationConfig,
   FluidQuality,
   FluidStyle,
+  FluidAdvancedParams,
 } from "./FluidConfig";
 export {
   QUALITY_PRESETS,

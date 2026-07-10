@@ -12,21 +12,18 @@ export class DisplayPass {
 
   private displayMaterial: Material;
   private colorProgram: Program;
-  private checkerboardProgram: Program;
 
   constructor(
     gl: WebGLRenderingContext,
     blit: (target: FBO | null, clear?: boolean) => void,
     displayMaterial: Material,
     colorProgram: Program,
-    checkerboardProgram: Program,
     config: FluidSimulationConfig,
   ) {
     this.gl = gl;
     this.blit = blit;
     this.displayMaterial = displayMaterial;
     this.colorProgram = colorProgram;
-    this.checkerboardProgram = checkerboardProgram;
     this.config = config;
   }
 
@@ -42,7 +39,7 @@ export class DisplayPass {
   /**
    * 渲染最终合成画面
    * - target=null 渲染到屏幕，否则渲染到指定 FBO
-   * - TRANSPARENT=true 时画棋盘格底，否则画纯色底
+   * - TRANSPARENT=true 时清屏为透明，让 CSS 背景层透出
    */
   render(
     target: FBO | null,
@@ -54,34 +51,25 @@ export class DisplayPass {
     const gl = this.gl;
     const config = this.config;
 
-    if (target == null || !config.TRANSPARENT) {
+    if (target == null && config.TRANSPARENT) {
+      gl.clearColor(0.0, 0.0, 0.0, 0.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.enable(gl.BLEND);
+    } else if (!config.TRANSPARENT) {
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.enable(gl.BLEND);
+      this.drawColor(target, normalizeColor(config.BACK_COLOR));
     } else {
       gl.disable(gl.BLEND);
     }
 
-    if (!config.TRANSPARENT) {
-      this.drawColor(target, normalizeColor(config.BACK_COLOR));
-    }
-    if (target == null && config.TRANSPARENT) {
-      this.drawCheckerboard(target);
-    }
     this.drawDisplay(target, dye, bloom, sunrays, ditheringTexture);
   }
 
   private drawColor(target: FBO | null, color: { r: number; g: number; b: number }) {
     this.colorProgram.bind();
     this.gl.uniform4f(this.colorProgram.uniforms.color, color.r, color.g, color.b, 1);
-    this.blit(target);
-  }
-
-  private drawCheckerboard(target: FBO | null) {
-    this.checkerboardProgram.bind();
-    this.gl.uniform1f(
-      this.checkerboardProgram.uniforms.aspectRatio,
-      this.gl.drawingBufferWidth / this.gl.drawingBufferHeight,
-    );
     this.blit(target);
   }
 

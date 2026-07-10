@@ -96,9 +96,9 @@
       />
     </div>
 
-    <SettingsModal v-model="settingsOpen" :title="t('chordDisplay.settings')">
+    <SettingsDrawer v-model="settingsOpen" :title="t('chordDisplay.settings')">
       <ChordDisplayModuleSettings :module-id="moduleId" />
-    </SettingsModal>
+    </SettingsDrawer>
   </div>
 </template>
 
@@ -110,7 +110,7 @@ import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";
 import { ChordIntervals } from "@/components/ChordIntervals/";
 import { SettingsButton } from "@/components/SettingsButton/";
-import { SettingsModal } from "@/components/SettingsModal/";
+import { SettingsDrawer } from "@/components/SettingsDrawer/";
 import { useNotes } from "@/composables/";
 import { useSettingsStore } from "@/stores";
 import {

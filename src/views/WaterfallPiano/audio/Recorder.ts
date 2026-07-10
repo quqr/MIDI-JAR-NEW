@@ -1,233 +1,129 @@
-import * as Tone from "tone";
+import { saveToStorage, loadFromStorage, removeFromStorage } from "@/helpers/storage";
+import { RECORDING_STORAGE_KEY } from "../constants";
 import type { RecordedNote, ScheduledNote } from "../types";
 
 export interface RecorderCallbacks {
-  onNoteOn: (midi: number, velocity: number) => void;
-  onNoteOff: (midi: number) => void;
-  onPlaybackEnd: () => void;
-  onProgress?: (progress: number, seconds: number) => void;
+  onNoteOn?: (midi: number, velocity: number, hand: "left" | "right" | "unknown") => void;
+  onNoteOff?: (midi: number) => void;
+  onPlaybackEnd?: () => void;
+  onProgress?: (current: number, duration: number) => void;
   onScheduledNotesReady?: (notes: ScheduledNote[]) => void;
 }
 
 export class Recorder {
-  private recordedNotes: RecordedNote[] = [];
-  private pendingNotes = new Map<
-    number,
-    { startTime: number; velocity: number }
-  >();
-  private startTime = 0;
-  private callbacks: RecorderCallbacks | null = null;
+  private notes: RecordedNote[] = [];
+  private pending = new Map<number, { velocity: number; startTime: number }>();
+  private recordStartTime = 0;
+  private isRecording = false;
   private isPlaying = false;
   private isPaused = false;
-  private duration = 0;
-  private activeNotes = new Set<number>();
-  private progressRAF: number | null = null;
-  private pauseOffset = 0;
+  private playStartTime = 0;
+  private pausedAt = 0;
+  private rafId: number | null = null;
+  private triggeredIndices = new Set<number>();
+  private endedIndices = new Set<number>();
+  callbacks: RecorderCallbacks = {};
 
-  isRecording = false;
-
-  setCallbacks(callbacks: RecorderCallbacks) {
-    this.callbacks = callbacks;
-  }
-
-  // ─── 录制 ───
-  startRecording() {
-    this.recordedNotes = [];
-    this.pendingNotes.clear();
-    this.startTime = Date.now();
+  startRecording(): void {
+    this.notes = [];
+    this.pending.clear();
+    this.recordStartTime = performance.now();
     this.isRecording = true;
   }
 
   stopRecording(): RecordedNote[] {
+    if (!this.isRecording) return this.notes;
     this.isRecording = false;
-    for (const [midi, data] of this.pendingNotes) {
-      this.recordedNotes.push({
+    const now = performance.now() - this.recordStartTime;
+    for (const [midi, info] of this.pending) {
+      this.notes.push({
         midi,
-        velocity: data.velocity,
-        time: data.startTime - this.startTime,
-        duration: Date.now() - data.startTime,
+        velocity: info.velocity,
+        time: info.startTime / 1000,
+        duration: Math.max(0, (now - info.startTime) / 1000),
       });
     }
-    this.pendingNotes.clear();
-    return this.recordedNotes;
+    this.pending.clear();
+    this.saveToStorage();
+    return this.notes;
   }
 
-  recordNoteOn(midi: number, velocity: number) {
+  recordNoteOn(midi: number, velocity: number): void {
     if (!this.isRecording) return;
-    this.pendingNotes.set(midi, {
-      startTime: Date.now(),
-      velocity,
+    if (this.pending.has(midi)) return;
+    const startTime = performance.now() - this.recordStartTime;
+    this.pending.set(midi, { velocity, startTime });
+  }
+
+  recordNoteOff(midi: number): void {
+    if (!this.isRecording) return;
+    const info = this.pending.get(midi);
+    if (!info) return;
+    const now = performance.now() - this.recordStartTime;
+    this.notes.push({
+      midi,
+      velocity: info.velocity,
+      time: info.startTime / 1000,
+      duration: Math.max(0, (now - info.startTime) / 1000),
     });
+    this.pending.delete(midi);
   }
 
-  recordNoteOff(midi: number) {
-    if (!this.isRecording) return;
-    const data = this.pendingNotes.get(midi);
-    if (data) {
-      this.recordedNotes.push({
-        midi,
-        velocity: data.velocity,
-        time: data.startTime - this.startTime,
-        duration: Date.now() - data.startTime,
-      });
-      this.pendingNotes.delete(midi);
-    }
+  loadNotes(notes: RecordedNote[]): void {
+    this.notes = [...notes];
+    this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
   }
 
-  getRecordedNotes(): RecordedNote[] {
-    return this.recordedNotes;
-  }
-
-  setRecordedNotes(notes: RecordedNote[]) {
-    this.recordedNotes = notes;
-  }
-
-  hasRecording(): boolean {
-    return this.recordedNotes.length > 0;
-  }
-
-  // ─── 回放 ───
-  private getScheduledNotes(): ScheduledNote[] {
-    return this.recordedNotes.map((note, i) => ({
-      midi: note.midi,
-      velocity: note.velocity,
-      time: note.time / 1000,
-      duration: note.duration / 1000,
-      hand: "unknown" as const,
-      trackIndex: i,
-    }));
-  }
-
-  async startPlayback(notes?: RecordedNote[]) {
-    if (notes) {
-      this.recordedNotes = notes;
-    }
-    if (this.recordedNotes.length === 0) return;
-
-    await Tone.start();
-
-    const transport = Tone.getTransport();
-    transport.cancel();
-
+  startPlayback(): void {
+    if (this.notes.length === 0) return;
+    this.resetPlaybackState();
+    this.pausedAt = 0;
+    this.playStartTime = performance.now();
     this.isPlaying = true;
     this.isPaused = false;
-    this.activeNotes.clear();
-
-    // 计算总时长
-    this.duration = this.recordedNotes.reduce((max, n) => {
-      return Math.max(max, (n.time + n.duration) / 1000);
-    }, 0);
-
-    transport.bpm.value = 120;
-    transport.seconds = this.pauseOffset;
-    const startSeconds = this.pauseOffset;
-
-    // 通知调度音符
-    this.callbacks?.onScheduledNotesReady?.(this.getScheduledNotes());
-
-    // 调度音符
-    for (const note of this.recordedNotes) {
-      const noteOnTime = note.time / 1000;
-      const noteOffTime = (note.time + note.duration) / 1000;
-
-      if (noteOnTime >= startSeconds) {
-        transport.schedule(() => {
-          if (!this.isPlaying) return;
-          this.activeNotes.add(note.midi);
-          this.callbacks?.onNoteOn(note.midi, note.velocity);
-        }, noteOnTime);
-      }
-
-      if (noteOffTime >= startSeconds) {
-        transport.schedule(() => {
-          if (!this.isPlaying) return;
-          this.activeNotes.delete(note.midi);
-          this.callbacks?.onNoteOff(note.midi);
-        }, noteOffTime);
-      }
-    }
-
-    // 调度结束
-    transport.schedule(() => {
-      this.stopPlayback();
-      this.callbacks?.onPlaybackEnd();
-    }, this.duration + 0.1);
-
-    transport.start();
+    this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
     this.startProgressLoop();
   }
 
-  pausePlayback() {
-    if (!this.isPlaying || this.isPaused) return;
+  pausePlayback(): void {
+    if (!this.isPlaying) return;
+    this.pausedAt = this.getCurrentTime();
+    this.isPlaying = false;
     this.isPaused = true;
-    this.isPlaying = false;
-
-    const transport = Tone.getTransport();
-    this.pauseOffset = transport.seconds;
-    transport.pause();
-
-    for (const midi of this.activeNotes) {
-      this.callbacks?.onNoteOff(midi);
-    }
-    this.activeNotes.clear();
-
     this.stopProgressLoop();
   }
 
-  async resumePlayback() {
-    if (this.isPlaying || !this.isPaused) return;
+  resumePlayback(): void {
+    if (!this.isPaused) return;
+    this.playStartTime = performance.now() - this.pausedAt * 1000;
+    this.isPlaying = true;
     this.isPaused = false;
-    await this.startPlayback();
+    this.startProgressLoop();
   }
 
-  stopPlayback() {
+  stopPlayback(): void {
     this.isPlaying = false;
     this.isPaused = false;
-    this.pauseOffset = 0;
-
-    const transport = Tone.getTransport();
-    transport.stop();
-    transport.cancel();
-    transport.seconds = 0;
-
-    for (const midi of this.activeNotes) {
-      this.callbacks?.onNoteOff(midi);
-    }
-    this.activeNotes.clear();
-
+    this.pausedAt = 0;
+    this.resetPlaybackState();
     this.stopProgressLoop();
   }
 
-  seekTo(seconds: number) {
-    const wasPlaying = this.isPlaying;
-    if (wasPlaying) {
-      this.pausePlayback();
-    }
-    this.pauseOffset = Math.max(0, Math.min(seconds, this.duration));
-
-    if (wasPlaying) {
-      this.startPlayback();
-    }
+  seekTo(seconds: number): void {
+    const clamped = Math.max(0, Math.min(seconds, this.getDuration()));
+    this.pausedAt = clamped;
+    this.playStartTime = performance.now() - clamped * 1000;
+    this.recomputeTriggeredState(clamped);
   }
 
-  private startProgressLoop() {
-    this.stopProgressLoop();
-    const loop = () => {
-      if (!this.isPlaying) return;
-      const transport = Tone.getTransport();
-      const seconds = transport.seconds;
-      const progress = Math.min(1, seconds / this.duration);
-      this.callbacks?.onProgress?.(progress, seconds);
-      this.progressRAF = requestAnimationFrame(loop);
-    };
-    this.progressRAF = requestAnimationFrame(loop);
-  }
-
-  private stopProgressLoop() {
-    if (this.progressRAF !== null) {
-      cancelAnimationFrame(this.progressRAF);
-      this.progressRAF = null;
+  getDuration(): number {
+    if (this.notes.length === 0) return 0;
+    let max = 0;
+    for (const n of this.notes) {
+      const end = n.time + n.duration;
+      if (end > max) max = end;
     }
+    return max;
   }
 
   getIsPlaying(): boolean {
@@ -238,29 +134,107 @@ export class Recorder {
     return this.isPaused;
   }
 
-  getDuration(): number {
-    return this.duration;
-  }
-
   getCurrentTime(): number {
-    if (this.isPlaying) {
-      return Tone.getTransport().seconds;
+    if (this.isPaused || !this.isPlaying) return this.pausedAt;
+    return (performance.now() - this.playStartTime) / 1000;
+  }
+
+  getScheduledNotes(): ScheduledNote[] {
+    return this.notes.map((n) => ({
+      midi: n.midi,
+      velocity: n.velocity,
+      time: n.time,
+      duration: n.duration,
+      hand: n.hand ?? "unknown",
+      trackIndex: -1,
+    }));
+  }
+
+  setCallbacks(callbacks: RecorderCallbacks): void {
+    this.callbacks = { ...this.callbacks, ...callbacks };
+  }
+
+  saveToStorage(): void {
+    saveToStorage(RECORDING_STORAGE_KEY, this.notes);
+  }
+
+  loadFromStorage(): RecordedNote[] {
+    this.notes = loadFromStorage<RecordedNote[]>({
+      key: RECORDING_STORAGE_KEY,
+      defaultValue: [],
+    });
+    return this.notes;
+  }
+
+  clearStorage(): void {
+    removeFromStorage(RECORDING_STORAGE_KEY);
+    this.notes = [];
+  }
+
+  dispose(): void {
+    this.stopProgressLoop();
+    this.isRecording = false;
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.pending.clear();
+    this.resetPlaybackState();
+  }
+
+  private resetPlaybackState(): void {
+    this.triggeredIndices.clear();
+    this.endedIndices.clear();
+  }
+
+  private recomputeTriggeredState(current: number): void {
+    this.triggeredIndices.clear();
+    this.endedIndices.clear();
+    for (let i = 0; i < this.notes.length; i++) {
+      const n = this.notes[i];
+      if (n.time <= current) this.triggeredIndices.add(i);
+      if (n.time + n.duration <= current) this.endedIndices.add(i);
     }
-    return this.pauseOffset;
   }
 
-  clear() {
-    this.stopPlayback();
-    this.recordedNotes = [];
-    this.pendingNotes.clear();
+  private startProgressLoop(): void {
+    this.stopProgressLoop();
+    const loop = () => {
+      this.tick();
+      this.rafId = requestAnimationFrame(loop);
+    };
+    this.rafId = requestAnimationFrame(loop);
   }
 
-  /** 销毁所有资源并释放引用，应在组件 onUnmounted 中调用 */
-  dispose() {
-    this.stopPlayback();
-    this.callbacks = null;
-    this.recordedNotes = [];
-    this.pendingNotes.clear();
-    this.activeNotes.clear();
+  private stopProgressLoop(): void {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  private tick(): void {
+    const current = this.getCurrentTime();
+    for (let i = 0; i < this.notes.length; i++) {
+      if (this.triggeredIndices.has(i)) continue;
+      const n = this.notes[i];
+      if (n.time <= current) {
+        this.triggeredIndices.add(i);
+        this.callbacks.onNoteOn?.(n.midi, n.velocity, n.hand ?? "unknown");
+      }
+    }
+    for (let i = 0; i < this.notes.length; i++) {
+      if (this.endedIndices.has(i)) continue;
+      const n = this.notes[i];
+      if (n.time + n.duration <= current) {
+        this.endedIndices.add(i);
+        this.callbacks.onNoteOff?.(n.midi);
+      }
+    }
+    this.callbacks.onProgress?.(current, this.getDuration());
+    if (current >= this.getDuration() && this.getDuration() > 0) {
+      this.isPlaying = false;
+      this.isPaused = false;
+      this.stopProgressLoop();
+      this.callbacks.onPlaybackEnd?.();
+    }
   }
 }

@@ -309,7 +309,7 @@ export class FluidSolver {
     y = Math.max(0, Math.min(1, y));
 
     const aspectRatio = this.getCanvasAspectRatio();
-    const radius = Math.max(0.0001, correctRadius(config.SPLAT_RADIUS / 100.0, aspectRatio));
+    const radius = Math.max(0.000001, correctRadius(config.SPLAT_RADIUS, aspectRatio));
 
     this.splatProgram.bind();
     gl.uniform1i(this.splatProgram.uniforms.uTarget, this.velocity.read.attach(0));

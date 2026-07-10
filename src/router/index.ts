@@ -23,18 +23,6 @@ const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
-        path: "waterfall-piano",
-        name: "waterfall-piano",
-        component: () => import("@/views/WaterfallPiano/WaterfallPiano.vue"),
-        meta: { title: "nav.waterfallPiano", icon: "piano" },
-      },
-      {
-        path: "fluid-test",
-        name: "fluid-test",
-        component: () => import("@/views/FluidTest.vue"),
-        meta: { title: "流体测试", icon: "water" },
-      },
-      {
         path: "chord-dictionary",
         name: "chord-dictionary",
         component: () => import("@/views/ChordDictionary/ChordDictionary.vue"),
@@ -54,6 +42,12 @@ const routes: RouteRecordRaw[] = [
               import("@/views/ChordDictionary/Detail/ChordDetail.vue"),
           },
         ],
+      },
+      {
+        path: "waterfall-piano",
+        name: "waterfall-piano",
+        component: () => import("@/views/waterfallpiano/WaterfallPiano.vue"),
+        meta: { title: "nav.waterfallPiano", icon: "piano" },
       },
       {
         path: "settings",
@@ -118,17 +112,17 @@ const routes: RouteRecordRaw[] = [
             ],
           },
           {
-            path: "waterfall-piano",
-            name: "settings-waterfall-piano",
-            component: () =>
-              import("@/views/Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue"),
-            meta: { title: "settings.waterfallPiano" },
-          },
-          {
             path: "debug",
             name: "settings-debug",
             component: () => import("@/views/Settings/Debugger/Debugger.vue"),
             meta: { title: "settings.debugger" },
+          },
+          {
+            path: "waterfall-piano",
+            name: "settings-waterfall-piano",
+            component: () =>
+              import("@/views/waterfallpiano/WaterfallPianoSettings.vue"),
+            meta: { title: "settings.waterfallPiano" },
           },
         ],
       },

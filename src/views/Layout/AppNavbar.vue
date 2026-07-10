@@ -25,24 +25,6 @@
       <span class="latency-dot" :class="latencyClass"></span>
     </div>
 
-    <!-- 录制/播放状态图标（常驻，仅在激活时显示） -->
-    <div
-      v-if="isRecording"
-      class="app-navbar__status"
-      :title="$t('waterfallPiano.recording')"
-      role="status"
-    >
-      <span class="status-pulse status-pulse--record"></span>
-    </div>
-    <div
-      v-if="isPlaying"
-      class="app-navbar__status"
-      :title="$t('waterfallPiano.playing')"
-      role="status"
-    >
-      <span class="status-pulse status-pulse--play"></span>
-    </div>
-
     <div class="app-navbar__actions">
       <RouterLink
         to="/settings"
@@ -185,7 +167,6 @@ import Icon from "@/components/Icon/Icon.vue";
 import { logger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
-import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/waterfallPiano";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -196,11 +177,6 @@ const isMac = ref(false);
 
 // 延迟监控
 const { currentLatency } = useMidiLatency();
-
-// 录制/播放状态
-const waterfallStore = useWaterfallPianoStore();
-const isRecording = computed(() => waterfallStore.isRecording);
-const isPlaying = computed(() => waterfallStore.isPlaying);
 
 // 延迟状态分类：<10ms 绿，10-30ms 黄，>30ms 红
 const latencyClass = computed(() => {

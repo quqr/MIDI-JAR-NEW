@@ -1,68 +1,49 @@
-// ─── 性能监控：自动降级与恢复 ───
-// 当帧率持续低于 minFps 时触发降级；恢复到 targetFps 后自动恢复
-
-export type PerformanceAction = "idle" | "degrade" | "recover";
+const WINDOW_SIZE = 60;
+const DEGRADE_THRESHOLD_FPS = 45;
+const DEGRADE_CONSECUTIVE_FRAMES = 30;
 
 export class PerformanceMonitor {
-  private minFps: number;
-  private targetFps: number;
-  private lowFpsAccumulator = 0; // 持续低帧率的累计时间（秒）
-  private highFpsAccumulator = 0;
+  private frameTimes: number[] = [];
+  private lowFpsStreak = 0;
   private degraded = false;
-  // 触发降级需要持续低帧率的时间（秒）
-  private readonly degradeThreshold = 3;
-  // 触发恢复需要持续高帧率的时间（秒）
-  private readonly recoverThreshold = 5;
 
-  constructor(minFps: number, targetFps: number) {
-    this.minFps = minFps;
-    this.targetFps = targetFps;
-  }
-
-  setThresholds(minFps: number, targetFps: number) {
-    this.minFps = minFps;
-    this.targetFps = targetFps;
-  }
-
-  // 每帧调用，传入当前 fps，返回建议动作
-  update(fps: number, deltaSeconds = 1 / 60): PerformanceAction {
-    if (fps < this.minFps) {
-      this.lowFpsAccumulator += deltaSeconds;
-      this.highFpsAccumulator = 0;
-      if (!this.degraded && this.lowFpsAccumulator >= this.degradeThreshold) {
+  recordFrame(deltaTime: number): void {
+    const dt = deltaTime > 0 ? deltaTime : 16.67;
+    this.frameTimes.push(dt);
+    if (this.frameTimes.length > WINDOW_SIZE) {
+      this.frameTimes.shift();
+    }
+    const fps = 1000 / dt;
+    if (fps < DEGRADE_THRESHOLD_FPS) {
+      this.lowFpsStreak++;
+      if (this.lowFpsStreak >= DEGRADE_CONSECUTIVE_FRAMES) {
         this.degraded = true;
-        return "degrade";
-      }
-    } else if (fps >= this.targetFps) {
-      this.highFpsAccumulator += deltaSeconds;
-      this.lowFpsAccumulator = 0;
-      if (this.degraded && this.highFpsAccumulator >= this.recoverThreshold) {
-        this.degraded = false;
-        this.lowFpsAccumulator = 0;
-        this.highFpsAccumulator = 0;
-        return "recover";
       }
     } else {
-      // 中间区间：缓慢重置
-      this.lowFpsAccumulator = Math.max(
-        0,
-        this.lowFpsAccumulator - deltaSeconds * 0.5,
-      );
-      this.highFpsAccumulator = Math.max(
-        0,
-        this.highFpsAccumulator - deltaSeconds * 0.5,
-      );
+      this.lowFpsStreak = 0;
+      this.degraded = false;
     }
-    return "idle";
   }
 
-  isDegraded(): boolean {
+  getFps(): number {
+    if (this.frameTimes.length === 0) return 0;
+    const avg =
+      this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    return avg > 0 ? 1000 / avg : 0;
+  }
+
+  getFrameTime(): number {
+    if (this.frameTimes.length === 0) return 0;
+    return this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+  }
+
+  shouldDegrade(): boolean {
     return this.degraded;
   }
 
-  reset() {
-    this.lowFpsAccumulator = 0;
-    this.highFpsAccumulator = 0;
+  reset(): void {
+    this.frameTimes = [];
+    this.lowFpsStreak = 0;
     this.degraded = false;
   }
 }

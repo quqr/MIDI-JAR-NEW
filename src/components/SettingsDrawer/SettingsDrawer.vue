@@ -1,22 +1,25 @@
 <template>
   <Teleport to="body">
     <Transition name="drawer">
-      <div v-if="modelValue" class="fixed top-0 right-0 bottom-0 z-50 flex">
-        <!-- 抽屉面板 -->
+      <div
+        v-if="modelValue"
+        class="fixed top-0 right-0 bottom-0 z-50 flex"
+        role="dialog"
+        aria-modal="false"
+        :aria-label="title"
+      >
         <div
-          class="card bg-base-100/90 backdrop-blur-md shadow-xl border-l border-base-200/30 w-80 max-h-full overflow-y-auto rounded-none"
+          class="card bg-base-100/90 backdrop-blur-md shadow-xl border-l border-base-200/30 w-96 max-w-[calc(100vw-1rem)] max-h-full overflow-y-auto rounded-none"
         >
-          <!-- 标题栏 -->
           <div
             class="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-base-200/30 bg-base-100/90 backdrop-blur-md"
           >
-            <h2 class="text-sm font-bold">{{ title }}</h2>
+            <h2 class="text-lg font-bold">{{ title }}</h2>
             <button class="btn btn-sm btn-ghost btn-circle" @click="close">
               <Icon name="x" :size="16" />
             </button>
           </div>
-          <!-- 内容区 -->
-          <div class="p-4">
+          <div class="overflow-y-auto p-4">
             <slot />
           </div>
         </div>
@@ -26,9 +29,10 @@
 </template>
 
 <script setup lang="ts">
+import { watch, onUnmounted } from "vue";
 import Icon from "@/components/Icon/Icon.vue";
 
-defineProps<{
+const props = defineProps<{
   modelValue: boolean;
   title?: string;
 }>();
@@ -40,6 +44,34 @@ const emit = defineEmits<{
 function close() {
   emit("update:modelValue", false);
 }
+
+function onEsc(e: KeyboardEvent) {
+  if (e.key !== "Escape") return;
+  const target = e.target;
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement
+  ) {
+    return;
+  }
+  close();
+}
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) {
+      window.addEventListener("keydown", onEsc);
+    } else {
+      window.removeEventListener("keydown", onEsc);
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", onEsc);
+});
 </script>
 
 <style scoped>

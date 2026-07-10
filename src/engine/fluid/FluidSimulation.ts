@@ -21,7 +21,6 @@ import {
   copyShader,
   clearShader,
   colorShader,
-  checkerboardShader,
   displayShaderSource,
   bloomPrefilterShader,
   bloomBlurShader,
@@ -171,14 +170,12 @@ export class FluidSimulation {
     // ─── DisplayPass 所需 programs/material ───
     const displayMaterial = new Material(gl, baseVS, displayShaderSource);
     const colorProgram = makeProgram(gl, baseVS, colorShader);
-    const checkerboardProgram = makeProgram(gl, baseVS, checkerboardShader);
 
     this.displayPass = new DisplayPass(
       gl,
       this.blit,
       displayMaterial,
       colorProgram,
-      checkerboardProgram,
       this.config,
     );
     this.displayPass.updateKeywords();
@@ -189,7 +186,6 @@ export class FluidSimulation {
   /** 初始化 WebGL 资源，启动渲染循环 */
   start() {
     if (this.initialized) return;
-    this.initialized = true;
 
     this.resizeCanvas();
     this.solver.initFramebuffers();
@@ -197,8 +193,13 @@ export class FluidSimulation {
     this.sunraysPass.initFramebuffers();
     this.solver.multipleSplats(this.initialSplats);
 
+    this.initialized = true;
     this.lastUpdateTime = Date.now();
     this.loop();
+  }
+
+  isInitialized(): boolean {
+    return this.initialized;
   }
 
   private loop = () => {

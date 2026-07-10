@@ -1,6 +1,18 @@
 // ─── 流体模拟配置 ───
 // 参考 WebGL-Fluid-Simulation by PavelDoGreat (MIT)
 
+// 流体高级覆盖参数（用户友好语义，原 WaterfallPiano/types.ts 内联至此以保持模块自包含）
+export interface FluidAdvancedParams {
+  splatRadius?: number;        // 0.0001-0.01 溅射半径
+  splatColorHue?: number;      // 0-1 色相，undefined 时用音高映射
+  trailLength?: number;         // 0-1 拖尾长度（1=长拖尾，0=快消散）
+  flowPersistence?: number;     // 0-1 流动持久度（1=持久，0=短促）
+  bloom?: boolean;              // 发光开关
+  bloomIntensity?: number;      // 0.1-2.0 发光强度
+  hitExplosion?: boolean;       // 命中爆炸发射开关
+  blockCoverage?: boolean;      // 块体覆盖发射开关
+}
+
 export interface FluidSimulationConfig {
   // 模拟参数
   SIM_RESOLUTION: number; // 32-256
@@ -11,7 +23,7 @@ export interface FluidSimulationConfig {
   PRESSURE: number; // 0-1
   PRESSURE_ITERATIONS: number; // 5-50 Jacobi 迭代次数
   CURL: number; // 0-50 涡度
-  SPLAT_RADIUS: number; // 1-100 (divided by 100 in shader)
+  SPLAT_RADIUS: number; // 0.00001-0.01
   SPLAT_FORCE: number; // 1000-10000
   SHADING: boolean; // 法线着色（伪 3D 立体感）
   COLORFUL: boolean; // 自动随机色彩
@@ -90,19 +102,19 @@ export const STYLE_PRESETS: Record<
     DENSITY_DISSIPATION: 2,
     VELOCITY_DISSIPATION: 0.5,
     CURL: 10,
-    SPLAT_RADIUS: 40,
+    SPLAT_RADIUS: 0.008,
   },
   standard: {
     DENSITY_DISSIPATION: 1,
     VELOCITY_DISSIPATION: 0.2,
     CURL: 30,
-    SPLAT_RADIUS: 25,
+    SPLAT_RADIUS: 0.005,
   },
   turbulent: {
     DENSITY_DISSIPATION: 0.5,
     VELOCITY_DISSIPATION: 0.1,
     CURL: 50,
-    SPLAT_RADIUS: 15,
+    SPLAT_RADIUS: 0.002,
   },
 };
 
@@ -116,7 +128,7 @@ export const DEFAULT_CONFIG: FluidSimulationConfig = {
   PRESSURE: 0.8,
   PRESSURE_ITERATIONS: 20,
   CURL: 30,
-  SPLAT_RADIUS: 25,
+  SPLAT_RADIUS: 0.005,
   SPLAT_FORCE: 6000,
   SHADING: true,
   COLORFUL: true,
@@ -135,32 +147,26 @@ export const DEFAULT_CONFIG: FluidSimulationConfig = {
   SUNRAYS_WEIGHT: 1.0,
 };
 
-// ─── 高级覆盖参数（精简后用户可调旋钮，发射开关由 WaterfallEngine 读取） ───
-export interface FluidAdvancedOverrides {
-  SPLAT_RADIUS?: number;
-  SPLAT_COLOR_HUE?: number;
-  DENSITY_DISSIPATION?: number;
-  VELOCITY_DISSIPATION?: number;
-  BLOOM?: boolean;
-  BLOOM_INTENSITY?: number;
-}
+// ─── 高级覆盖参数（用户友好语义，由 types.ts 的 FluidAdvancedParams 定义） ───
 
 // ─── 由质量 + 风格 + 高级覆盖生成最终配置 ───
 // 始终应用 overrides，确保用户设置的参数生效
+// 用户语义映射：trailLength/flowPersistence (0-1) → DENSITY/VELOCITY_DISSIPATION (0-4，反向)
 export function resolveConfig(
   quality: FluidQuality,
   style: FluidStyle,
   _advanced: boolean,
-  overrides: FluidAdvancedOverrides,
+  overrides: FluidAdvancedParams,
 ): FluidSimulationConfig {
   const base = { ...DEFAULT_CONFIG };
   Object.assign(base, QUALITY_PRESETS[quality]);
   Object.assign(base, STYLE_PRESETS[style]);
-  // 仅应用 FluidSimulationConfig 已知字段（忽略发射开关等非求解器参数）
-  if (overrides.SPLAT_RADIUS !== undefined) base.SPLAT_RADIUS = overrides.SPLAT_RADIUS;
-  if (overrides.DENSITY_DISSIPATION !== undefined) base.DENSITY_DISSIPATION = overrides.DENSITY_DISSIPATION;
-  if (overrides.VELOCITY_DISSIPATION !== undefined) base.VELOCITY_DISSIPATION = overrides.VELOCITY_DISSIPATION;
-  if (overrides.BLOOM !== undefined) base.BLOOM = overrides.BLOOM;
-  if (overrides.BLOOM_INTENSITY !== undefined) base.BLOOM_INTENSITY = overrides.BLOOM_INTENSITY;
+  // 用户友好旋钮映射到底层求解器参数
+  if (overrides.splatRadius !== undefined) base.SPLAT_RADIUS = overrides.splatRadius;
+  if (overrides.trailLength !== undefined) base.DENSITY_DISSIPATION = (1 - overrides.trailLength) * 4;
+  if (overrides.flowPersistence !== undefined) base.VELOCITY_DISSIPATION = (1 - overrides.flowPersistence) * 4;
+  if (overrides.bloom !== undefined) base.BLOOM = overrides.bloom;
+  if (overrides.bloomIntensity !== undefined) base.BLOOM_INTENSITY = overrides.bloomIntensity;
+  base.TRANSPARENT = true;
   return base;
 }

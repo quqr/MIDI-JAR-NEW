@@ -148,12 +148,12 @@
         @click="settingsOpen = true"
       />
 
-      <SettingsModal
+      <SettingsDrawer
         v-model="settingsOpen"
         :title="t('chordDictionary.settings')"
       >
         <ChordDictionarySettings />
-      </SettingsModal>
+      </SettingsDrawer>
     </div>
 
     <!-- Row 2: Chroma selector auto-fit grid -->
@@ -195,7 +195,7 @@ import {
   getNoteInKeySignature,
 } from "@/helpers";
 import { SettingsButton } from "@/components/SettingsButton";
-import { SettingsModal } from "@/components/SettingsModal";
+import { SettingsDrawer } from "@/components/SettingsDrawer/";
 import Icon from "@/components/Icon/Icon.vue";
 import ChordSearch from "./ChordSearch/ChordSearch.vue";
 import ChordDictionarySettings from "../Settings/ChordDictionarySettings/ChordDictionarySettings.vue";

@@ -1,439 +1,338 @@
-// Canvas 2D 音符块系统（从 PixiJS 重写，移除粒子特效）
+import type { WaterfallPianoSettings, ScheduledNote } from "../types";
+import { noteToColor, type CustomColors } from "./NoteColorMapper";
+import type { KeyboardRenderer } from "./KeyboardRenderer";
 
-import { isBlackKey } from "./KeyboardRenderer";
-import type { ColorScheme, ScheduledNote, FlowDirection } from "../types";
+export type NoteBlockMode = "realtime" | "synthesia";
 
-// ─── 音符块 ───
 interface NoteBlock {
   midi: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: number;
-  alpha: number;
-  startTime: number;
-  active: boolean;
-  hitTime: number;
-  endTime: number;
-  hasTriggered: boolean;
-  hasEnded: boolean;
   velocity: number;
   hand: "left" | "right" | "unknown";
-  trackColor: number | null;
+  trackIndex: number;
+  startTime: number;
+  duration: number;
+  y: number;
+  height: number;
+  triggered: boolean;
+  ended: boolean;
+  releasing: boolean;
+  fadeTime: number;
+  active: boolean;
 }
 
-export interface NoteBlockCallbacks {
+interface NoteBlockCallbacks {
   onNoteTrigger?: (midi: number, velocity: number, hand: "left" | "right" | "unknown") => void;
   onNoteEnd?: (midi: number) => void;
 }
 
+const FADE_DURATION = 0.5;
+const POOL_MAX = 512;
+
 export class NoteBlockSystem {
-  private blocks: NoteBlock[] = [];
-
-  private mode: "realtime" | "synthesia" = "realtime";
-
-  // 布局
-  private keyboardY = 0;
-  private canvasHeight = 0;
-  private canvasWidth = 0;
-  private keyWidth = 0;
-  private blackKeyWidth = 0;
-
-  // 速度
-  private realtimeSpeed = 2;
-  private fallSpeed = 120;
-  private lookAhead = 3;
-
-  // 视觉配置（简化）
-  private colorScheme: ColorScheme = "pitch";
-  private opacity = 0.9;
-  private cornerRadius = 3;
-
-  // 命中线配置（简化）
-  private hitLineVisible = true;
-  private hitLineColor = "#ffffff";
-  private hitLineThickness = 2;
-
-  // Synthesia 播放状态
+  private canvas: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
+  private settings: WaterfallPianoSettings | null = null;
+  private keyboardRenderer: KeyboardRenderer | null = null;
+  private width = 0;
+  private height = 0;
+  private mode: NoteBlockMode = "realtime";
+  private pool: NoteBlock[] = [];
+  private active: NoteBlock[] = [];
+  private realtimeHeld = new Map<number, NoteBlock>();
+  private synthesiaNotes: ScheduledNote[] = [];
   private transportTime = 0;
-  private isTransportPlaying = false;
-  private flowDirection: FlowDirection = "down";
+  private transportPlaying = false;
+  private triggeredSet = new Set<number>();
+  callbacks: NoteBlockCallbacks = {};
 
-  private callbacks: NoteBlockCallbacks = {};
-
-  constructor() {
-    // 无需初始化 PixiJS 容器
+  init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.settings = settings;
   }
 
-  setCallbacks(callbacks: NoteBlockCallbacks) {
-    this.callbacks = callbacks;
-  }
-
-  // ─── 布局设置 ───
-  setCanvasSize(width: number, height: number) {
-    this.canvasWidth = width;
-    this.canvasHeight = height;
-    this.updateFallSpeed();
-  }
-
-  setKeyboardY(y: number) {
-    this.keyboardY = y;
-    this.updateFallSpeed();
-  }
-
-  setKeyWidth(width: number) {
-    this.keyWidth = width;
-    this.blackKeyWidth = width * 0.6;
-  }
-
-  private updateFallSpeed() {
-    const fallDistance = this.keyboardY;
-    if (this.lookAhead > 0 && fallDistance > 0) {
-      this.fallSpeed = fallDistance / this.lookAhead;
+  resize(width: number, height: number, dpr: number, keyboardRenderer: KeyboardRenderer): void {
+    this.width = width;
+    this.height = height;
+    this.keyboardRenderer = keyboardRenderer;
+    if (this.canvas) {
+      this.canvas.width = Math.max(1, Math.floor(width * dpr));
+      this.canvas.height = Math.max(1, Math.floor(height * dpr));
+    }
+    if (this.ctx) {
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
   }
 
-  setMode(mode: "realtime" | "synthesia") {
+  setMode(mode: NoteBlockMode): void {
     this.mode = mode;
+    this.clearNoteBlocks();
   }
 
-  // ─── 视觉配置 ───
-  setRealtimeSpeed(speed: number) {
-    this.realtimeSpeed = speed;
+  getMode(): NoteBlockMode {
+    return this.mode;
   }
 
-  setLookAhead(seconds: number) {
-    this.lookAhead = seconds;
-    this.updateFallSpeed();
+  clearNoteBlocks(): void {
+    for (const b of this.active) this.release(b);
+    this.active = [];
+    this.realtimeHeld.clear();
+    this.triggeredSet.clear();
+    this.synthesiaNotes = [];
   }
 
-  setColorScheme(scheme: ColorScheme) {
-    this.colorScheme = scheme;
+  setSettings(settings: WaterfallPianoSettings): void {
+    this.settings = settings;
   }
 
-  setOpacity(op: number) {
-    this.opacity = op;
+  scheduleSynthesiaNotes(notes: ScheduledNote[]): void {
+    this.synthesiaNotes = notes;
+    this.triggeredSet.clear();
   }
 
-  setCornerRadius(r: number) {
-    this.cornerRadius = r;
+  setTransportTime(t: number): void {
+    this.transportTime = t;
   }
 
-  setFlowDirection(direction: FlowDirection) {
-    this.flowDirection = direction;
+  setTransportPlaying(playing: boolean): void {
+    this.transportPlaying = playing;
   }
 
-  setHitLineConfig(config: { visible: boolean; color: string; thickness: number }) {
-    this.hitLineVisible = config.visible;
-    this.hitLineColor = config.color;
-    this.hitLineThickness = config.thickness;
+  triggerSynthesiaNote(midi: number, _velocity: number): void {
+    this.triggeredSet.add(midi);
   }
 
-  // ─── Synthesia 播放控制 ───
-  setTransportTime(time: number) {
-    this.transportTime = time;
+  releaseSynthesiaNote(midi: number): void {
+    this.triggeredSet.delete(midi);
   }
 
-  setTransportPlaying(playing: boolean) {
-    this.isTransportPlaying = playing;
+  playRealtimeNote(midi: number, velocity: number): void {
+    if (this.realtimeHeld.has(midi)) return;
+    const block = this.acquire();
+    block.midi = midi;
+    block.velocity = velocity;
+    block.hand = "unknown";
+    block.trackIndex = -1;
+    block.startTime = 0;
+    block.duration = 0;
+    block.y = this.height;
+    block.height = 0;
+    block.triggered = true;
+    block.ended = false;
+    block.releasing = false;
+    block.fadeTime = 0;
+    block.active = true;
+    this.active.push(block);
+    this.realtimeHeld.set(midi, block);
   }
 
-  // ─── 实时模式：开始音符 ───
-  startRealtimeNote(midi: number, x: number, velocity: number) {
-    if (midi < 0 || midi > 127) return;
-    if (velocity < 0 || velocity > 127) velocity = Math.max(0, Math.min(127, velocity));
+  releaseRealtimeNote(midi: number): void {
+    const block = this.realtimeHeld.get(midi);
+    if (!block) return;
+    block.releasing = true;
+    block.fadeTime = 0;
+    this.realtimeHeld.delete(midi);
+  }
 
-    // 防止同一 MIDI 音符多次激活
-    for (let i = this.blocks.length - 1; i >= 0; i--) {
-      const b = this.blocks[i];
-      if (b.midi === midi && b.active) {
-        b.active = false;
-        b.endTime = performance.now();
-        b.hasEnded = true;
-        break;
-      }
+  private acquire(): NoteBlock {
+    const pooled = this.pool.pop();
+    if (pooled) {
+      pooled.active = true;
+      return pooled;
     }
-
-    const color = this.resolveColor(midi, "unknown", null);
-    const w = isBlackKey(midi) ? this.blackKeyWidth : this.keyWidth;
-    const block: NoteBlock = {
-      midi,
-      x: x - w / 2,
-      y: this.keyboardY,
-      width: w,
-      height: 0,
-      color,
-      alpha: this.opacity,
-      startTime: performance.now(),
-      active: true,
-      hitTime: 0,
-      endTime: 0,
-      hasTriggered: true,
-      hasEnded: false,
-      velocity,
+    return {
+      midi: 0,
+      velocity: 0,
       hand: "unknown",
-      trackColor: null,
+      trackIndex: -1,
+      startTime: 0,
+      duration: 0,
+      y: 0,
+      height: 0,
+      triggered: false,
+      ended: false,
+      releasing: false,
+      fadeTime: 0,
+      active: false,
     };
-    this.blocks.push(block);
   }
 
-  endRealtimeNote(midi: number) {
-    if (midi < 0 || midi > 127) return;
-
-    for (let i = this.blocks.length - 1; i >= 0; i--) {
-      const b = this.blocks[i];
-      if (b.midi === midi && b.active) {
-        b.active = false;
-        b.endTime = performance.now();
-        b.hasEnded = true;
-        break;
-      }
+  private release(b: NoteBlock): void {
+    b.active = false;
+    if (this.pool.length < POOL_MAX) {
+      this.pool.push(b);
     }
   }
 
-  // ─── Synthesia 模式：调度音符 ───
-  scheduleNotes(notes: ScheduledNote[], getX: (midi: number) => number) {
-    for (const note of notes) {
-      const x = getX(note.midi);
-      if (x < 0) continue;
-      const color = this.resolveColor(note.midi, note.hand, null);
-      const blockHeight = Math.max(8, note.duration * this.fallSpeed);
-      const w = isBlackKey(note.midi) ? this.blackKeyWidth : this.keyWidth;
+  update(deltaTime: number): void {
+    if (!this.settings) return;
+    const pps = this.pixelsPerSecond();
+    const dt = Math.min(deltaTime, 0.1);
 
-      const block: NoteBlock = {
-        midi: note.midi,
-        x: x - w / 2,
-        y: 0,
-        width: w,
-        height: blockHeight,
-        color,
-        alpha: this.opacity,
-        startTime: 0,
-        active: false,
-        hitTime: note.time,
-        endTime: note.time + note.duration,
-        hasTriggered: false,
-        hasEnded: false,
-        velocity: note.velocity,
-        hand: note.hand,
-        trackColor: null,
-      };
-      this.blocks.push(block);
+    if (this.mode === "synthesia" && this.transportPlaying) {
+      this.updateSynthesia(pps);
     }
-  }
 
-  // ─── 颜色解析 ───
-  private resolveColor(midi: number, hand: "left" | "right" | "unknown", trackColor: number | null): number {
-    if (trackColor !== null) return trackColor;
-
-    switch (this.colorScheme) {
-      case "pitch": {
-        const t = (midi - 21) / 87;
-        return this.hslToHex(t * 300, 85, 55);
-      }
-      case "hands": {
-        if (hand === "left") return 0x6366f1;
-        if (hand === "right") return 0x14b8a6;
-        return 0xf59e0b;
-      }
-      case "rainbow": {
-        const hue = ((midi - 21) / 87) * 360;
-        return this.hslToHex(hue, 90, 55);
-      }
-      case "warm": {
-        const t = (midi - 21) / 87;
-        return this.hslToHex(t * 60, 90, 55);
-      }
-      case "cool": {
-        const t = (midi - 21) / 87;
-        return this.hslToHex(180 + t * 80, 80, 50);
-      }
-      case "neon": {
-        const t = (midi - 21) / 87;
-        return this.hslToHex(t * 360, 100, 60);
-      }
-      default:
-        return 0x6366f1;
-    }
-  }
-
-  private hslToHex(h: number, s: number, l: number): number {
-    s /= 100;
-    l /= 100;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n: number) => {
-      const k = (n + h / 30) % 12;
-      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-      return Math.round(255 * color);
-    };
-    return (f(0) << 16) + (f(8) << 8) + f(4);
-  }
-
-  private numberToHex(color: number): string {
-    const r = (color >> 16) & 0xff;
-    const g = (color >> 8) & 0xff;
-    const b = color & 0xff;
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-
-  // ─── 主更新循环 ───
-  update(delta: number, _deltaSeconds: number) {
-    const now = performance.now();
-    const toRemove: number[] = [];
-
-    for (let i = 0; i < this.blocks.length; i++) {
-      const block = this.blocks[i];
-
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const b = this.active[i];
       if (this.mode === "realtime") {
-        this.updateRealtimeBlock(block, now, delta);
-      } else {
-        this.updateSynthesiaBlock(block);
-      }
-
-      if (this.shouldRemove(block, now)) {
-        toRemove.push(i);
-      }
-    }
-
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.blocks.splice(toRemove[i], 1);
-    }
-  }
-
-  // ─── 渲染到 Canvas ───
-  render(ctx: CanvasRenderingContext2D) {
-    // 绘制命中线
-    this.drawHitLine(ctx);
-
-    // 绘制音符块
-    for (const block of this.blocks) {
-      this.drawBlock(ctx, block);
-    }
-  }
-
-  // ─── 实时模式更新 ───
-  private updateRealtimeBlock(block: NoteBlock, now: number, delta: number) {
-    if (block.active) {
-      const elapsed = now - block.startTime;
-      block.height = Math.max(8, elapsed * this.realtimeSpeed * 0.06);
-      block.y = this.keyboardY - block.height;
-    } else {
-      // 释放后匹配生长速度继续向上飘
-      block.y -= this.realtimeSpeed * 0.06 * delta;
-    }
-  }
-
-  // ─── Synthesia 模式更新 ───
-  private updateSynthesiaBlock(block: NoteBlock) {
-    if (!this.isTransportPlaying) return;
-
-    const hitY = this.keyboardY;
-    if (this.flowDirection === "down") {
-      block.y = hitY - (block.hitTime - this.transportTime) * this.fallSpeed;
-    } else {
-      block.y = hitY + (block.hitTime - this.transportTime) * this.fallSpeed - block.height;
-    }
-
-    // 触发 noteOn
-    if (!block.hasTriggered && this.transportTime >= block.hitTime) {
-      block.hasTriggered = true;
-      this.callbacks.onNoteTrigger?.(block.midi, block.velocity, block.hand);
-    }
-
-    // 触发 noteOff
-    if (!block.hasEnded && this.transportTime >= block.endTime) {
-      block.hasEnded = true;
-      this.callbacks.onNoteEnd?.(block.midi);
-    }
-  }
-
-  // ─── 移除判断 ───
-  private shouldRemove(block: NoteBlock, _now: number): boolean {
-    if (this.mode === "realtime") {
-      // 仅在完全飘出屏幕顶部时移除
-      return block.hasEnded && block.y + block.height < 0;
-    } else {
-      if (this.flowDirection === "down") {
-        return block.hasEnded && block.y > this.canvasHeight;
-      } else {
-        return block.hasEnded && block.y + block.height < 0;
+        if (b.releasing) {
+          b.y -= pps * dt;
+          b.fadeTime += dt;
+        } else {
+          b.height += pps * dt;
+        }
+        if (b.releasing && (b.y + b.height < 0 || b.fadeTime > FADE_DURATION)) {
+          this.active.splice(i, 1);
+          this.release(b);
+        }
       }
     }
   }
 
-  // ─── 绘制命中线 ───
-  private drawHitLine(ctx: CanvasRenderingContext2D) {
-    if (!this.hitLineVisible) return;
+  private updateSynthesia(pps: number): void {
+    const t = this.transportTime;
+    const lookAhead = this.settings ? this.settings.particles.lookAhead : 3;
+    for (const note of this.synthesiaNotes) {
+      const timeUntilHit = note.time - t;
+      if (timeUntilHit > lookAhead) continue;
+      const endOffset = t - (note.time + note.duration);
+      if (endOffset > 1) continue;
 
-    const y = this.keyboardY;
-    ctx.strokeStyle = this.hitLineColor;
-    ctx.lineWidth = this.hitLineThickness;
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(this.canvasWidth, y);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+      let block = this.findSynthesiaBlock(note);
+      if (!block) {
+        if (timeUntilHit > lookAhead) continue;
+        block = this.acquire();
+        block.midi = note.midi;
+        block.velocity = note.velocity;
+        block.hand = note.hand;
+        block.trackIndex = note.trackIndex;
+        block.startTime = note.time;
+        block.duration = note.duration;
+        block.triggered = false;
+        block.ended = false;
+        block.releasing = false;
+        block.fadeTime = 0;
+        block.active = true;
+        this.active.push(block);
+      }
+      block.y = this.height - timeUntilHit * pps;
+      block.height = note.duration * pps;
+
+      if (!block.triggered && timeUntilHit <= 0) {
+        block.triggered = true;
+        this.triggeredSet.add(note.midi);
+        this.callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
+      }
+      if (!block.ended && t >= note.time + note.duration) {
+        block.ended = true;
+        this.callbacks.onNoteEnd?.(note.midi);
+      }
+    }
+
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const b = this.active[i];
+      if (b.trackIndex < 0) continue;
+      const endOffset = t - (b.startTime + b.duration);
+      if (endOffset > 1) {
+        this.active.splice(i, 1);
+        this.release(b);
+      }
+    }
   }
 
-  // ─── 绘制音符块 ───
-  private drawBlock(ctx: CanvasRenderingContext2D, block: NoteBlock) {
-    const { x, y, width, height, color, alpha } = block;
+  private findSynthesiaBlock(note: ScheduledNote): NoteBlock | null {
+    for (const b of this.active) {
+      if (b.trackIndex === note.trackIndex && b.midi === note.midi && b.startTime === note.time) {
+        return b;
+      }
+    }
+    return null;
+  }
 
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = this.numberToHex(color);
+  private pixelsPerSecond(): number {
+    if (!this.settings) return 200;
+    return this.settings.particles.speed * 100;
+  }
 
-    // 圆角矩形
-    const r = Math.min(this.cornerRadius, width / 2, height / 2);
-    if (r > 0) {
+  render(): void {
+    if (!this.ctx || !this.settings || !this.keyboardRenderer) return;
+    const ctx = this.ctx;
+    const p = this.settings.particles;
+    ctx.clearRect(0, 0, this.width, this.height);
+
+    if (p.hitLine.visible) {
+      ctx.strokeStyle = p.hitLine.color;
+      ctx.lineWidth = p.hitLine.thickness;
       ctx.beginPath();
-      ctx.roundRect(x, y, width, height, r);
-      ctx.fill();
-    } else {
-      ctx.fillRect(x, y, width, height);
-    }
-
-    // 高亮边框（活跃状态）
-    const isActive = block.active || (this.mode === "synthesia" && block.hasTriggered && !block.hasEnded);
-    if (isActive) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = alpha * 0.6;
+      ctx.moveTo(0, this.height - p.hitLine.thickness / 2);
+      ctx.lineTo(this.width, this.height - p.hitLine.thickness / 2);
       ctx.stroke();
     }
 
-    ctx.globalAlpha = 1;
+    const whiteKeyWidth = this.keyboardRenderer.getWhiteKeyWidth();
+    const blockWidth = whiteKeyWidth * 0.85;
+    const customColors: CustomColors = p.customColors;
+    const isHighlighted = (midi: number) => this.triggeredSet.has(midi);
+
+    for (const b of this.active) {
+      const x = this.keyboardRenderer!.midiToX(b.midi) - blockWidth / 2;
+      let y = b.y;
+      let h = b.height;
+      if (h <= 0) h = blockWidth;
+      if (this.mode === "synthesia") {
+        y = b.y - b.height;
+      }
+      let alpha = p.opacity;
+      if (b.releasing) {
+        alpha *= Math.max(0, 1 - b.fadeTime / FADE_DURATION);
+      }
+      const color = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      if (p.cornerRadius > 0) {
+        this.roundRect(ctx, x, y, blockWidth, h, p.cornerRadius);
+        ctx.fill();
+      } else {
+        ctx.fillRect(x, y, blockWidth, h);
+      }
+      if (isHighlighted(b.midi)) {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, blockWidth, h);
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 
-  // ─── 清理 ───
-  clear() {
-    this.blocks = [];
-  }
-
-  clearBlocksOnly() {
-    this.blocks = [];
-  }
-
-  getBlockCount(): number {
-    return this.blocks.length;
+  private roundRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ): void {
+    const radius = Math.min(r, w / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
   }
 
   getActiveBlockCount(): number {
-    return this.blocks.filter(
-      (b) => b.active || (this.mode === "synthesia" && b.hasTriggered && !b.hasEnded)
-    ).length;
+    return this.active.length;
   }
 
-  getBlocks(): readonly NoteBlock[] {
-    return this.blocks;
+  getPoolSize(): number {
+    return this.pool.length;
   }
 
-  getKeyboardY(): number {
-    return this.keyboardY;
-  }
-
-  destroy() {
-    this.clear();
+  dispose(): void {
+    this.clearNoteBlocks();
+    this.pool = [];
   }
 }

@@ -1,58 +1,45 @@
+import type { Ref } from "vue";
 import { useMidiMessage } from "@/composables/useMidiMessage";
-import {
-  getMidiCommand,
-  getMidiNote,
-  getMidiValue,
-} from "@/helpers/midi";
+import { MIDI_NAMESPACE } from "../constants";
+import type { WaterfallEngine } from "../engine/WaterfallEngine";
+import type { Recorder } from "../audio/Recorder";
 
-// MIDI 命令码（与 useNotes.ts 保持一致）
-const MIDI_CMD_NOTE_ON = 0x90;
-const MIDI_CMD_NOTE_OFF = 0x80;
-const MIDI_CMD_CC = 0xb0;
-const MIDI_CC_SUSTAIN = 0x40;
-
-export interface UseRealtimeMidiOptions {
-  namespace?: string;
+export interface RealtimeMidiOptions {
   onNoteOn?: (midi: number, velocity: number) => void;
   onNoteOff?: (midi: number) => void;
   onSustain?: (enabled: boolean) => void;
+  onControlChange?: (controller: number, value: number) => void;
 }
 
-/**
- * 实时 MIDI 订阅 Composable
- *
- * 监听 `chord-display/default` namespace 的 MIDI 消息，
- * 解析 note-on（带真实 velocity）、note-off、CC64（延音踏板），
- * 转发到 WaterfallEngine 的实时演奏接口。
- *
- * 不改动 sidecar —— MidiMessageManager 已在 Tauri 环境中自动连接。
- */
-export function useRealtimeMidi(options: UseRealtimeMidiOptions = {}) {
-  const {
-    namespace = "chord-display/default",
-    onNoteOn,
-    onNoteOff,
-    onSustain,
-  } = options;
+export function useRealtimeMidi(
+  engine: Ref<WaterfallEngine | null>,
+  recorder: Ref<Recorder | null>,
+  isRecording: Ref<boolean>,
+  options?: RealtimeMidiOptions,
+): void {
+  const handler = (message: number[]): void => {
+    if (message.length < 2) return;
+    const status = message[0] & 0xf0;
+    const midi = message[1];
+    const velocity = message[2] ?? 0;
 
-  useMidiMessage((message: number[]) => {
-    const cmd = getMidiCommand(message);
-    const midi = getMidiNote(message);
-    const value = getMidiValue(message);
-
-    // Note-on (velocity ≠ 0) → 带真实力度
-    if (cmd === MIDI_CMD_NOTE_ON && value !== 0) {
-      onNoteOn?.(midi, value);
+    if (status === 0x90 && velocity > 0) {
+      engine.value?.triggerNoteOn(midi, velocity);
+      if (isRecording.value) recorder.value?.recordNoteOn(midi, velocity);
+      options?.onNoteOn?.(midi, velocity);
+    } else if (status === 0x80 || (status === 0x90 && velocity === 0)) {
+      engine.value?.triggerNoteOff(midi);
+      if (isRecording.value) recorder.value?.recordNoteOff(midi);
+      options?.onNoteOff?.(midi);
+    } else if (status === 0xb0 && message.length >= 3) {
+      const controller = message[1];
+      const value = message[2];
+      if (controller === 64) {
+        options?.onSustain?.(value >= 64);
+      }
+      options?.onControlChange?.(controller, value);
     }
+  };
 
-    // Note-off 或 Note-on velocity=0
-    if (cmd === MIDI_CMD_NOTE_OFF || (cmd === MIDI_CMD_NOTE_ON && value === 0)) {
-      onNoteOff?.(midi);
-    }
-
-    // CC64 延音踏板
-    if (cmd === MIDI_CMD_CC && midi === MIDI_CC_SUSTAIN) {
-      onSustain?.(value !== 0);
-    }
-  }, namespace);
+  useMidiMessage(handler, MIDI_NAMESPACE);
 }
