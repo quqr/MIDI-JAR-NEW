@@ -69,6 +69,12 @@ export const navItems: GroupedNavItem[] = [
     labelKey: "settings.debugger",
     group: "advanced",
   },
+  {
+    icon: "cog",
+    to: "/settings/advanced-debug",
+    labelKey: "settings.advancedDebug",
+    group: "advanced",
+  },
 ];
 
 export const groupOrder: SettingsGroup[] = ["general", "display", "advanced"];

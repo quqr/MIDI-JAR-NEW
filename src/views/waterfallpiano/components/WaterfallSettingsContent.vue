@@ -157,11 +157,11 @@
         @update:model-value="store.updateSetting('background', 'fluidEnabled', $event)"
       />
       <template v-if="settings.background.fluidEnabled">
-        <SettingsSelect
-          :model-value="settings.background.fluidQuality"
+        <SettingsRange
+          :model-value="settings.background.fluidParams.simResolution ?? 128"
           :label="t('waterfallPiano.fluidQuality')"
-          :options="fluidQualityOptions"
-          @update:model-value="store.updateSetting('background', 'fluidQuality', $event)"
+          :min="32" :max="256" :step="32"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, simResolution: $event })"
         />
         <SettingsSelect
           :model-value="settings.background.fluidStyle"
@@ -304,12 +304,6 @@ const imageFitModeOptions = computed(() => [
   { value: "stretch", label: "Stretch" },
   { value: "center", label: "Center" },
   { value: "tile", label: "Tile" },
-]);
-
-const fluidQualityOptions = computed(() => [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
 ]);
 
 const fluidStyleOptions = computed(() => [

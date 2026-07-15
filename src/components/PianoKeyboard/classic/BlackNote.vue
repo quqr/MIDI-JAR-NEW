@@ -51,6 +51,7 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :cx="props.sizes.BLACK_WIDTH / 2"
       :cy="props.sizes.BLACK_HEIGHT - props.sizes.BLACK_INFO_OFFSET"
       :r="props.sizes.TONIC_RADIUS"
+      style="pointer-events: none"
     />
     <text
       class="pianoInfo"
@@ -58,6 +59,7 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :y="props.sizes.BLACK_HEIGHT - props.sizes.BLACK_INFO_OFFSET"
       text-anchor="middle"
       dominant-baseline="mathematical"
+      style="pointer-events: none"
     />
     <text
       v-if="props.keyName !== 'none'"
@@ -66,6 +68,7 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :y="props.sizes.BLACK_HEIGHT - props.sizes.BLACK_NAME_OFFSET"
       text-anchor="middle"
       dominant-baseline="baseline"
+      style="pointer-events: none"
     >
       {{ props.displayName }}
     </text>

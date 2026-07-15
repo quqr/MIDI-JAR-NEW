@@ -1,26 +1,13 @@
-import { Note, Chord, Interval } from "tonal";
-import { ref, shallowRef, watch } from "vue";
+import { Note } from "tonal";
+import { watch } from "vue";
 
-import {
-  getMidiChannel,
-  getMidiCommand,
-  getMidiNote,
-  getMidiValue,
-  getKeySignature,
-  getNoteInKeySignature,
-  KeySignatureConfig,
-  tokenizeChord,
-} from "@/helpers";
-import { detect } from "@/helpers/chord-detect";
+import { getNoteInKeySignature } from "@/helpers";
+
+import { useNoteConfig, resolveOption } from "./useNoteConfig";
+import { useNoteState } from "./useNoteState";
+import { getChords } from "./useChordDetection";
+import { createMidiHandler } from "./useMidiHandler";
 import { useMidiMessage } from "./useMidiMessage";
-
-const MIDI_CMD_NOTE_OFF = 0x80;
-const MIDI_CMD_NOTE_ON = 0x90;
-const MIDI_CHANNEL_ALL = 0;
-const MIDI_CMD_CC = 0xb0;
-const MIDI_CC_SUSTAIN = 0x40;
-
-const midiSortCompareFn = (a: number, b: number) => a - b;
 
 export interface UseNotesOptions {
   accidentals?: "flat" | "sharp" | (() => "flat" | "sharp");
@@ -33,98 +20,34 @@ export interface UseNotesOptions {
   namespace?: string;
 }
 
-interface ChordInfo extends ReturnType<typeof Chord.getChord> {
-  symbol: string;
-  root: string;
-  rootInterval: string;
-  rootDegree: number;
-}
-
-function getChordInfo(
-  chord: string,
-  keySignatureNotes: readonly string[],
-): ChordInfo | null {
-  const [tonic, type, root] = tokenizeChord(chord);
-  if (tonic) {
-    const tonicInKey = getNoteInKeySignature(tonic, keySignatureNotes);
-    const rootInKey = getNoteInKeySignature(root, keySignatureNotes);
-    const c = Chord.getChord(type, tonicInKey);
-    const rootInterval = Interval.distance(tonicInKey, rootInKey);
-    const rootDegree = c.intervals.indexOf(rootInterval) + 1;
-    return { ...c, symbol: chord, root, rootInterval, rootDegree };
-  }
-  return null;
-}
-
-function getChords(
-  notes: string[],
-  keySignatureNotes: readonly string[],
-  allowOmissions: boolean,
-  disabledChords: string[] = [],
-) {
-  return detect(notes, { allowOmissions, disabledChords }).map((n) =>
-    getChordInfo(n, keySignatureNotes),
-  );
-}
-
-interface InternalParams {
-  keySignature: KeySignatureConfig;
-  allowOmissions: boolean;
-  useSustain: boolean;
-  detectOnRelease: boolean;
-  disabledChords?: string[];
-}
-
 export function useNotes({
   accidentals = "flat",
   key = "C",
-  midiChannel = MIDI_CHANNEL_ALL,
+  midiChannel = 0,
   allowOmissions = false,
   useSustain = true,
   detectOnRelease = true,
   disabledChords = undefined,
   namespace = "debugger",
 }: UseNotesOptions = {}) {
-  const resolve = <T>(v: T | (() => T)): T =>
-    typeof v === "function" ? (v as () => T)() : v;
-
-  const keyGetter = typeof key === "function" ? key : () => key;
-  const accidentalsGetter =
-    typeof accidentals === "function" ? accidentals : () => accidentals;
-  const allowOmissionsGetter =
-    typeof allowOmissions === "function"
-      ? allowOmissions
-      : () => allowOmissions;
-  const useSustainGetter =
-    typeof useSustain === "function" ? useSustain : () => useSustain;
-  const detectOnReleaseGetter =
-    typeof detectOnRelease === "function"
-      ? detectOnRelease
-      : () => detectOnRelease;
-  const disabledChordsGetter =
-    typeof disabledChords === "function"
-      ? disabledChords
-      : () => disabledChords;
-
-  const keySignature = ref<KeySignatureConfig>(
-    getKeySignature(resolve(key), resolve(accidentals) === "sharp"),
-  );
-  const sustainedMidiNotes = ref<number[]>([]);
-  const playedMidiNotes = ref<number[]>([]);
-  const clickedMidiNotes = ref<number[]>([]);
-  const midiNotes = ref<number[]>([]);
-  const notes = ref<string[]>([]);
-  const pitchClasses = ref<string[]>([]);
-  const chords = shallowRef<ReturnType<typeof getChords>>([]);
-  const sustained = ref(false);
-  const params = ref<InternalParams>({
-    keySignature: keySignature.value,
-    allowOmissions: resolve(allowOmissions),
-    useSustain: resolve(useSustain),
-    detectOnRelease: resolve(detectOnRelease),
-    disabledChords: resolve(disabledChords),
+  // ── Configuration ────────────────────────────────────────────────
+  const config = useNoteConfig({
+    accidentals,
+    key,
+    midiChannel,
+    allowOmissions,
+    useSustain,
+    detectOnRelease,
+    disabledChords,
+    namespace,
   });
 
+  const { keySignature, midiChannel: channel, namespace: ns } = config;
+
+  // ── State ────────────────────────────────────────────────────────
+  const state = useNoteState();
+
+  // ── Derived computations ─────────────────────────────────────────
   const keySignatureNotes = () => keySignature.value.notes;
 
   const fromMidi = (m: number) =>
@@ -134,179 +57,142 @@ export function useNotes({
     return getChords(
       currentNotes,
       keySignatureNotes(),
-      params.value.allowOmissions,
-      params.value.disabledChords,
+      resolveOption(allowOmissions, false),
+      resolveOption(disabledChords, undefined) ?? [],
     );
   }
 
   function recomputeFromMidiNotes() {
-    const currentMidiNotes = [
-      ...sustainedMidiNotes.value,
-      ...playedMidiNotes.value,
-      ...clickedMidiNotes.value,
-    ];
-    currentMidiNotes.sort(midiSortCompareFn);
+    const currentMidiNotes = state.aggregateMidiNotes();
     const currentNotes = currentMidiNotes.map(fromMidi);
     const currentPitchClasses = currentNotes.map(Note.pitchClass);
     const currentChords = recomputeChords(currentNotes);
 
-    midiNotes.value = currentMidiNotes;
-    notes.value = currentNotes;
-    pitchClasses.value = currentPitchClasses;
-    chords.value = currentChords;
+    state.updateDerived(
+      currentMidiNotes,
+      currentNotes,
+      currentPitchClasses,
+      currentChords,
+    );
   }
 
+  // ── Event handlers ───────────────────────────────────────────────
   function handleNoteOn(midi: number) {
-    clickedMidiNotes.value = [];
-    playedMidiNotes.value = [...playedMidiNotes.value, midi];
-    sustainedMidiNotes.value = sustainedMidiNotes.value.filter(
-      (m) => m !== midi,
-    );
+    state.clickedMidiNotes.value = [];
+    state.playedMidiNotes.value = [...state.playedMidiNotes.value, midi];
+    state.sustainedMidiNotes.value =
+      state.sustainedMidiNotes.value.filter((m) => m !== midi);
     recomputeFromMidiNotes();
   }
 
   function handleNoteOff(midi: number) {
-    playedMidiNotes.value = playedMidiNotes.value.filter((m) => m !== midi);
-    if (sustained.value) {
-      sustainedMidiNotes.value = [...sustainedMidiNotes.value, midi];
+    state.playedMidiNotes.value =
+      state.playedMidiNotes.value.filter((m) => m !== midi);
+    if (state.sustained.value) {
+      state.sustainedMidiNotes.value = [
+        ...state.sustainedMidiNotes.value,
+        midi,
+      ];
     }
     recomputeFromMidiNotes();
-    if (params.value.detectOnRelease) {
-      chords.value = recomputeChords(notes.value);
+    if (resolveOption(detectOnRelease, true)) {
+      state.chords.value = recomputeChords(state.notes.value);
     }
   }
 
   function handleSustainOn() {
-    if (!params.value.useSustain) return;
-    sustained.value = true;
-    sustainedMidiNotes.value = [];
+    if (!resolveOption(useSustain, true)) return;
+    state.sustained.value = true;
+    state.sustainedMidiNotes.value = [];
   }
 
   function handleSustainOff() {
-    if (!params.value.useSustain) return;
-    sustained.value = false;
-    sustainedMidiNotes.value = [];
+    if (!resolveOption(useSustain, true)) return;
+    state.sustained.value = false;
+    state.sustainedMidiNotes.value = [];
     recomputeFromMidiNotes();
   }
 
+  // ── User interaction ─────────────────────────────────────────────
   function toggleNote(midi: number) {
-    // Mutual exclusion: clear MIDI-sourced notes when clicking
-    playedMidiNotes.value = [];
-    sustainedMidiNotes.value = [];
-    sustained.value = false;
+    state.playedMidiNotes.value = [];
+    state.sustainedMidiNotes.value = [];
+    state.sustained.value = false;
 
-    const idx = clickedMidiNotes.value.indexOf(midi);
+    const idx = state.clickedMidiNotes.value.indexOf(midi);
     if (idx >= 0) {
-      clickedMidiNotes.value = clickedMidiNotes.value.filter((m) => m !== midi);
+      state.clickedMidiNotes.value =
+        state.clickedMidiNotes.value.filter((m) => m !== midi);
     } else {
-      clickedMidiNotes.value = [...clickedMidiNotes.value, midi];
+      state.clickedMidiNotes.value = [...state.clickedMidiNotes.value, midi];
     }
     recomputeFromMidiNotes();
   }
 
   function clearClickedNotes() {
-    if (clickedMidiNotes.value.length === 0) return;
-    clickedMidiNotes.value = [];
+    if (state.clickedMidiNotes.value.length === 0) return;
+    state.clickedMidiNotes.value = [];
     recomputeFromMidiNotes();
   }
 
-  const onMidiMessage = (message: number[]) => {
-    const cmd = getMidiCommand(message);
-    const ch = getMidiChannel(message);
-    const midi = getMidiNote(message);
-    const value = getMidiValue(message);
+  function clearNotes() {
+    state.clearAll();
+  }
 
-    if (
-      cmd === MIDI_CMD_NOTE_ON &&
-      value !== 0 &&
-      (midiChannel === MIDI_CHANNEL_ALL || midiChannel === ch)
-    ) {
-      handleNoteOn(midi);
-    }
-
-    if (
-      (cmd === MIDI_CMD_NOTE_OFF ||
-        (cmd === MIDI_CMD_NOTE_ON && value === 0)) &&
-      (midiChannel === MIDI_CHANNEL_ALL || midiChannel === ch)
-    ) {
-      handleNoteOff(midi);
-    }
-
-    if (
-      cmd === MIDI_CMD_CC &&
-      midi === MIDI_CC_SUSTAIN &&
-      (midiChannel === MIDI_CHANNEL_ALL || midiChannel === ch)
-    ) {
-      if (value === 0) {
-        handleSustainOff();
-      }
-      if (value === 127) {
-        handleSustainOn();
-      }
-    }
-  };
-
-  watch([accidentalsGetter, keyGetter], () => {
-    const currentAccidentals = resolve(accidentals);
-    const currentKey = resolve(key);
-    keySignature.value = getKeySignature(
-      currentKey,
-      currentAccidentals === "sharp",
-    );
-    params.value.keySignature = keySignature.value;
-    const newNotes = midiNotes.value.map((m: number) =>
-      getNoteInKeySignature(Note.fromMidi(m), keySignature.value.notes),
-    );
-    notes.value = newNotes;
-    pitchClasses.value = newNotes.map(Note.pitchClass);
-    chords.value = recomputeChords(newNotes);
+  // ── MIDI message routing ─────────────────────────────────────────
+  const onMidiMessage = createMidiHandler(channel, {
+    onNoteOn: handleNoteOn,
+    onNoteOff: handleNoteOff,
+    onSustainOn: handleSustainOn,
+    onSustainOff: handleSustainOff,
   });
 
-  watch(allowOmissionsGetter, (newValue) => {
-    params.value.allowOmissions = newValue;
-    chords.value = recomputeChords(notes.value);
+  useMidiMessage(onMidiMessage, ns);
+
+  // ── Reactive config updates ──────────────────────────────────────
+  watch(
+    [config.accidentalsGetter, config.keyGetter],
+    () => {
+      const newNotes = state.midiNotes.value.map(fromMidi);
+      const newPitchClasses = newNotes.map(Note.pitchClass);
+      const newChords = recomputeChords(newNotes);
+
+      state.notes.value = newNotes;
+      state.pitchClasses.value = newPitchClasses;
+      state.chords.value = newChords;
+    },
+  );
+
+  watch(config.allowOmissionsGetter, () => {
+    state.chords.value = recomputeChords(state.notes.value);
   });
 
-  watch(disabledChordsGetter, (newValue) => {
-    params.value.disabledChords = newValue;
-    chords.value = recomputeChords(notes.value);
+  watch(config.disabledChordsGetter, () => {
+    state.chords.value = recomputeChords(state.notes.value);
   });
 
-  watch(useSustainGetter, (newValue) => {
-    params.value.useSustain = newValue;
+  watch(config.useSustainGetter, (newValue) => {
     if (!newValue) {
-      sustainedMidiNotes.value = [];
-      sustained.value = false;
+      state.sustainedMidiNotes.value = [];
+      state.sustained.value = false;
       recomputeFromMidiNotes();
     }
   });
 
-  watch(detectOnReleaseGetter, (newValue) => {
-    params.value.detectOnRelease = newValue;
+  watch(config.detectOnReleaseGetter, () => {
+    // No immediate action needed; flag used on next note-off
   });
 
-  function clearNotes() {
-    playedMidiNotes.value = [];
-    sustainedMidiNotes.value = [];
-    clickedMidiNotes.value = [];
-    midiNotes.value = [];
-    notes.value = [];
-    pitchClasses.value = [];
-    chords.value = [];
-    sustained.value = false;
-  }
-
-  useMidiMessage(onMidiMessage, namespace);
-
+  // ── Public API ───────────────────────────────────────────────────
   return {
-    notes,
-    pitchClasses,
-    midiNotes,
-    chords,
-    sustained,
-    sustainedMidiNotes,
-    playedMidiNotes,
-    clickedMidiNotes,
+    notes: state.notes,
+    pitchClasses: state.pitchClasses,
+    midiNotes: state.midiNotes,
+    chords: state.chords,
+    sustained: state.sustained,
+    sustainedMidiNotes: state.sustainedMidiNotes,
+    playedMidiNotes: state.playedMidiNotes,
+    clickedMidiNotes: state.clickedMidiNotes,
     keySignature,
     clearNotes,
     clearClickedNotes,

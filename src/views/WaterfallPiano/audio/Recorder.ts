@@ -19,7 +19,6 @@ export class Recorder {
   private isPaused = false;
   private playStartTime = 0;
   private pausedAt = 0;
-  private rafId: number | null = null;
   private triggeredIndices = new Set<number>();
   private endedIndices = new Set<number>();
   callbacks: RecorderCallbacks = {};
@@ -82,7 +81,6 @@ export class Recorder {
     this.isPlaying = true;
     this.isPaused = false;
     this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
-    this.startProgressLoop();
   }
 
   pausePlayback(): void {
@@ -90,7 +88,6 @@ export class Recorder {
     this.pausedAt = this.getCurrentTime();
     this.isPlaying = false;
     this.isPaused = true;
-    this.stopProgressLoop();
   }
 
   resumePlayback(): void {
@@ -98,7 +95,6 @@ export class Recorder {
     this.playStartTime = performance.now() - this.pausedAt * 1000;
     this.isPlaying = true;
     this.isPaused = false;
-    this.startProgressLoop();
   }
 
   stopPlayback(): void {
@@ -106,7 +102,6 @@ export class Recorder {
     this.isPaused = false;
     this.pausedAt = 0;
     this.resetPlaybackState();
-    this.stopProgressLoop();
   }
 
   seekTo(seconds: number): void {
@@ -172,7 +167,6 @@ export class Recorder {
   }
 
   dispose(): void {
-    this.stopProgressLoop();
     this.isRecording = false;
     this.isPlaying = false;
     this.isPaused = false;
@@ -195,23 +189,8 @@ export class Recorder {
     }
   }
 
-  private startProgressLoop(): void {
-    this.stopProgressLoop();
-    const loop = () => {
-      this.tick();
-      this.rafId = requestAnimationFrame(loop);
-    };
-    this.rafId = requestAnimationFrame(loop);
-  }
-
-  private stopProgressLoop(): void {
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
-  }
-
-  private tick(): void {
+  /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
+  tick(): void {
     const current = this.getCurrentTime();
     for (let i = 0; i < this.notes.length; i++) {
       if (this.triggeredIndices.has(i)) continue;
@@ -233,7 +212,6 @@ export class Recorder {
     if (current >= this.getDuration() && this.getDuration() > 0) {
       this.isPlaying = false;
       this.isPaused = false;
-      this.stopProgressLoop();
       this.callbacks.onPlaybackEnd?.();
     }
   }

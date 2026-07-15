@@ -118,6 +118,13 @@ const routes: RouteRecordRaw[] = [
             meta: { title: "settings.debugger" },
           },
           {
+            path: "advanced-debug",
+            name: "settings-advanced-debug",
+            component: () =>
+              import("@/views/Settings/AdvancedDebug/AdvancedDebug.vue"),
+            meta: { title: "settings.advancedDebug" },
+          },
+          {
             path: "waterfall-piano",
             name: "settings-waterfall-piano",
             component: () =>

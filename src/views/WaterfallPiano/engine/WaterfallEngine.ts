@@ -43,6 +43,8 @@ export class WaterfallEngine {
   private pointerDown = false;
   private activePointerMidi: number | null = null;
   callbacks: EngineCallbacks = {};
+  /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
+  frameCallback: (() => void) | null = null;
 
   init(canvases: WaterfallCanvases, settings: WaterfallPianoSettings): void {
     this.canvases = canvases;
@@ -220,22 +222,39 @@ export class WaterfallEngine {
   private fluidSplat(midi: number): void {
     if (!this.fluid || !this.canvases) return;
     const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-    const y = 1 - this.keyboardHeight / Math.max(1, this.height);
+    // Fluid canvas uses WebGL coordinates: y=0 is bottom, y=1 is top
+    // Keyboard top (hit line) is at screen position (height - keyboardHeight) from top
+    // In WebGL coords, that's keyboardHeight / height from the bottom
+    const y = this.keyboardHeight / Math.max(1, this.height);
     const colorHex = noteToColor(midi, this.settings?.particles.colorScheme ?? "pitch", undefined, this.settings?.particles.customColors);
     const rgb = hexToRgbNorm(colorHex);
-    this.fluid.splat(x, y, 0, -200, rgb);
+    this.fluid.splat(x, y, 0, 200, rgb);
   }
 
   private startLoop(): void {
     this.lastTime = performance.now();
+    let fluidFrameCount = 0;
+    const FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
+
     const loop = (now: number) => {
       const dt = now - this.lastTime;
       this.lastTime = now;
       this.perfMonitor.recordFrame(dt);
+      // 先推进播放器时间（通过 tick → onProgress → setTransportTime），
+      // 再更新音符方块系统，确保 updateSynthesia 使用最新的 transportTime
+      this.frameCallback?.();
       this.backgroundRenderer.render(now);
       this.noteBlockSystem.update(dt / 1000);
       this.noteBlockSystem.render();
       this.keyboardRenderer.render();
+
+      // 流体模拟由主循环驱动，但降帧运行
+      fluidFrameCount++;
+      if (this.fluid && fluidFrameCount > FLUID_SKIP_FRAMES) {
+        this.fluid.update();
+        fluidFrameCount = 0;
+      }
+
       this.rafId = requestAnimationFrame(loop);
     };
     this.rafId = requestAnimationFrame(loop);

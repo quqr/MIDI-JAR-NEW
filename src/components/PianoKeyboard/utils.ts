@@ -10,6 +10,61 @@ import {
 
 import type { KeyboardSettings } from "./types";
 
+// ── Strategy interface for highlight logic ──────────────────────────
+
+export interface HighlightStrategy {
+  getNotes: () => number[] | undefined;
+  className: string;
+  wrapClassName?: string;
+  shouldApply: (keyboard: KeyboardSettings) => boolean;
+  getLabelNotes?: (keyboard: KeyboardSettings) => number[] | undefined;
+}
+
+export const FADE_CLASSES = [
+  "played",
+  "sustained",
+  "wrapPlayed",
+  "wrapSustained",
+  "exactTarget",
+  "wrapExactTarget",
+] as const;
+
+export function fadeAllHighlights(el: HTMLElement) {
+  for (const cls of FADE_CLASSES) {
+    fadeNotes(el, cls);
+  }
+  fadeTargets(el);
+  fadeLabels(el);
+}
+
+export function applyHighlightStrategy(
+  el: HTMLElement,
+  strategy: HighlightStrategy,
+  keyboard: KeyboardSettings,
+  keySignature: KeySignatureConfig,
+  chord?: Chord,
+) {
+  const notes = strategy.getNotes();
+  if (!notes || notes.length === 0) return;
+
+  highlightNotes(el, notes, strategy.className);
+
+  if (keyboard.wrap && strategy.wrapClassName) {
+    highlightWrapNotes(el, keyboard.from, keyboard.to, notes, strategy.wrapClassName);
+  }
+
+  const labelNotes = strategy.getLabelNotes?.(keyboard);
+  if (labelNotes) {
+    highlightLabels(el, keySignature, keyboard, labelNotes, chord);
+
+    if (keyboard.wrap) {
+      highlightWrapLabels(el, keySignature, keyboard, labelNotes, chord);
+    }
+  }
+}
+
+// ── Original utilities ─────────────────────────────────────────────
+
 function wrapMidiNotes(
   from: string,
   to: string,

@@ -15,17 +15,15 @@ import type {
 } from "./types";
 
 import {
-  fadeNotes,
-  highlightNotes,
-  highlightWrapNotes,
-  fadeInfo,
-  highlightInfo,
+  fadeAllHighlights,
+  applyHighlightStrategy,
+  highlightTargets,
   highlightLabels,
   highlightWrapLabels,
-  fadeLabels,
-  highlightTargets,
-  fadeTargets,
+  fadeInfo,
+  highlightInfo,
 } from "./utils";
+import type { HighlightStrategy } from "./utils";
 
 import ClassicBoard from "./classic/Board.vue";
 import ClassicLabels from "./classic/Labels.vue";
@@ -96,103 +94,59 @@ const emit = defineEmits<{ noteClick: [midi: number] }>();
 
 const pianoRef = ref<HTMLDivElement | null>(null);
 
+const noteStrategies = computed<HighlightStrategy[]>(() => [
+  {
+    getNotes: () => props.targets ?? undefined,
+    className: "exactTarget",
+    wrapClassName: "wrapExactTarget",
+    shouldApply: () => !!props.targets,
+    getLabelNotes: () => props.targets ?? undefined,
+  },
+  {
+    getNotes: () => props.played,
+    className: "played",
+    wrapClassName: "wrapPlayed",
+    shouldApply: () => !!props.played?.length,
+  },
+  {
+    getNotes: () => props.sustained,
+    className: "sustained",
+    wrapClassName: "wrapSustained",
+    shouldApply: (kb) => !!props.sustained?.length && kb.displaySustained,
+  },
+]);
+
 function applyHighlights() {
   const el = pianoRef.value;
   if (!el) return;
 
-  fadeNotes(el, "played");
-  fadeNotes(el, "sustained");
-  fadeNotes(el, "wrapPlayed");
-  fadeNotes(el, "wrapSustained");
-  fadeNotes(el, "exactTarget");
-  fadeNotes(el, "wrapExactTarget");
-  fadeTargets(el);
-  fadeLabels(el);
+  fadeAllHighlights(el);
 
-  if (props.targets) {
-    if (!props.exactTargets) {
-      highlightTargets(el, props.targets);
-    }
-    highlightNotes(el, props.targets, "exactTarget");
-    highlightLabels(
-      el,
-      props.keySignature,
-      props.keyboard,
-      props.targets,
-      props.chord,
-    );
+  if (props.targets && !props.exactTargets) {
+    highlightTargets(el, props.targets);
+  }
 
-    if (props.keyboard.wrap) {
-      highlightWrapNotes(
+  // 标准策略：音符高亮 + 可选标签高亮
+  for (const strategy of noteStrategies.value) {
+    if (strategy.shouldApply(props.keyboard)) {
+      applyHighlightStrategy(
         el,
-        props.keyboard.from,
-        props.keyboard.to,
-        props.targets,
-        "wrapExactTarget",
-      );
-      highlightWrapLabels(
-        el,
-        props.keySignature,
+        strategy,
         props.keyboard,
-        props.targets,
+        props.keySignature,
         props.chord,
       );
     }
   }
 
-  if (props.played) {
-    highlightNotes(el, props.played, "played");
-    if (props.keyboard.wrap) {
-      highlightWrapNotes(
-        el,
-        props.keyboard.from,
-        props.keyboard.to,
-        props.played,
-        "wrapPlayed",
-      );
+  // midi 标签高亮：标签数据源取决于 displaySustained，与 wrapLabels 独立
+  if (props.midi?.length) {
+    const labelMidi = props.keyboard.displaySustained ? props.midi : props.played;
+    if (labelMidi?.length) {
+      highlightLabels(el, props.keySignature, props.keyboard, labelMidi, props.chord);
     }
-  }
-
-  if (props.sustained && props.keyboard.displaySustained) {
-    highlightNotes(el, props.sustained, "sustained");
     if (props.keyboard.wrap) {
-      highlightWrapNotes(
-        el,
-        props.keyboard.from,
-        props.keyboard.to,
-        props.sustained,
-        "wrapSustained",
-      );
-    }
-  }
-
-  if (props.midi) {
-    if (props.keyboard.wrap) {
-      highlightWrapLabels(
-        el,
-        props.keySignature,
-        props.keyboard,
-        props.midi,
-        props.chord,
-      );
-    }
-
-    if (props.keyboard.displaySustained) {
-      highlightLabels(
-        el,
-        props.keySignature,
-        props.keyboard,
-        props.midi,
-        props.chord,
-      );
-    } else {
-      highlightLabels(
-        el,
-        props.keySignature,
-        props.keyboard,
-        props.played,
-        props.chord,
-      );
+      highlightWrapLabels(el, props.keySignature, props.keyboard, props.midi, props.chord);
     }
   }
 }

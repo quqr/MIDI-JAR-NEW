@@ -15,7 +15,7 @@ use device_manager::MidiDeviceManager as InnerManager;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
-const REFRESH_LOOP_INTERVAL_MS: u64 = 100;
+const REFRESH_LOOP_INTERVAL_MS: u64 = 1000;
 
 #[cfg(debug_assertions)]
 const DEBUG_MIDI: bool = true;

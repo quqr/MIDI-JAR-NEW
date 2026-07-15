@@ -20,7 +20,8 @@
     "name": "Name",
     "clear": "Clear",
     "connected": "Connected",
-    "disconnected": "Disconnected"
+    "disconnected": "Disconnected",
+    "back": "Back"
   },
   "nav": {
     "home": "Home",
@@ -31,6 +32,7 @@
     "chordDictionary": "Chord Dictionary",
     "routing": "Routing",
     "debugger": "Debugger",
+    "advancedDebug": "Advanced Debug",
     "waterfallPiano": "Waterfall Piano"
   },
   "home": {
@@ -165,6 +167,7 @@
     "chordDictionary": "Chord Dictionary",
     "chordDisplay": "Chord Display",
     "debugger": "Debugger",
+    "advancedDebug": "Advanced Debug",
     "cursor": "Cursor",
     "waterfallPiano": "Waterfall Piano",
     "resetCurrent": "Reset Section",
@@ -546,6 +549,114 @@
       "warm": "Warm",
       "cool": "Cool",
       "neon": "Neon"
+    }
+  },
+  "advancedDebug": {
+    "notation": {
+      "display": {
+        "title": "Notation - Display",
+        "clef": "Clef",
+        "keySignature": "Key Signature",
+        "keySignatureText": "Key Signature Text",
+        "barlines": "Barlines",
+        "timeSignature": "Time Signature",
+        "noteNames": "Note Names",
+        "staffLines": "Staff Lines"
+      },
+      "layout": {
+        "title": "Notation - Layout",
+        "paddingTop": "Padding Top",
+        "staveHeight": "Stave Height",
+        "staveGap": "Stave Gap",
+        "textHeight": "Text Height",
+        "bottomPadding": "Bottom Padding",
+        "sidePadding": "Side Padding",
+        "clefWidth": "Clef Width",
+        "noteWidth": "Note Width",
+        "keySignatureWidthPerAlteration": "Key Signature Width Factor",
+        "keySignatureWidthPerAlterationHint": "Width per accidental (px), extended range beyond 200",
+        "maxScale": "Max Scale",
+        "maxScaleHint": "Extended range beyond 2.0x limit"
+      },
+      "style": {
+        "title": "Notation - Style",
+        "backgroundColor": "Background Color",
+        "staffLineColor": "Staff Line Color",
+        "noteColor": "Note Color",
+        "noteHighlightColor": "Note Highlight Color",
+        "fontSize": "Font Size"
+      }
+    },
+    "waterfall": {
+      "fluid": {
+        "title": "Fluid Advanced",
+        "fluidAdvanced": "Fluid Advanced Mode",
+        "fluidAdvancedHint": "Enable to adjust fluid simulation details",
+        "simResolution": "Simulation Resolution",
+        "splatRadius": "Splat Radius",
+        "splatColorHue": "Splat Color Hue",
+        "trailLength": "Trail Length",
+        "trailLengthHint": "1=long trail, 0=fast fade",
+        "flowPersistence": "Flow Persistence",
+        "flowPersistenceHint": "1=persistent, 0=short",
+        "bloom": "Bloom",
+        "bloomIntensity": "Bloom Intensity",
+        "hitExplosion": "Hit Explosion",
+        "hitExplosionHint": "Produce explosion effect on key hit",
+        "blockCoverage": "Block Coverage",
+        "blockCoverageHint": "Produce emission when note blocks cover"
+      },
+      "keyboard": {
+        "title": "Keyboard Advanced",
+        "customFrom": "Custom Start Note",
+        "customTo": "Custom End Note",
+        "keyBorderWidth": "Key Border Width",
+        "keyBorderColor": "Key Border Color",
+        "gapBlur": "Gap Blur",
+        "separatorColor": "Separator Color",
+        "separatorThickness": "Separator Thickness",
+        "staffVisible": "Show Staff",
+        "synthesiaFlowDirection": "Synthesia Flow Direction",
+        "flowUp": "Up",
+        "flowDown": "Down"
+      },
+      "midiFile": {
+        "title": "MIDI File Advanced",
+        "selectedTracks": "Selected Tracks",
+        "selectedTracksHint": "Currently playing track indices",
+        "noTracks": "No tracks selected",
+        "trackColors": "Track Colors",
+        "trackColorN": "Track {n} Color"
+      }
+    },
+    "sound": {
+      "title": "Sound Engine Advanced",
+      "volume": "Volume",
+      "reverbAmount": "Reverb Wet",
+      "reverbAmountHint": "0=dry, 1=full reverb",
+      "reverbDecay": "Reverb Decay (s)",
+      "sustain": "Sustain Pedal",
+      "velocitySensitivity": "Velocity Sensitivity",
+      "synthParams": "Synthesizer Parameters",
+      "harmonicity": "Harmonicity",
+      "modulationIndex": "Modulation Index",
+      "oscillatorType": "Oscillator Type",
+      "oscTypes": {
+        "triangle": "Triangle",
+        "sine": "Sine",
+        "square": "Square",
+        "sawtooth": "Sawtooth"
+      },
+      "envelope": "Envelope",
+      "attack": "Attack",
+      "decay": "Decay",
+      "sustainLevel": "Sustain Level",
+      "release": "Release",
+      "modEnvelope": "Modulation Envelope",
+      "modAttack": "Mod Attack",
+      "modDecay": "Mod Decay",
+      "modSustain": "Mod Sustain",
+      "modRelease": "Mod Release"
     }
   }
 }

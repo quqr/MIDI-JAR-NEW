@@ -1,8 +1,8 @@
 <template>
   <div ref="containerRef" class="absolute inset-0 overflow-hidden">
-    <canvas ref="bgRef" class="absolute inset-0" />
+    <canvas ref="bgRef" class="absolute inset-0 pointer-events-none" />
     <canvas ref="fluidRef" class="absolute inset-0 pointer-events-none" />
-    <canvas ref="waterfallRef" class="absolute" />
+    <canvas ref="waterfallRef" class="absolute pointer-events-none" />
     <canvas ref="keyboardRef" class="absolute" />
   </div>
 </template>
@@ -93,7 +93,7 @@ onMounted(async () => {
 
   soundEngine = new SoundEngine();
   try {
-    await soundEngine.init();
+    await soundEngine.init(props.settings.sound);
   } catch {
     // 浏览器自动播放策略可能阻止；首次交互时重试
   }
@@ -135,6 +135,12 @@ onMounted(async () => {
 watch(
   () => props.settings,
   (s) => engine?.applySettings(s),
+  { deep: true },
+);
+
+watch(
+  () => props.settings.sound,
+  (s) => soundEngine?.updateConfig(s),
   { deep: true },
 );
 

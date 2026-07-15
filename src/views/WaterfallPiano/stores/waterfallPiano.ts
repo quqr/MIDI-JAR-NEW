@@ -5,12 +5,14 @@ import { debounce } from "@/helpers/debounce";
 import {
   defaultWaterfallSettings,
   STORAGE_KEY,
+  SETTINGS_VERSION,
 } from "../constants";
 import type {
   WaterfallPianoSettings,
   RecordedNote,
   FluidAdvancedParams,
   BackgroundConfig,
+  SoundEngineUserConfig,
 } from "../types";
 
 // 迁移旧版 fluidParams（大写字段名）到新版用户友好字段名（小写驼峰）
@@ -78,6 +80,14 @@ function migrateFluidParams(
 }
 
 function loadSettings(): WaterfallPianoSettings {
+  // 检查设置版本号，不匹配则重置为默认值
+  const versionKey = `${STORAGE_KEY}__version`;
+  const storedVersion = loadFromStorage<number>({ key: versionKey, defaultValue: 0 });
+  if (storedVersion !== SETTINGS_VERSION) {
+    saveToStorage(versionKey, SETTINGS_VERSION);
+    return { ...defaultWaterfallSettings };
+  }
+
   const stored = loadFromStorage<
     Partial<WaterfallPianoSettings> & {
       background?: Partial<BackgroundConfig> & {
@@ -130,6 +140,18 @@ function loadSettings(): WaterfallPianoSettings {
       midiFile: {
         ...defaultWaterfallSettings.midiFile,
         ...stored.midiFile,
+      },
+      sound: {
+        ...defaultWaterfallSettings.sound,
+        ...stored.sound,
+        envelope: {
+          ...defaultWaterfallSettings.sound.envelope,
+          ...(stored.sound as Record<string, unknown> | undefined)?.envelope as Record<string, number> | undefined,
+        },
+        modulationEnvelope: {
+          ...defaultWaterfallSettings.sound.modulationEnvelope,
+          ...(stored.sound as Record<string, unknown> | undefined)?.modulationEnvelope as Record<string, number> | undefined,
+        },
       },
     };
   }

@@ -20,7 +20,8 @@
     "name": "名称",
     "clear": "清除",
     "connected": "已连接",
-    "disconnected": "未连接"
+    "disconnected": "未连接",
+    "back": "返回"
   },
   "nav": {
     "home": "首页",
@@ -31,6 +32,7 @@
     "chordDictionary": "和弦词典",
     "routing": "路由",
     "debugger": "调试器",
+    "advancedDebug": "高级调试",
     "waterfallPiano": "瀑布流钢琴"
   },
   "home": {
@@ -165,6 +167,7 @@
     "chordDictionary": "和弦词典",
     "chordDisplay": "和弦显示",
     "debugger": "调试器",
+    "advancedDebug": "高级调试",
     "cursor": "光标",
     "waterfallPiano": "瀑布流钢琴",
     "resetCurrent": "重置当前",
@@ -546,6 +549,114 @@
       "warm": "暖色",
       "cool": "冷色",
       "neon": "霓虹"
+    }
+  },
+  "advancedDebug": {
+    "notation": {
+      "display": {
+        "title": "记谱 - 显示参数",
+        "clef": "谱号",
+        "keySignature": "调号",
+        "keySignatureText": "调号文字",
+        "barlines": "小节线",
+        "timeSignature": "拍号",
+        "noteNames": "音名",
+        "staffLines": "谱线"
+      },
+      "layout": {
+        "title": "记谱 - 布局参数",
+        "paddingTop": "顶部内边距",
+        "staveHeight": "谱表高度",
+        "staveGap": "谱表间距",
+        "textHeight": "文字高度",
+        "bottomPadding": "底部内边距",
+        "sidePadding": "侧边内边距",
+        "clefWidth": "谱号宽度",
+        "noteWidth": "音符宽度",
+        "keySignatureWidthPerAlteration": "调号宽度系数",
+        "keySignatureWidthPerAlterationHint": "每个升降号分配的宽度（像素），高级模式可突破200",
+        "maxScale": "最大缩放",
+        "maxScaleHint": "高级模式可突破2.0倍限制"
+      },
+      "style": {
+        "title": "记谱 - 样式参数",
+        "backgroundColor": "背景颜色",
+        "staffLineColor": "谱线颜色",
+        "noteColor": "音符颜色",
+        "noteHighlightColor": "音符高亮颜色",
+        "fontSize": "字号"
+      }
+    },
+    "waterfall": {
+      "fluid": {
+        "title": "流体高级参数",
+        "fluidAdvanced": "流体高级模式",
+        "fluidAdvancedHint": "启用后可调整流体模拟的详细参数",
+        "simResolution": "模拟分辨率",
+        "splatRadius": "溅射半径",
+        "splatColorHue": "溅射色相",
+        "trailLength": "拖尾长度",
+        "trailLengthHint": "1=长拖尾，0=快消散",
+        "flowPersistence": "流动持久度",
+        "flowPersistenceHint": "1=持久，0=短促",
+        "bloom": "发光效果",
+        "bloomIntensity": "发光强度",
+        "hitExplosion": "命中爆炸",
+        "hitExplosionHint": "按键命中时产生爆炸效果",
+        "blockCoverage": "块体覆盖",
+        "blockCoverageHint": "音符块覆盖时产生发射效果"
+      },
+      "keyboard": {
+        "title": "键盘高级参数",
+        "customFrom": "自定义起始音",
+        "customTo": "自定义结束音",
+        "keyBorderWidth": "按键边框宽度",
+        "keyBorderColor": "按键边框颜色",
+        "gapBlur": "间隙模糊",
+        "separatorColor": "分隔线颜色",
+        "separatorThickness": "分隔线粗细",
+        "staffVisible": "显示谱表",
+        "synthesiaFlowDirection": "Synthesia 流动方向",
+        "flowUp": "上升",
+        "flowDown": "下降"
+      },
+      "midiFile": {
+        "title": "MIDI文件高级参数",
+        "selectedTracks": "选中音轨",
+        "selectedTracksHint": "当前正在播放的音轨索引",
+        "noTracks": "暂无选中音轨",
+        "trackColors": "音轨颜色",
+        "trackColorN": "音轨 {n} 颜色"
+      }
+    },
+    "sound": {
+      "title": "音频引擎高级参数",
+      "volume": "音量",
+      "reverbAmount": "混响湿度",
+      "reverbAmountHint": "0=干声，1=全混响",
+      "reverbDecay": "混响衰减（秒）",
+      "sustain": "延音踏板",
+      "velocitySensitivity": "力度感应",
+      "synthParams": "合成器参数",
+      "harmonicity": "泛音比",
+      "modulationIndex": "调制指数",
+      "oscillatorType": "振荡器类型",
+      "oscTypes": {
+        "triangle": "三角波",
+        "sine": "正弦波",
+        "square": "方波",
+        "sawtooth": "锯齿波"
+      },
+      "envelope": "包络",
+      "attack": "起音",
+      "decay": "衰减",
+      "sustainLevel": "持续电平",
+      "release": "释放",
+      "modEnvelope": "调制包络",
+      "modAttack": "调制起音",
+      "modDecay": "调制衰减",
+      "modSustain": "调制持续",
+      "modRelease": "调制释放"
     }
   }
 }

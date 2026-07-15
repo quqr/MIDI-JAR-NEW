@@ -77,7 +77,6 @@ export class FluidSimulation {
   private displayPass: DisplayPass;
 
   private ditheringTexture: DitheringTexture;
-  private animationId: number | null = null;
   private lastUpdateTime = 0;
   private paused = false;
   private destroyed = false;
@@ -183,7 +182,7 @@ export class FluidSimulation {
     this.ditheringTexture = this.createDitheringTexture();
   }
 
-  /** 初始化 WebGL 资源，启动渲染循环 */
+  /** 初始化 WebGL 资源（不再自动启动循环） */
   start() {
     if (this.initialized) return;
 
@@ -195,15 +194,11 @@ export class FluidSimulation {
 
     this.initialized = true;
     this.lastUpdateTime = Date.now();
-    this.loop();
   }
 
-  isInitialized(): boolean {
-    return this.initialized;
-  }
-
-  private loop = () => {
-    if (this.destroyed) return;
+  /** 外部驱动的更新方法，由 WaterfallEngine 主循环调用 */
+  update(): void {
+    if (this.destroyed || !this.initialized) return;
     const dt = this.calcDeltaTime();
     if (this.resizeCanvas()) {
       this.solver.resize();
@@ -212,8 +207,11 @@ export class FluidSimulation {
     }
     if (!this.paused) this.solver.step(dt);
     this.render();
-    this.animationId = requestAnimationFrame(this.loop);
-  };
+  }
+
+  isInitialized(): boolean {
+    return this.initialized;
+  }
 
   private calcDeltaTime(): number {
     const now = Date.now();
@@ -363,13 +361,9 @@ export class FluidSimulation {
     return obj;
   }
 
-  /** 停止渲染循环，释放所有 WebGL 资源 */
+  /** 停止渲染，释放所有 WebGL 资源 */
   destroy() {
     this.destroyed = true;
-    if (this.animationId !== null) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
     this.solver.destroy();
     this.bloomPass.destroy();
     this.sunraysPass.destroy();

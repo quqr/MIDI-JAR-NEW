@@ -40,6 +40,8 @@ export class KeyboardRenderer {
   private to = 108;
   private highlights = new Set<number>();
   private activeNotes = new Set<number>();
+  private _cachedLayout: KeyboardLayout | null = null;
+  private _midiToIndex = new Map<number, number>();
 
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
     this.canvas = canvas;
@@ -79,27 +81,33 @@ export class KeyboardRenderer {
     } else {
       this.applyRangeFromSettings();
     }
+    this.invalidateLayout();
   }
 
   setRange(from: number, to: number): void {
     this.from = from;
     this.to = to;
+    this.invalidateLayout();
   }
 
   getVisibleRange(): { from: number; to: number } {
     return { from: this.from, to: this.to };
   }
 
-  private getLayout(): KeyboardLayout {
+  private rebuildLayout(): void {
     const whiteKeys: number[] = [];
+    this._midiToIndex.clear();
     for (let m = this.from; m <= this.to; m++) {
-      if (isWhiteKey(m)) whiteKeys.push(m);
+      if (isWhiteKey(m)) {
+        this._midiToIndex.set(m, whiteKeys.length);
+        whiteKeys.push(m);
+      }
     }
     const count = Math.max(1, whiteKeys.length);
     const whiteKeyWidth = this.width / count;
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const blackKeyHeight = this.height * BLACK_KEY_HEIGHT_RATIO;
-    return {
+    this._cachedLayout = {
       whiteKeys,
       whiteKeyWidth,
       blackKeyWidth,
@@ -110,16 +118,25 @@ export class KeyboardRenderer {
     };
   }
 
+  private getLayout(): KeyboardLayout {
+    if (!this._cachedLayout) this.rebuildLayout();
+    return this._cachedLayout!;
+  }
+
+  invalidateLayout(): void {
+    this._cachedLayout = null;
+  }
+
   midiToX(midi: number): number {
     const layout = this.getLayout();
     if (isWhiteKey(midi)) {
-      const idx = layout.whiteKeys.indexOf(midi);
-      if (idx < 0) return 0;
+      const idx = this._midiToIndex.get(midi);
+      if (idx === undefined) return 0;
       return (idx + 0.5) * layout.whiteKeyWidth;
     }
     const aboveWhite = midi + 1;
-    const idx = layout.whiteKeys.indexOf(aboveWhite);
-    if (idx <= 0) return 0;
+    const idx = this._midiToIndex.get(aboveWhite);
+    if (idx === undefined || idx <= 0) return 0;
     return idx * layout.whiteKeyWidth;
   }
 
@@ -175,6 +192,8 @@ export class KeyboardRenderer {
     const kb = this.settings.keyboard;
     ctx.clearRect(0, 0, this.width, this.height);
 
+    if (!kb.visible) return;
+
     for (let i = 0; i < layout.whiteKeys.length; i++) {
       const midi = layout.whiteKeys[i];
       const x = i * layout.whiteKeyWidth;
@@ -216,14 +235,15 @@ export class KeyboardRenderer {
       }
     }
 
-    if (kb.keyLabel !== "none") {
+    if (kb.keyLabel !== "none" || kb.showNoteNames) {
+      const effectiveLabel = kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
       ctx.fillStyle = "#666";
       ctx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
-        const label = this.labelFor(midi, kb.keyLabel);
+        const label = this.labelFor(midi, effectiveLabel);
         if (!label) continue;
         const x = (i + 0.5) * layout.whiteKeyWidth;
         ctx.fillText(label, x, this.height - 4);

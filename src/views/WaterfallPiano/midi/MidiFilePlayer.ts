@@ -23,7 +23,6 @@ export class MidiFilePlayer {
   private loop = false;
   private triggeredIndices = new Set<number>();
   private endedIndices = new Set<number>();
-  private rafId: number | null = null;
   callbacks: MidiPlayerCallbacks = {};
 
   async loadFile(file: File): Promise<MidiTrackInfo[]> {
@@ -86,7 +85,6 @@ export class MidiFilePlayer {
     Tone.getTransport().start();
     this.isPlaying = true;
     this.isPaused = false;
-    this.startProgressLoop();
   }
 
   pausePlayback(): void {
@@ -94,7 +92,6 @@ export class MidiFilePlayer {
     Tone.getTransport().pause();
     this.isPlaying = false;
     this.isPaused = true;
-    this.stopProgressLoop();
   }
 
   resumePlayback(): void {
@@ -102,7 +99,6 @@ export class MidiFilePlayer {
     Tone.getTransport().start();
     this.isPlaying = true;
     this.isPaused = false;
-    this.startProgressLoop();
   }
 
   stopPlayback(): void {
@@ -111,12 +107,10 @@ export class MidiFilePlayer {
     this.isPlaying = false;
     this.isPaused = false;
     this.resetPlaybackState();
-    this.stopProgressLoop();
   }
 
   seekTo(seconds: number): void {
-    const scaled = seconds / this.playbackSpeed;
-    Tone.getTransport().seconds = Math.max(0, scaled);
+    Tone.getTransport().seconds = Math.max(0, seconds);
     this.recomputeTriggeredState();
   }
 
@@ -133,14 +127,13 @@ export class MidiFilePlayer {
   }
 
   getCurrentTime(): number {
-    return Tone.getTransport().seconds * this.playbackSpeed;
+    return Tone.getTransport().seconds;
   }
 
   setPlaybackSpeed(speed: number): void {
     if (speed <= 0) return;
-    const currentOriginal = this.getCurrentTime();
     this.playbackSpeed = speed;
-    Tone.getTransport().seconds = currentOriginal / speed;
+    Tone.getTransport().bpm.value = 120 * speed;
     this.recomputeTriggeredState();
   }
 
@@ -180,23 +173,8 @@ export class MidiFilePlayer {
     }
   }
 
-  private startProgressLoop(): void {
-    this.stopProgressLoop();
-    const loop = () => {
-      this.tick();
-      this.rafId = requestAnimationFrame(loop);
-    };
-    this.rafId = requestAnimationFrame(loop);
-  }
-
-  private stopProgressLoop(): void {
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
-  }
-
-  private tick(): void {
+  /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
+  tick(): void {
     const current = this.getCurrentTime();
     for (let i = 0; i < this.notes.length; i++) {
       if (this.triggeredIndices.has(i)) continue;
@@ -222,7 +200,6 @@ export class MidiFilePlayer {
       } else {
         this.isPlaying = false;
         this.isPaused = false;
-        this.stopProgressLoop();
         Tone.getTransport().stop();
         this.callbacks.onPlaybackEnd?.();
       }
@@ -230,7 +207,6 @@ export class MidiFilePlayer {
   }
 
   dispose(): void {
-    this.stopProgressLoop();
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
     this.midi = null;

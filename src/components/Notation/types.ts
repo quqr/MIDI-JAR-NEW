@@ -83,7 +83,7 @@ export const defaultLayoutConfig: NotationLayoutConfig = {
 };
 
 export const defaultStyleConfig: NotationStyleConfig = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "transparent",
   staffLineColor: "#000000",
   noteColor: "#000000",
   noteHighlightColor: null,

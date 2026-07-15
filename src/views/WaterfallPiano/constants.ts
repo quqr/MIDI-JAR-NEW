@@ -77,7 +77,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     },
   },
   background: {
-    type: "preset",
+    type: "solid",
     solidColor: "#1a1a2e",
     gradientDirection: "linear-vertical",
     gradientStart: "#0f0c29",
@@ -92,7 +92,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     imageBlur: 0,
     imageDarken: 0.5,
     imageFitMode: "cover",
-    starfieldEnabled: true,
+    starfieldEnabled: false,
     starfieldDensity: 0.5,
     fluidEnabled: false,
     fluidQuality: "medium",
@@ -139,6 +139,28 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     loop: false,
     showNoteNames: false,
   },
+  sound: {
+    volume: 0.8,
+    reverbAmount: 0.3,
+    reverbDecay: 2,
+    sustain: false,
+    velocitySensitivity: true,
+    harmonicity: 2,
+    modulationIndex: 10,
+    oscillatorType: "triangle",
+    envelope: {
+      attack: 0.002,
+      decay: 0.3,
+      sustain: 0.3,
+      release: 1.0,
+    },
+    modulationEnvelope: {
+      attack: 0.005,
+      decay: 0.5,
+      sustain: 0.2,
+      release: 0.5,
+    },
+  },
 };
 
 // ─── 键盘快捷键映射（A-K → C4-C5） ───
@@ -160,6 +182,7 @@ export const keyboardMap: Record<string, number> = {
 
 // ─── 持久化键 ───
 export const STORAGE_KEY = "waterfall-piano-settings";
+export const SETTINGS_VERSION = 3; // 递增此版本号可强制重置 localStorage 中的旧设置
 export const RECORDING_STORAGE_KEY = "waterfall-piano-recordings";
 
 // ─── MIDI 路由 namespace ───

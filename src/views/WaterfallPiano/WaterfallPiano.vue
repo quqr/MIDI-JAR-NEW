@@ -2,6 +2,7 @@
   <div class="fixed inset-0 flex flex-col bg-black overflow-hidden">
     <div class="flex-1 relative min-h-0">
       <WaterfallCanvas
+        ref="waterfallCanvasRef"
         :settings="store.settings"
         :mode="mode"
         :octave-offset="store.octaveOffset"
@@ -10,8 +11,17 @@
         @note-off="onCanvasNoteOff"
       />
       <div class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none">
-        <div class="text-white/80 font-semibold pointer-events-auto drop-shadow">
-          {{ t('waterfallPiano.title') }}
+        <div class="flex items-center gap-2 pointer-events-auto">
+          <button
+            class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20"
+            :aria-label="t('common.back')"
+            @click="$router.push('/home')"
+          >
+            <Icon name="arrow-left" :size="18" aria-hidden="true" />
+          </button>
+          <span class="text-white/80 font-semibold drop-shadow">
+            {{ t('waterfallPiano.title') }}
+          </span>
         </div>
         <div class="flex items-center gap-1 pointer-events-auto">
           <button
@@ -40,33 +50,32 @@
           </button>
         </div>
       </div>
-    </div>
 
-    <PlaybackPanel
-      class="flex-none"
-      :mode="mode"
-      :is-recording="isRecording"
-      :is-playing="isPlaying"
-      :is-paused="isPaused"
-      :current-time="currentTime"
-      :duration="duration"
-      :file-name="fileName"
-      :tracks="tracks"
-      :selected-tracks="selectedTracks"
-      :playback-speed="store.settings.midiFile.playbackSpeed"
-      :loop="store.settings.midiFile.loop"
-      :has-content="contentType !== 'none'"
-      @update:mode="onModeChange"
-      @toggle-record="onToggleRecord"
-      @play="onPlay"
-      @pause="onPause"
-      @stop="onStop"
-      @seek="onSeek"
-      @load-midi="onLoadMidi"
-      @select-tracks="onSelectTracks"
-      @set-speed="onSetSpeed"
-      @toggle-loop="onToggleLoop"
-    />
+      <PlaybackPanel
+        :mode="mode"
+        :is-recording="isRecording"
+        :is-playing="isPlaying"
+        :is-paused="isPaused"
+        :current-time="currentTime"
+        :duration="duration"
+        :file-name="fileName"
+        :tracks="tracks"
+        :selected-tracks="selectedTracks"
+        :playback-speed="store.settings.midiFile.playbackSpeed"
+        :loop="store.settings.midiFile.loop"
+        :has-content="contentType !== 'none'"
+        @update:mode="onModeChange"
+        @toggle-record="onToggleRecord"
+        @play="onPlay"
+        @pause="onPause"
+        @stop="onStop"
+        @seek="onSeek"
+        @load-midi="onLoadMidi"
+        @select-tracks="onSelectTracks"
+        @set-speed="onSetSpeed"
+        @toggle-loop="onToggleLoop"
+      />
+    </div>
 
     <SettingsPanel v-model="settingsOpen" />
   </div>
@@ -101,14 +110,28 @@ const fileName = ref("");
 const tracks = ref<MidiTrackInfo[]>([]);
 const selectedTracks = ref<number[]>([]);
 const settingsOpen = ref(false);
+const waterfallCanvasRef = ref<InstanceType<typeof WaterfallCanvas> | null>(null);
 
 const engineRef = shallowRef<WaterfallEngine | null>(null);
 const recorderRef = shallowRef<Recorder | null>(null);
 let player: MidiFilePlayer | null = null;
 let recorder: Recorder | null = null;
 
+async function ensureAudioReady(): Promise<void> {
+  await waterfallCanvasRef.value?.retryAudio();
+}
+
 function onEngineReady(engine: WaterfallEngine): void {
   engineRef.value = engine;
+  // 设置每帧回调：在 WaterfallEngine 主循环中调用 player.tick()/recorder.tick()，
+  // 替代各自独立的 rAF 循环，消除两个 rAF 之间的时间同步问题
+  engine.frameCallback = () => {
+    if (contentType.value === "midi" && player?.getIsPlaying()) {
+      player.tick();
+    } else if (contentType.value === "recording" && recorder?.getIsPlaying()) {
+      recorder.tick();
+    }
+  };
   if (recorder) {
     const saved = recorder.loadFromStorage();
     if (saved.length > 0) {
@@ -137,15 +160,17 @@ function onModeChange(m: NoteBlockMode): void {
 async function onLoadMidi(file: File): Promise<void> {
   if (!player) return;
   try {
+    // 先切换模式（清空旧方块），再加载文件（调度新音符）
+    // 顺序不能反，否则 setMode 的 clearNoteBlocks 会清空刚调度的 synthesiaNotes
+    mode.value = "synthesia";
+    engineRef.value?.setMode("synthesia");
     await player.loadFile(file);
     fileName.value = file.name;
     contentType.value = "midi";
     duration.value = player.getDuration();
     currentTime.value = 0;
-    mode.value = "synthesia";
-    engineRef.value?.setMode("synthesia");
-  } catch {
-    // ignore parse errors
+  } catch (e) {
+    console.error("[MIDI] loadFile failed:", e);
   }
 }
 
@@ -165,7 +190,8 @@ function onToggleRecord(): void {
   }
 }
 
-function onPlay(): void {
+async function onPlay(): Promise<void> {
+  await ensureAudioReady();
   if (contentType.value === "midi" && player) {
     if (isPaused.value) {
       player.resumePlayback();

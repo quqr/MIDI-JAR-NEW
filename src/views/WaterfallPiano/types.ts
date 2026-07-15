@@ -136,12 +136,35 @@ export interface MidiFileConfig {
   showNoteNames: boolean;
 }
 
+// ─── 合成器包络配置 ───
+export interface SynthEnvelopeConfig {
+  attack: number;
+  decay: number;
+  sustain: number;
+  release: number;
+}
+
+// ─── 音频引擎用户配置 ───
+export interface SoundEngineUserConfig {
+  volume: number;
+  reverbAmount: number;
+  reverbDecay: number;
+  sustain: boolean;
+  velocitySensitivity: boolean;
+  harmonicity: number;
+  modulationIndex: number;
+  oscillatorType: string;
+  envelope: SynthEnvelopeConfig;
+  modulationEnvelope: SynthEnvelopeConfig;
+}
+
 // ─── 瀑布流钢琴总配置 ───
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
   background: BackgroundConfig;
   keyboard: KeyboardConfig;
   midiFile: MidiFileConfig;
+  sound: SoundEngineUserConfig;
 }
 
 // ─── 录制的音符 ───

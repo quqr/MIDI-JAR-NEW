@@ -4,6 +4,13 @@ import type { KeyboardRenderer } from "./KeyboardRenderer";
 
 export type NoteBlockMode = "realtime" | "synthesia";
 
+const BLACK_KEY_CLASSES = new Set([1, 3, 6, 8, 10]);
+const BLACK_KEY_WIDTH_RATIO = 0.6;
+
+function isBlackKey(midi: number): boolean {
+  return BLACK_KEY_CLASSES.has(((midi % 12) + 12) % 12);
+}
+
 interface NoteBlock {
   midi: number;
   velocity: number;
@@ -25,7 +32,7 @@ interface NoteBlockCallbacks {
   onNoteEnd?: (midi: number) => void;
 }
 
-const FADE_DURATION = 0.5;
+const FADE_DURATION = 3;
 const POOL_MAX = 512;
 
 export class NoteBlockSystem {
@@ -40,9 +47,12 @@ export class NoteBlockSystem {
   private active: NoteBlock[] = [];
   private realtimeHeld = new Map<number, NoteBlock>();
   private synthesiaNotes: ScheduledNote[] = [];
+  private synthesiaCursor = 0;
+  private synthesiaBlockMap = new Map<string, NoteBlock>();
   private transportTime = 0;
   private transportPlaying = false;
   private triggeredSet = new Set<number>();
+  private lastTransportTime = 0;
   callbacks: NoteBlockCallbacks = {};
 
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
@@ -65,6 +75,7 @@ export class NoteBlockSystem {
   }
 
   setMode(mode: NoteBlockMode): void {
+    if (this.mode === mode) return;
     this.mode = mode;
     this.clearNoteBlocks();
   }
@@ -79,6 +90,9 @@ export class NoteBlockSystem {
     this.realtimeHeld.clear();
     this.triggeredSet.clear();
     this.synthesiaNotes = [];
+    this.synthesiaCursor = 0;
+    this.synthesiaBlockMap.clear();
+    this.lastTransportTime = 0;
   }
 
   setSettings(settings: WaterfallPianoSettings): void {
@@ -87,6 +101,8 @@ export class NoteBlockSystem {
 
   scheduleSynthesiaNotes(notes: ScheduledNote[]): void {
     this.synthesiaNotes = notes;
+    this.synthesiaCursor = 0;
+    this.synthesiaBlockMap.clear();
     this.triggeredSet.clear();
   }
 
@@ -108,6 +124,7 @@ export class NoteBlockSystem {
 
   playRealtimeNote(midi: number, velocity: number): void {
     if (this.realtimeHeld.has(midi)) return;
+    const pps = this.pixelsPerSecond();
     const block = this.acquire();
     block.midi = midi;
     block.velocity = velocity;
@@ -116,7 +133,7 @@ export class NoteBlockSystem {
     block.startTime = 0;
     block.duration = 0;
     block.y = this.height;
-    block.height = 0;
+    block.height = Math.max(pps * 0.05, 4); // 立即显示一个小块
     block.triggered = true;
     block.ended = false;
     block.releasing = false;
@@ -182,7 +199,8 @@ export class NoteBlockSystem {
         } else {
           b.height += pps * dt;
         }
-        if (b.releasing && (b.y + b.height < 0 || b.fadeTime > FADE_DURATION)) {
+        // 方块底部离开屏幕顶部时移除
+        if (b.releasing && b.y < 0) {
           this.active.splice(i, 1);
           this.release(b);
         }
@@ -190,18 +208,56 @@ export class NoteBlockSystem {
     }
   }
 
+  private noteKey(note: { trackIndex: number; midi: number; time: number }): string {
+    return `${note.trackIndex}-${note.midi}-${note.time}`;
+  }
+
   private updateSynthesia(pps: number): void {
     const t = this.transportTime;
     const lookAhead = this.settings ? this.settings.particles.lookAhead : 3;
-    for (const note of this.synthesiaNotes) {
-      const timeUntilHit = note.time - t;
-      if (timeUntilHit > lookAhead) continue;
-      const endOffset = t - (note.time + note.duration);
-      if (endOffset > 1) continue;
+    const notes = this.synthesiaNotes;
+    const len = notes.length;
 
-      let block = this.findSynthesiaBlock(note);
-      if (!block) {
-        if (timeUntilHit > lookAhead) continue;
+    // 检测向后跳转或循环：transport 时间回退超过 0.1 秒
+    if (t < this.lastTransportTime - 0.1) {
+      this.synthesiaCursor = 0;
+      this.synthesiaBlockMap.clear();
+      this.triggeredSet.clear();
+      // 释放所有 synthesia 方块（trackIndex >= 0），保留 realtime 方块
+      for (let i = this.active.length - 1; i >= 0; i--) {
+        const b = this.active[i];
+        if (b.trackIndex >= 0) {
+          this.active.splice(i, 1);
+          this.release(b);
+        }
+      }
+    }
+    this.lastTransportTime = t;
+
+    // Reset cursor if transport went backwards (seek)
+    if (this.synthesiaCursor > 0 && this.synthesiaCursor < len && notes[this.synthesiaCursor].time > t + lookAhead) {
+      this.synthesiaCursor = 0;
+    }
+
+    // Advance cursor past notes that are too far in the past to matter
+    while (this.synthesiaCursor < len && t - (notes[this.synthesiaCursor].time + notes[this.synthesiaCursor].duration) > lookAhead + notes[this.synthesiaCursor].duration + 1) {
+      this.synthesiaCursor++;
+    }
+
+    const startIdx = this.synthesiaCursor;
+    for (let ni = startIdx; ni < len; ni++) {
+      const note = notes[ni];
+      const timeUntilHit = note.time - t;
+      if (timeUntilHit > lookAhead) break; // sorted by time, no need to scan further
+
+      const maxEndOffset = lookAhead + note.duration + 1;
+      const endOffset = t - (note.time + note.duration);
+      if (endOffset > maxEndOffset) continue;
+
+      const key = this.noteKey(note);
+      let block = this.synthesiaBlockMap.get(key);
+      if (!block || !block.active) {
+        // 方块不存在或已回收到池中，需要重新创建
         block = this.acquire();
         block.midi = note.midi;
         block.velocity = note.velocity;
@@ -215,6 +271,7 @@ export class NoteBlockSystem {
         block.fadeTime = 0;
         block.active = true;
         this.active.push(block);
+        this.synthesiaBlockMap.set(key, block);
       }
       block.y = this.height - timeUntilHit * pps;
       block.height = note.duration * pps;
@@ -233,21 +290,15 @@ export class NoteBlockSystem {
     for (let i = this.active.length - 1; i >= 0; i--) {
       const b = this.active[i];
       if (b.trackIndex < 0) continue;
-      const endOffset = t - (b.startTime + b.duration);
-      if (endOffset > 1) {
+      // Block slides off screen: remove only when the top of the block is below the canvas bottom
+      const blockTop = b.y - b.height;
+      if (blockTop > this.height) {
         this.active.splice(i, 1);
+        // 使用 startTime 而非 time（NoteBlock 没有 time 属性）
+        this.synthesiaBlockMap.delete(`${b.trackIndex}-${b.midi}-${b.startTime}`);
         this.release(b);
       }
     }
-  }
-
-  private findSynthesiaBlock(note: ScheduledNote): NoteBlock | null {
-    for (const b of this.active) {
-      if (b.trackIndex === note.trackIndex && b.midi === note.midi && b.startTime === note.time) {
-        return b;
-      }
-    }
-    return null;
   }
 
   private pixelsPerSecond(): number {
@@ -271,23 +322,25 @@ export class NoteBlockSystem {
     }
 
     const whiteKeyWidth = this.keyboardRenderer.getWhiteKeyWidth();
-    const blockWidth = whiteKeyWidth * 0.85;
+    const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const isHighlighted = (midi: number) => this.triggeredSet.has(midi);
 
     for (const b of this.active) {
+      const isBlack = isBlackKey(b.midi);
+      const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
       const x = this.keyboardRenderer!.midiToX(b.midi) - blockWidth / 2;
-      let y = b.y;
-      let h = b.height;
-      if (h <= 0) h = blockWidth;
-      if (this.mode === "synthesia") {
-        y = b.y - b.height;
-      }
+      const h = b.height <= 0 ? blockWidth : b.height;
+      // b.y 是方块底部，绘制时需要从底部减去高度，使方块向上生长
+      const y = b.y - h;
       let alpha = p.opacity;
       if (b.releasing) {
         alpha *= Math.max(0, 1 - b.fadeTime / FADE_DURATION);
       }
-      const color = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
+      const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
+      const isTriggered = isHighlighted(b.midi);
+      // Brighten color when triggered (Synthesia-style glow)
+      const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
       ctx.globalAlpha = alpha;
       ctx.fillStyle = color;
       if (p.cornerRadius > 0) {
@@ -296,8 +349,9 @@ export class NoteBlockSystem {
       } else {
         ctx.fillRect(x, y, blockWidth, h);
       }
-      if (isHighlighted(b.midi)) {
-        ctx.strokeStyle = "#ffffff";
+      if (isTriggered) {
+        // Outer glow
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, blockWidth, h);
       }
@@ -335,4 +389,16 @@ export class NoteBlockSystem {
     this.clearNoteBlocks();
     this.pool = [];
   }
+}
+
+/** Mix a hex color toward white by a given ratio (0-1) */
+function brightenColor(hex: string, ratio: number): string {
+  const h = hex.replace("#", "").padEnd(6, "0");
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  const br = Math.round(r + (255 - r) * ratio);
+  const bg = Math.round(g + (255 - g) * ratio);
+  const bb = Math.round(b + (255 - b) * ratio);
+  return `#${br.toString(16).padStart(2, "0")}${bg.toString(16).padStart(2, "0")}${bb.toString(16).padStart(2, "0")}`;
 }

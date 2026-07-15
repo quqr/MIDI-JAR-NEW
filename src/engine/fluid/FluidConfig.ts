@@ -3,6 +3,7 @@
 
 // 流体高级覆盖参数（用户友好语义，原 WaterfallPiano/types.ts 内联至此以保持模块自包含）
 export interface FluidAdvancedParams {
+  simResolution?: number;      // 32-256 模拟分辨率
   splatRadius?: number;        // 0.0001-0.01 溅射半径
   splatColorHue?: number;      // 0-1 色相，undefined 时用音高映射
   trailLength?: number;         // 0-1 拖尾长度（1=长拖尾，0=快消散）
@@ -162,6 +163,10 @@ export function resolveConfig(
   Object.assign(base, QUALITY_PRESETS[quality]);
   Object.assign(base, STYLE_PRESETS[style]);
   // 用户友好旋钮映射到底层求解器参数
+  if (overrides.simResolution !== undefined) {
+    base.SIM_RESOLUTION = overrides.simResolution;
+    base.DYE_RESOLUTION = Math.min(1024, overrides.simResolution * 4);
+  }
   if (overrides.splatRadius !== undefined) base.SPLAT_RADIUS = overrides.splatRadius;
   if (overrides.trailLength !== undefined) base.DENSITY_DISSIPATION = (1 - overrides.trailLength) * 4;
   if (overrides.flowPersistence !== undefined) base.VELOCITY_DISSIPATION = (1 - overrides.flowPersistence) * 4;
