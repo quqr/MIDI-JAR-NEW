@@ -36,7 +36,7 @@
   "license": "MIT",
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
-    "@rolldown/binding-linux-x64-gnu": "^1.1.5",
+    "@rolldown/binding-win32-x64-msvc": "^1.2.0",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
