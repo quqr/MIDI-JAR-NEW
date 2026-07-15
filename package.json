@@ -21,6 +21,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix",
+    "analyze": "vite-bundle-visualizer",
     "generate-licenses": "node scripts/generate-licenses.js"
   },
   "keywords": [
@@ -33,6 +36,7 @@
   "license": "MIT",
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
+    "@rolldown/binding-linux-x64-gnu": "^1.1.5",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
@@ -85,6 +89,7 @@
     "typescript-eslint": "^8.62.0",
     "unplugin-auto-import": "21.0.0",
     "unplugin-vue-components": "32.1.0",
+    "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-eslint": "1.8.1",
     "vitest": "^4.1.9",
     "vue-eslint-parser": "10.4.1",

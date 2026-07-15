@@ -25,7 +25,7 @@ function mockCanvas(): HTMLCanvasElement {
 }
 
 function cloneSettings(): WaterfallPianoSettings {
-  return JSON.parse(JSON.stringify(defaultWaterfallSettings));
+  return structuredClone(defaultWaterfallSettings);
 }
 
 describe("KeyboardRenderer", () => {

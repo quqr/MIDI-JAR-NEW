@@ -110,7 +110,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
 
   function syncRoutesToMain() {
     if (!isTauri()) {
-      console.log("[MIDI_DEBUG] syncRoutesToMain: not in Tauri, skipping");
+      logger.info("syncRoutesToMain: not in Tauri, skipping");
       return Promise.resolve();
     }
     const routeList = routes.value.map((r) => ({
@@ -119,13 +119,11 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
       type: r.type,
       enabled: r.enabled,
     }));
-    console.log(
-      `[MIDI_DEBUG] syncRoutesToMain: syncing ${routeList.length} routes`,
-      JSON.stringify(routeList),
+    logger.info(
+      `syncRoutesToMain: syncing ${routeList.length} routes: ${JSON.stringify(routeList)}`,
     );
     return window.tauriAPI.midi.syncRoutes(routeList).catch((e: Error) => {
       logger.error(`同步路由失败: ${e.message}`);
-      console.error("[MIDI_DEBUG] syncRoutesToMain FAILED:", e);
     });
   }
 

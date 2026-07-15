@@ -79,7 +79,7 @@ function mockSoundEngine(): SoundEngine {
 }
 
 function cloneSettings(): WaterfallPianoSettings {
-  return JSON.parse(JSON.stringify(defaultWaterfallSettings));
+  return structuredClone(defaultWaterfallSettings);
 }
 
 describe("WaterfallEngine", () => {

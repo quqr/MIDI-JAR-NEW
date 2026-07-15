@@ -3,12 +3,12 @@ type ObjectType = Record<string, unknown>;
 export const isObject = (obj: unknown): obj is ObjectType =>
   !!obj && typeof obj === "object" && obj.constructor === Object;
 
-export const deepClone = (obj: unknown) => {
-  let cloneObj;
+export const deepClone = <T>(obj: T): T => {
+  let cloneObj: T;
   try {
-    cloneObj = JSON.parse(JSON.stringify(obj));
+    cloneObj = structuredClone(obj);
   } catch (err) {
-    cloneObj = isObject(obj) ? { ...obj } : cloneObj;
+    cloneObj = isObject(obj) ? { ...obj } as T : (undefined as unknown as T);
   }
   return cloneObj;
 };
@@ -18,7 +18,7 @@ export function mergeDeep<T extends ObjectType, S extends ObjectType>(
   source: S,
   isMergingArrays = false,
 ): T | S {
-  const t = deepClone(target);
+  const t = deepClone(target) as ObjectType;
 
   if (!isObject(target) || !isObject(source)) return source;
 
@@ -34,7 +34,9 @@ export function mergeDeep<T extends ObjectType, S extends ObjectType>(
             : mergeDeep(x, sourceValue[i], isMergingArrays),
         );
         if (sourceValue.length > targetValue.length)
-          t[key] = t[key].concat(sourceValue.slice(targetValue.length));
+          t[key] = (t[key] as unknown[]).concat(
+            sourceValue.slice(targetValue.length),
+          );
       } else {
         t[key] = sourceValue;
       }
@@ -43,7 +45,7 @@ export function mergeDeep<T extends ObjectType, S extends ObjectType>(
     else t[key] = sourceValue;
   });
 
-  return t;
+  return t as T | S;
 }
 
 export function setValueByPath(

@@ -54,13 +54,13 @@ export const useSettingsStore = defineStore("settings", () => {
   function resetSetting(key: keyof Settings): Promise<void> {
     settings.value = {
       ...settings.value,
-      [key]: JSON.parse(JSON.stringify(defaultSettings[key])),
+      [key]: structuredClone(defaultSettings[key]),
     };
     return Promise.resolve();
   }
 
   function resetSettings(): Promise<void> {
-    settings.value = JSON.parse(JSON.stringify(defaultSettings));
+    settings.value = structuredClone(defaultSettings);
     return Promise.resolve();
   }
 
