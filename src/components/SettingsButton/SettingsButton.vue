@@ -1,6 +1,7 @@
 <template>
   <button
-    class="btn btn-sm btn-outline btn-circle"
+    class="btn btn-sm btn-outline btn-circle tooltip tooltip-bottom"
+    :data-tip="ariaLabel"
     :aria-label="ariaLabel"
     @click="$emit('click')"
   >

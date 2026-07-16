@@ -34,7 +34,8 @@
                 <RouterLink
                   v-if="settingsTo"
                   :to="settingsTo"
-                  class="btn btn-ghost btn-sm btn-circle opacity-60 transition-all duration-hig-normal group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0"
+                  class="btn btn-ghost btn-sm btn-circle opacity-60 transition-all duration-hig-normal group-hover:opacity-100 hover:bg-primary/10 flex-shrink-0 tooltip tooltip-bottom"
+                  :data-tip="$t('common.settings')"
                   :aria-label="$t('common.settings')"
                   @click.stop
                 >

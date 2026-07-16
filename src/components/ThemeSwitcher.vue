@@ -1,6 +1,7 @@
 <template>
   <label
-    class="swap swap-rotate btn btn-ghost btn-sm btn-circle transition-all duration-hig-fast hover:bg-base-200"
+    class="swap swap-rotate btn btn-ghost btn-sm btn-circle transition-all duration-hig-fast hover:bg-base-200 tooltip tooltip-bottom"
+    :data-tip="t('settings.generalSettings.toggleTheme')"
     :aria-label="t('settings.generalSettings.toggleTheme')"
   >
     <input

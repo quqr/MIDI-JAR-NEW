@@ -15,7 +15,11 @@
             class="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-base-200/30 bg-base-100/90 backdrop-blur-md"
           >
             <h2 class="text-lg font-bold">{{ title }}</h2>
-            <button class="btn btn-sm btn-ghost btn-circle" @click="close">
+            <button
+              class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom"
+              :data-tip="t('common.close')"
+              @click="close"
+            >
               <Icon name="x" :size="16" />
             </button>
           </div>
@@ -30,7 +34,10 @@
 
 <script setup lang="ts">
 import { watch, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
+
+const { t } = useI18n();
 
 const props = defineProps<{
   modelValue: boolean;

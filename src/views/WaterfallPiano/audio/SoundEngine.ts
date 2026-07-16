@@ -1,4 +1,3 @@
-import * as Tone from "tone";
 import { midiToNoteName } from "../constants";
 import type { SoundEngineUserConfig, SynthEnvelopeConfig } from "../types";
 
@@ -33,8 +32,12 @@ export interface SoundEngineOptions {
  * 内部通过引用计数机制处理同一音高被多个音符同时按住的情况。
  */
 export class SoundEngine {
-  private synth: Tone.PolySynth | null = null;
-  private reverb: Tone.Reverb | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private Tone: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private synth: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private reverb: any = null;
   private sustainedNotes = new Set<string>();
   /** 引用计数：同一音高可被多个音符同时按住，只有计数归零才释放 */
   private heldNotes = new Map<string, number>();
@@ -52,22 +55,26 @@ export class SoundEngine {
     if (this.initialized) {
       // 已初始化，但音频上下文可能被浏览器自动播放策略暂停（尤其在首次 init
       // 发生在非用户手势时）。每次调用都尝试恢复，确保 Transport 能正常推进。
-      const ctx = Tone.getContext();
+      const ctx = this.Tone.getContext();
       if (ctx.state !== "running") {
         await ctx.resume();
       }
       return;
     }
-    await Tone.start();
+
+    // Dynamic import to defer Tone.js loading until user interaction
+    this.Tone = await import("tone");
+
+    await this.Tone.start();
 
     const c = config ?? {};
     this.volume = c.volume ?? DEFAULT_VOLUME;
     this.sustain = c.sustain ?? false;
     this.velocitySensitivity = c.velocitySensitivity ?? true;
 
-    Tone.Destination.volume.value = Tone.gainToDb(this.volume);
+    this.Tone.Destination.volume.value = this.Tone.gainToDb(this.volume);
 
-    this.reverb = new Tone.Reverb({
+    this.reverb = new this.Tone.Reverb({
       decay: c.reverbDecay ?? DEFAULT_REVERB_DECAY,
       wet: c.reverbAmount ?? DEFAULT_REVERB_WET,
     });
@@ -86,7 +93,7 @@ export class SoundEngine {
       release: 0.5,
     };
 
-    this.synth = new Tone.PolySynth(Tone.FMSynth, {
+    this.synth = new this.Tone.PolySynth(this.Tone.FMSynth, {
       harmonicity: c.harmonicity ?? 2,
       modulationIndex: c.modulationIndex ?? 10,
       oscillator: { type: c.oscillatorType ?? "triangle" } as Record<
@@ -113,24 +120,21 @@ export class SoundEngine {
     if (this.reverb) {
       this.reverb.wet.value = config.reverbAmount;
       // reverbDecay 需要重新 generate，仅在差异较大时执行
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const currentDecay = (this.reverb as any).decay as number;
+      const currentDecay = this.reverb.decay as number;
       if (Math.abs(currentDecay - config.reverbDecay) > 0.5) {
-        (this.reverb as unknown as Record<string, unknown>).decay =
-          config.reverbDecay;
+        this.reverb.decay = config.reverbDecay;
         this.reverb.generate();
       }
     }
 
     if (this.synth) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.synth.set({
         harmonicity: config.harmonicity,
         modulationIndex: config.modulationIndex,
-        oscillator: { type: config.oscillatorType as Tone.ToneOscillatorType },
+        oscillator: { type: config.oscillatorType },
         envelope: toEnvelopeConfig(config.envelope),
         modulationEnvelope: toEnvelopeConfig(config.modulationEnvelope),
-      } as any);
+      });
     }
   }
 
@@ -183,8 +187,8 @@ export class SoundEngine {
 
   setVolume(v: number): void {
     this.volume = v;
-    if (this.initialized) {
-      Tone.Destination.volume.value = Tone.gainToDb(v);
+    if (this.initialized && this.Tone) {
+      this.Tone.Destination.volume.value = this.Tone.gainToDb(v);
     }
   }
 
@@ -205,6 +209,7 @@ export class SoundEngine {
     this.reverb?.dispose();
     this.synth = null;
     this.reverb = null;
+    this.Tone = null;
     this.initialized = false;
   }
 }

@@ -83,6 +83,7 @@ export class NoteBlockSystem {
    * @param settings - 瀑布钢琴的全局配置
    */
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+    if (!canvas) return;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.settings = settings;
@@ -396,7 +397,9 @@ export class NoteBlockSystem {
 
     // 检测向后跳转或循环：transport 时间回退超过 0.1 秒
     if (t < this.lastTransportTime - 0.1) {
-      console.log(`[NBS] Seek backward detected: ${this.lastTransportTime.toFixed(2)}s → ${t.toFixed(2)}s, resetting state`);
+      console.log(
+        `[NBS] Seek backward detected: ${this.lastTransportTime.toFixed(2)}s → ${t.toFixed(2)}s, resetting state`,
+      );
       this.synthesiaCursor = 0;
       this.synthesiaBlockMap.clear();
       this.triggeredSet.clear();
@@ -427,9 +430,9 @@ export class NoteBlockSystem {
     while (
       this.synthesiaCursor < len &&
       t -
-      (notes[this.synthesiaCursor].time +
-        notes[this.synthesiaCursor].duration) >
-      lookAhead + notes[this.synthesiaCursor].duration + 1
+        (notes[this.synthesiaCursor].time +
+          notes[this.synthesiaCursor].duration) >
+        lookAhead + notes[this.synthesiaCursor].duration + 1
     ) {
       this.synthesiaCursor++;
     }
@@ -460,7 +463,9 @@ export class NoteBlockSystem {
       if (!this.triggeredNoteKeys.has(key) && timeUntilHit <= 0) {
         this.triggeredNoteKeys.add(key);
         this.addActiveMidi(note.midi);
-        console.log(`[NBS] Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`);
+        console.log(
+          `[NBS] Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
+        );
         this.callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
         frameTriggered++;
       }
@@ -506,8 +511,15 @@ export class NoteBlockSystem {
 
     // 每秒输出一次帧摘要（避免日志爆炸）
     if (Math.floor(t) !== Math.floor(prevTime)) {
-      if (frameCreated > 0 || frameTriggered > 0 || frameSkipped > 0 || frameAlreadyTriggered > 0) {
-        console.log(`[NBS] t=${t.toFixed(2)}s active=${this.active.length} created=${frameCreated} triggered=${frameTriggered} skipped=${frameSkipped} reuse-skip=${frameAlreadyTriggered} triggeredKeys=${this.triggeredNoteKeys.size} midiActive=${this.activeMidiCount.size}`);
+      if (
+        frameCreated > 0 ||
+        frameTriggered > 0 ||
+        frameSkipped > 0 ||
+        frameAlreadyTriggered > 0
+      ) {
+        console.log(
+          `[NBS] t=${t.toFixed(2)}s active=${this.active.length} created=${frameCreated} triggered=${frameTriggered} skipped=${frameSkipped} reuse-skip=${frameAlreadyTriggered} triggeredKeys=${this.triggeredNoteKeys.size} midiActive=${this.activeMidiCount.size}`,
+        );
       }
     }
 

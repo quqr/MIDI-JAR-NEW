@@ -126,11 +126,11 @@
                   <ChordName :chord="chord" :notation="index" />
                 </div>
                 <button
-                  class="btn btn-sm btn-ghost btn-circle"
+                  class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom"
                   :class="
                     isPreferred(index) || isDefault(index) ? 'text-warning' : ''
                   "
-                  :title="
+                  :data-tip="
                     isPreferred(index)
                       ? t('chordDictionary.unsetAsPreferredAlias', { alias })
                       : t('chordDictionary.setAsPreferredAlias', { alias })

@@ -20,6 +20,7 @@ export class BackgroundRenderer {
    * @param settings - 瀑布流钢琴的渲染配置
    */
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+    if (!canvas) return;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.settings = settings;

@@ -52,6 +52,7 @@ export class KeyboardRenderer {
    * @param settings - WaterfallPiano 全局配置
    */
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+    if (!canvas) return;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.settings = settings;

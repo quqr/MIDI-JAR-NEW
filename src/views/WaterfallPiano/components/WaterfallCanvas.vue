@@ -37,6 +37,7 @@ let engine: WaterfallEngine | null = null;
 let soundEngine: SoundEngine | null = null;
 let resizeObserver: ResizeObserver | null = null;
 const heldKeys = new Set<string>();
+let audioInitialized = false;
 
 /**
  * 将电脑键盘按键映射为 MIDI 音符号
@@ -66,6 +67,15 @@ function onKeyDown(e: KeyboardEvent): void {
   const key = e.key.toLowerCase();
   if (heldKeys.has(key)) return;
   heldKeys.add(key);
+
+  // Initialize audio on first user interaction (user gesture)
+  if (!audioInitialized && soundEngine) {
+    audioInitialized = true;
+    soundEngine.init(props.settings.sound).catch(() => {
+      audioInitialized = false;
+    });
+  }
+
   engine?.triggerNoteOn(midi, 90);
   emit("noteOn", midi, 90);
 }
@@ -106,11 +116,8 @@ onMounted(async () => {
   }
 
   soundEngine = new SoundEngine();
-  try {
-    await soundEngine.init(props.settings.sound);
-  } catch {
-    // 浏览器自动播放策略可能阻止；首次交互时重试
-  }
+  // AudioContext initialization deferred to first user interaction (keyboard press)
+  // to comply with browser autoplay policy
 
   engine = new WaterfallEngine();
   engine.init(
@@ -192,6 +199,7 @@ defineExpose({
     if (soundEngine) {
       try {
         await soundEngine.init();
+        audioInitialized = true;
       } catch {
         // ignore
       }

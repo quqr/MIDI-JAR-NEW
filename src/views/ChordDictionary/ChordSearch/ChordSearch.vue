@@ -20,7 +20,8 @@
       />
       <button
         v-if="search"
-        class="btn btn-xs btn-ghost btn-circle absolute right-1 top-1/2 -translate-y-1/2"
+        class="btn btn-xs btn-ghost btn-circle absolute right-1 top-1/2 -translate-y-1/2 tooltip tooltip-bottom"
+        :data-tip="t('common.clear')"
         tabindex="-1"
         @click="clearSearch"
       >
@@ -120,7 +121,8 @@
             />
             <button
               v-if="search"
-              class="btn btn-xs btn-ghost btn-circle absolute right-1 top-1/2 -translate-y-1/2"
+              class="btn btn-xs btn-ghost btn-circle absolute right-1 top-1/2 -translate-y-1/2 tooltip tooltip-bottom"
+              :data-tip="t('common.clear')"
               @click="search = ''"
             >
               <Icon name="x" class="w-3 h-3" :size="12" />
