@@ -393,7 +393,6 @@ export class WaterfallEngine {
    * 启动 rAF 主循环：每帧推进播放、渲染各子系统、降帧更新流体并叠加持续 splat
    */
   private startLoop(): void {
-
     this.lastTime = performance.now();
     let fluidFrameCount = 0;
     const FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
@@ -480,7 +479,11 @@ export class WaterfallEngine {
             }
             // 尾焰：从方块底部向命中线方向喷射小 splat
             // dy < 0 表示在 WebGL 坐标中向下（朝向键盘 / 命中线）
-            this.fluid.splat(pos.normX, pos.normY, 0, -20, { r: rgb.r * 0.3, g: rgb.g * 0.3, b: rgb.b * 0.3 });
+            this.fluid.splat(pos.normX, pos.normY, 0, -20, {
+              r: rgb.r * 0.3,
+              g: rgb.g * 0.3,
+              b: rgb.b * 0.3,
+            });
           }
         }
       }

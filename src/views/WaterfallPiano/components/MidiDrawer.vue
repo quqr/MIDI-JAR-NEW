@@ -18,7 +18,11 @@
             <h2 class="text-lg font-bold">
               {{ t("WaterfallPiano.midiDrawer.title") }}
             </h2>
-            <button class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom" data-tip="关闭" @click="close">
+            <button
+              class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom"
+              data-tip="关闭"
+              @click="close"
+            >
               <Icon name="x" :size="16" />
             </button>
           </div>

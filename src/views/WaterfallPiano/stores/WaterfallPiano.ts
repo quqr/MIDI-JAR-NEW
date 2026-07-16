@@ -161,7 +161,7 @@ function loadSettings(): WaterfallPianoSettings {
         envelope: mergeSection(
           defaultWaterfallSettings.sound.envelope,
           (stored.sound as Record<string, unknown> | undefined)?.envelope as
-          Partial<SynthEnvelopeConfig> | undefined,
+            Partial<SynthEnvelopeConfig> | undefined,
         ),
         modulationEnvelope: mergeSection(
           defaultWaterfallSettings.sound.modulationEnvelope,

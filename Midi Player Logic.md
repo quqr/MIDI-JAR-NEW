@@ -43,12 +43,12 @@ MIDI 播放涉及 4 个核心模块，按层级从上到下：
 
 ```typescript
 interface ScheduledNote {
-  midi: number;        // MIDI 音符号 (0-127)
-  velocity: number;    // 力度 (0-127)
-  time: number;        // 命中时间（秒）
-  duration: number;    // 持续时间（秒）
-  hand: "left" | "right" | "unknown";  // 左右手
-  trackIndex: number;  // 轨道索引
+  midi: number; // MIDI 音符号 (0-127)
+  velocity: number; // 力度 (0-127)
+  time: number; // 命中时间（秒）
+  duration: number; // 持续时间（秒）
+  hand: "left" | "right" | "unknown"; // 左右手
+  trackIndex: number; // 轨道索引
 }
 ```
 
@@ -348,14 +348,14 @@ release(b: NoteBlock): void {
 
 ## 9. Realtime 模式 vs Synthesia 模式
 
-| 特性 | Realtime | Synthesia |
-|------|----------|-----------|
-| 方块方向 | 从底部向上生长 | 从顶部向下跌落 |
-| 触发时机 | 用户按下键盘/点击 | transportTime 到达 note.time |
-| 方块来源 | `playRealtimeNote()` | `updateSynthesia()` 自动创建 |
-| 释放方式 | `releaseRealtimeNote()` → 方块向上滑出 | 方块自动跌出屏幕底部 |
-| 音源 | 外部 MIDI 输入 / 键盘点击 | MidiFilePlayer 驱动 |
-| 命中线 | 方块顶部触碰 | 方块底部触碰 |
+| 特性     | Realtime                               | Synthesia                    |
+| -------- | -------------------------------------- | ---------------------------- |
+| 方块方向 | 从底部向上生长                         | 从顶部向下跌落               |
+| 触发时机 | 用户按下键盘/点击                      | transportTime 到达 note.time |
+| 方块来源 | `playRealtimeNote()`                   | `updateSynthesia()` 自动创建 |
+| 释放方式 | `releaseRealtimeNote()` → 方块向上滑出 | 方块自动跌出屏幕底部         |
+| 音源     | 外部 MIDI 输入 / 键盘点击              | MidiFilePlayer 驱动          |
+| 命中线   | 方块顶部触碰                           | 方块底部触碰                 |
 
 ---
 
@@ -370,12 +370,12 @@ release(b: NoteBlock): void {
 [NBS] Seek backward detected: 5.00s → 1.00s             // Seek 事件
 ```
 
-| 字段 | 含义 |
-|------|------|
-| `active` | 当前活跃方块数 |
-| `created` | 本帧新建方块数 |
-| `triggered` | 本帧触发回调数 |
-| `skipped` | 被 endOffset > lookAhead 跳过的音符数 |
-| `reuse-skip` | 因 triggeredNoteKeys 命中而跳过的回收方块数 |
-| `triggeredKeys` | 累计已触发音符 key 总数 |
-| `midiActive` | 当前活跃 MIDI 音符数（引用计数 > 0） |
+| 字段            | 含义                                        |
+| --------------- | ------------------------------------------- |
+| `active`        | 当前活跃方块数                              |
+| `created`       | 本帧新建方块数                              |
+| `triggered`     | 本帧触发回调数                              |
+| `skipped`       | 被 endOffset > lookAhead 跳过的音符数       |
+| `reuse-skip`    | 因 triggeredNoteKeys 命中而跳过的回收方块数 |
+| `triggeredKeys` | 累计已触发音符 key 总数                     |
+| `midiActive`    | 当前活跃 MIDI 音符数（引用计数 > 0）        |
