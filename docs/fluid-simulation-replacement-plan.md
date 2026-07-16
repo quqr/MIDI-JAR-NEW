@@ -364,7 +364,7 @@ fluidParams: Partial<FluidSimulationConfig>; // 高级模式参数覆盖
 | `WaterfallPiano/engine/FluidRenderer.ts`                     | **删除** | Phase 5: 旧实现               |
 | `WaterfallPiano/types.ts`                                    | **修改** | Phase 4: 扩展配置类型         |
 | `Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue` | **修改** | Phase 4: 设置面板             |
-| `stores/waterfallPiano.ts`                                   | **修改** | Phase 4: 默认值               |
+| `stores/WaterfallPiano.ts`                                   | **修改** | Phase 4: 默认值               |
 
 ## 依赖关系
 

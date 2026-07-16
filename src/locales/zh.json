@@ -33,7 +33,7 @@
     "routing": "路由",
     "debugger": "调试器",
     "advancedDebug": "高级调试",
-    "waterfallPiano": "瀑布流钢琴"
+    "WaterfallPiano": "瀑布流钢琴"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -49,7 +49,7 @@
       "chordDictionary": "查询和弦结构和排列",
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息",
-      "waterfallPiano": "瀑布流式钢琴演奏与可视化"
+      "WaterfallPiano": "瀑布流式钢琴演奏与可视化"
     }
   },
   "layout": {
@@ -169,7 +169,7 @@
     "debugger": "调试器",
     "advancedDebug": "高级调试",
     "cursor": "光标",
-    "waterfallPiano": "瀑布流钢琴",
+    "WaterfallPiano": "瀑布流钢琴",
     "resetCurrent": "重置当前",
     "resetAll": "全部重置",
     "resetConfirmTitle": "确认重置",
@@ -501,7 +501,7 @@
     "reportBug": "报告Bug",
     "openApp": "打开应用"
   },
-  "waterfallPiano": {
+  "WaterfallPiano": {
     "title": "瀑布流钢琴",
     "settings": "瀑布流钢琴设置",
     "mode": {

@@ -22,13 +22,13 @@
             <Icon name="arrow-left" :size="18" aria-hidden="true" />
           </button>
           <span class="text-white/80 font-semibold drop-shadow">
-            {{ t("waterfallPiano.title") }}
+            {{ t("WaterfallPiano.title") }}
           </span>
         </div>
         <div class="flex items-center gap-1 pointer-events-auto">
           <button
             class="btn btn-sm btn-circle btn-ghost text-white"
-            :aria-label="t('waterfallPiano.midiDrawer.title')"
+            :aria-label="t('WaterfallPiano.midiDrawer.title')"
             @click="midiDrawerOpen = true"
           >
             <Icon name="music" :size="18" aria-hidden="true" />
@@ -87,7 +87,7 @@ import WaterfallCanvas from "./components/WaterfallCanvas.vue";
 import PlaybackPanel from "./components/PlaybackPanel.vue";
 import MidiDrawer from "./components/MidiDrawer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
-import { useWaterfallPianoStore } from "./stores/waterfallPiano";
+import { useWaterfallPianoStore } from "./stores/WaterfallPiano";
 import { MidiFilePlayer } from "./midi/MidiFilePlayer";
 import { Recorder } from "./audio/Recorder";
 import { useRealtimeMidi } from "./composables/useRealtimeMidi";
@@ -289,6 +289,7 @@ onMounted(() => {
       engineRef.value?.noteBlockSystemRef.setTransportTime(current);
     },
     onScheduledNotesReady: (notes) => {
+      console.log("[MIDI] Scheduled notes ready:", notes.length);
       engineRef.value?.noteBlockSystemRef.scheduleSynthesiaNotes(notes);
     },
     onTracksReady: (t) => {

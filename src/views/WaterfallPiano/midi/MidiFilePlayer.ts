@@ -220,6 +220,7 @@ export class MidiFilePlayer {
   /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
   tick(): void {
     const current = this.getCurrentTime();
+
     for (let i = 0; i < this.notes.length; i++) {
       if (this.triggeredIndices.has(i)) continue;
       const note = this.notes[i];

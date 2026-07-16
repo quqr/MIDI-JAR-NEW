@@ -116,14 +116,14 @@ import { useI18n } from "vue-i18n";
 import { useRoute, RouterLink } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
-import { useWaterfallPianoStore } from "@/views/waterfallpiano/stores/waterfallPiano";
+import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const route = useRoute();
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
 const themeStore = useThemeStore();
-const waterfallPianoStore = useWaterfallPianoStore();
+const WaterfallPianoStore = useWaterfallPianoStore();
 
 const drawerOpen = ref(false);
 const resetDialog = ref<HTMLDialogElement>();
@@ -136,7 +136,7 @@ const routeToSettingKey: Record<string, string> = {
   "/settings/cursor": "cursor",
   "/settings/notation": "notation",
   "/settings/chord-dictionary": "chordDictionary",
-  "/settings/waterfall-piano": "waterfallPiano",
+  "/settings/waterfall-piano": "WaterfallPiano",
   "/settings/advanced-debug": "advancedDebug",
 };
 
@@ -158,7 +158,7 @@ const currentSectionLabel = computed(() => {
     notation: t("settings.musicNotation"),
     chordDictionary: t("settings.chordDictionary"),
     chordDisplay: t("settings.chordDisplay"),
-    waterfallPiano: t("settings.waterfallPiano"),
+    WaterfallPiano: t("settings.WaterfallPiano"),
     advancedDebug: t("settings.advancedDebug"),
   };
   return labelMap[key] || key;
@@ -196,13 +196,13 @@ function closeDialog() {
 function confirmReset() {
   if (resetTarget.value === "all") {
     settingsStore.resetSettings();
-    waterfallPianoStore.resetSettings();
+    WaterfallPianoStore.resetSettings();
     themeStore.setTheme("light");
   } else if (
-    currentSettingKey.value === "waterfallPiano" ||
+    currentSettingKey.value === "WaterfallPiano" ||
     currentSettingKey.value === "advancedDebug"
   ) {
-    waterfallPianoStore.resetSettings();
+    WaterfallPianoStore.resetSettings();
   } else if (currentSettingKey.value) {
     settingsStore.resetSetting(currentSettingKey.value as any);
   }

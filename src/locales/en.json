@@ -33,7 +33,7 @@
     "routing": "Routing",
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
-    "waterfallPiano": "Waterfall Piano"
+    "WaterfallPiano": "Waterfall Piano"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -49,7 +49,7 @@
       "chordDictionary": "Look up chord structures and voicings",
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
-      "waterfallPiano": "Waterfall-style piano performance and visualization"
+      "WaterfallPiano": "Waterfall-style piano performance and visualization"
     }
   },
   "layout": {
@@ -169,7 +169,7 @@
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
     "cursor": "Cursor",
-    "waterfallPiano": "Waterfall Piano",
+    "WaterfallPiano": "Waterfall Piano",
     "resetCurrent": "Reset Section",
     "resetAll": "Reset All",
     "resetConfirmTitle": "Confirm Reset",
@@ -501,7 +501,7 @@
     "reportBug": "Report Bug",
     "openApp": "Open App"
   },
-  "waterfallPiano": {
+  "WaterfallPiano": {
     "title": "Waterfall Piano",
     "settings": "Waterfall Piano Settings",
     "mode": {

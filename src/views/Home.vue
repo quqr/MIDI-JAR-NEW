@@ -24,8 +24,8 @@
           <ModuleCard
             to="/waterfall-piano"
             settings-to="/settings/waterfall-piano"
-            :title="$t('nav.waterfallPiano')"
-            :description="$t('home.moduleDescriptions.waterfallPiano')"
+            :title="$t('nav.WaterfallPiano')"
+            :description="$t('home.moduleDescriptions.WaterfallPiano')"
             icon="mdi-piano"
           />
           <ModuleCard

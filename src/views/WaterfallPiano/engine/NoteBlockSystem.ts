@@ -67,6 +67,10 @@ export class NoteBlockSystem {
   private transportPlaying = false;
   private triggeredSet = new Set<number>();
   private lastTransportTime = 0;
+  /** 记录已触发过的音符 key，防止方块回收后重建时重复触发回调 */
+  private triggeredNoteKeys = new Set<string>();
+  /** MIDI 音符的引用计数，用于在多个同音高音符并发时正确清理 triggeredSet */
+  private activeMidiCount = new Map<number, number>();
   callbacks: NoteBlockCallbacks = {};
 
   /**
@@ -120,6 +124,8 @@ export class NoteBlockSystem {
     this.active = [];
     this.realtimeHeld.clear();
     this.triggeredSet.clear();
+    this.triggeredNoteKeys.clear();
+    this.activeMidiCount.clear();
     this.synthesiaNotes = [];
     this.synthesiaCursor = 0;
     this.synthesiaBlockMap.clear();
@@ -139,6 +145,8 @@ export class NoteBlockSystem {
     this.synthesiaCursor = 0;
     this.synthesiaBlockMap.clear();
     this.triggeredSet.clear();
+    this.triggeredNoteKeys.clear();
+    this.activeMidiCount.clear();
     this.active = []; // 清空活跃方块，确保重播时状态干净
   }
 
@@ -250,6 +258,24 @@ export class NoteBlockSystem {
     this.realtimeHeld.delete(midi);
   }
 
+  /** 引用计数：将 MIDI 音符加入 triggeredSet */
+  private addActiveMidi(midi: number): void {
+    const count = this.activeMidiCount.get(midi) ?? 0;
+    this.activeMidiCount.set(midi, count + 1);
+    this.triggeredSet.add(midi);
+  }
+
+  /** 引用计数：减少 MIDI 音符计数，归零时从 triggeredSet 移除 */
+  private removeActiveMidi(midi: number): void {
+    const count = this.activeMidiCount.get(midi) ?? 0;
+    if (count <= 1) {
+      this.activeMidiCount.delete(midi);
+      this.triggeredSet.delete(midi);
+    } else {
+      this.activeMidiCount.set(midi, count - 1);
+    }
+  }
+
   /** 从对象池中获取一个 note block，池为空时创建新实例 */
   private acquire(): NoteBlock {
     const pooled = this.pool.pop();
@@ -332,12 +358,16 @@ export class NoteBlockSystem {
     const lookAhead = this.settings ? this.settings.particles.lookAhead : 3;
     const notes = this.synthesiaNotes;
     const len = notes.length;
+    const prevTime = this.lastTransportTime;
 
     // 检测向后跳转或循环：transport 时间回退超过 0.1 秒
     if (t < this.lastTransportTime - 0.1) {
+      console.log(`[NBS] Seek backward detected: ${this.lastTransportTime.toFixed(2)}s → ${t.toFixed(2)}s, resetting state`);
       this.synthesiaCursor = 0;
       this.synthesiaBlockMap.clear();
       this.triggeredSet.clear();
+      this.triggeredNoteKeys.clear();
+      this.activeMidiCount.clear();
       // 释放所有 synthesia 方块（trackIndex >= 0），保留 realtime 方块
       for (let i = this.active.length - 1; i >= 0; i--) {
         const b = this.active[i];
@@ -362,12 +392,18 @@ export class NoteBlockSystem {
     while (
       this.synthesiaCursor < len &&
       t -
-        (notes[this.synthesiaCursor].time +
-          notes[this.synthesiaCursor].duration) >
-        lookAhead + notes[this.synthesiaCursor].duration + 1
+      (notes[this.synthesiaCursor].time +
+        notes[this.synthesiaCursor].duration) >
+      lookAhead + notes[this.synthesiaCursor].duration + 1
     ) {
       this.synthesiaCursor++;
     }
+
+    // 每帧统计（用于诊断）
+    let frameCreated = 0;
+    let frameTriggered = 0;
+    let frameSkipped = 0;
+    let frameAlreadyTriggered = 0;
 
     const startIdx = this.synthesiaCursor;
     for (let ni = startIdx; ni < len; ni++) {
@@ -375,14 +411,24 @@ export class NoteBlockSystem {
       const timeUntilHit = note.time - t;
       if (timeUntilHit > lookAhead) break; // sorted by time, no need to scan further
 
-      const maxEndOffset = lookAhead + note.duration + 1;
       const endOffset = t - (note.time + note.duration);
-      if (endOffset > maxEndOffset) continue;
+
+      // 跳过已经结束超过 lookAhead 时间的音符
+      if (endOffset > lookAhead) {
+        frameSkipped++;
+        continue;
+      }
 
       const key = this.noteKey(note);
       let block = this.synthesiaBlockMap.get(key);
       if (!block || !block.active) {
-        // 方块不存在或已回收到池中，需要重新创建
+        // 方块不存在或已回收到池中
+        // 如果该音符之前已经触发过回调，不再重新创建方块和触发回调（防止回收-重建循环）
+        if (this.triggeredNoteKeys.has(key)) {
+          frameAlreadyTriggered++;
+          continue;
+        }
+        // 首次遇到此音符，创建新方块
         block = this.acquire();
         block.midi = note.midi;
         block.velocity = note.velocity;
@@ -397,7 +443,9 @@ export class NoteBlockSystem {
         block.active = true;
         this.active.push(block);
         this.synthesiaBlockMap.set(key, block);
+        frameCreated++;
       }
+
       // synthesia 下落模式：方块从屏幕顶部下落到命中线
       // b.y = 方块底部位置；timeUntilHit > 0 时方块在命中线上方
       block.y = this.height - timeUntilHit * pps;
@@ -405,23 +453,34 @@ export class NoteBlockSystem {
 
       if (!block.triggered && timeUntilHit <= 0) {
         block.triggered = true;
-        this.triggeredSet.add(note.midi);
+        this.triggeredNoteKeys.add(key);
+        this.addActiveMidi(note.midi);
+        console.log(`[NBS] Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s, key=${key}`);
         this.callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
+        frameTriggered++;
       }
       if (!block.ended && t >= note.time + note.duration) {
         block.ended = true;
+        this.removeActiveMidi(note.midi);
         this.callbacks.onNoteEnd?.(note.midi);
+      }
+    }
+
+    // 每秒输出一次帧摘要（避免日志爆炸）
+    if (Math.floor(t) !== Math.floor(prevTime)) {
+      if (frameCreated > 0 || frameTriggered > 0 || frameSkipped > 0 || frameAlreadyTriggered > 0) {
+        console.log(`[NBS] t=${t.toFixed(2)}s active=${this.active.length} created=${frameCreated} triggered=${frameTriggered} skipped=${frameSkipped} reuse-skip=${frameAlreadyTriggered} triggeredKeys=${this.triggeredNoteKeys.size} midiActive=${this.activeMidiCount.size}`);
       }
     }
 
     for (let i = this.active.length - 1; i >= 0; i--) {
       const b = this.active[i];
       if (b.trackIndex < 0) continue;
-      // Block slides off screen: remove only when the top of the block is below the canvas bottom
+      // Block slides off screen: remove only when the block is far enough below the canvas bottom
       const blockTop = b.y - b.height;
-      if (blockTop > this.height) {
+      const recycleThreshold = this.height * 0.5; // 方块至少要超过屏幕底部 50% 才回收
+      if (blockTop > this.height + recycleThreshold) {
         this.active.splice(i, 1);
-        // 使用 startTime 而非 time（NoteBlock 没有 time 属性）
         this.synthesiaBlockMap.delete(
           `${b.trackIndex}-${b.midi}-${b.startTime}`,
         );
@@ -430,7 +489,7 @@ export class NoteBlockSystem {
     }
   }
 
-  /** 根据配置中的速度参数计算每秒下落像素数 */
+  /** 根据配置中的速度参数计算每秒下落像素数（已修复 MIDI 播放问题）*/
   private pixelsPerSecond(): number {
     if (!this.settings) return 200;
     return this.settings.particles.speed * 100;

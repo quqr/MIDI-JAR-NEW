@@ -60,7 +60,7 @@ export const navItems: GroupedNavItem[] = [
   {
     icon: "piano",
     to: "/settings/waterfall-piano",
-    labelKey: "settings.waterfallPiano",
+    labelKey: "settings.WaterfallPiano",
     group: "display",
   },
   {

@@ -546,8 +546,8 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
-import { useWaterfallPianoStore } from "@/views/waterfallpiano/stores/waterfallPiano";
-import { defaultWaterfallSettings } from "@/views/waterfallpiano/constants";
+import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";
+import { defaultWaterfallSettings } from "@/views/WaterfallPiano/constants";
 import { defaultNotationSettings } from "@/types";
 import {
   mergeDisplayConfig,

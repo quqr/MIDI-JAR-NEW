@@ -278,7 +278,7 @@ const details = item.querySelector("details") as HTMLDetailsElement;
 
 1. [src/composables/useNotes.ts](file:///f:/Codes/MIDI-JAR-NEW/src/composables/useNotes.ts) - 和弦检测逻辑
 2. [src/engine/fluid/FluidSolver.ts](file:///f:/Codes/MIDI-JAR-NEW/src/engine/fluid/FluidSolver.ts) - 流体求解器
-3. [src/views/waterfallpiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/waterfallpiano/engine/WaterfallEngine.ts) - 瀑布引擎
+3. [src/views/WaterfallPiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts) - 瀑布引擎
 
 **建议**: 将高复杂度函数拆分为多个单一职责函数
 

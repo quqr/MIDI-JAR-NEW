@@ -6,7 +6,7 @@
         class="fixed top-0 right-0 bottom-0 z-50 flex"
         role="dialog"
         aria-modal="false"
-        :aria-label="t('waterfallPiano.midiDrawer.title')"
+        :aria-label="t('WaterfallPiano.midiDrawer.title')"
       >
         <div
           class="card bg-base-100/90 backdrop-blur-md shadow-xl border-l border-base-200/30 w-80 max-w-[calc(100vw-1rem)] max-h-full overflow-y-auto rounded-none"
@@ -16,7 +16,7 @@
             class="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-base-200/30 bg-base-100/90 backdrop-blur-md"
           >
             <h2 class="text-lg font-bold">
-              {{ t("waterfallPiano.midiDrawer.title") }}
+              {{ t("WaterfallPiano.midiDrawer.title") }}
             </h2>
             <button class="btn btn-sm btn-ghost btn-circle" @click="close">
               <Icon name="x" :size="16" />
@@ -28,7 +28,7 @@
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">{{
-                  t("waterfallPiano.midiDrawer.mode")
+                  t("WaterfallPiano.midiDrawer.mode")
                 }}</span>
               </label>
               <div class="flex gap-2">
@@ -37,14 +37,14 @@
                   :class="mode === 'realtime' ? 'btn-primary' : 'btn-ghost'"
                   @click="$emit('update:mode', 'realtime')"
                 >
-                  {{ t("waterfallPiano.midiDrawer.realtime") }}
+                  {{ t("WaterfallPiano.midiDrawer.realtime") }}
                 </button>
                 <button
                   class="btn btn-sm flex-1"
                   :class="mode === 'synthesia' ? 'btn-primary' : 'btn-ghost'"
                   @click="$emit('update:mode', 'synthesia')"
                 >
-                  {{ t("waterfallPiano.midiDrawer.synthesia") }}
+                  {{ t("WaterfallPiano.midiDrawer.synthesia") }}
                 </button>
               </div>
             </div>
@@ -53,12 +53,12 @@
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">{{
-                  t("waterfallPiano.midiDrawer.midiFile")
+                  t("WaterfallPiano.midiDrawer.midiFile")
                 }}</span>
               </label>
               <label class="btn btn-sm btn-outline w-full">
                 <Icon name="upload" :size="14" />
-                {{ t("waterfallPiano.midiDrawer.loadFile") }}
+                {{ t("WaterfallPiano.midiDrawer.loadFile") }}
                 <input
                   type="file"
                   accept=".mid,.midi"
@@ -75,7 +75,7 @@
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">{{
-                  t("waterfallPiano.midiDrawer.playback")
+                  t("WaterfallPiano.midiDrawer.playback")
                 }}</span>
               </label>
               <div class="flex gap-2">

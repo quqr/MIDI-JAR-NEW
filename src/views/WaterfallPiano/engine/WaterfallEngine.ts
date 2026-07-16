@@ -371,12 +371,12 @@ export class WaterfallEngine {
     // 力度与 hitExplosionRadius 缩放联动
     const spread = this.settings.particles.hitExplosionRadius ?? 0.03;
     const force = spread * 5000;
-    this.fluid.splat(x - spread, hitLineY, -force * 0.6, force, {
+    this.fluid.splat(x - spread, -hitLineY, -force * 0.6, force, {
       r: rgb.r * 0.7,
       g: rgb.g * 0.7,
       b: rgb.b * 0.7,
     });
-    this.fluid.splat(x + spread, hitLineY, force * 0.6, force, {
+    this.fluid.splat(x + spread, -hitLineY, force * 0.6, force, {
       r: rgb.r * 0.7,
       g: rgb.g * 0.7,
       b: rgb.b * 0.7,
@@ -387,6 +387,7 @@ export class WaterfallEngine {
    * 启动 rAF 主循环：每帧推进播放、渲染各子系统、降帧更新流体并叠加持续 splat
    */
   private startLoop(): void {
+
     this.lastTime = performance.now();
     let fluidFrameCount = 0;
     const FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
@@ -442,7 +443,7 @@ export class WaterfallEngine {
               );
               rgb = hexToRgbNorm(colorHex);
             }
-            // 持续触发：从键盘位置向上喷射弱 splat（dy > 0 在 WebGL 中向上）
+            //持续触发：从键盘位置向上喷射弱 splat（dy > 0 在 WebGL 中向上）
             this.fluid.splat(x, y, 0, 60, {
               r: rgb.r * 0.4,
               g: rgb.g * 0.4,
@@ -472,8 +473,8 @@ export class WaterfallEngine {
               rgb = hexToRgbNorm(colorHex);
             }
             // 尾焰：从方块底部向命中线方向喷射小 splat
-            // dy < 0 表示在 WebGL 坐标中向下（朝向键盘/命中线）
-            this.fluid.splat(pos.normX, pos.normY, 0, -25, { r: rgb.r * 0.3, g: rgb.g * 0.3, b: rgb.b * 0.3 });
+            // dy < 0 表示在 WebGL 坐标中向下（朝向键盘 / 命中线）
+            this.fluid.splat(pos.normX, pos.normY, 0, -20, { r: rgb.r * 0.3, g: rgb.g * 0.3, b: rgb.b * 0.3 });
           }
         }
       }

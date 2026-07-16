@@ -46,8 +46,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: "waterfall-piano",
         name: "waterfall-piano",
-        component: () => import("@/views/waterfallpiano/WaterfallPiano.vue"),
-        meta: { title: "nav.waterfallPiano", icon: "piano" },
+        component: () => import("@/views/WaterfallPiano/WaterfallPiano.vue"),
+        meta: { title: "nav.WaterfallPiano", icon: "piano" },
       },
       {
         path: "settings",
@@ -128,8 +128,8 @@ const routes: RouteRecordRaw[] = [
             path: "waterfall-piano",
             name: "settings-waterfall-piano",
             component: () =>
-              import("@/views/waterfallpiano/WaterfallPianoSettings.vue"),
-            meta: { title: "settings.waterfallPiano" },
+              import("@/views/WaterfallPiano/WaterfallPianoSettings.vue"),
+            meta: { title: "settings.WaterfallPiano" },
           },
         ],
       },

@@ -1,7 +1,7 @@
 <template>
   <SettingsDrawer
     :model-value="modelValue"
-    :title="t('waterfallPiano.settings')"
+    :title="t('WaterfallPiano.settings')"
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <WaterfallSettingsContent />

@@ -20,6 +20,10 @@ export default defineConfig(() => {
     server: {
       port: 5173,
       strictPort: true,
+      watch: {
+        ignored: ["**/src-tauri/target/**"],
+        usePolling: true,
+      },
     },
     build: {
       sourcemap: isDevEnv,
@@ -50,8 +54,10 @@ export default defineConfig(() => {
       setupFiles: ["./vitest.setup.ts"],
       include: ["src/**/*.test.ts", "src/**/__tests__/**/*.test.ts"],
       exclude: ["node_modules", "dist"],
-      deps: {
-        inline: ["tone"],
+      server: {
+        deps: {
+          inline: ["tone"],
+        },
       },
     },
   };

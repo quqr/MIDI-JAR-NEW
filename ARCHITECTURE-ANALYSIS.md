@@ -74,7 +74,7 @@
    - Store: [src/stores/chordDictionary.ts](file:///f:/Codes/MIDI-JAR-NEW/src/stores/chordDictionary.ts)
 
 4. **瀑布钢琴**
-   - 引擎: [src/views/waterfallpiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/waterfallpiano/engine/WaterfallEngine.ts)
+   - 引擎: [src/views/WaterfallPiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts)
 
 ## 三、improve-codebase-architecture 分析结果
 
@@ -177,7 +177,7 @@ class MockMidiTransport implements MidiTransport { ... }
 
 #### 问题 5: 坐标转换逻辑分散
 
-**位置**: [src/views/waterfallpiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/waterfallpiano/engine/WaterfallEngine.ts)
+**位置**: [src/views/WaterfallPiano/engine/WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts)
 
 **问题**:
 
@@ -197,10 +197,10 @@ class MockMidiTransport implements MidiTransport { ... }
 
 ### 3.2 测试覆盖情况
 
-**测试文件**: 7 个(仅 waterfallpiano 模块)
+**测试文件**: 7 个(仅 WaterfallPiano 模块)
 
 ```
-src/views/waterfallpiano/__tests__/
+src/views/WaterfallPiano/__tests__/
 ├── KeyboardRenderer.test.ts
 ├── MidiFilePlayer.test.ts
 ├── NoteBlockSystem.test.ts
@@ -412,7 +412,7 @@ const details = item.querySelector("details") as HTMLDetailsElement;
 - [src/helpers/object.ts:9](file:///f:/Codes/MIDI-JAR-NEW/src/helpers/object.ts#L9)
 - [src/stores/settings.ts:57](file:///f:/Codes/MIDI-JAR-NEW/src/stores/settings.ts#L57)
 - [src/stores/settings.ts:63](file:///f:/Codes/MIDI-JAR-NEW/src/stores/settings.ts#L63)
-- [src/views/waterfallpiano/**tests**/](file:///f:/Codes/MIDI-JAR-NEW/src/views/waterfallpiano/__tests__) (3 处测试文件)
+- [src/views/WaterfallPiano/**tests**/](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/__tests__) (3 处测试文件)
 
 **建议**:
 

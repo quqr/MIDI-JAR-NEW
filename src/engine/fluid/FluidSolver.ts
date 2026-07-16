@@ -345,32 +345,50 @@ export class FluidSolver {
   splat(x: number, y: number, dx: number, dy: number, color: RGBColor) {
     const gl = this.gl;
     const config = this.config;
+    // 检查 dye 和 velocity 双缓冲是否已初始化
     if (!this.dye || !this.velocity) return;
 
+    // 将输入坐标限制在 [0, 1] 范围内，防止越界
     x = Math.max(0, Math.min(1, x));
     y = Math.max(0, Math.min(1, y));
 
+    // 获取画布宽高比，用于校正 splat 半径（避免非正方形画布上的形变）
     const aspectRatio = this.getCanvasAspectRatio();
+    // 计算 splat 半径，确保最小值避免除零错误
     const radius = Math.max(
-      0.000001,
+      10e-6,
       correctRadius(config.SPLAT_RADIUS, aspectRatio),
     );
 
+    // ========== 第一步：向速度场注入动量 ==========
+    // 绑定 splat shader 程序
     this.splatProgram.bind();
+    // 设置目标纹理为速度场读缓冲区（纹理单元 0）
     gl.uniform1i(
       this.splatProgram.uniforms.uTarget,
       this.velocity.read.attach(0),
     );
+    // 传递画布宽高比，用于在 shader 中校正 splat 形状
     gl.uniform1f(this.splatProgram.uniforms.aspectRatio, aspectRatio);
+    // 设置 splat 中心位置
     gl.uniform2f(this.splatProgram.uniforms.point, x, y);
+    // 设置 splat 颜色（这里作为速度向量 dx, dy 传入，z 分量为 0）
     gl.uniform3f(this.splatProgram.uniforms.color, dx, dy, 0.0);
+    // 设置 splat 影响半径
     gl.uniform1f(this.splatProgram.uniforms.radius, radius);
+    // 执行渲染，输出到速度场写缓冲区
     this.blit(this.velocity.write);
+    // 交换读写缓冲区，使新速度场成为当前状态
     this.velocity.swap();
 
+    // ========== 第二步：向染料场注入颜色 ==========
+    // 设置目标纹理为染料场读缓冲区（纹理单元 0）
     gl.uniform1i(this.splatProgram.uniforms.uTarget, this.dye.read.attach(0));
+    // 设置染料颜色（RGB）
     gl.uniform3f(this.splatProgram.uniforms.color, color.r, color.g, color.b);
+    // 执行渲染，输出到染料场写缓冲区
     this.blit(this.dye.write);
+    // 交换读写缓冲区，使新染料场成为当前状态
     this.dye.swap();
   }
 

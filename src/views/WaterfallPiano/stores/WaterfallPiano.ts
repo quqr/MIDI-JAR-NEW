@@ -161,7 +161,7 @@ function loadSettings(): WaterfallPianoSettings {
         envelope: mergeSection(
           defaultWaterfallSettings.sound.envelope,
           (stored.sound as Record<string, unknown> | undefined)?.envelope as
-            Partial<SynthEnvelopeConfig> | undefined,
+          Partial<SynthEnvelopeConfig> | undefined,
         ),
         modulationEnvelope: mergeSection(
           defaultWaterfallSettings.sound.modulationEnvelope,
@@ -174,7 +174,7 @@ function loadSettings(): WaterfallPianoSettings {
   return { ...defaultWaterfallSettings };
 }
 
-export const useWaterfallPianoStore = defineStore("waterfallPiano", () => {
+export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
   const settings = ref<WaterfallPianoSettings>(loadSettings());
   const recordedNotes = ref<RecordedNote[]>([]);
   const isRecording = ref(false);
