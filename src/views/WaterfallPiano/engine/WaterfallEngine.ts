@@ -130,7 +130,7 @@ export class WaterfallEngine {
    */
   setMode(mode: NoteBlockMode): void {
     if (this.noteBlockSystem.getMode() !== mode) {
-      this.noteBlockSystem.clearNoteBlocks();
+      this.noteBlockSystem.clearVisualBlocks();
     }
     this.noteBlockSystem.setMode(mode);
   }
@@ -303,6 +303,9 @@ export class WaterfallEngine {
    */
   private onSynthesiaTrigger(midi: number, velocity: number): void {
     this.soundEngine?.noteOn(midi, velocity);
+    if (this.noteBlockSystem.getMode() === "realtime") {
+      this.noteBlockSystem.playRealtimeNoteFromMidi(midi, velocity);
+    }
     this.keyboardRenderer.highlightNote(midi);
     this.fluidSplat(midi, velocity);
     // hitExplosion: 在音符X + 命中线Y位置触发爆发式 splat
@@ -317,6 +320,9 @@ export class WaterfallEngine {
    */
   private onSynthesiaEnd(midi: number): void {
     this.soundEngine?.noteOff(midi);
+    if (this.noteBlockSystem.getMode() === "realtime") {
+      this.noteBlockSystem.releaseRealtimeNoteFromMidi(midi);
+    }
     this.keyboardRenderer.clearHighlight(midi);
   }
 

@@ -66,6 +66,8 @@ export type IconName =
   | "git-branch"
   | "alert-circle"
   | "play"
+  | "pause"
+  | "stop"
   | "sparkles"
   | "image"
   | "droplet"

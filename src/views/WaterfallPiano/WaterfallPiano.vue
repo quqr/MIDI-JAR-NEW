@@ -15,7 +15,8 @@
       >
         <div class="flex items-center gap-2 pointer-events-auto">
           <button
-            class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20"
+            class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20 tooltip tooltip-bottom"
+            :data-tip="t('common.back')"
             :aria-label="t('common.back')"
             @click="$router.push('/home')"
           >
@@ -27,14 +28,16 @@
         </div>
         <div class="flex items-center gap-1 pointer-events-auto">
           <button
-            class="btn btn-sm btn-circle btn-ghost text-white"
+            class="btn btn-sm btn-circle btn-ghost text-white tooltip tooltip-bottom"
+            :data-tip="t('WaterfallPiano.midiDrawer.title')"
             :aria-label="t('WaterfallPiano.midiDrawer.title')"
             @click="midiDrawerOpen = true"
           >
             <Icon name="music" :size="18" aria-hidden="true" />
           </button>
           <button
-            class="btn btn-sm btn-circle btn-ghost text-white"
+            class="btn btn-sm btn-circle btn-ghost text-white tooltip tooltip-bottom"
+            :data-tip="t('common.settings')"
             :aria-label="t('common.settings')"
             @click="settingsOpen = true"
           >
@@ -164,9 +167,6 @@ function onCanvasNoteOff(midi: number): void {
 function onModeChange(m: NoteBlockMode): void {
   mode.value = m;
   engineRef.value?.setMode(m);
-  if (m === "realtime") {
-    engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
-  }
 }
 
 /**

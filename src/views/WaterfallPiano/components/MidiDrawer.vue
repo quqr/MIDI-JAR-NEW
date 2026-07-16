@@ -18,7 +18,7 @@
             <h2 class="text-lg font-bold">
               {{ t("WaterfallPiano.midiDrawer.title") }}
             </h2>
-            <button class="btn btn-sm btn-ghost btn-circle" @click="close">
+            <button class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom" data-tip="关闭" @click="close">
               <Icon name="x" :size="16" />
             </button>
           </div>
@@ -80,7 +80,8 @@
               </label>
               <div class="flex gap-2">
                 <button
-                  class="btn btn-sm btn-circle"
+                  class="btn btn-sm btn-circle tooltip tooltip-bottom"
+                  data-tip="播放"
                   :class="isPlaying && !isPaused ? 'btn-primary' : 'btn-ghost'"
                   :disabled="!hasContent"
                   @click="$emit('play')"
@@ -88,21 +89,24 @@
                   <Icon name="play" :size="14" />
                 </button>
                 <button
-                  class="btn btn-sm btn-circle btn-ghost"
+                  class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
+                  data-tip="暂停"
                   :disabled="!isPlaying"
                   @click="$emit('pause')"
                 >
                   <Icon name="pause" :size="14" />
                 </button>
                 <button
-                  class="btn btn-sm btn-circle btn-ghost"
+                  class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
+                  data-tip="停止"
                   :disabled="!isPlaying && !isPaused"
                   @click="$emit('stop')"
                 >
-                  <Icon name="square" :size="14" />
+                  <Icon name="stop" :size="14" />
                 </button>
                 <button
-                  class="btn btn-sm btn-circle"
+                  class="btn btn-sm btn-circle tooltip tooltip-bottom"
+                  data-tip="录制"
                   :class="isRecording ? 'btn-error' : 'btn-ghost'"
                   @click="$emit('toggle-record')"
                 >
