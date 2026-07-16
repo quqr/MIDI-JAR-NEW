@@ -1,24 +1,13 @@
-import { Note } from "tonal";
+﻿import { Note } from "tonal";
 import { watch } from "vue";
 
 import { getNoteInKeySignature } from "@/helpers";
 
-import { useNoteConfig, resolveOption } from "./useNoteConfig";
+import { useNoteConfig, resolveOption, type UseNotesOptions } from "./useNoteConfig";
 import { useNoteState } from "./useNoteState";
 import { getChords } from "./useChordDetection";
 import { createMidiHandler } from "./useMidiHandler";
 import { useMidiMessage } from "./useMidiMessage";
-
-export interface UseNotesOptions {
-  accidentals?: "flat" | "sharp" | (() => "flat" | "sharp");
-  key?: string | (() => string);
-  midiChannel?: number;
-  allowOmissions?: boolean | (() => boolean);
-  useSustain?: boolean | (() => boolean);
-  detectOnRelease?: boolean | (() => boolean);
-  disabledChords?: string[] | (() => string[]);
-  namespace?: string;
-}
 
 export function useNotes({
   accidentals = "flat",
@@ -58,7 +47,7 @@ export function useNotes({
       currentNotes,
       keySignatureNotes(),
       resolveOption(allowOmissions, false),
-      resolveOption(disabledChords, undefined) ?? [],
+      resolveOption(disabledChords, []),
     );
   }
 

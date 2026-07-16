@@ -3,9 +3,9 @@ import {
   InternalMidiMessages,
   MidiMessageEvent,
 } from "@/midi/MidiMessageManager";
+import { MIDI_CHANNEL_ALL } from "./useMidiHandler";
 
 const MIDI_CMD_NOTE_ON = 0x90;
-const MIDI_CHANNEL_ALL = 0;
 
 export function useMidiLearn(
   midiManager: InternalMidiMessages | null,

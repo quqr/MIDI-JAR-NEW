@@ -1,10 +1,14 @@
 import * as Tone from "tone";
 import { midiToNoteName } from "../constants";
-import type { SoundEngineUserConfig } from "../types";
+import type { SoundEngineUserConfig, SynthEnvelopeConfig } from "../types";
 
 const DEFAULT_VOLUME = 0.8;
 const DEFAULT_REVERB_DECAY = 2;
 const DEFAULT_REVERB_WET = 0.3;
+
+function toEnvelopeConfig(e: SynthEnvelopeConfig) {
+  return { attack: e.attack, decay: e.decay, sustain: e.sustain, release: e.release };
+}
 
 export interface SoundEngineOptions {
   volume?: number;
@@ -66,20 +70,10 @@ export class SoundEngine {
     this.synth = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: c.harmonicity ?? 2,
       modulationIndex: c.modulationIndex ?? 10,
-      oscillator: { type: (c.oscillatorType as Tone.ToneOscillatorType) ?? "triangle" },
-      envelope: {
-        attack: envelope.attack,
-        decay: envelope.decay,
-        sustain: envelope.sustain,
-        release: envelope.release,
-      },
+      oscillator: { type: c.oscillatorType ?? "triangle" } as Record<string, unknown>,
+      envelope: toEnvelopeConfig(envelope),
       modulation: { type: "sine" },
-      modulationEnvelope: {
-        attack: modEnvelope.attack,
-        decay: modEnvelope.decay,
-        sustain: modEnvelope.sustain,
-        release: modEnvelope.release,
-      },
+      modulationEnvelope: toEnvelopeConfig(modEnvelope),
     });
     this.synth.maxPolyphony = 64;
     this.synth.connect(this.reverb);
@@ -97,30 +91,23 @@ export class SoundEngine {
     if (this.reverb) {
       this.reverb.wet.value = config.reverbAmount;
       // reverbDecay 需要重新 generate，仅在差异较大时执行
-      if (Math.abs(this.reverb.decay - config.reverbDecay) > 0.5) {
-        this.reverb.decay = config.reverbDecay;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentDecay = (this.reverb as any).decay as number;
+      if (Math.abs(currentDecay - config.reverbDecay) > 0.5) {
+        (this.reverb as unknown as Record<string, unknown>).decay = config.reverbDecay;
         this.reverb.generate();
       }
     }
 
     if (this.synth) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.synth.set({
         harmonicity: config.harmonicity,
         modulationIndex: config.modulationIndex,
         oscillator: { type: config.oscillatorType as Tone.ToneOscillatorType },
-        envelope: {
-          attack: config.envelope.attack,
-          decay: config.envelope.decay,
-          sustain: config.envelope.sustain,
-          release: config.envelope.release,
-        },
-        modulationEnvelope: {
-          attack: config.modulationEnvelope.attack,
-          decay: config.modulationEnvelope.decay,
-          sustain: config.modulationEnvelope.sustain,
-          release: config.modulationEnvelope.release,
-        },
-      });
+        envelope: toEnvelopeConfig(config.envelope),
+        modulationEnvelope: toEnvelopeConfig(config.modulationEnvelope),
+      } as any);
     }
   }
 

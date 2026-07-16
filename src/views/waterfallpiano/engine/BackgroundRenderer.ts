@@ -19,8 +19,6 @@ export class BackgroundRenderer {
   private imageCache = new Map<string, HTMLImageElement>();
   private prefersReducedMotion = false;
 
-  // 脏标记：静态背景只需绘制一次
-  private dirty = true;
   // 星场离屏 canvas
   private starCanvas: HTMLCanvasElement | null = null;
   private starCtx: CanvasRenderingContext2D | null = null;
@@ -75,7 +73,6 @@ export class BackgroundRenderer {
   }
 
   private markDirty(): void {
-    this.dirty = true;
     this.bgCached = false;
   }
 
@@ -191,8 +188,6 @@ export class BackgroundRenderer {
       ctx.drawImage(this.bgCanvas!, 0, 0, this.width, this.height);
       this.bgCached = true;
     }
-
-    this.dirty = false;
   }
 
   private renderGradient(

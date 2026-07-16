@@ -1,6 +1,6 @@
 <template>
   <SettingsSection :on-reset="resetModule">
-    <div class="space-y-3 w-full h-full">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.chords')"
         icon="music-note"

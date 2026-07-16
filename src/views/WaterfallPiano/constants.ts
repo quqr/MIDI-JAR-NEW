@@ -70,6 +70,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     lookAhead: 3,
     opacity: 1.0,
     cornerRadius: 3,
+    hitExplosionRadius: 0.03,
     hitLine: {
       visible: true,
       color: "#ffffff",

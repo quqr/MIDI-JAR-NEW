@@ -35,10 +35,12 @@ vi.mock("@tonejs/midi", () => {
 vi.mock("tone", () => {
   const transport = {
     seconds: 0,
-    start: vi.fn(),
-    pause: vi.fn(),
-    stop: vi.fn(),
-    cancel: vi.fn(),
+    bpm: { value: 120 },
+    loop: false,
+    start: vi.fn(function (this: typeof transport) { return this; }),
+    pause: vi.fn(function (this: typeof transport) { return this; }),
+    stop: vi.fn(function (this: typeof transport) { return this; }),
+    cancel: vi.fn(function (this: typeof transport) { return this; }),
   };
   return {
     getTransport: () => transport,
@@ -119,6 +121,7 @@ describe("MidiFilePlayer", () => {
     player.startPlayback();
     transport.seconds = 1.0;
     vi.advanceTimersByTime(16);
+    player.tick();
     expect(progressSpy).toHaveBeenCalled();
     const lastCall = progressSpy.mock.calls[progressSpy.mock.calls.length - 1];
     expect(lastCall[0]).toBe(1.0);
@@ -185,6 +188,7 @@ describe("MidiFilePlayer", () => {
     player.startPlayback();
     transport.seconds = 3.0;
     vi.advanceTimersByTime(16);
+    player.tick();
     expect(endSpy).not.toHaveBeenCalled();
     expect(transport.seconds).toBe(0);
   });
@@ -196,6 +200,7 @@ describe("MidiFilePlayer", () => {
     player.startPlayback();
     transport.seconds = 3.0;
     vi.advanceTimersByTime(16);
+    player.tick();
     expect(endSpy).toHaveBeenCalledTimes(1);
     expect(player.getIsPlaying()).toBe(false);
   });

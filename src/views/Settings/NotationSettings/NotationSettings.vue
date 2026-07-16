@@ -3,6 +3,7 @@
     :show-reset="true"
     :on-reset="() => settingsStore.resetSetting('notation')"
   >
+    <div class="grid grid-cols-1 gap-4 m-4">
     <SettingsCollapse
       :title="t('settings.notationSettings.title')"
       icon="music-note"
@@ -96,6 +97,7 @@
     <NotationLayoutSettings />
 
     <NotationStyleSettings />
+    </div>
   </SettingsSection>
 </template>
 

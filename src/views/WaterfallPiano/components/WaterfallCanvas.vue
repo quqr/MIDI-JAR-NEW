@@ -18,7 +18,7 @@ import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 const props = defineProps<{
   settings: WaterfallPianoSettings;
   mode: NoteBlockMode;
-  octaveOffset?: number;
+  showFPS?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -41,7 +41,7 @@ const heldKeys = new Set<string>();
 function midiFromKey(key: string): number | null {
   const base = keyboardMap[key.toLowerCase()];
   if (base === undefined) return null;
-  return base + (props.octaveOffset ?? 0) * 12;
+  return base;
 }
 
 function onKeyDown(e: KeyboardEvent): void {
@@ -149,9 +149,11 @@ watch(
   (m) => engine?.setMode(m),
 );
 
+// FPS 显示通过 engine.showFPS 控制，不需要独立 RAF 循环
 watch(
-  () => props.octaveOffset,
-  () => clearAllHeld(),
+  () => props.showFPS,
+  (show) => { if (engine) engine.showFPS = show; },
+  { immediate: true }
 );
 
 onUnmounted(() => {

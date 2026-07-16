@@ -8,6 +8,15 @@
           {{ t("settings.routingSettings.refreshDevices") }}
         </button>
         <button
+          class="btn btn-sm btn-outline"
+          :disabled="!virtualPortSupported"
+          :title="!virtualPortSupported ? t('settings.routingSettings.notSupportedOnWindows') : ''"
+          @click="showVirtualPortModal = true"
+        >
+          <Icon name="plus" :size="16" aria-hidden="true" />
+          {{ t("settings.routingSettings.addVirtualPort") }}
+        </button>
+        <button
           class="btn btn-sm btn-error btn-outline"
           :aria-label="t('settings.routingSettings.clearAll')"
           @click="handleClearAndRefresh"
@@ -69,12 +78,12 @@
     <!-- 矩阵视图 -->
     <div
       v-else-if="viewMode === 'matrix'"
-      class="flex-1 overflow-auto rounded-box border border-base-200 bg-base-100"
+      class="flex-1 overflow-x-auto overflow-y-auto rounded-box border border-base-200 bg-base-100"
     >
       <table class="table table-zebra">
         <thead>
           <tr>
-            <th class="sticky top-0 z-10 bg-base-200/80 backdrop-blur-sm">
+            <th class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-sm">
               <span class="text-xs font-semibold uppercase tracking-wider text-base-content/60">
                 {{ t("settings.routingSettings.inputOutput") }}
               </span>
@@ -99,7 +108,7 @@
         </thead>
         <tbody>
           <tr v-for="input in inputs" :key="input.name">
-            <td class="font-semibold">
+            <td class="font-semibold sticky left-0 z-10 bg-base-100">
               <div class="flex items-center gap-2 min-w-[150px]">
                 <span
                   class="w-2 h-2 rounded-full flex-shrink-0"
@@ -149,13 +158,74 @@
       variant="error"
       @confirm="doClearAndRefresh"
     />
+
+    <!-- 添加虚拟端口模态框 -->
+    <dialog
+      :class="['modal', { 'modal-open': showVirtualPortModal }]"
+      @close="showVirtualPortModal = false"
+    >
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+          {{ t("settings.routingSettings.addVirtualPort") }}
+        </h3>
+        <div class="form-control w-full mb-4">
+          <label class="label">
+            <span class="label-text">{{ t("settings.routingSettings.virtualPortName") }}</span>
+          </label>
+          <input
+            v-model="virtualPortName"
+            type="text"
+            class="input input-bordered w-full"
+            :placeholder="t('settings.routingSettings.virtualPortNamePlaceholder')"
+          />
+        </div>
+        <div class="form-control w-full mb-4">
+          <label class="label">
+            <span class="label-text">{{ t("settings.routingSettings.virtualPortType") }}</span>
+          </label>
+          <div class="flex gap-4">
+            <label class="label cursor-pointer gap-2">
+              <input
+                v-model="virtualPortType"
+                type="radio"
+                value="input"
+                class="radio radio-sm radio-primary"
+              />
+              <span class="label-text">{{ t("settings.routingSettings.virtualInput") }}</span>
+            </label>
+            <label class="label cursor-pointer gap-2">
+              <input
+                v-model="virtualPortType"
+                type="radio"
+                value="output"
+                class="radio radio-sm radio-primary"
+              />
+              <span class="label-text">{{ t("settings.routingSettings.virtualOutput") }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-action">
+          <button class="btn btn-ghost btn-sm" @click="showVirtualPortModal = false">
+            {{ t("common.cancel") }}
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            :disabled="!virtualPortName.trim()"
+            @click="handleCreateVirtualPort"
+          >
+            {{ t("settings.routingSettings.createVirtualPort") }}
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="showVirtualPortModal = false"></div>
+    </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { onMounted, onUnmounted, onActivated, onDeactivated } from "vue";
+import { onMounted as vueOnMounted, onUnmounted, onActivated, onDeactivated } from "vue";
 import { storeToRefs } from "pinia";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 import type { MidiRoute } from "@/stores/midiRouting";
@@ -167,10 +237,21 @@ const { t } = useI18n();
 const routingStore = useMidiRoutingStore();
 
 const { inputs, outputs, wires, routes } = storeToRefs(routingStore);
-const { addRoute, deleteRoute } = routingStore;
+const { addRoute, deleteRoute, isVirtualPortSupported, createVirtualInput, createVirtualOutput } = routingStore;
 
 const viewMode = ref<"matrix" | "flow">("matrix");
 const showClearConfirm = ref(false);
+const virtualPortSupported = ref(false);
+
+// Virtual port modal state
+const showVirtualPortModal = ref(false);
+const virtualPortName = ref("");
+const virtualPortType = ref<"input" | "output">("output");
+
+// Check virtual port support on mount
+onMounted(async () => {
+  virtualPortSupported.value = await isVirtualPortSupported();
+});
 
 // 检查输入输出是否已连接
 function isConnected(inputName: string, outputName: string): boolean {
@@ -230,7 +311,27 @@ async function doClearAndRefresh() {
   routingStore.syncRoutesToMain();
 }
 
-onMounted(async () => {
+async function handleCreateVirtualPort() {
+  const name = virtualPortName.value.trim();
+  if (!name) return;
+
+  try {
+    if (virtualPortType.value === "input") {
+      await createVirtualInput(name);
+    } else {
+      await createVirtualOutput(name);
+    }
+    // Reset form and close modal
+    virtualPortName.value = "";
+    showVirtualPortModal.value = false;
+    // Refresh devices to show the new virtual port
+    await routingStore.refreshDevices();
+  } catch (error) {
+    console.error("Failed to create virtual port:", error);
+  }
+}
+
+vueOnMounted(async () => {
   await routingStore.initialize();
   routingStore.startPolling(3000);
 });

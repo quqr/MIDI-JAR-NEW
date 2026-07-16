@@ -12,7 +12,11 @@
         <h3 :id="titleId" class="font-bold text-lg">{{ title }}</h3>
         <p class="py-4 text-base-content/80">{{ message }}</p>
         <div class="modal-action">
-          <button class="btn btn-sm" :aria-label="cancelLabel" @click="onCancel">
+          <button
+            class="btn btn-sm"
+            :aria-label="cancelLabel"
+            @click="onCancel"
+          >
             {{ cancelLabel }}
           </button>
           <button

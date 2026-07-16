@@ -1,6 +1,7 @@
 <template>
   <SettingsSection :show-reset="true" :on-reset="() => store.resetSettings()">
-    <SettingsCollapse :title="t('waterfallPiano.particles')" :default-open="true">
+    <div class="grid grid-cols-1 gap-4 m-4">
+    <SettingsCollapse :title="t('waterfallPiano.particles')" icon="sparkles" :default-open="true">
       <SettingsSelect
         :model-value="settings.particles.colorScheme"
         :label="t('waterfallPiano.colorScheme')"
@@ -30,6 +31,12 @@
         :label="t('waterfallPiano.cornerRadius')"
         :min="0" :max="20" :step="1"
         @update:model-value="store.updateSetting('particles', 'cornerRadius', $event)"
+      />
+      <SettingsRange
+        :model-value="settings.particles.hitExplosionRadius"
+        :label="t('waterfallPiano.hitExplosionRadius')"
+        :min="0.01" :max="0.1" :step="0.005"
+        @update:model-value="store.updateSetting('particles', 'hitExplosionRadius', $event)"
       />
       <SettingsToggle
         :model-value="settings.particles.hitLine.visible"
@@ -68,7 +75,7 @@
       </template>
     </SettingsCollapse>
 
-    <SettingsCollapse :title="t('waterfallPiano.background')" :default-open="false">
+    <SettingsCollapse :title="t('waterfallPiano.background')" icon="image" :default-open="false">
       <SettingsSelect
         :model-value="settings.background.type"
         :label="t('waterfallPiano.backgroundType')"
@@ -169,10 +176,69 @@
           :options="fluidStyleOptions"
           @update:model-value="store.updateSetting('background', 'fluidStyle', $event)"
         />
+        <SettingsToggle
+          :model-value="settings.background.fluidAdvanced"
+          :label="t('waterfallPiano.fluidAdvanced')"
+          @update:model-value="store.updateSetting('background', 'fluidAdvanced', $event)"
+        />
       </template>
     </SettingsCollapse>
 
-    <SettingsCollapse :title="t('waterfallPiano.keyboard')" :default-open="false">
+    <SettingsCollapse
+      v-if="settings.background.fluidEnabled && settings.background.fluidAdvanced"
+      :title="t('waterfallPiano.fluidAdvancedParams')"
+      icon="droplet"
+      :default-open="false"
+    >
+      <SettingsRange
+        :model-value="settings.background.fluidParams.splatRadius ?? 0.005"
+        :label="t('waterfallPiano.splatRadius')"
+        :min="0.0001" :max="0.01" :step="0.0005"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, splatRadius: $event })"
+      />
+      <SettingsRange
+        :model-value="settings.background.fluidParams.splatColorHue ?? 0"
+        :label="t('waterfallPiano.splatColorHue')"
+        :min="0" :max="1" :step="0.05"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, splatColorHue: $event })"
+      />
+      <SettingsRange
+        :model-value="settings.background.fluidParams.trailLength ?? 0.5"
+        :label="t('waterfallPiano.trailLength')"
+        :min="0" :max="1" :step="0.05"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, trailLength: $event })"
+      />
+      <SettingsRange
+        :model-value="settings.background.fluidParams.flowPersistence ?? 0.5"
+        :label="t('waterfallPiano.flowPersistence')"
+        :min="0" :max="1" :step="0.05"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, flowPersistence: $event })"
+      />
+      <SettingsToggle
+        :model-value="settings.background.fluidParams.bloom ?? true"
+        :label="t('waterfallPiano.bloom')"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, bloom: $event })"
+      />
+      <SettingsRange
+        v-if="settings.background.fluidParams.bloom !== false"
+        :model-value="settings.background.fluidParams.bloomIntensity ?? 0.8"
+        :label="t('waterfallPiano.bloomIntensity')"
+        :min="0.1" :max="2" :step="0.1"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, bloomIntensity: $event })"
+      />
+      <SettingsToggle
+        :model-value="settings.background.fluidParams.hitExplosion ?? false"
+        :label="t('waterfallPiano.hitExplosion')"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, hitExplosion: $event })"
+      />
+      <SettingsToggle
+        :model-value="settings.background.fluidParams.blockCoverage ?? false"
+        :label="t('waterfallPiano.blockCoverage')"
+        @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, blockCoverage: $event })"
+      />
+    </SettingsCollapse>
+
+    <SettingsCollapse :title="t('waterfallPiano.keyboard')" icon="piano" :default-open="false">
       <SettingsToggle
         :model-value="settings.keyboard.visible"
         :label="t('waterfallPiano.keyboard')"
@@ -247,6 +313,7 @@
         @update:model-value="store.updateSetting('midiFile', 'showNoteNames', $event)"
       />
     </SettingsCollapse>
+    </div>
   </SettingsSection>
 </template>
 

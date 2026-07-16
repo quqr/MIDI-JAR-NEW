@@ -1,6 +1,7 @@
 # 流体模拟项目对比分析
 
 对比对象：
+
 - **项目 A**：`F:\Codes\Fluid-Simulation`（PavelDoGreat 的 Zig 开源重写版）
 - **项目 B**：本项目 `F:\Codes\MIDI-JAR-NEW` 的流体模块（移植自 WebGL-Fluid-Simulation）
 
@@ -10,13 +11,13 @@
 
 ## 一、总体定位
 
-| 维度 | 项目 A：Fluid-Simulation | 项目 B：MIDI-JAR-NEW 流体模块 |
-|---|---|---|
-| 作者 | PavelDoGreat | 移植自 PavelDoGreat（MIT） |
-| 目标 | 跨平台流体 App 下一代重写（Web/macOS/iOS/Android） | 为钢琴瀑布可视化提供流体背景特效 |
-| 语言 | Zig（编译为 WASM / 原生可执行） | TypeScript |
-| 成熟度 | **早期骨架阶段**，核心 `update()`/`draw()` 为空 | **生产可用**，完整 Navier-Stokes 求解 + 后处理 |
-| 许可证 | MIT | 遵循上游 MIT |
+| 维度   | 项目 A：Fluid-Simulation                           | 项目 B：MIDI-JAR-NEW 流体模块                  |
+| ------ | -------------------------------------------------- | ---------------------------------------------- |
+| 作者   | PavelDoGreat                                       | 移植自 PavelDoGreat（MIT）                     |
+| 目标   | 跨平台流体 App 下一代重写（Web/macOS/iOS/Android） | 为钢琴瀑布可视化提供流体背景特效               |
+| 语言   | Zig（编译为 WASM / 原生可执行）                    | TypeScript                                     |
+| 成熟度 | **早期骨架阶段**，核心 `update()`/`draw()` 为空    | **生产可用**，完整 Navier-Stokes 求解 + 后处理 |
+| 许可证 | MIT                                                | 遵循上游 MIT                                   |
 
 ### 关键事实：项目 A 当前并无可用流体实现
 
@@ -32,14 +33,14 @@
 
 ## 二、技术栈与图形后端
 
-| 维度 | 项目 A | 项目 B |
-|---|---|---|
-| Web 运行方式 | Zig → WASM，JS 仅作加载器（`script.js` 调 `exports.start/update/draw`） | 原生 JS/TS，直接操作 WebGL |
-| Web 图形 API | WebGL2（`getContext('webgl2')`） | WebGL2 优先，**自动回退 WebGL1** |
-| 桌面图形 API | Metal（macOS，Swift 桥接 `metal.swift`/`metal.zig`） | 无（仅 Web） |
-| 纹理精度 | 计划使用半浮点（代码中扩展检测被注释） | 半浮点纹理 `RGBA16F/RG16F/R16F`，含格式降级逻辑 |
-| 线性过滤 | 计划支持（被注释） | 运行时检测 `OES_texture_float_linear`，不支持时降级 `NEAREST` + `MANUAL_FILTERING` |
-| 构建 | `zig build` + `xcrun metal/metallib` + `swiftc` | Vite + vue-tsc + vitest |
+| 维度         | 项目 A                                                                  | 项目 B                                                                             |
+| ------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Web 运行方式 | Zig → WASM，JS 仅作加载器（`script.js` 调 `exports.start/update/draw`） | 原生 JS/TS，直接操作 WebGL                                                         |
+| Web 图形 API | WebGL2（`getContext('webgl2')`）                                        | WebGL2 优先，**自动回退 WebGL1**                                                   |
+| 桌面图形 API | Metal（macOS，Swift 桥接 `metal.swift`/`metal.zig`）                    | 无（仅 Web）                                                                       |
+| 纹理精度     | 计划使用半浮点（代码中扩展检测被注释）                                  | 半浮点纹理 `RGBA16F/RG16F/R16F`，含格式降级逻辑                                    |
+| 线性过滤     | 计划支持（被注释）                                                      | 运行时检测 `OES_texture_float_linear`，不支持时降级 `NEAREST` + `MANUAL_FILTERING` |
+| 构建         | `zig build` + `xcrun metal/metallib` + `swiftc`                         | Vite + vue-tsc + vitest                                                            |
 
 项目 B 的 [GLContext.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/fluid/GLContext.ts) 实现了完整的格式探测与递归降级（[L138-L165](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/fluid/GLContext.ts#L138-L165)），这是项目 A 尚未实现的能力。
 
@@ -111,15 +112,15 @@ src/views/WaterfallPiano/engine/fluid/
 
 ## 四、着色器对比
 
-| 着色器类别 | 项目 A | 项目 B |
-|---|---|---|
-| 顶点着色器 | 无（metal 中硬编码 4 顶点全屏三角形） | `baseVertex` / `blurVertex` |
-| 流体求解（8 个） | **无** | curl / vorticity / divergence / pressure / gradientSubtract / advection / splat / clear |
-| 拷贝/颜色 | 无 | copy / color / checkerboard |
-| 显示 | 无 | display（含 SHADING 关键字变体） |
-| Bloom（3 个） | 无（materials.zig 注释中提到 prefilter） | bloomPrefilter / bloomBlur / bloomFinal |
-| Sunrays（2 个） | 无 | sunraysMask / sunrays |
-| 模糊 | 无 | blur（7-tap 双向） |
+| 着色器类别       | 项目 A                                   | 项目 B                                                                                  |
+| ---------------- | ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| 顶点着色器       | 无（metal 中硬编码 4 顶点全屏三角形）    | `baseVertex` / `blurVertex`                                                             |
+| 流体求解（8 个） | **无**                                   | curl / vorticity / divergence / pressure / gradientSubtract / advection / splat / clear |
+| 拷贝/颜色        | 无                                       | copy / color / checkerboard                                                             |
+| 显示             | 无                                       | display（含 SHADING 关键字变体）                                                        |
+| Bloom（3 个）    | 无（materials.zig 注释中提到 prefilter） | bloomPrefilter / bloomBlur / bloomFinal                                                 |
+| Sunrays（2 个）  | 无                                       | sunraysMask / sunrays                                                                   |
+| 模糊             | 无                                       | blur（7-tap 双向）                                                                      |
 
 项目 B 的 [shaders/index.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/fluid/shaders/index.ts) 统一导出 18 个着色器，`displayShaderSource` 使用 `Material` 类支持 `SHADING`/`BLOOM`/`SUNRAYS` 等 keyword 编译多变体。
 
@@ -130,23 +131,27 @@ src/views/WaterfallPiano/engine/fluid/
 ## 五、集成模型对比
 
 ### 项目 A：独立流体应用
+
 - 纯流体可视化，无外部数据源驱动。
 - 输入仅来自鼠标/触摸（计划中，当前未实现）。
 - 单 canvas 全屏渲染。
 
 ### 项目 B：嵌入钢琴可视化的流体背景
+
 这是项目 B 最显著的差异点。流体不再是主角，而是**由 MIDI 事件驱动**的背景特效。
 
 #### 4 层渲染架构（来自项目约束）
-| 层 | z-index | 内容 |
-|---|---|---|
-| background div | 0 | 纯色/渐变背景 |
-| fluid WebGL canvas | 1 | 流体模拟输出（透明合成） |
-| main canvas 2D | 2 | 钢琴音符块（不透明 + 垂直渐变） |
-| keyboard canvas 2D | 3 | 键盘 + 命中线（y=0 本地坐标） |
-| UI overlay | 4 | 控件 |
+
+| 层                 | z-index | 内容                            |
+| ------------------ | ------- | ------------------------------- |
+| background div     | 0       | 纯色/渐变背景                   |
+| fluid WebGL canvas | 1       | 流体模拟输出（透明合成）        |
+| main canvas 2D     | 2       | 钢琴音符块（不透明 + 垂直渐变） |
+| keyboard canvas 2D | 3       | 键盘 + 命中线（y=0 本地坐标）   |
+| UI overlay         | 4       | 控件                            |
 
 #### MIDI → 流体 splat 映射
+
 [WaterfallEngine.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts) 实现两种发射模式：
 
 1. **命中爆炸 `triggerHitExplosion`**（[L355-L380](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts#L355-L380)）
@@ -160,10 +165,12 @@ src/views/WaterfallPiano/engine/fluid/
    - 块中心 + 随机扰动 → splat 坐标
 
 #### 坐标系对齐（项目特有约束）
+
 - WebGL 流体坐标 y 轴向上，Canvas 2D 钢琴坐标 y 轴向下。
 - 所有 splat 注入处使用 `1.0 - cy/canvasHeight` 翻转 y，确保流体出现在键盘附近而非屏幕顶部。
 
 #### 颜色映射
+
 - `resolveSplatHue`（[L432-L436](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/WaterfallEngine.ts#L432-L436)）：用户可设 `splatColorHue` 统一色相，否则按 MIDI 音高映射 `(midi-21)/87`。
 
 ---
@@ -171,30 +178,38 @@ src/views/WaterfallPiano/engine/fluid/
 ## 六、配置体系对比
 
 ### 项目 A
+
 无任何运行时可配置参数暴露。`materials.zig` 中 Bloom/prefilter 字段全注释。
 
 ### 项目 B
+
 [FluidConfig.ts](file:///f:/Codes/MIDI-JAR-NEW/src/views/WaterfallPiano/engine/fluid/FluidConfig.ts) 提供三层配置：
 
 #### 1. 底层 `FluidSimulationConfig`（24 个字段）
+
 涵盖 SIM/DYE 分辨率、扩散率、压力迭代、涡度、splat 半径/力、Bloom、Sunrays 全套参数。
 
 #### 2. 质量预设 `QUALITY_PRESETS`（low/medium/high）
+
 按 GPU 能力分级 DYE/SIM 分辨率与后处理开关：
+
 - low：DYE 256 / SIM 64，关闭 Bloom 与 Sunrays
 - high：DYE 1024 / SIM 128，全开 Bloom + Sunrays
 
 #### 3. 风格预设 `STYLE_PRESETS`（gentle/standard/turbulent）
+
 通过 DENSITY/VELOCITY_DISSIPATION 与 CURL 控制视觉风格。
 
 #### 4. 用户友好语义映射 `resolveConfig`
+
 将 `FluidAdvancedParams`（camelCase 用户语义）映射到底层求解器参数：
-| 用户旋钮 | 底层映射 |
-|---|---|
-| `splatRadius` | `SPLAT_RADIUS`（0.00001-0.01，步进 0.00001） |
-| `trailLength` (0-1) | `DENSITY_DISSIPATION = (1-trailLength)*4` |
-| `flowPersistence` (0-1) | `VELOCITY_DISSIPATION = (1-flowPersistence)*4` |
-| `bloom` / `bloomIntensity` | 直接映射 |
+
+| 用户旋钮                   | 底层映射                                       |
+| -------------------------- | ---------------------------------------------- |
+| `splatRadius`              | `SPLAT_RADIUS`（0.00001-0.01，步进 0.00001）   |
+| `trailLength` (0-1)        | `DENSITY_DISSIPATION = (1-trailLength)*4`      |
+| `flowPersistence` (0-1)    | `VELOCITY_DISSIPATION = (1-flowPersistence)*4` |
+| `bloom` / `bloomIntensity` | 直接映射                                       |
 
 此映射遵循项目约束：**不向用户暴露原始求解器变量名**（如 PRESSURE_ITERATIONS、CURL），避免混淆。
 
@@ -214,17 +229,17 @@ src/views/WaterfallPiano/engine/fluid/
 
 ## 八、关键差异总结
 
-| 差异点 | 项目 A | 项目 B |
-|---|---|---|
-| **实现完整度** | 空壳，无流体算法 | 完整可用 |
-| **语言范式** | Zig（系统级，手动内存） | TypeScript（GC） |
-| **图形后端数** | 2（Metal + WebGL2/WASM） | 1（WebGL2，含 WebGL1 回退） |
-| **跨平台** | Web + macOS（计划 iOS/Android） | 仅 Web |
-| **代码组织** | 引擎/业务分层（Zig 模块互引） | Pass 化（每步独立类） |
-| **数据驱动** | 独立应用，鼠标输入 | MIDI 事件驱动，集成钢琴 |
-| **配置暴露** | 无 | 三层（底层/预设/用户语义） |
-| **资源管理** | Zig arena/GPA 分配 | WebGL context lose 释放 |
-| **工程约束** | 追求小体积/低功耗/快编译 | 追求 45fps+ 与自动降级 |
+| 差异点         | 项目 A                          | 项目 B                      |
+| -------------- | ------------------------------- | --------------------------- |
+| **实现完整度** | 空壳，无流体算法                | 完整可用                    |
+| **语言范式**   | Zig（系统级，手动内存）         | TypeScript（GC）            |
+| **图形后端数** | 2（Metal + WebGL2/WASM）        | 1（WebGL2，含 WebGL1 回退） |
+| **跨平台**     | Web + macOS（计划 iOS/Android） | 仅 Web                      |
+| **代码组织**   | 引擎/业务分层（Zig 模块互引）   | Pass 化（每步独立类）       |
+| **数据驱动**   | 独立应用，鼠标输入              | MIDI 事件驱动，集成钢琴     |
+| **配置暴露**   | 无                              | 三层（底层/预设/用户语义）  |
+| **资源管理**   | Zig arena/GPA 分配              | WebGL context lose 释放     |
+| **工程约束**   | 追求小体积/低功耗/快编译        | 追求 45fps+ 与自动降级      |
 
 ---
 

@@ -1,5 +1,6 @@
 <template>
   <SettingsSection :on-reset="resetAll">
+    <div class="grid grid-cols-1 gap-4 m-4">
     <!-- ═══ 分类1a：记谱 - 显示参数 ═══ -->
     <SettingsCollapse
       :title="t('advancedDebug.notation.display.title')"
@@ -491,6 +492,7 @@
         @update:model-value="updateEnvelope('modulationEnvelope', 'release', $event)"
       />
     </SettingsCollapse>
+    </div>
   </SettingsSection>
 </template>
 

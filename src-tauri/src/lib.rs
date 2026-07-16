@@ -331,6 +331,41 @@ fn get_wires(app: AppHandle) -> Vec<midi::ApiMidiWire> {
     midi.get_wires()
 }
 
+// ===== Virtual Port Commands =====
+
+#[tauri::command]
+fn is_virtual_port_supported() -> bool {
+    MidiManager::is_virtual_port_supported()
+}
+
+#[tauri::command]
+fn create_virtual_input(app: AppHandle, name: String) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut midi = state.midi.lock().unwrap();
+    midi.create_virtual_input(&app, &name)
+}
+
+#[tauri::command]
+fn create_virtual_output(app: AppHandle, name: String) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut midi = state.midi.lock().unwrap();
+    midi.create_virtual_output(&app, &name)
+}
+
+#[tauri::command]
+fn delete_virtual_input(app: AppHandle, name: String) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut midi = state.midi.lock().unwrap();
+    midi.delete_virtual_input(&app, &name)
+}
+
+#[tauri::command]
+fn delete_virtual_output(app: AppHandle, name: String) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut midi = state.midi.lock().unwrap();
+    midi.delete_virtual_output(&app, &name)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -404,6 +439,11 @@ pub fn run() {
             get_inputs,
             get_outputs,
             get_wires,
+            is_virtual_port_supported,
+            create_virtual_input,
+            create_virtual_output,
+            delete_virtual_input,
+            delete_virtual_output,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

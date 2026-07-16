@@ -181,6 +181,10 @@ export class KeyboardRenderer {
     this.activeNotes.clear();
   }
 
+  getActiveNotes(): number[] {
+    return Array.from(this.activeNotes);
+  }
+
   getRangeText(): string {
     return `${midiToNoteName(this.from)} - ${midiToNoteName(this.to)}`;
   }
@@ -200,11 +204,21 @@ export class KeyboardRenderer {
       const w = layout.whiteKeyWidth;
       const isActive = this.activeNotes.has(midi);
       ctx.fillStyle = isActive ? kb.pressedKeyColor : kb.whiteKeyColor;
-      ctx.fillRect(x, 0, w, this.height);
+      if (kb.keyCornerRadius > 0) {
+        roundRect(ctx, x, 0, w, this.height, kb.keyCornerRadius);
+        ctx.fill();
+      } else {
+        ctx.fillRect(x, 0, w, this.height);
+      }
       if (kb.keyBorderWidth > 0) {
         ctx.strokeStyle = kb.keyBorderColor;
         ctx.lineWidth = kb.keyBorderWidth;
-        ctx.strokeRect(x, 0, w, this.height);
+        if (kb.keyCornerRadius > 0) {
+          roundRect(ctx, x, 0, w, this.height, kb.keyCornerRadius);
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(x, 0, w, this.height);
+        }
       }
     }
 
@@ -237,16 +251,27 @@ export class KeyboardRenderer {
 
     if (kb.keyLabel !== "none" || kb.showNoteNames) {
       const effectiveLabel = kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
-      ctx.fillStyle = "#666";
-      ctx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
+      // 白键标签
+      ctx.fillStyle = "#666";
+      ctx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
         const label = this.labelFor(midi, effectiveLabel);
         if (!label) continue;
         const x = (i + 0.5) * layout.whiteKeyWidth;
         ctx.fillText(label, x, this.height - 4);
+      }
+      // 黑键标签
+      ctx.fillStyle = "#999";
+      ctx.font = `${Math.max(7, layout.blackKeyWidth * 0.35)}px sans-serif`;
+      for (let m = this.from; m <= this.to; m++) {
+        if (!isBlackKey(m)) continue;
+        const label = this.labelFor(m, effectiveLabel);
+        if (!label) continue;
+        const bx = this.midiToX(m);
+        ctx.fillText(label, bx, layout.blackKeyHeight - 4);
       }
     }
   }

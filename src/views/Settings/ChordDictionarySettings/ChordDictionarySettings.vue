@@ -3,6 +3,7 @@
     :show-reset="true"
     :on-reset="() => settingsStore.resetSetting('chordDictionary')"
   >
+    <div class="grid grid-cols-1 gap-4 m-4">
     <SettingsCollapse
       :title="t('settings.chordDictionarySettings.browse')"
       icon="gamepad"
@@ -132,6 +133,7 @@
         </li>
       </ul>
     </SettingsCollapse>
+    </div>
   </SettingsSection>
 </template>
 

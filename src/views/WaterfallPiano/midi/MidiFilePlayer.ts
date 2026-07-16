@@ -38,21 +38,27 @@ export class MidiFilePlayer {
 
   private extractTrackInfo(): MidiTrackInfo[] {
     if (!this.midi) return [];
-    return this.midi.tracks.map((track, index) => ({
-      index,
-      name: track.name || `Track ${index + 1}`,
-      noteCount: track.notes.length,
-      instrument: track.instrument.name || "Unknown",
-    }));
+    return this.midi.tracks
+      .filter((track) => track.notes.length > 0)
+      .map((track, idx) => ({
+        index: idx,
+        name: track.name || `Track ${idx + 1}`,
+        noteCount: track.notes.length,
+        instrument: track.instrument.name || "Unknown",
+      }));
   }
 
   private collectNotes(): ScheduledNote[] {
     if (!this.midi) return [];
     const result: ScheduledNote[] = [];
+    // 只处理有音符的轨道
+    const nonEmptyTracks = this.midi.tracks.filter((track) => track.notes.length > 0);
     const selected =
-      this.selectedTracks.length > 0 ? this.selectedTracks : this.midi.tracks.map((_, i) => i);
+      this.selectedTracks.length > 0
+        ? this.selectedTracks.filter((idx) => nonEmptyTracks[idx])
+        : nonEmptyTracks.map((_, i) => i);
     for (const trackIdx of selected) {
-      const track = this.midi.tracks[trackIdx];
+      const track = nonEmptyTracks[trackIdx];
       if (!track) continue;
       const hand: "left" | "right" | "unknown" = trackIdx === 0 ? "right" : trackIdx === 1 ? "left" : "unknown";
       for (const note of track.notes) {
@@ -85,6 +91,8 @@ export class MidiFilePlayer {
     Tone.getTransport().start();
     this.isPlaying = true;
     this.isPaused = false;
+    // 重新通知 NoteBlockSystem，确保方块系统状态完全重置
+    this.callbacks.onScheduledNotesReady?.(this.notes);
   }
 
   pausePlayback(): void {
@@ -110,7 +118,7 @@ export class MidiFilePlayer {
   }
 
   seekTo(seconds: number): void {
-    Tone.getTransport().seconds = Math.max(0, seconds);
+    Tone.getTransport().seconds = seconds / this.playbackSpeed;
     this.recomputeTriggeredState();
   }
 
@@ -127,7 +135,7 @@ export class MidiFilePlayer {
   }
 
   getCurrentTime(): number {
-    return Tone.getTransport().seconds;
+    return Tone.getTransport().seconds * this.playbackSpeed;
   }
 
   setPlaybackSpeed(speed: number): void {

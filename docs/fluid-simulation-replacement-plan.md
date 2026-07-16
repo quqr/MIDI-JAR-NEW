@@ -6,16 +6,16 @@
 
 ## 决策记录
 
-| # | 问题 | 决策 | 理由 |
-|---|------|------|------|
-| 1 | 替换范围 | **双层方案**：独立 WebGL canvas (底层) + PixiJS canvas (上层) | 两层各司其职，互不干扰 |
-| 2 | Canvas 对齐 | **CSS 叠加**：`position: absolute` 叠加在同一容器 | 坐标天然对齐，简单直接 |
-| 3 | 代码组织 | **完全重写为 TS 模块**，最细粒度拆分 | 可维护性最好，与项目架构一致 |
-| 4 | MIDI → Splat 映射 | 音符 → 水平坐标，velocity → splat 力度 | 最直觉的映射，符合钢琴空间分布 |
-| 5 | 分辨率策略 | **可配置**：低(256) / 中(512) / 高(1024) | 用户根据 GPU 选择 |
-| 6 | 背景模式 | 流体模式下 BackgroundRenderer 不渲染，流体 canvas 全权负责 | 职责清晰 |
-| 7 | 参数面板 | **简单/高级模式切换**：预设 + 3-5 核心滑块 / 全部参数 | 两全其美 |
-| 8 | 后处理 | 流体自带 Bloom/Sunrays，PixiJS 独立处理 | 各取所长，互不干扰 |
+| #   | 问题              | 决策                                                          | 理由                           |
+| --- | ----------------- | ------------------------------------------------------------- | ------------------------------ |
+| 1   | 替换范围          | **双层方案**：独立 WebGL canvas (底层) + PixiJS canvas (上层) | 两层各司其职，互不干扰         |
+| 2   | Canvas 对齐       | **CSS 叠加**：`position: absolute` 叠加在同一容器             | 坐标天然对齐，简单直接         |
+| 3   | 代码组织          | **完全重写为 TS 模块**，最细粒度拆分                          | 可维护性最好，与项目架构一致   |
+| 4   | MIDI → Splat 映射 | 音符 → 水平坐标，velocity → splat 力度                        | 最直觉的映射，符合钢琴空间分布 |
+| 5   | 分辨率策略        | **可配置**：低(256) / 中(512) / 高(1024)                      | 用户根据 GPU 选择              |
+| 6   | 背景模式          | 流体模式下 BackgroundRenderer 不渲染，流体 canvas 全权负责    | 职责清晰                       |
+| 7   | 参数面板          | **简单/高级模式切换**：预设 + 3-5 核心滑块 / 全部参数         | 两全其美                       |
+| 8   | 后处理            | 流体自带 Bloom/Sunrays，PixiJS 独立处理                       | 各取所长，互不干扰             |
 
 ## 目录结构
 
@@ -83,7 +83,12 @@ export interface GLContextResult {
 }
 
 export function getWebGLContext(canvas: HTMLCanvasElement): GLContextResult;
-export function getSupportedFormat(gl: WebGLRenderingContext, internalFormat: number, format: number, type: number): { internalFormat: number; format: number } | null;
+export function getSupportedFormat(
+  gl: WebGLRenderingContext,
+  internalFormat: number,
+  format: number,
+  type: number,
+): { internalFormat: number; format: number } | null;
 ```
 
 #### 1c. GLUtils.ts
@@ -118,7 +123,7 @@ export class FluidSolver {
   constructor(gl, ext, blit, config);
   initFramebuffers(width, height): void;
   step(dt: number): void;
-  splat(x, y, dx, dy, color: { r, g, b }): void;
+  splat(x, y, dx, dy, color: { r; g; b }): void;
   multipleSplats(amount: number): void;
   resize(width, height): void;
   destroy(): void;
@@ -218,23 +223,32 @@ export class FluidSimulation {
   private animationId: number | null = null;
   private lastUpdateTime = 0;
 
-  constructor(canvas: HTMLCanvasElement, config?: Partial<FluidSimulationConfig>);
-  
+  constructor(
+    canvas: HTMLCanvasElement,
+    config?: Partial<FluidSimulationConfig>,
+  );
+
   /** 初始化 WebGL 资源，启动渲染循环 */
   start(): void;
-  
+
   /** 注入一个流体 splat（MIDI 触发时调用） */
-  splat(x: number, y: number, dx: number, dy: number, color: { r: number; g: number; b: number }): void;
-  
+  splat(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    color: { r: number; g: number; b: number },
+  ): void;
+
   /** 更新配置（设置面板调用） */
   updateConfig(config: Partial<FluidSimulationConfig>): void;
-  
+
   /** 处理 canvas resize */
   resize(): void;
-  
+
   /** 暂停/恢复 */
   setPaused(paused: boolean): void;
-  
+
   /** 停止渲染循环，释放所有 WebGL 资源 */
   destroy(): void;
 }
@@ -267,6 +281,7 @@ export class FluidSimulation {
 ```
 
 关键改动：
+
 - 添加 `fluidCanvasRef`，在 `onMounted` 时创建 `FluidSimulation` 实例
 - 监听 `settings.background.type`，当为 `"fluid"` 时显示流体 canvas 并启动模拟，否则隐藏并暂停
 - 两个 canvas 都用 `position: absolute; inset: 0` 叠加
@@ -282,7 +297,7 @@ private fluidSimulation: FluidSimulation | null = null;
 // 在 playRealtimeNote 中添加
 playRealtimeNote(midi: number, velocity: number) {
   // ... 现有逻辑 ...
-  
+
   // 流体 splat
   if (this.fluidSimulation) {
     const x = this.midiToFluidX(midi);        // MIDI → 水平坐标 0-1
@@ -325,8 +340,8 @@ private midiToFluidColor(midi: number): { r: number; g: number; b: number } {
 
 ```ts
 // 新增字段
-fluidQuality: 'low' | 'medium' | 'high';
-fluidStyle: 'gentle' | 'standard' | 'turbulent';
+fluidQuality: "low" | "medium" | "high";
+fluidStyle: "gentle" | "standard" | "turbulent";
 fluidAdvanced: boolean;
 fluidParams: Partial<FluidSimulationConfig>; // 高级模式参数覆盖
 ```
@@ -339,17 +354,17 @@ fluidParams: Partial<FluidSimulationConfig>; // 高级模式参数覆盖
 
 ## 文件改动清单
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `engine/fluid/*.ts` (新建 ~20 个文件) | **新建** | Phase 1: 完整 TS 模块 |
-| `engine/fluid/shaders/*.glsl` (新建 ~20 个文件) | **新建** | Phase 1: GLSL shader 源码 |
-| `WaterfallPiano/components/WaterfallCanvas.vue` | **修改** | Phase 2: 添加流体 canvas |
-| `WaterfallPiano/engine/WaterfallEngine.ts` | **修改** | Phase 3: MIDI → Splat 映射 |
-| `WaterfallPiano/engine/BackgroundRenderer.ts` | **修改** | Phase 5: 移除旧 FluidRenderer |
-| `WaterfallPiano/engine/FluidRenderer.ts` | **删除** | Phase 5: 旧实现 |
-| `WaterfallPiano/types.ts` | **修改** | Phase 4: 扩展配置类型 |
-| `Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue` | **修改** | Phase 4: 设置面板 |
-| `stores/waterfallPiano.ts` | **修改** | Phase 4: 默认值 |
+| 文件                                                         | 操作     | 说明                          |
+| ------------------------------------------------------------ | -------- | ----------------------------- |
+| `engine/fluid/*.ts` (新建 ~20 个文件)                        | **新建** | Phase 1: 完整 TS 模块         |
+| `engine/fluid/shaders/*.glsl` (新建 ~20 个文件)              | **新建** | Phase 1: GLSL shader 源码     |
+| `WaterfallPiano/components/WaterfallCanvas.vue`              | **修改** | Phase 2: 添加流体 canvas      |
+| `WaterfallPiano/engine/WaterfallEngine.ts`                   | **修改** | Phase 3: MIDI → Splat 映射    |
+| `WaterfallPiano/engine/BackgroundRenderer.ts`                | **修改** | Phase 5: 移除旧 FluidRenderer |
+| `WaterfallPiano/engine/FluidRenderer.ts`                     | **删除** | Phase 5: 旧实现               |
+| `WaterfallPiano/types.ts`                                    | **修改** | Phase 4: 扩展配置类型         |
+| `Settings/WaterfallPianoSettings/WaterfallPianoSettings.vue` | **修改** | Phase 4: 设置面板             |
+| `stores/waterfallPiano.ts`                                   | **修改** | Phase 4: 默认值               |
 
 ## 依赖关系
 

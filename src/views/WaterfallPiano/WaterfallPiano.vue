@@ -5,7 +5,7 @@
         ref="waterfallCanvasRef"
         :settings="store.settings"
         :mode="mode"
-        :octave-offset="store.octaveOffset"
+        :show-fps="showFPS"
         @ready="onEngineReady"
         @note-on="onCanvasNoteOn"
         @note-off="onCanvasNoteOff"
@@ -26,20 +26,10 @@
         <div class="flex items-center gap-1 pointer-events-auto">
           <button
             class="btn btn-sm btn-circle btn-ghost text-white"
-            :aria-label="t('common.decrement')"
-            @click="store.octaveOffset = Math.max(-4, store.octaveOffset - 1)"
+            :aria-label="t('waterfallPiano.midiDrawer.title')"
+            @click="midiDrawerOpen = true"
           >
-            <Icon name="minus" :size="16" aria-hidden="true" />
-          </button>
-          <span class="text-white/70 text-xs font-mono w-10 text-center tabular-nums">
-            {{ store.octaveOffset >= 0 ? '+' : '' }}{{ store.octaveOffset }}
-          </span>
-          <button
-            class="btn btn-sm btn-circle btn-ghost text-white"
-            :aria-label="t('common.increment')"
-            @click="store.octaveOffset = Math.min(4, store.octaveOffset + 1)"
-          >
-            <Icon name="plus" :size="16" aria-hidden="true" />
+            <Icon name="music" :size="18" aria-hidden="true" />
           </button>
           <button
             class="btn btn-sm btn-circle btn-ghost text-white"
@@ -52,31 +42,37 @@
       </div>
 
       <PlaybackPanel
-        :mode="mode"
-        :is-recording="isRecording"
-        :is-playing="isPlaying"
-        :is-paused="isPaused"
         :current-time="currentTime"
         :duration="duration"
-        :file-name="fileName"
-        :tracks="tracks"
-        :selected-tracks="selectedTracks"
-        :playback-speed="store.settings.midiFile.playbackSpeed"
-        :loop="store.settings.midiFile.loop"
-        :has-content="contentType !== 'none'"
-        @update:mode="onModeChange"
-        @toggle-record="onToggleRecord"
-        @play="onPlay"
-        @pause="onPause"
-        @stop="onStop"
         @seek="onSeek"
-        @load-midi="onLoadMidi"
-        @select-tracks="onSelectTracks"
-        @set-speed="onSetSpeed"
-        @toggle-loop="onToggleLoop"
       />
     </div>
 
+    <MidiDrawer
+      v-model="midiDrawerOpen"
+      :mode="mode"
+      :is-recording="isRecording"
+      :is-playing="isPlaying"
+      :is-paused="isPaused"
+      :current-time="currentTime"
+      :duration="duration"
+      :file-name="fileName"
+      :tracks="tracks"
+      :selected-tracks="selectedTracks"
+      :playback-speed="store.settings.midiFile.playbackSpeed"
+      :loop="store.settings.midiFile.loop"
+      :has-content="contentType !== 'none'"
+      @update:mode="onModeChange"
+      @toggle-record="onToggleRecord"
+      @play="onPlay"
+      @pause="onPause"
+      @stop="onStop"
+      @seek="onSeek"
+      @load-midi="onLoadMidi"
+      @select-tracks="onSelectTracks"
+      @set-speed="onSetSpeed"
+      @toggle-loop="onToggleLoop"
+    />
     <SettingsPanel v-model="settingsOpen" />
   </div>
 </template>
@@ -87,6 +83,7 @@ import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
 import PlaybackPanel from "./components/PlaybackPanel.vue";
+import MidiDrawer from "./components/MidiDrawer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import { useWaterfallPianoStore } from "./stores/waterfallPiano";
 import { MidiFilePlayer } from "./midi/MidiFilePlayer";
@@ -110,6 +107,8 @@ const fileName = ref("");
 const tracks = ref<MidiTrackInfo[]>([]);
 const selectedTracks = ref<number[]>([]);
 const settingsOpen = ref(false);
+const midiDrawerOpen = ref(false);
+const showFPS = ref(true); // FPS 显示开关
 const waterfallCanvasRef = ref<InstanceType<typeof WaterfallCanvas> | null>(null);
 
 const engineRef = shallowRef<WaterfallEngine | null>(null);
@@ -123,8 +122,6 @@ async function ensureAudioReady(): Promise<void> {
 
 function onEngineReady(engine: WaterfallEngine): void {
   engineRef.value = engine;
-  // 设置每帧回调：在 WaterfallEngine 主循环中调用 player.tick()/recorder.tick()，
-  // 替代各自独立的 rAF 循环，消除两个 rAF 之间的时间同步问题
   engine.frameCallback = () => {
     if (contentType.value === "midi" && player?.getIsPlaying()) {
       player.tick();
@@ -160,8 +157,6 @@ function onModeChange(m: NoteBlockMode): void {
 async function onLoadMidi(file: File): Promise<void> {
   if (!player) return;
   try {
-    // 先切换模式（清空旧方块），再加载文件（调度新音符）
-    // 顺序不能反，否则 setMode 的 clearNoteBlocks 会清空刚调度的 synthesiaNotes
     mode.value = "synthesia";
     engineRef.value?.setMode("synthesia");
     await player.loadFile(file);
@@ -197,6 +192,8 @@ async function onPlay(): Promise<void> {
       player.resumePlayback();
     } else {
       player.startPlayback();
+      // 确保重播时时间归零
+      engineRef.value?.noteBlockSystemRef.setTransportTime(0);
     }
     engineRef.value?.noteBlockSystemRef.setTransportPlaying(true);
   } else if (contentType.value === "recording" && recorder) {

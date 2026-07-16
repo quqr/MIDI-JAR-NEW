@@ -219,4 +219,74 @@ impl MidiManager {
             let _ = handle.join();
         }
     }
+
+    // ===== Virtual Port Methods =====
+
+    pub fn is_virtual_port_supported() -> bool {
+        InnerManager::is_virtual_port_supported()
+    }
+
+    pub fn create_virtual_input(&mut self, app_handle: &AppHandle, name: &str) -> Result<(), String> {
+        if DEBUG_MIDI {
+            eprintln!("[MIDI_DEBUG] create_virtual_input: name='{}'", name);
+        }
+        let mut mgr = self.manager.lock().unwrap();
+        let result = mgr.create_virtual_input(name, app_handle);
+        if result.is_ok() {
+            // Refresh to emit updated inputs
+            let inputs = mgr.get_inputs();
+            let _ = app_handle.emit("midi:inputs", &inputs);
+        }
+        result
+    }
+
+    pub fn create_virtual_output(&mut self, app_handle: &AppHandle, name: &str) -> Result<(), String> {
+        if DEBUG_MIDI {
+            eprintln!("[MIDI_DEBUG] create_virtual_output: name='{}'", name);
+        }
+        let mut mgr = self.manager.lock().unwrap();
+        let result = mgr.create_virtual_output(name);
+        if result.is_ok() {
+            // Refresh to emit updated outputs
+            let outputs = mgr.get_outputs();
+            let _ = app_handle.emit("midi:outputs", &outputs);
+        }
+        result
+    }
+
+    pub fn delete_virtual_input(&mut self, app_handle: &AppHandle, name: &str) -> Result<(), String> {
+        if DEBUG_MIDI {
+            eprintln!("[MIDI_DEBUG] delete_virtual_input: name='{}'", name);
+        }
+        let mut mgr = self.manager.lock().unwrap();
+        let result = mgr.delete_virtual_input(name);
+        if result.is_ok() {
+            // Refresh to emit updated inputs
+            let inputs = mgr.get_inputs();
+            let _ = app_handle.emit("midi:inputs", &inputs);
+        }
+        result
+    }
+
+    pub fn delete_virtual_output(&mut self, app_handle: &AppHandle, name: &str) -> Result<(), String> {
+        if DEBUG_MIDI {
+            eprintln!("[MIDI_DEBUG] delete_virtual_output: name='{}'", name);
+        }
+        let mut mgr = self.manager.lock().unwrap();
+        let result = mgr.delete_virtual_output(name);
+        if result.is_ok() {
+            // Refresh to emit updated outputs
+            let outputs = mgr.get_outputs();
+            let _ = app_handle.emit("midi:outputs", &outputs);
+        }
+        result
+    }
+
+    pub fn get_virtual_inputs(&self) -> Vec<String> {
+        self.manager.lock().unwrap().get_virtual_inputs()
+    }
+
+    pub fn get_virtual_outputs(&self) -> Vec<String> {
+        self.manager.lock().unwrap().get_virtual_outputs()
+    }
 }

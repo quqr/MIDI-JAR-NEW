@@ -75,6 +75,7 @@ export interface ParticleConfig {
   opacity: number;
   cornerRadius: number;
   hitLine: HitLineConfig;
+  hitExplosionRadius: number; // 命中爆炸大小（0-0.1）
 }
 
 // ─── 流体高级参数（从 @/engine/fluid 重新导出，保持单一类型源） ───
@@ -144,6 +145,9 @@ export interface SynthEnvelopeConfig {
   release: number;
 }
 
+// ─── 振荡器类型 ───
+export type OscillatorType = "triangle" | "sine" | "square" | "sawtooth";
+
 // ─── 音频引擎用户配置 ───
 export interface SoundEngineUserConfig {
   volume: number;
@@ -153,7 +157,7 @@ export interface SoundEngineUserConfig {
   velocitySensitivity: boolean;
   harmonicity: number;
   modulationIndex: number;
-  oscillatorType: string;
+  oscillatorType: OscillatorType;
   envelope: SynthEnvelopeConfig;
   modulationEnvelope: SynthEnvelopeConfig;
 }

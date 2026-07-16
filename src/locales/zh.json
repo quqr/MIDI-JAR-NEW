@@ -265,7 +265,15 @@
       "noDevicesTitle": "未检测到 MIDI 设备",
       "noDevicesDesc": "请连接 MIDI 设备后点击刷新按钮",
       "clearConfirmTitle": "确认清除路由",
-      "confirmClear": "确定要清除所有路由连接吗？此操作不可撤销。"
+      "confirmClear": "确定要清除所有路由连接吗？此操作不可撤销。",
+      "addVirtualPort": "添加虚拟端口",
+      "virtualPortName": "端口名称",
+      "virtualPortNamePlaceholder": "例如: My Virtual Port",
+      "virtualPortType": "端口类型",
+      "virtualInput": "虚拟输入",
+      "virtualOutput": "虚拟输出",
+      "createVirtualPort": "创建虚拟端口",
+      "notSupportedOnWindows": "Windows 不支持虚拟端口"
     },
     "notationSettings": {
       "title": "记谱设置",
@@ -506,9 +514,10 @@
     "midiFile": "MIDI 文件",
     "colorScheme": "配色方案",
     "speed": "速度",
-    "lookAhead": "预看时间",
+    "lookAhead": "出现提前量",
     "opacity": "不透明度",
     "cornerRadius": "圆角",
+    "hitExplosionRadius": "爆炸大小",
     "hitLine": "命中线",
     "customColors": "自定义颜色",
     "low": "低音",
@@ -524,6 +533,16 @@
     "fluidEnabled": "启用流体",
     "fluidQuality": "流体质量",
     "fluidStyle": "流体风格",
+    "fluidAdvanced": "高级参数",
+    "fluidAdvancedParams": "流体高级参数",
+    "splatRadius": "溅射半径",
+    "splatColorHue": "溅射色相",
+    "trailLength": "拖尾长度",
+    "flowPersistence": "流动持久度",
+    "bloom": "发光效果",
+    "bloomIntensity": "发光强度",
+    "hitExplosion": "命中爆炸",
+    "blockCoverage": "方块覆盖",
     "keyRange": "键盘范围",
     "keyLabel": "按键标签",
     "heightRatio": "键盘高度比",
@@ -549,6 +568,17 @@
       "warm": "暖色",
       "cool": "冷色",
       "neon": "霓虹"
+    },
+    "midiDrawer": {
+      "title": "MIDI",
+      "playback": "播放控制",
+      "modeAndFile": "模式与文件",
+      "mode": "模式",
+      "realtime": "实时",
+      "synthesia": "瀑布",
+      "midiFile": "MIDI 文件",
+      "loadFile": "加载文件",
+      "synthesiaOptions": "瀑布选项"
     }
   },
   "advancedDebug": {

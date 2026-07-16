@@ -172,6 +172,8 @@ export function resolveConfig(
   if (overrides.flowPersistence !== undefined) base.VELOCITY_DISSIPATION = (1 - overrides.flowPersistence) * 4;
   if (overrides.bloom !== undefined) base.BLOOM = overrides.bloom;
   if (overrides.bloomIntensity !== undefined) base.BLOOM_INTENSITY = overrides.bloomIntensity;
+  // splatColorHue: 完全覆盖模式 — 设置色相时禁用随机色彩
+  if (overrides.splatColorHue !== undefined) base.COLORFUL = false;
   base.TRANSPARENT = true;
   return base;
 }

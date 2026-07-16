@@ -161,6 +161,22 @@ const tauriAPI = {
         callback(payload.message, payload.timestamp, payload.device);
       });
     },
+    // Virtual port methods
+    isVirtualPortSupported: () => {
+      return invoke<boolean>("is_virtual_port_supported");
+    },
+    createVirtualInput: (name: string) => {
+      return invoke<void>("create_virtual_input", { name });
+    },
+    createVirtualOutput: (name: string) => {
+      return invoke<void>("create_virtual_output", { name });
+    },
+    deleteVirtualInput: (name: string) => {
+      return invoke<void>("delete_virtual_input", { name });
+    },
+    deleteVirtualOutput: (name: string) => {
+      return invoke<void>("delete_virtual_output", { name });
+    },
   },
   shell: {
     openExternal: (url: string) => invoke<void>("open_external", { url }),

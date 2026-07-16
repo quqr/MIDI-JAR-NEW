@@ -115,6 +115,7 @@ describe("Recorder", () => {
       recorder.setCallbacks({ onNoteOn: noteOnSpy });
       recorder.startPlayback();
       vi.advanceTimersByTime(16);
+      recorder.tick();
       expect(noteOnSpy).toHaveBeenCalledWith(60, 100, "unknown");
     });
 
@@ -126,6 +127,7 @@ describe("Recorder", () => {
       recorder.setCallbacks({ onNoteOff: noteOffSpy });
       recorder.startPlayback();
       vi.advanceTimersByTime(1100);
+      recorder.tick();
       expect(noteOffSpy).toHaveBeenCalledWith(60);
     });
 
@@ -137,6 +139,7 @@ describe("Recorder", () => {
       recorder.setCallbacks({ onPlaybackEnd: endSpy });
       recorder.startPlayback();
       vi.advanceTimersByTime(1100);
+      recorder.tick();
       expect(endSpy).toHaveBeenCalledTimes(1);
       expect(recorder.getIsPlaying()).toBe(false);
     });

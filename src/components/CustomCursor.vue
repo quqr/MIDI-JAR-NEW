@@ -11,6 +11,9 @@ const outerPointer = ref<HTMLElement>();
 let isHovering = false;
 let halfElementWidth = 6;
 let halfElementWidth2 = 21;
+// RAF 节流：保存最新鼠标位置，每帧最多更新一次
+let latestX = 0, latestY = 0, latestTarget: HTMLElement | null = null;
+let rafPending = false;
 
 const isHoverState = ref(false);
 
@@ -87,10 +90,18 @@ function setPosition(x: number, y: number, zoom: number = 1) {
 }
 
 const handleMouseMove = (e: MouseEvent) => {
-  const zoom = getVueFlowZoom(e.target as HTMLElement);
-  requestAnimationFrame(() => {
-    setPosition(e.clientX, e.clientY, zoom);
-  });
+  // 保存最新鼠标位置，每帧最多更新一次指针位置
+  latestX = e.clientX;
+  latestY = e.clientY;
+  latestTarget = e.target as HTMLElement;
+  if (!rafPending) {
+    rafPending = true;
+    requestAnimationFrame(() => {
+      const zoom = getVueFlowZoom(latestTarget!);
+      setPosition(latestX, latestY, zoom);
+      rafPending = false;
+    });
+  }
 };
 
 const handleMouseOver = (event: MouseEvent) => {

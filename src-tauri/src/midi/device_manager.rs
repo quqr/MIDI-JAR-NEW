@@ -3,6 +3,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, Mutex};
 use tauri::{AppHandle, Emitter};
 
+// Import virtual port traits for non-Windows platforms
+#[cfg(not(target_os = "windows"))]
+use midir::os::unix::{VirtualInput, VirtualOutput};
+
 use super::input_device::{ApiMidiInput, MidiInputDevice};
 use super::internal_output::InternalOutput;
 use super::output_device::{ApiMidiOutput, MidiOutputDevice};
@@ -84,6 +88,11 @@ pub struct MidiDeviceManager {
     active_connections: HashMap<String, MidiInputConnection>,
     active_output_connections: HashMap<String, MidiOutputConnection>,
     dedup: Arc<Mutex<MidiDedup>>,
+    // Virtual ports (not supported on Windows)
+    #[cfg(not(target_os = "windows"))]
+    virtual_inputs: HashMap<String, MidiInputConnection>,
+    #[cfg(not(target_os = "windows"))]
+    virtual_outputs: HashMap<String, MidiOutputConnection>,
 }
 
 enum OutputEntry {
@@ -102,6 +111,10 @@ impl MidiDeviceManager {
             active_connections: HashMap::new(),
             active_output_connections: HashMap::new(),
             dedup: Arc::new(Mutex::new(MidiDedup::new())),
+            #[cfg(not(target_os = "windows"))]
+            virtual_inputs: HashMap::new(),
+            #[cfg(not(target_os = "windows"))]
+            virtual_outputs: HashMap::new(),
         };
         manager.refresh_internal_outputs();
         manager
@@ -474,6 +487,170 @@ impl MidiDeviceManager {
 
     pub fn get_wires(&self) -> Vec<ApiMidiWire> {
         self.wires.iter().map(|w| w.to_api()).collect()
+    }
+
+    // ===== Virtual Port Methods (not supported on Windows) =====
+
+    /// Check if virtual ports are supported on this platform
+    pub fn is_virtual_port_supported() -> bool {
+        #[cfg(target_os = "windows")]
+        {
+            false
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            true
+        }
+    }
+
+    /// Get list of virtual input port names
+    pub fn get_virtual_inputs(&self) -> Vec<String> {
+        #[cfg(target_os = "windows")]
+        {
+            Vec::new()
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            self.virtual_inputs.keys().cloned().collect()
+        }
+    }
+
+    /// Get list of virtual output port names
+    pub fn get_virtual_outputs(&self) -> Vec<String> {
+        #[cfg(target_os = "windows")]
+        {
+            Vec::new()
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            self.virtual_outputs.keys().cloned().collect()
+        }
+    }
+
+    /// Create a virtual input port that other apps can send MIDI to
+    #[cfg(not(target_os = "windows"))]
+    pub fn create_virtual_input(&mut self, name: &str, app_handle: &AppHandle) -> Result<(), String> {
+        if self.virtual_inputs.contains_key(name) {
+            return Err(format!("Virtual input '{}' already exists", name));
+        }
+
+        let midi_in = MidiInput::new("midi-jar-virtual-input")
+            .map_err(|e| format!("Failed to create MidiInput: {}", e))?;
+
+        let app_handle_clone = app_handle.clone();
+        let name_clone = name.to_string();
+        let dedup_clone = self.dedup.clone();
+
+        let conn = midi_in
+            .create_virtual(
+                name,
+                move |stamp, message, _| {
+                    let timestamp = (stamp as f64) * 1000.0;
+
+                    // Dedup check
+                    {
+                        let mut dedup = dedup_clone.lock().unwrap();
+                        if dedup.is_duplicate(message, timestamp as u128) {
+                            return;
+                        }
+                    }
+
+                    // Emit to internal modules
+                    for &module_name in MODULE_OUTPUTS {
+                        let event_name = format!("midi:message:{}", module_name);
+                        let _ = app_handle_clone.emit(&event_name, serde_json::json!({
+                            "message": message,
+                            "timestamp": timestamp,
+                            "device": &name_clone
+                        }));
+                    }
+
+                    // Emit activity event
+                    let _ = app_handle_clone.emit("midi:activity", serde_json::json!({
+                        "latency": 0.0,
+                        "device": &name_clone
+                    }));
+                },
+                (),
+            )
+            .map_err(|e| format!("Failed to create virtual input: {}", e))?;
+
+        self.virtual_inputs.insert(name.to_string(), conn);
+
+        // Add to inputs list as a connected input
+        self.inputs.insert(
+            name.to_string(),
+            MidiInputDevice::new(name.to_string(), true),
+        );
+
+        Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn create_virtual_input(&mut self, _name: &str, _app_handle: &AppHandle) -> Result<(), String> {
+        Err("Virtual ports are not supported on Windows".to_string())
+    }
+
+    /// Create a virtual output port that other apps can receive MIDI from
+    #[cfg(not(target_os = "windows"))]
+    pub fn create_virtual_output(&mut self, name: &str) -> Result<(), String> {
+        if self.virtual_outputs.contains_key(name) {
+            return Err(format!("Virtual output '{}' already exists", name));
+        }
+
+        let midi_out = MidiOutput::new("midi-jar-virtual-output")
+            .map_err(|e| format!("Failed to create MidiOutput: {}", e))?;
+
+        let conn = midi_out
+            .create_virtual(name)
+            .map_err(|e| format!("Failed to create virtual output: {}", e))?;
+
+        self.virtual_outputs.insert(name.to_string(), conn);
+
+        // Add to outputs list as a physical output (for routing purposes)
+        self.outputs.insert(
+            name.to_string(),
+            OutputEntry::Physical(MidiOutputDevice::new(name.to_string(), true)),
+        );
+
+        Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn create_virtual_output(&mut self, _name: &str) -> Result<(), String> {
+        Err("Virtual ports are not supported on Windows".to_string())
+    }
+
+    /// Delete a virtual input port
+    #[cfg(not(target_os = "windows"))]
+    pub fn delete_virtual_input(&mut self, name: &str) -> Result<(), String> {
+        if self.virtual_inputs.remove(name).is_some() {
+            self.inputs.remove(name);
+            Ok(())
+        } else {
+            Err(format!("Virtual input '{}' not found", name))
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn delete_virtual_input(&mut self, _name: &str) -> Result<(), String> {
+        Err("Virtual ports are not supported on Windows".to_string())
+    }
+
+    /// Delete a virtual output port
+    #[cfg(not(target_os = "windows"))]
+    pub fn delete_virtual_output(&mut self, name: &str) -> Result<(), String> {
+        if self.virtual_outputs.remove(name).is_some() {
+            self.outputs.remove(name);
+            Ok(())
+        } else {
+            Err(format!("Virtual output '{}' not found", name))
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn delete_virtual_output(&mut self, _name: &str) -> Result<(), String> {
+        Err("Virtual ports are not supported on Windows".to_string())
     }
 }
 

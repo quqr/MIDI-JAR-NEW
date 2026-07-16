@@ -291,6 +291,36 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     outputs.value.filter((o) => o.type === "internal"),
   );
 
+  // Virtual port methods
+  async function isVirtualPortSupported(): Promise<boolean> {
+    if (!isTauri()) return false;
+    return await window.tauriAPI.midi.isVirtualPortSupported();
+  }
+
+  async function createVirtualInput(name: string): Promise<void> {
+    if (!isTauri()) return;
+    await window.tauriAPI.midi.createVirtualInput(name);
+    logger.success(`虚拟输入端口已创建: ${name}`);
+  }
+
+  async function createVirtualOutput(name: string): Promise<void> {
+    if (!isTauri()) return;
+    await window.tauriAPI.midi.createVirtualOutput(name);
+    logger.success(`虚拟输出端口已创建: ${name}`);
+  }
+
+  async function deleteVirtualInput(name: string): Promise<void> {
+    if (!isTauri()) return;
+    await window.tauriAPI.midi.deleteVirtualInput(name);
+    logger.warn(`虚拟输入端口已删除: ${name}`);
+  }
+
+  async function deleteVirtualOutput(name: string): Promise<void> {
+    if (!isTauri()) return;
+    await window.tauriAPI.midi.deleteVirtualOutput(name);
+    logger.warn(`虚拟输出端口已删除: ${name}`);
+  }
+
   function cleanup() {
     stopPolling();
     if (offInputs) {
@@ -332,6 +362,11 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     clearViewport,
     physicalOutputs,
     internalOutputs,
+    isVirtualPortSupported,
+    createVirtualInput,
+    createVirtualOutput,
+    deleteVirtualInput,
+    deleteVirtualOutput,
     cleanup,
   };
 });

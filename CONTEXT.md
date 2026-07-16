@@ -9,15 +9,18 @@ MIDI-JAR 是一个基于 Tauri + Vue 3 + TypeScript 的桌面音乐应用程序,
 ### MIDI 设备管理
 
 **MIDI 路由 (MidiRoute)**
+
 - 定义 MIDI 输入设备到输出设备的映射关系
 - 包含输入设备名称、输出设备名称、路由类型(physical/internal)、启用状态
 
 **MIDI 线路 (MidiWire)**
+
 - 表示一个已建立的 MIDI 连接
 - 包含路由配置和连接状态
 - 由 Rust 后端管理连接生命周期
 
 **内部输出 (Internal Output)**
+
 - 特殊的 MIDI 输出类型,指向应用内部模块
 - 预定义模块: chord-dictionary, chord-display/default, debugger
 - 通过 Tauri 事件系统分发 MIDI 消息
@@ -25,42 +28,50 @@ MIDI-JAR 是一个基于 Tauri + Vue 3 + TypeScript 的桌面音乐应用程序,
 ### 和弦字典 (Chord Dictionary)
 
 **和弦 (Chord)**
+
 - 音乐理论中的和弦实体
 - 由根音(tonic)和和弦类型(type)组成
 - 使用 @tonaljs 库进行音乐理论计算
 
 **和弦别名 (Chord Alias)**
+
 - 用户自定义的和弦名称映射
 - 用于显示偏好(如: "Cmaj7" → "CM7")
 
 **和弦分组 (Chord Grouping)**
+
 - 按质量(quality)或音程(intervals)分组显示
 - 支持在调性内筛选和弦
 
 ### 瀑布钢琴 (Waterfall Piano)
 
 **音符块 (Note Block)**
+
 - 瀑布流中下落的音符可视化单元
 - 包含 MIDI 音符编号、开始/结束时间、颜色等信息
 - 支持实时模式和播放模式
 
 **流体模拟 (Fluid Simulation)**
+
 - 基于 Navier-Stokes 方程的 WebGL 流体特效
 - 由 MIDI 事件驱动产生视觉反馈
 - 作为瀑布钢琴的背景层渲染
 
 **音高映射 (Pitch Mapping)**
+
 - MIDI 音符编号到视觉属性的映射
 - 包括颜色、位置、键盘显示等
 
 ### 设置管理 (Settings)
 
 **设置路径 (Setting Path)**
+
 - 使用点分隔的路径标识设置项(如: "notation.key")
 - 支持深层嵌套的对象结构
 - 通过 `setValueByPath` 实现动态更新
 
 **预设配置 (Preset)**
+
 - 质量预设: low/medium/high
 - 风格预设: gentle/standard/turbulent
 - 用户语义映射到底层参数

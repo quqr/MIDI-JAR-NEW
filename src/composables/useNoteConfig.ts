@@ -1,7 +1,6 @@
-import { computed } from "vue";
+﻿import { computed } from "vue";
 import { getKeySignature, type KeySignatureConfig } from "@/helpers";
-
-const MIDI_CHANNEL_ALL = 0;
+import { MIDI_CHANNEL_ALL } from "./useMidiHandler";
 
 export interface UseNotesOptions {
   accidentals?: "flat" | "sharp" | (() => "flat" | "sharp");
@@ -32,7 +31,7 @@ export function useNoteConfig(options: UseNotesOptions = {}) {
   const allowOmissionsGetter = toGetter(options.allowOmissions, false);
   const useSustainGetter = toGetter(options.useSustain, true);
   const detectOnReleaseGetter = toGetter(options.detectOnRelease, true);
-  const disabledChordsGetter = toGetter(options.disabledChords, undefined as string[] | undefined);
+  const disabledChordsGetter = toGetter(options.disabledChords, [] as string[]);
 
   const keySignature = computed<KeySignatureConfig>(() => {
     const currentKey = keyGetter();

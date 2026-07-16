@@ -13,7 +13,14 @@ import type {
   FluidAdvancedParams,
   BackgroundConfig,
   SoundEngineUserConfig,
+  SynthEnvelopeConfig,
 } from "../types";
+
+/** 深合并一个配置段：默认值 + 用户存储值 */
+function mergeSection<T extends object>(defaults: T, stored: Partial<T> | undefined): T {
+  if (!stored) return { ...defaults };
+  return { ...defaults, ...stored };
+}
 
 // 迁移旧版 fluidParams（大写字段名）到新版用户友好字段名（小写驼峰）
 function migrateFluidParams(
@@ -128,30 +135,20 @@ function loadSettings(): WaterfallPianoSettings {
     delete (background as unknown as Record<string, unknown>).fluidResolution;
 
     return {
-      particles: {
-        ...defaultWaterfallSettings.particles,
-        ...stored.particles,
-      },
+      particles: mergeSection(defaultWaterfallSettings.particles, stored.particles),
       background,
-      keyboard: {
-        ...defaultWaterfallSettings.keyboard,
-        ...stored.keyboard,
-      },
-      midiFile: {
-        ...defaultWaterfallSettings.midiFile,
-        ...stored.midiFile,
-      },
+      keyboard: mergeSection(defaultWaterfallSettings.keyboard, stored.keyboard),
+      midiFile: mergeSection(defaultWaterfallSettings.midiFile, stored.midiFile),
       sound: {
-        ...defaultWaterfallSettings.sound,
-        ...stored.sound,
-        envelope: {
-          ...defaultWaterfallSettings.sound.envelope,
-          ...(stored.sound as Record<string, unknown> | undefined)?.envelope as Record<string, number> | undefined,
-        },
-        modulationEnvelope: {
-          ...defaultWaterfallSettings.sound.modulationEnvelope,
-          ...(stored.sound as Record<string, unknown> | undefined)?.modulationEnvelope as Record<string, number> | undefined,
-        },
+        ...mergeSection(defaultWaterfallSettings.sound, stored.sound as Partial<SoundEngineUserConfig> | undefined),
+        envelope: mergeSection(
+          defaultWaterfallSettings.sound.envelope,
+          (stored.sound as Record<string, unknown> | undefined)?.envelope as Partial<SynthEnvelopeConfig> | undefined,
+        ),
+        modulationEnvelope: mergeSection(
+          defaultWaterfallSettings.sound.modulationEnvelope,
+          (stored.sound as Record<string, unknown> | undefined)?.modulationEnvelope as Partial<SynthEnvelopeConfig> | undefined,
+        ),
       },
     };
   }
@@ -164,8 +161,6 @@ export const useWaterfallPianoStore = defineStore("waterfallPiano", () => {
   const isRecording = ref(false);
   const isPlaying = ref(false);
   const currentMidiFileName = ref<string>("");
-  const octaveOffset = ref(0);
-
   function resetSettings() {
     settings.value = { ...defaultWaterfallSettings };
   }
@@ -194,7 +189,6 @@ export const useWaterfallPianoStore = defineStore("waterfallPiano", () => {
     isRecording,
     isPlaying,
     currentMidiFileName,
-    octaveOffset,
     resetSettings,
     resetGroup,
     updateSetting,

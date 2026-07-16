@@ -1,4 +1,4 @@
-import {
+﻿import {
   getMidiChannel,
   getMidiCommand,
   getMidiNote,
@@ -7,7 +7,7 @@ import {
 
 const MIDI_CMD_NOTE_OFF = 0x80;
 const MIDI_CMD_NOTE_ON = 0x90;
-const MIDI_CHANNEL_ALL = 0;
+export const MIDI_CHANNEL_ALL = 0;
 const MIDI_CMD_CC = 0xb0;
 const MIDI_CC_SUSTAIN = 0x40;
 

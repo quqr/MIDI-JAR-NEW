@@ -265,7 +265,15 @@
       "noDevicesTitle": "No MIDI devices detected",
       "noDevicesDesc": "Please connect a MIDI device and click refresh",
       "clearConfirmTitle": "Confirm Clear Routes",
-      "confirmClear": "Are you sure you want to clear all route connections? This cannot be undone."
+      "confirmClear": "Are you sure you want to clear all route connections? This cannot be undone.",
+      "addVirtualPort": "Add Virtual Port",
+      "virtualPortName": "Port Name",
+      "virtualPortNamePlaceholder": "e.g., My Virtual Port",
+      "virtualPortType": "Port Type",
+      "virtualInput": "Virtual Input",
+      "virtualOutput": "Virtual Output",
+      "createVirtualPort": "Create Virtual Port",
+      "notSupportedOnWindows": "Virtual ports not supported on Windows"
     },
     "notationSettings": {
       "title": "Notation Settings",
@@ -506,9 +514,10 @@
     "midiFile": "MIDI File",
     "colorScheme": "Color Scheme",
     "speed": "Speed",
-    "lookAhead": "Look Ahead",
+    "lookAhead": "Lead Time",
     "opacity": "Opacity",
     "cornerRadius": "Corner Radius",
+    "hitExplosionRadius": "Explosion Size",
     "hitLine": "Hit Line",
     "customColors": "Custom Colors",
     "low": "Low",
@@ -524,6 +533,16 @@
     "fluidEnabled": "Enable Fluid",
     "fluidQuality": "Fluid Quality",
     "fluidStyle": "Fluid Style",
+    "fluidAdvanced": "Advanced",
+    "fluidAdvancedParams": "Fluid Advanced",
+    "splatRadius": "Splat Radius",
+    "splatColorHue": "Splat Hue",
+    "trailLength": "Trail Length",
+    "flowPersistence": "Flow Persistence",
+    "bloom": "Bloom",
+    "bloomIntensity": "Bloom Intensity",
+    "hitExplosion": "Hit Explosion",
+    "blockCoverage": "Block Coverage",
     "keyRange": "Key Range",
     "keyLabel": "Key Label",
     "heightRatio": "Keyboard Height Ratio",
@@ -549,6 +568,17 @@
       "warm": "Warm",
       "cool": "Cool",
       "neon": "Neon"
+    },
+    "midiDrawer": {
+      "title": "MIDI",
+      "playback": "Playback",
+      "modeAndFile": "Mode & File",
+      "mode": "Mode",
+      "realtime": "Realtime",
+      "synthesia": "Synthesia",
+      "midiFile": "MIDI File",
+      "loadFile": "Load File",
+      "synthesiaOptions": "Synthesia Options"
     }
   },
   "advancedDebug": {

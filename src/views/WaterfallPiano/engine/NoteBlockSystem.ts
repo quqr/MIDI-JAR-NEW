@@ -32,7 +32,6 @@ interface NoteBlockCallbacks {
   onNoteEnd?: (midi: number) => void;
 }
 
-const FADE_DURATION = 3;
 const POOL_MAX = 512;
 
 export class NoteBlockSystem {
@@ -104,6 +103,7 @@ export class NoteBlockSystem {
     this.synthesiaCursor = 0;
     this.synthesiaBlockMap.clear();
     this.triggeredSet.clear();
+    this.active = []; // 清空活跃方块，确保重播时状态干净
   }
 
   setTransportTime(t: number): void {
@@ -120,6 +120,51 @@ export class NoteBlockSystem {
 
   releaseSynthesiaNote(midi: number): void {
     this.triggeredSet.delete(midi);
+  }
+
+  /** 获取当前活跃（已触发但未结束）的 MIDI 音符列表 */
+  getActiveMidiNotes(): number[] {
+    return Array.from(this.triggeredSet);
+  }
+
+  /** 获取活跃音符块的中心位置（归一化坐标），用于方块覆盖流体发射 */
+  getActiveBlockPositions(
+    keyboardRenderer: KeyboardRenderer,
+    totalHeight: number
+  ): Array<{
+    midi: number;
+    normX: number;
+    normY: number;
+    blockWidth: number;
+    blockHeight: number;
+  }> {
+    const result: Array<{
+      midi: number;
+      normX: number;
+      normY: number;
+      blockWidth: number;
+      blockHeight: number;
+    }> = [];
+    const whiteKeyWidth = keyboardRenderer.getWhiteKeyWidth();
+    const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
+    for (const b of this.active) {
+      if (!b.triggered || b.ended) continue;
+      const isBlack = isBlackKey(b.midi);
+      const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
+      const blockHeight = b.height <= 0 ? blockWidth : b.height;
+      const normX = keyboardRenderer.midiToX(b.midi) / this.width;
+      // normY 使用整个 canvas 高度（包括键盘区域）进行归一化
+      // synthesia 模式下 b.y 是方块底部位置，需要计算中心位置
+      const normY = (b.y - blockHeight / 2) / totalHeight;
+      result.push({
+        midi: b.midi,
+        normX,
+        normY: Math.max(0, Math.min(1, normY)),
+        blockWidth,
+        blockHeight,
+      });
+    }
+    return result;
   }
 
   playRealtimeNote(midi: number, velocity: number): void {
@@ -273,6 +318,8 @@ export class NoteBlockSystem {
         this.active.push(block);
         this.synthesiaBlockMap.set(key, block);
       }
+      // synthesia 下落模式：方块从屏幕顶部下落到命中线
+      // b.y = 方块底部位置；timeUntilHit > 0 时方块在命中线上方
       block.y = this.height - timeUntilHit * pps;
       block.height = note.duration * pps;
 
@@ -334,9 +381,6 @@ export class NoteBlockSystem {
       // b.y 是方块底部，绘制时需要从底部减去高度，使方块向上生长
       const y = b.y - h;
       let alpha = p.opacity;
-      if (b.releasing) {
-        alpha *= Math.max(0, 1 - b.fadeTime / FADE_DURATION);
-      }
       const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
       const isTriggered = isHighlighted(b.midi);
       // Brighten color when triggered (Synthesia-style glow)

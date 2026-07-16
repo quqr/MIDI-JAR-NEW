@@ -82,8 +82,6 @@ export class FluidSimulation {
   private destroyed = false;
   private initialized = false;
 
-  private initialSplats = 5;
-
   constructor(canvas: HTMLCanvasElement, config?: Partial<FluidSimulationConfig>) {
     this.canvas = canvas;
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -190,7 +188,7 @@ export class FluidSimulation {
     this.solver.initFramebuffers();
     this.bloomPass.initFramebuffers();
     this.sunraysPass.initFramebuffers();
-    this.solver.multipleSplats(this.initialSplats);
+    // 不再触发随机初始 splat，避免进入页面时的随机流体效果
 
     this.initialized = true;
     this.lastUpdateTime = Date.now();
@@ -277,6 +275,7 @@ export class FluidSimulation {
     const prevBloomRes = this.config.BLOOM_RESOLUTION;
     const prevSunraysRes = this.config.SUNRAYS_RESOLUTION;
     const prevBloomIter = this.config.BLOOM_ITERATIONS;
+    const prevBloom = this.config.BLOOM;
 
     Object.assign(this.config, config);
 
@@ -295,6 +294,10 @@ export class FluidSimulation {
       this.config.BLOOM_RESOLUTION !== prevBloomRes ||
       this.config.BLOOM_ITERATIONS !== prevBloomIter
     ) {
+      this.bloomPass.resize();
+    }
+    // BLOOM 从 false 变为 true 时需要重建 bloom FBO
+    if (this.config.BLOOM && !prevBloom) {
       this.bloomPass.resize();
     }
     if (this.config.SUNRAYS_RESOLUTION !== prevSunraysRes) {

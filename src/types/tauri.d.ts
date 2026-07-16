@@ -52,6 +52,12 @@ export interface TauriAPI {
       namespace: string,
       callback: (message: number[], timestamp: number, device: string) => void,
     ) => Promise<UnlistenFn>;
+    // Virtual port methods
+    isVirtualPortSupported: () => Promise<boolean>;
+    createVirtualInput: (name: string) => Promise<void>;
+    createVirtualOutput: (name: string) => Promise<void>;
+    deleteVirtualInput: (name: string) => Promise<void>;
+    deleteVirtualOutput: (name: string) => Promise<void>;
   };
   shell: {
     openExternal: (url: string) => Promise<void>;
