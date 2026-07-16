@@ -36,6 +36,11 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     return settingsStore.settings.chordDictionary.groupBy;
   });
 
+  /**
+   * 添加或更新和弦别名映射。若 key 已存在则更新，否则新增
+   * @param key - 原始和弦名称
+   * @param value - 别名（preferred alias）
+   */
   function addAlias(key: string, value: string): void {
     const currentAliases = [...settingsStore.settings.chordDictionary.aliases];
     const existingIndex = currentAliases.findIndex(([k]) => k === key);
@@ -53,6 +58,10 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     settingsStore.updateSetting("chordDictionary.aliases", currentAliases);
   }
 
+  /**
+   * 切换指定和弦的禁用状态：已禁用则启用，未禁用则禁用
+   * @param chordName - 和弦名称
+   */
   function toggleDisabled(chordName: string): void {
     const currentDisabled = [
       ...settingsStore.settings.chordDictionary.disabled,
@@ -90,6 +99,11 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     return disabled.value.includes(chordName);
   }
 
+  /**
+   * 解析和弦名称：若存在非空的别名映射则返回别名，否则返回原名
+   * @param chordName - 原始和弦名称
+   * @returns 解析后的和弦名称
+   */
   function resolveChordName(chordName: string): string {
     if (aliases.value.has(chordName)) {
       const alias = aliases.value.get(chordName)!;
@@ -117,16 +131,25 @@ export const useChordDictionaryStore = defineStore("chordDictionary", () => {
     return getPreferredAlias(chordAlias) === alias;
   }
 
+  /**
+   * 根据当前默认记谱法（notation）获取对应的别名索引
+   * @returns 默认别名在别名数组中的索引
+   */
   function getDefaultAliasIndex(): number {
     const notation =
       settingsStore.settings.chordDictionary.defaultNotation || "long";
     return ALIAS_NOTATION[notation];
   }
 
+  /**
+   * 判断指定别名是否为该和弦的默认别名（即无 preferred alias 且索引匹配默认记谱法）
+   * @param chordAlias - 和弦别名
+   * @param index - 别名在数组中的索引
+   * @returns 是否为默认别名
+   */
   function isDefaultAlias(chordAlias: string, index: number): boolean {
     return (
-      getPreferredAlias(chordAlias) === null &&
-      index === getDefaultAliasIndex()
+      getPreferredAlias(chordAlias) === null && index === getDefaultAliasIndex()
     );
   }
 

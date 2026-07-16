@@ -40,7 +40,7 @@ watch(
   () => props.defaultOpen,
   (val) => {
     isOpen.value = val;
-  }
+  },
 );
 
 function toggle(e: MouseEvent) {

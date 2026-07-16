@@ -1,9 +1,13 @@
-﻿import { Note } from "tonal";
+import { Note } from "tonal";
 import { watch } from "vue";
 
 import { getNoteInKeySignature } from "@/helpers";
 
-import { useNoteConfig, resolveOption, type UseNotesOptions } from "./useNoteConfig";
+import {
+  useNoteConfig,
+  resolveOption,
+  type UseNotesOptions,
+} from "./useNoteConfig";
 import { useNoteState } from "./useNoteState";
 import { getChords } from "./useChordDetection";
 import { createMidiHandler } from "./useMidiHandler";
@@ -51,6 +55,7 @@ export function useNotes({
     );
   }
 
+  /** 从当前所有活跃 MIDI 音符重新计算派生状态（音名、音级、和弦） */
   function recomputeFromMidiNotes() {
     const currentMidiNotes = state.aggregateMidiNotes();
     const currentNotes = currentMidiNotes.map(fromMidi);
@@ -69,14 +74,16 @@ export function useNotes({
   function handleNoteOn(midi: number) {
     state.clickedMidiNotes.value = [];
     state.playedMidiNotes.value = [...state.playedMidiNotes.value, midi];
-    state.sustainedMidiNotes.value =
-      state.sustainedMidiNotes.value.filter((m) => m !== midi);
+    state.sustainedMidiNotes.value = state.sustainedMidiNotes.value.filter(
+      (m) => m !== midi,
+    );
     recomputeFromMidiNotes();
   }
 
   function handleNoteOff(midi: number) {
-    state.playedMidiNotes.value =
-      state.playedMidiNotes.value.filter((m) => m !== midi);
+    state.playedMidiNotes.value = state.playedMidiNotes.value.filter(
+      (m) => m !== midi,
+    );
     if (state.sustained.value) {
       state.sustainedMidiNotes.value = [
         ...state.sustainedMidiNotes.value,
@@ -110,8 +117,9 @@ export function useNotes({
 
     const idx = state.clickedMidiNotes.value.indexOf(midi);
     if (idx >= 0) {
-      state.clickedMidiNotes.value =
-        state.clickedMidiNotes.value.filter((m) => m !== midi);
+      state.clickedMidiNotes.value = state.clickedMidiNotes.value.filter(
+        (m) => m !== midi,
+      );
     } else {
       state.clickedMidiNotes.value = [...state.clickedMidiNotes.value, midi];
     }
@@ -139,18 +147,15 @@ export function useNotes({
   useMidiMessage(onMidiMessage, ns);
 
   // ── Reactive config updates ──────────────────────────────────────
-  watch(
-    [config.accidentalsGetter, config.keyGetter],
-    () => {
-      const newNotes = state.midiNotes.value.map(fromMidi);
-      const newPitchClasses = newNotes.map(Note.pitchClass);
-      const newChords = recomputeChords(newNotes);
+  watch([config.accidentalsGetter, config.keyGetter], () => {
+    const newNotes = state.midiNotes.value.map(fromMidi);
+    const newPitchClasses = newNotes.map(Note.pitchClass);
+    const newChords = recomputeChords(newNotes);
 
-      state.notes.value = newNotes;
-      state.pitchClasses.value = newPitchClasses;
-      state.chords.value = newChords;
-    },
-  );
+    state.notes.value = newNotes;
+    state.pitchClasses.value = newPitchClasses;
+    state.chords.value = newChords;
+  });
 
   watch(config.allowOmissionsGetter, () => {
     state.chords.value = recomputeChords(state.notes.value);

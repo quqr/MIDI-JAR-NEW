@@ -10,7 +10,9 @@
         @note-on="onCanvasNoteOn"
         @note-off="onCanvasNoteOff"
       />
-      <div class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none">
+      <div
+        class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none"
+      >
         <div class="flex items-center gap-2 pointer-events-auto">
           <button
             class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20"
@@ -20,7 +22,7 @@
             <Icon name="arrow-left" :size="18" aria-hidden="true" />
           </button>
           <span class="text-white/80 font-semibold drop-shadow">
-            {{ t('waterfallPiano.title') }}
+            {{ t("waterfallPiano.title") }}
           </span>
         </div>
         <div class="flex items-center gap-1 pointer-events-auto">
@@ -109,17 +111,26 @@ const selectedTracks = ref<number[]>([]);
 const settingsOpen = ref(false);
 const midiDrawerOpen = ref(false);
 const showFPS = ref(true); // FPS 显示开关
-const waterfallCanvasRef = ref<InstanceType<typeof WaterfallCanvas> | null>(null);
+const waterfallCanvasRef = ref<InstanceType<typeof WaterfallCanvas> | null>(
+  null,
+);
 
 const engineRef = shallowRef<WaterfallEngine | null>(null);
 const recorderRef = shallowRef<Recorder | null>(null);
 let player: MidiFilePlayer | null = null;
 let recorder: Recorder | null = null;
 
+/**
+ * 确保 AudioContext 已初始化（处理浏览器自动播放策略限制）
+ */
 async function ensureAudioReady(): Promise<void> {
   await waterfallCanvasRef.value?.retryAudio();
 }
 
+/**
+ * 引擎初始化完成回调，设置每帧驱动逻辑并恢复本地录缓存数据
+ * @param engine - Waterfall 引擎实例
+ */
 function onEngineReady(engine: WaterfallEngine): void {
   engineRef.value = engine;
   engine.frameCallback = () => {
@@ -146,6 +157,10 @@ function onCanvasNoteOff(midi: number): void {
   if (isRecording.value && recorder) recorder.recordNoteOff(midi);
 }
 
+/**
+ * 切换音符块显示模式，切回实时模式时同步重置 transport 播放状态
+ * @param m - 目标模式（realtime / synthesia）
+ */
 function onModeChange(m: NoteBlockMode): void {
   mode.value = m;
   engineRef.value?.setMode(m);
@@ -154,6 +169,10 @@ function onModeChange(m: NoteBlockMode): void {
   }
 }
 
+/**
+ * 加载 MIDI 文件并切换至 synthesia 模式，同步更新播放时长与状态
+ * @param file - 用户选择的 MIDI 文件
+ */
 async function onLoadMidi(file: File): Promise<void> {
   if (!player) return;
   try {
@@ -169,6 +188,9 @@ async function onLoadMidi(file: File): Promise<void> {
   }
 }
 
+/**
+ * 切换录制状态：停止时保存录制数据并更新内容类型；开始前先停止当前播放
+ */
 function onToggleRecord(): void {
   if (!recorder) return;
   if (isRecording.value) {
@@ -185,6 +207,9 @@ function onToggleRecord(): void {
   }
 }
 
+/**
+ * 开始或恢复播放，根据当前内容类型（MIDI 文件 / 录制）分别驱动对应播放器
+ */
 async function onPlay(): Promise<void> {
   await ensureAudioReady();
   if (contentType.value === "midi" && player) {
@@ -210,7 +235,8 @@ async function onPlay(): Promise<void> {
 
 function onPause(): void {
   if (contentType.value === "midi" && player) player.pausePlayback();
-  else if (contentType.value === "recording" && recorder) recorder.pausePlayback();
+  else if (contentType.value === "recording" && recorder)
+    recorder.pausePlayback();
   isPlaying.value = false;
   isPaused.value = true;
   engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
@@ -218,7 +244,8 @@ function onPause(): void {
 
 function onStop(): void {
   if (contentType.value === "midi" && player) player.stopPlayback();
-  else if (contentType.value === "recording" && recorder) recorder.stopPlayback();
+  else if (contentType.value === "recording" && recorder)
+    recorder.stopPlayback();
   isPlaying.value = false;
   isPaused.value = false;
   currentTime.value = 0;
@@ -228,7 +255,8 @@ function onStop(): void {
 
 function onSeek(seconds: number): void {
   if (contentType.value === "midi" && player) player.seekTo(seconds);
-  else if (contentType.value === "recording" && recorder) recorder.seekTo(seconds);
+  else if (contentType.value === "recording" && recorder)
+    recorder.seekTo(seconds);
   currentTime.value = seconds;
   engineRef.value?.noteBlockSystemRef.setTransportTime(seconds);
 }

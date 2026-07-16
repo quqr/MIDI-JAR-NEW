@@ -5,6 +5,18 @@ import type {
   LayoutDimensions,
 } from "./types";
 
+/**
+ * 根据容器尺寸和谱表配置计算完整的布局尺寸，包括缩放比例、谱表位置和各元素偏移
+ * 会自动根据容器大小计算最优缩放，确保谱表完整显示
+ * @param containerWidth - 容器宽度
+ * @param containerHeight - 容器高度
+ * @param options - 布局计算选项
+ * @param options.staffClef - 谱号模式："treble" | "bass" | "both"
+ * @param options.alteration - 调号升降号数量
+ * @param options.layout - 布局配置
+ * @param options.display - 显示配置
+ * @returns 完整的布局尺寸信息
+ */
 export function getLayoutDimensions(
   containerWidth: number,
   containerHeight: number,

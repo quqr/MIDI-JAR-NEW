@@ -4,6 +4,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 let appWindow: ReturnType<typeof getCurrentWindow> | null = null;
 
+/**
+ * 懒加载获取当前 Tauri 窗口实例
+ * @returns Tauri 窗口对象
+ */
 function win(): ReturnType<typeof getCurrentWindow> {
   if (!appWindow) {
     appWindow = getCurrentWindow();
@@ -11,6 +15,11 @@ function win(): ReturnType<typeof getCurrentWindow> {
   return appWindow;
 }
 
+/**
+ * 判断当前是否运行在 Tauri 环境中
+ * 通过检测 __TAURI_INTERNALS__（Tauri 2.0）或 __TAURI__（Tauri 1.x）全局变量
+ * @returns 是否为 Tauri 环境
+ */
 export function isTauri(): boolean {
   const hasWindow = typeof window !== "undefined";
   // Tauri 2.0 使用 __TAURI_INTERNALS__ 而不是 __TAURI__
@@ -19,6 +28,11 @@ export function isTauri(): boolean {
   return hasTauriInternals || hasTauriGlobal;
 }
 
+/**
+ * 获取挂载在 window 上的 tauriAPI 对象，非 Tauri 环境下抛出异常
+ * @returns tauriAPI 对象
+ * @throws 未运行在 Tauri 环境或 tauriAPI 未就绪时抛出错误
+ */
 export function getTauriAPI(): NonNullable<Window["tauriAPI"]> {
   if (!isTauri()) {
     throw new Error("Not running in Tauri environment");
@@ -29,6 +43,12 @@ export function getTauriAPI(): NonNullable<Window["tauriAPI"]> {
   return window.tauriAPI;
 }
 
+/**
+ * 在 Tauri 环境中执行函数，否则返回 fallback 值
+ * @param fn - 需要在 Tauri 环境中执行的函数
+ * @param fallback - 非 Tauri 环境时的返回值
+ * @returns fn 的返回值或 fallback
+ */
 export function runInTauri<T>(fn: () => T, fallback?: T): T | undefined {
   if (isTauri()) {
     return fn();
@@ -36,6 +56,12 @@ export function runInTauri<T>(fn: () => T, fallback?: T): T | undefined {
   return fallback;
 }
 
+/**
+ * 安全执行窗口操作，捕获异常并输出错误日志
+ * @param action - 操作名称，用于错误日志标识
+ * @param fn - 实际执行的异步操作
+ * @returns 操作结果，失败时返回 undefined
+ */
 async function safeWindowAction<T>(
   action: string,
   fn: () => Promise<T>,
@@ -48,6 +74,9 @@ async function safeWindowAction<T>(
   }
 }
 
+/**
+ * Tauri API 封装，涵盖事件监听、应用控制、窗口管理、文件系统、MIDI 和 Shell 操作
+ */
 const tauriAPI = {
   on: (channel: string, callback: (data?: any) => void) => {
     listen(channel, (event) => {
@@ -185,6 +214,9 @@ const tauriAPI = {
 
 let initialized = false;
 
+/**
+ * 确保在 Tauri 环境中将 tauriAPI 挂载到 window 上，仅执行一次
+ */
 function ensureInitialized(): void {
   if (initialized) return;
   initialized = true;

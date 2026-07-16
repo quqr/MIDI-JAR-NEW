@@ -141,12 +141,26 @@ function applyHighlights() {
 
   // midi 标签高亮：标签数据源取决于 displaySustained，与 wrapLabels 独立
   if (props.midi?.length) {
-    const labelMidi = props.keyboard.displaySustained ? props.midi : props.played;
+    const labelMidi = props.keyboard.displaySustained
+      ? props.midi
+      : props.played;
     if (labelMidi?.length) {
-      highlightLabels(el, props.keySignature, props.keyboard, labelMidi, props.chord);
+      highlightLabels(
+        el,
+        props.keySignature,
+        props.keyboard,
+        labelMidi,
+        props.chord,
+      );
     }
     if (props.keyboard.wrap) {
-      highlightWrapLabels(el, props.keySignature, props.keyboard, props.midi, props.chord);
+      highlightWrapLabels(
+        el,
+        props.keySignature,
+        props.keyboard,
+        props.midi,
+        props.chord,
+      );
     }
   }
 }
@@ -236,9 +250,7 @@ function buildClassicKeys() {
   const noteStart = fromNote.alt
     ? (fromNote.midi ?? 0) - 1
     : (fromNote.midi ?? 0);
-  const noteEnd = toNote.alt
-    ? (toNote.midi ?? 0) + 1
-    : (toNote.midi ?? 0);
+  const noteEnd = toNote.alt ? (toNote.midi ?? 0) + 1 : (toNote.midi ?? 0);
   const start = Math.min(noteStart, noteEnd);
   const end = Math.max(noteStart, noteEnd);
 

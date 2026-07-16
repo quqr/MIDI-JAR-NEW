@@ -10,6 +10,11 @@ interface FoundChord {
   readonly name: string;
 }
 
+/**
+ * 获取和弦类型中标记为可省略的音程（以 * 结尾的音程）
+ * @param chordType - 和弦类型
+ * @returns 可省略音程列表
+ */
 const getOmissions = (chordType: ChordType) => {
   return chordType.intervals.filter((interval: string) =>
     interval.endsWith("*"),
@@ -116,6 +121,12 @@ type DetectOptions = {
   allowOmissions: boolean;
   disabledChords: string[];
 };
+/**
+ * 根据音符列表检测可能的和弦名称，按匹配权重降序排列
+ * @param source - 音符名称列表（如 ["C", "E", "G"]）
+ * @param options - 检测选项，包括是否允许省略音和禁用的和弦别名
+ * @returns 匹配的和弦名称列表（如 ["CM"]）
+ */
 export function detect(
   source: string[],
   options: Partial<DetectOptions> = {},

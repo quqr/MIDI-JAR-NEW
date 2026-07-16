@@ -30,6 +30,9 @@ export interface KeyboardLayout {
   to: number;
 }
 
+/**
+ * 钢琴键盘渲染器，负责在 Canvas 上绘制钢琴键盘并管理 MIDI 音符与像素坐标的双向映射
+ */
 export class KeyboardRenderer {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
@@ -43,6 +46,11 @@ export class KeyboardRenderer {
   private _cachedLayout: KeyboardLayout | null = null;
   private _midiToIndex = new Map<number, number>();
 
+  /**
+   * 初始化渲染器，绑定 Canvas 元素和全局配置
+   * @param canvas - 键盘绘制目标 Canvas
+   * @param settings - WaterfallPiano 全局配置
+   */
   init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
@@ -50,6 +58,9 @@ export class KeyboardRenderer {
     this.applyRangeFromSettings();
   }
 
+  /**
+   * 根据配置中的键盘范围设置（预设或自定义）更新 MIDI 范围
+   */
   private applyRangeFromSettings(): void {
     if (!this.settings) return;
     const range = this.settings.keyboard.range;
@@ -65,6 +76,12 @@ export class KeyboardRenderer {
     }
   }
 
+  /**
+   * 调整画布尺寸，根据宽度自动切换窄屏/宽屏 MIDI 范围
+   * @param width - 逻辑宽度（CSS 像素）
+   * @param height - 逻辑高度（CSS 像素）
+   * @param dpr - 设备像素比，用于高清渲染
+   */
   resize(width: number, height: number, dpr: number): void {
     this.width = width;
     this.height = height;
@@ -94,6 +111,9 @@ export class KeyboardRenderer {
     return { from: this.from, to: this.to };
   }
 
+  /**
+   * 重建键盘布局缓存，计算白键/黑键的尺寸与位置映射
+   */
   private rebuildLayout(): void {
     const whiteKeys: number[] = [];
     this._midiToIndex.clear();
@@ -127,6 +147,11 @@ export class KeyboardRenderer {
     this._cachedLayout = null;
   }
 
+  /**
+   * 将 MIDI 音符号转换为对应的水平像素坐标（键中心位置）
+   * @param midi - MIDI 音符号
+   * @returns 音符在键盘上的水平中心坐标
+   */
   midiToX(midi: number): number {
     const layout = this.getLayout();
     if (isWhiteKey(midi)) {
@@ -140,6 +165,11 @@ export class KeyboardRenderer {
     return idx * layout.whiteKeyWidth;
   }
 
+  /**
+   * 将水平像素坐标转换为对应的 MIDI 音符号，优先匹配黑键边界区域
+   * @param x - 水平像素坐标
+   * @returns 对应的 MIDI 音符号，若键盘为空则返回 null
+   */
   xToMidi(x: number): number | null {
     const layout = this.getLayout();
     if (layout.whiteKeys.length === 0) return null;
@@ -250,7 +280,8 @@ export class KeyboardRenderer {
     }
 
     if (kb.keyLabel !== "none" || kb.showNoteNames) {
-      const effectiveLabel = kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
+      const effectiveLabel =
+        kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
       // 白键标签
@@ -276,6 +307,12 @@ export class KeyboardRenderer {
     }
   }
 
+  /**
+   * 根据标签模式生成琴键上显示的文本
+   * @param midi - MIDI 音符号
+   * @param mode - 标签模式："note" 显示音名，"pitchClass" 显示音级，"octave" 仅在八度 C 处显示
+   * @returns 标签文本，无需显示时返回 null
+   */
   private labelFor(
     midi: number,
     mode: WaterfallPianoSettings["keyboard"]["keyLabel"],

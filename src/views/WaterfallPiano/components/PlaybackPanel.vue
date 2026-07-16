@@ -1,7 +1,10 @@
 <template>
   <div class="absolute bottom-0 left-0 right-0 z-40">
     <!-- 迷你进度条（始终可见） -->
-    <div class="h-1 bg-white/10 cursor-pointer relative" @click="onProgressClick">
+    <div
+      class="h-1 bg-white/10 cursor-pointer relative"
+      @click="onProgressClick"
+    >
       <div
         class="h-full bg-primary/80 transition-[width] duration-100"
         :style="{ width: progressPercent + '%' }"

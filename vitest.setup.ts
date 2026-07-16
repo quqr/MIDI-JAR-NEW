@@ -74,7 +74,7 @@ const mockCanvasContext = {
 HTMLCanvasElement.prototype.getContext = vi.fn(function (
   this: HTMLCanvasElement,
   contextId: string,
-  _options?: unknown
+  _options?: unknown,
 ): RenderingContext | null {
   if (contextId === "2d") {
     return mockCanvasContext as unknown as CanvasRenderingContext2D;

@@ -182,7 +182,13 @@ export class FluidSolver {
   step(dt: number) {
     const gl = this.gl;
     const config = this.config;
-    if (!this.dye || !this.velocity || !this.divergence || !this.curl || !this.pressure) {
+    if (
+      !this.dye ||
+      !this.velocity ||
+      !this.divergence ||
+      !this.curl ||
+      !this.pressure
+    ) {
       return;
     }
 
@@ -195,7 +201,10 @@ export class FluidSolver {
       this.velocity.texelSizeX,
       this.velocity.texelSizeY,
     );
-    gl.uniform1i(this.curlProgram.uniforms.uVelocity, this.velocity.read.attach(0));
+    gl.uniform1i(
+      this.curlProgram.uniforms.uVelocity,
+      this.velocity.read.attach(0),
+    );
     this.blit(this.curl);
 
     // 2. vorticity confinement
@@ -205,7 +214,10 @@ export class FluidSolver {
       this.velocity.texelSizeX,
       this.velocity.texelSizeY,
     );
-    gl.uniform1i(this.vorticityProgram.uniforms.uVelocity, this.velocity.read.attach(0));
+    gl.uniform1i(
+      this.vorticityProgram.uniforms.uVelocity,
+      this.velocity.read.attach(0),
+    );
     gl.uniform1i(this.vorticityProgram.uniforms.uCurl, this.curl.attach(1));
     gl.uniform1f(this.vorticityProgram.uniforms.curl, config.CURL);
     gl.uniform1f(this.vorticityProgram.uniforms.dt, dt);
@@ -219,12 +231,18 @@ export class FluidSolver {
       this.velocity.texelSizeX,
       this.velocity.texelSizeY,
     );
-    gl.uniform1i(this.divergenceProgram.uniforms.uVelocity, this.velocity.read.attach(0));
+    gl.uniform1i(
+      this.divergenceProgram.uniforms.uVelocity,
+      this.velocity.read.attach(0),
+    );
     this.blit(this.divergence);
 
     // 4. clear pressure (衰减)
     this.clearProgram.bind();
-    gl.uniform1i(this.clearProgram.uniforms.uTexture, this.pressure.read.attach(0));
+    gl.uniform1i(
+      this.clearProgram.uniforms.uTexture,
+      this.pressure.read.attach(0),
+    );
     gl.uniform1f(this.clearProgram.uniforms.value, config.PRESSURE);
     this.blit(this.pressure.write);
     this.pressure.swap();
@@ -236,9 +254,15 @@ export class FluidSolver {
       this.velocity.texelSizeX,
       this.velocity.texelSizeY,
     );
-    gl.uniform1i(this.pressureProgram.uniforms.uDivergence, this.divergence.attach(0));
+    gl.uniform1i(
+      this.pressureProgram.uniforms.uDivergence,
+      this.divergence.attach(0),
+    );
     for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-      gl.uniform1i(this.pressureProgram.uniforms.uPressure, this.pressure.read.attach(1));
+      gl.uniform1i(
+        this.pressureProgram.uniforms.uPressure,
+        this.pressure.read.attach(1),
+      );
       this.blit(this.pressure.write);
       this.pressure.swap();
     }
@@ -250,8 +274,14 @@ export class FluidSolver {
       this.velocity.texelSizeX,
       this.velocity.texelSizeY,
     );
-    gl.uniform1i(this.gradientSubtractProgram.uniforms.uPressure, this.pressure.read.attach(0));
-    gl.uniform1i(this.gradientSubtractProgram.uniforms.uVelocity, this.velocity.read.attach(1));
+    gl.uniform1i(
+      this.gradientSubtractProgram.uniforms.uPressure,
+      this.pressure.read.attach(0),
+    );
+    gl.uniform1i(
+      this.gradientSubtractProgram.uniforms.uVelocity,
+      this.velocity.read.attach(1),
+    );
     this.blit(this.velocity.write);
     this.velocity.swap();
 
@@ -273,7 +303,10 @@ export class FluidSolver {
     gl.uniform1i(this.advectionProgram.uniforms.uVelocity, velocityId);
     gl.uniform1i(this.advectionProgram.uniforms.uSource, velocityId);
     gl.uniform1f(this.advectionProgram.uniforms.dt, dt);
-    gl.uniform1f(this.advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+    gl.uniform1f(
+      this.advectionProgram.uniforms.dissipation,
+      config.VELOCITY_DISSIPATION,
+    );
     this.blit(this.velocity.write);
     this.velocity.swap();
 
@@ -285,9 +318,18 @@ export class FluidSolver {
         this.dye.texelSizeY,
       );
     }
-    gl.uniform1i(this.advectionProgram.uniforms.uVelocity, this.velocity.read.attach(0));
-    gl.uniform1i(this.advectionProgram.uniforms.uSource, this.dye.read.attach(1));
-    gl.uniform1f(this.advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+    gl.uniform1i(
+      this.advectionProgram.uniforms.uVelocity,
+      this.velocity.read.attach(0),
+    );
+    gl.uniform1i(
+      this.advectionProgram.uniforms.uSource,
+      this.dye.read.attach(1),
+    );
+    gl.uniform1f(
+      this.advectionProgram.uniforms.dissipation,
+      config.DENSITY_DISSIPATION,
+    );
     this.blit(this.dye.write);
     this.dye.swap();
   }
@@ -309,10 +351,16 @@ export class FluidSolver {
     y = Math.max(0, Math.min(1, y));
 
     const aspectRatio = this.getCanvasAspectRatio();
-    const radius = Math.max(0.000001, correctRadius(config.SPLAT_RADIUS, aspectRatio));
+    const radius = Math.max(
+      0.000001,
+      correctRadius(config.SPLAT_RADIUS, aspectRatio),
+    );
 
     this.splatProgram.bind();
-    gl.uniform1i(this.splatProgram.uniforms.uTarget, this.velocity.read.attach(0));
+    gl.uniform1i(
+      this.splatProgram.uniforms.uTarget,
+      this.velocity.read.attach(0),
+    );
     gl.uniform1f(this.splatProgram.uniforms.aspectRatio, aspectRatio);
     gl.uniform2f(this.splatProgram.uniforms.point, x, y);
     gl.uniform3f(this.splatProgram.uniforms.color, dx, dy, 0.0);
@@ -407,22 +455,34 @@ export function HSVtoRGB(h: number, s: number, v: number): RGBColor {
 
   switch (i % 6) {
     case 0:
-      r = v; g = t; b = p;
+      r = v;
+      g = t;
+      b = p;
       break;
     case 1:
-      r = q; g = v; b = p;
+      r = q;
+      g = v;
+      b = p;
       break;
     case 2:
-      r = p; g = v; b = t;
+      r = p;
+      g = v;
+      b = t;
       break;
     case 3:
-      r = p; g = q; b = v;
+      r = p;
+      g = q;
+      b = v;
       break;
     case 4:
-      r = t; g = p; b = v;
+      r = t;
+      g = p;
+      b = v;
       break;
     case 5:
-      r = v; g = p; b = q;
+      r = v;
+      g = p;
+      b = q;
       break;
   }
   return { r, g, b };

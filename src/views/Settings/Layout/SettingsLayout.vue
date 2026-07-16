@@ -59,10 +59,7 @@
             >
               {{ t(groupLabels[group]) }}
             </li>
-            <li
-              v-for="item in getItemsForGroup(group)"
-              :key="item.to"
-            >
+            <li v-for="item in getItemsForGroup(group)" :key="item.to">
               <RouterLink
                 :to="item.to"
                 class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
@@ -75,19 +72,25 @@
                 :aria-current="isActive(item.to) ? 'page' : undefined"
               >
                 <Icon :name="item.icon" :size="20" aria-hidden="true" />
-                <span class="is-drawer-close:hidden">{{ t(item.labelKey) }}</span>
+                <span class="is-drawer-close:hidden">{{
+                  t(item.labelKey)
+                }}</span>
               </RouterLink>
             </li>
           </template>
-
-
         </ul>
       </div>
     </div>
 
-    <dialog ref="resetDialog" class="modal" aria-labelledby="reset-dialog-title">
+    <dialog
+      ref="resetDialog"
+      class="modal"
+      aria-labelledby="reset-dialog-title"
+    >
       <div class="modal-box">
-        <h3 id="reset-dialog-title" class="font-bold text-lg">{{ t("settings.resetConfirmTitle") }}</h3>
+        <h3 id="reset-dialog-title" class="font-bold text-lg">
+          {{ t("settings.resetConfirmTitle") }}
+        </h3>
         <p class="py-4">{{ resetConfirmMessage }}</p>
         <div class="modal-action">
           <button class="btn btn-sm" @click="closeDialog">
@@ -195,7 +198,10 @@ function confirmReset() {
     settingsStore.resetSettings();
     waterfallPianoStore.resetSettings();
     themeStore.setTheme("light");
-  } else if (currentSettingKey.value === "waterfallPiano" || currentSettingKey.value === "advancedDebug") {
+  } else if (
+    currentSettingKey.value === "waterfallPiano" ||
+    currentSettingKey.value === "advancedDebug"
+  ) {
     waterfallPianoStore.resetSettings();
   } else if (currentSettingKey.value) {
     settingsStore.resetSetting(currentSettingKey.value as any);

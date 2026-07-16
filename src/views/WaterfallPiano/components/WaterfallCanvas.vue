@@ -38,6 +38,11 @@ let soundEngine: SoundEngine | null = null;
 let resizeObserver: ResizeObserver | null = null;
 const heldKeys = new Set<string>();
 
+/**
+ * 将电脑键盘按键映射为 MIDI 音符号
+ * @param key - 键盘按键名称（如 "a", "w"）
+ * @returns 对应的 MIDI 编号，无映射时返回 null
+ */
 function midiFromKey(key: string): number | null {
   const base = keyboardMap[key.toLowerCase()];
   if (base === undefined) return null;
@@ -75,6 +80,9 @@ function onKeyUp(e: KeyboardEvent): void {
   emit("noteOff", midi);
 }
 
+/**
+ * 释放所有正在按住的键，逐个触发 noteOff 并清空 heldKeys 集合
+ */
 function clearAllHeld(): void {
   for (const key of heldKeys) {
     const midi = midiFromKey(key);
@@ -87,7 +95,13 @@ function clearAllHeld(): void {
 }
 
 onMounted(async () => {
-  if (!containerRef.value || !bgRef.value || !fluidRef.value || !waterfallRef.value || !keyboardRef.value) {
+  if (
+    !containerRef.value ||
+    !bgRef.value ||
+    !fluidRef.value ||
+    !waterfallRef.value ||
+    !keyboardRef.value
+  ) {
     return;
   }
 
@@ -152,8 +166,10 @@ watch(
 // FPS 显示通过 engine.showFPS 控制，不需要独立 RAF 循环
 watch(
   () => props.showFPS,
-  (show) => { if (engine) engine.showFPS = show; },
-  { immediate: true }
+  (show) => {
+    if (engine) engine.showFPS = show;
+  },
+  { immediate: true },
 );
 
 onUnmounted(() => {

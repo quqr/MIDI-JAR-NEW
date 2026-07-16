@@ -1,65 +1,4 @@
-import type {
-  WaterfallPianoSettings,
-  PresetTheme,
-  GradientStop,
-} from "./types";
-
-// ─── 多色渐变预设主题 ───
-export interface PresetThemePalette {
-  stops: GradientStop[];
-  starColor: string;
-  accentColor: string;
-}
-
-export const presetThemes: Record<PresetTheme, PresetThemePalette> = {
-  "night-sky": {
-    stops: [
-      { position: 0, color: "#0a0a1f" },
-      { position: 0.5, color: "#1a1a3e" },
-      { position: 1, color: "#2d1b4e" },
-    ],
-    starColor: "#ffffff",
-    accentColor: "#6366f1",
-  },
-  ocean: {
-    stops: [
-      { position: 0, color: "#001220" },
-      { position: 0.5, color: "#003566" },
-      { position: 1, color: "#0077b6" },
-    ],
-    starColor: "#caf0f8",
-    accentColor: "#00b4d8",
-  },
-  sunset: {
-    stops: [
-      { position: 0, color: "#0f0c29" },
-      { position: 0.4, color: "#e94560" },
-      { position: 0.8, color: "#f59e0b" },
-      { position: 1, color: "#fde047" },
-    ],
-    starColor: "#fef3c7",
-    accentColor: "#ec4899",
-  },
-  aurora: {
-    stops: [
-      { position: 0, color: "#0a2e1a" },
-      { position: 0.3, color: "#1b4332" },
-      { position: 0.6, color: "#2d6a4f" },
-      { position: 1, color: "#52b788" },
-    ],
-    starColor: "#d8f3dc",
-    accentColor: "#40db81",
-  },
-  forest: {
-    stops: [
-      { position: 0, color: "#0b1a0b" },
-      { position: 0.5, color: "#1b4332" },
-      { position: 1, color: "#2d5016" },
-    ],
-    starColor: "#d9e8d0",
-    accentColor: "#74c69d",
-  },
-};
+import type { WaterfallPianoSettings } from "./types";
 
 // ─── 默认设置 ───
 export const defaultWaterfallSettings: WaterfallPianoSettings = {
@@ -80,28 +19,15 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
   background: {
     type: "solid",
     solidColor: "#1a1a2e",
-    gradientDirection: "linear-vertical",
-    gradientStart: "#0f0c29",
-    gradientEnd: "#302b63",
-    gradientStops: [
-      { position: 0, color: "#0f0c29" },
-      { position: 0.5, color: "#1a1a3e" },
-      { position: 1, color: "#302b63" },
-    ],
-    presetTheme: "night-sky",
-    imageFile: "",
-    imageBlur: 0,
-    imageDarken: 0.5,
-    imageFitMode: "cover",
-    starfieldEnabled: false,
-    starfieldDensity: 0.5,
     fluidEnabled: false,
     fluidQuality: "medium",
     fluidStyle: "standard",
     fluidAdvanced: false,
-    fluidParams: { hitExplosion: true, blockCoverage: false, splatRadius: 0.005 },
-    flowAnimation: true,
-    flowSpeed: 1,
+    fluidParams: {
+      hitExplosion: true,
+      blockCoverage: false,
+      splatRadius: 0.005,
+    },
   },
   keyboard: {
     visible: true,
@@ -183,13 +109,13 @@ export const keyboardMap: Record<string, number> = {
 
 // ─── 持久化键 ───
 export const STORAGE_KEY = "waterfall-piano-settings";
-export const SETTINGS_VERSION = 3; // 递增此版本号可强制重置 localStorage 中的旧设置
+export const SETTINGS_VERSION = 4; // 递增此版本号可强制重置 localStorage 中的旧设置
 export const RECORDING_STORAGE_KEY = "waterfall-piano-recordings";
 
 // ─── MIDI 路由 namespace ───
 export const MIDI_NAMESPACE = "waterfall-piano/default";
 
-// ─── 键盘范围定义 ───
+/** 键盘范围定义，from/to 为 MIDI 音符号 */
 export const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
   "88": { from: 21, to: 108 },
   "61": { from: 36, to: 96 },
@@ -203,13 +129,36 @@ export const NARROW_BREAKPOINT = 768;
 export const NARROW_RANGE = { from: 36, to: 84 };
 
 // ─── 音名 ↔ MIDI 工具 ───
-const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const NOTE_NAMES = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
 
+/**
+ * 将 MIDI 音符号转换为音名（如 60 → "C4"）
+ * @param midi - MIDI 音符号（0-127）
+ * @returns 音名字符串，格式为 音名+八度（如 "C#3"）
+ */
 export function midiToNoteName(midi: number): string {
   const octave = Math.floor(midi / 12) - 1;
   return NOTE_NAMES[midi % 12] + octave;
 }
 
+/**
+ * 将音名转换为 MIDI 音符号（如 "C4" → 60）
+ * @param name - 音名字符串，格式为 音名+八度（如 "F#5"）
+ * @returns MIDI 音符号；解析失败时返回 60（C4）
+ */
 export function noteNameToMidi(name: string): number {
   const match = name.match(/^([A-G]#?)(-?\d+)$/);
   if (!match) return 60;
@@ -218,6 +167,11 @@ export function noteNameToMidi(name: string): number {
   return (parseInt(match[2], 10) + 1) * 12 + idx;
 }
 
+/**
+ * 获取 MIDI 音符号对应的音高类名（不含八度，如 61 → "C#"）
+ * @param midi - MIDI 音符号（0-127）
+ * @returns 音高类名（C, C#, D, ... B）
+ */
 export function midiToPitchClass(midi: number): string {
   return NOTE_NAMES[midi % 12];
 }

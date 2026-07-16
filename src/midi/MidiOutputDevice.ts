@@ -1,3 +1,4 @@
+/** MIDI 输出设备的 API 层数据结构 */
 export interface ApiMidiOutput {
   name: string;
   type: string;
@@ -6,6 +7,7 @@ export interface ApiMidiOutput {
   error: boolean;
 }
 
+/** MIDI 输出设备，封装设备名称、类型与连接状态信息 */
 export class MidiOutputDevice {
   name: string;
   type: string;

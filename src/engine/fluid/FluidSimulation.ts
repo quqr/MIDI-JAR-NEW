@@ -82,7 +82,10 @@ export class FluidSimulation {
   private destroyed = false;
   private initialized = false;
 
-  constructor(canvas: HTMLCanvasElement, config?: Partial<FluidSimulationConfig>) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    config?: Partial<FluidSimulationConfig>,
+  ) {
     this.canvas = canvas;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
@@ -116,7 +119,11 @@ export class FluidSimulation {
     const curlProgram = makeProgram(gl, baseVS, curlShader);
     const vorticityProgram = makeProgram(gl, baseVS, vorticityShader);
     const pressureProgram = makeProgram(gl, baseVS, pressureShader);
-    const gradientSubtractProgram = makeProgram(gl, baseVS, gradientSubtractShader);
+    const gradientSubtractProgram = makeProgram(
+      gl,
+      baseVS,
+      gradientSubtractShader,
+    );
 
     this.solver = new FluidSolver(
       gl,
@@ -188,8 +195,6 @@ export class FluidSimulation {
     this.solver.initFramebuffers();
     this.bloomPass.initFramebuffers();
     this.sunraysPass.initFramebuffers();
-    // 不再触发随机初始 splat，避免进入页面时的随机流体效果
-
     this.initialized = true;
     this.lastUpdateTime = Date.now();
   }

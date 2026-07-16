@@ -97,7 +97,8 @@ export function mapRoutesToEdges(
       animated: connected,
       markerEnd: {
         type: "arrowclosed" as MarkerType,
-        color: "color-mix(in oklch, var(--color-base-content) 50%, transparent)",
+        color:
+          "color-mix(in oklch, var(--color-base-content) 50%, transparent)",
       },
       style: {
         strokeWidth: connected ? 4 : 2.5,

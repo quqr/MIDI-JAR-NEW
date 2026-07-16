@@ -1,5 +1,8 @@
 import type { ColorScheme } from "../types";
 
+/**
+ * 自定义配色方案的三个音高区间颜色，分别对应低音、中音、高音区
+ */
 export interface CustomColors {
   low: string;
   mid: string;
@@ -29,10 +32,7 @@ function hexToRgb(hex: string): [number, number, number] {
 function rgbToHex(r: number, g: number, b: number): string {
   const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
   return (
-    "#" +
-    [r, g, b]
-      .map((v) => clamp(v).toString(16).padStart(2, "0"))
-      .join("")
+    "#" + [r, g, b].map((v) => clamp(v).toString(16).padStart(2, "0")).join("")
   );
 }
 
@@ -40,6 +40,13 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+/**
+ * 在两个十六进制颜色之间进行线性插值
+ * @param low - 起始颜色（十六进制）
+ * @param high - 结束颜色（十六进制）
+ * @param t - 插值因子，0 返回 low，1 返回 high
+ * @returns 插值后的十六进制颜色
+ */
 function interpolateHex(low: string, high: string, t: number): string {
   const [r1, g1, b1] = hexToRgb(low);
   const [r2, g2, b2] = hexToRgb(high);
@@ -51,6 +58,12 @@ function interpolateHex(low: string, high: string, t: number): string {
   );
 }
 
+/**
+ * 根据 MIDI 音符号在低-中-高三个音区颜色之间分段插值
+ * @param midi - MIDI 音符号（21~108）
+ * @param colors - 三个音高区间的颜色配置
+ * @returns 插值后的十六进制颜色
+ */
 function pitchToColor(midi: number, colors: CustomColors): string {
   if (midi <= PITCH_MID) {
     const t =
@@ -68,6 +81,14 @@ const DEFAULT_CUSTOM: CustomColors = {
   high: "#f59e0b",
 };
 
+/**
+ * 根据配色方案将音符映射为颜色
+ * @param midi - MIDI 音符号
+ * @param scheme - 配色方案类型
+ * @param hand - 左右手标识，仅 scheme 为 "hands" 时有效
+ * @param customColors - 自定义配色，仅 scheme 为 "custom" 时有效
+ * @returns 十六进制颜色字符串
+ */
 export function noteToColor(
   midi: number,
   scheme: ColorScheme,

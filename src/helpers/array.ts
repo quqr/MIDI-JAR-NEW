@@ -6,6 +6,13 @@ export const range = (min: number, max: number) =>
 export const randomPick = <T>(arr: readonly T[]): T =>
   arr[(Math.random() * arr.length) >> 0];
 
+/**
+ * 计算两个序列之间的 Damerau-Levenshtein 距离（支持相邻交换的编辑距离）
+ * 当对角线距离超过 4 时提前返回源序列长度，用于快速剪枝
+ * @param s - 源序列
+ * @param t - 目标序列
+ * @returns 编辑距离
+ */
 export const levenshtein = <T>(s: readonly T[], t: readonly T[]) => {
   const d = [] as number[][];
 

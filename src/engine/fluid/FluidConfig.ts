@@ -3,15 +3,15 @@
 
 // 流体高级覆盖参数（用户友好语义，原 WaterfallPiano/types.ts 内联至此以保持模块自包含）
 export interface FluidAdvancedParams {
-  simResolution?: number;      // 32-256 模拟分辨率
-  splatRadius?: number;        // 0.0001-0.01 溅射半径
-  splatColorHue?: number;      // 0-1 色相，undefined 时用音高映射
-  trailLength?: number;         // 0-1 拖尾长度（1=长拖尾，0=快消散）
-  flowPersistence?: number;     // 0-1 流动持久度（1=持久，0=短促）
-  bloom?: boolean;              // 发光开关
-  bloomIntensity?: number;      // 0.1-2.0 发光强度
-  hitExplosion?: boolean;       // 命中爆炸发射开关
-  blockCoverage?: boolean;      // 块体覆盖发射开关
+  simResolution?: number; // 32-256 模拟分辨率
+  splatRadius?: number; // 0.0001-0.01 溅射半径
+  splatColorHue?: number; // 0-1 色相，undefined 时用音高映射
+  trailLength?: number; // 0-1 拖尾长度（1=长拖尾，0=快消散）
+  flowPersistence?: number; // 0-1 流动持久度（1=持久，0=短促）
+  bloom?: boolean; // 发光开关
+  bloomIntensity?: number; // 0.1-2.0 发光强度
+  hitExplosion?: boolean; // 命中爆炸发射开关
+  blockCoverage?: boolean; // 块体覆盖发射开关
 }
 
 export interface FluidSimulationConfig {
@@ -93,10 +93,7 @@ export const STYLE_PRESETS: Record<
   FluidStyle,
   Pick<
     FluidSimulationConfig,
-    | "DENSITY_DISSIPATION"
-    | "VELOCITY_DISSIPATION"
-    | "CURL"
-    | "SPLAT_RADIUS"
+    "DENSITY_DISSIPATION" | "VELOCITY_DISSIPATION" | "CURL" | "SPLAT_RADIUS"
   >
 > = {
   gentle: {
@@ -167,11 +164,15 @@ export function resolveConfig(
     base.SIM_RESOLUTION = overrides.simResolution;
     base.DYE_RESOLUTION = Math.min(1024, overrides.simResolution * 4);
   }
-  if (overrides.splatRadius !== undefined) base.SPLAT_RADIUS = overrides.splatRadius;
-  if (overrides.trailLength !== undefined) base.DENSITY_DISSIPATION = (1 - overrides.trailLength) * 4;
-  if (overrides.flowPersistence !== undefined) base.VELOCITY_DISSIPATION = (1 - overrides.flowPersistence) * 4;
+  if (overrides.splatRadius !== undefined)
+    base.SPLAT_RADIUS = overrides.splatRadius;
+  if (overrides.trailLength !== undefined)
+    base.DENSITY_DISSIPATION = (1 - overrides.trailLength) * 4;
+  if (overrides.flowPersistence !== undefined)
+    base.VELOCITY_DISSIPATION = (1 - overrides.flowPersistence) * 4;
   if (overrides.bloom !== undefined) base.BLOOM = overrides.bloom;
-  if (overrides.bloomIntensity !== undefined) base.BLOOM_INTENSITY = overrides.bloomIntensity;
+  if (overrides.bloomIntensity !== undefined)
+    base.BLOOM_INTENSITY = overrides.bloomIntensity;
   // splatColorHue: 完全覆盖模式 — 设置色相时禁用随机色彩
   if (overrides.splatColorHue !== undefined) base.COLORFUL = false;
   base.TRANSPARENT = true;

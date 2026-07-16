@@ -6,6 +6,14 @@ export interface StorageOptions<T> {
   mergeWithDefault?: boolean;
 }
 
+/**
+ * 从 localStorage 中读取并解析 JSON 数据
+ * @param options - 存储选项
+ * @param options.key - 存储键名
+ * @param options.defaultValue - 读取失败或无数据时的默认返回值
+ * @param options.mergeWithDefault - 是否将读取的数据与默认值合并（浅合并），适用于新增字段的向前兼容
+ * @returns 读取到的数据或默认值
+ */
 export function loadFromStorage<T>({
   key,
   defaultValue,

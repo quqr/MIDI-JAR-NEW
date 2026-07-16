@@ -3,11 +3,7 @@
 
 import type { GLExtensions } from "./GLContext";
 import { Program } from "./GLUtils";
-import {
-  type FBO,
-  createFBO,
-  getResolution,
-} from "./FramebufferManager";
+import { type FBO, createFBO, getResolution } from "./FramebufferManager";
 import type { FluidSimulationConfig } from "./FluidConfig";
 
 export class SunraysPass {

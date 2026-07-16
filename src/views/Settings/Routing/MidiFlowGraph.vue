@@ -160,7 +160,8 @@ function handleConnect(connection: Connection) {
       animated: true,
       markerEnd: {
         type: "arrowclosed" as MarkerType,
-        color: "color-mix(in oklch, var(--color-base-content) 50%, transparent)",
+        color:
+          "color-mix(in oklch, var(--color-base-content) 50%, transparent)",
       },
       style: { strokeWidth: 2.5 },
       data: { route },

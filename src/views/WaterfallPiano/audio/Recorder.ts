@@ -1,15 +1,28 @@
-import { saveToStorage, loadFromStorage, removeFromStorage } from "@/helpers/storage";
+import {
+  saveToStorage,
+  loadFromStorage,
+  removeFromStorage,
+} from "@/helpers/storage";
 import { RECORDING_STORAGE_KEY } from "../constants";
 import type { RecordedNote, ScheduledNote } from "../types";
 
 export interface RecorderCallbacks {
-  onNoteOn?: (midi: number, velocity: number, hand: "left" | "right" | "unknown") => void;
+  onNoteOn?: (
+    midi: number,
+    velocity: number,
+    hand: "left" | "right" | "unknown",
+  ) => void;
   onNoteOff?: (midi: number) => void;
   onPlaybackEnd?: () => void;
   onProgress?: (current: number, duration: number) => void;
   onScheduledNotesReady?: (notes: ScheduledNote[]) => void;
 }
 
+/**
+ * MIDI 录音与回放控制器，
+ * 负责录制弹奏的音符序列、回放已录制的音符，
+ * 并通过 tick() 方法驱动瀑布流视图的进度更新。
+ */
 export class Recorder {
   private notes: RecordedNote[] = [];
   private pending = new Map<number, { velocity: number; startTime: number }>();
@@ -47,6 +60,11 @@ export class Recorder {
     return this.notes;
   }
 
+  /**
+   * 记录音符按下事件，同一 MIDI 编号在未释放前不会重复记录
+   * @param midi - MIDI 音符编号 (0-127)
+   * @param velocity - 力度值 (0-127)
+   */
   recordNoteOn(midi: number, velocity: number): void {
     if (!this.isRecording) return;
     if (this.pending.has(midi)) return;
@@ -54,6 +72,10 @@ export class Recorder {
     this.pending.set(midi, { velocity, startTime });
   }
 
+  /**
+   * 记录音符释放事件，与 recordNoteOn 配对使用以完成一个音符的时长计算
+   * @param midi - MIDI 音符编号 (0-127)
+   */
   recordNoteOff(midi: number): void {
     if (!this.isRecording) return;
     const info = this.pending.get(midi);
@@ -68,6 +90,10 @@ export class Recorder {
     this.pending.delete(midi);
   }
 
+  /**
+   * 加载外部音符序列（如从 MIDI 文件解析的结果），并触发 onScheduledNotesReady 回调
+   * @param notes - 要加载的音符数组
+   */
   loadNotes(notes: RecordedNote[]): void {
     this.notes = [...notes];
     this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
@@ -104,6 +130,10 @@ export class Recorder {
     this.resetPlaybackState();
   }
 
+  /**
+   * 跳转到指定时间点播放，会重新计算已触发/已结束音符的状态
+   * @param seconds - 目标时间位置（秒）
+   */
   seekTo(seconds: number): void {
     const clamped = Math.max(0, Math.min(seconds, this.getDuration()));
     this.pausedAt = clamped;
@@ -134,6 +164,11 @@ export class Recorder {
     return (performance.now() - this.playStartTime) / 1000;
   }
 
+  /**
+   * 将内部 RecordedNote 转换为 ScheduledNote 格式，
+   * 补充 hand 默认值和 trackIndex 占位，供回放和瀑布流视图使用
+   * @returns 可供调度的音符列表
+   */
   getScheduledNotes(): ScheduledNote[] {
     return this.notes.map((n) => ({
       midi: n.midi,
@@ -174,11 +209,19 @@ export class Recorder {
     this.resetPlaybackState();
   }
 
+  /**
+   * 重置回放状态，清空已触发和已结束音符的索引记录
+   */
   private resetPlaybackState(): void {
     this.triggeredIndices.clear();
     this.endedIndices.clear();
   }
 
+  /**
+   * 根据当前播放时间重新计算哪些音符已被触发、已结束，
+   * 用于 seekTo 跳转后恢复正确的回放状态
+   * @param current - 当前播放时间（秒）
+   */
   private recomputeTriggeredState(current: number): void {
     this.triggeredIndices.clear();
     this.endedIndices.clear();

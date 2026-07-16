@@ -28,6 +28,9 @@ export const useWindowStateStore = defineStore("windowState", () => {
     windowState.value.alwaysOnTop = flag;
   }
 
+  /**
+   * 标记更新日志为已读（设置 dismissed 版本为 "1.0.0"）
+   */
   function dismissChangelog(): void {
     windowState.value.changelogDismissed = "1.0.0";
   }
@@ -44,6 +47,10 @@ export const useWindowStateStore = defineStore("windowState", () => {
     windowState.value = { ...windowState.value, ...updates };
   }
 
+  /**
+   * 获取窗口状态。在 Tauri 环境下从后端获取真实窗口状态，否则返回本地状态
+   * @returns 窗口状态对象，非 Tauri 环境始终返回非 null
+   */
   async function getWindowState(): Promise<WindowState | null> {
     if (isTauri()) {
       return await getTauriAPI().window.getWindowState();

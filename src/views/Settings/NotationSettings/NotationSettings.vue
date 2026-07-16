@@ -4,99 +4,99 @@
     :on-reset="() => settingsStore.resetSetting('notation')"
   >
     <div class="grid grid-cols-1 gap-4 m-4">
-    <SettingsCollapse
-      :title="t('settings.notationSettings.title')"
-      icon="music-note"
-      :default-open="true"
-    >
-      <div class="flex items-center justify-between py-2.5">
-        <span class="text-sm">{{
-          t("settings.notationSettings.keySignature")
-        }}</span>
-        <InputNote
-          :model-value="settingsStore.settings.notation.key"
+      <SettingsCollapse
+        :title="t('settings.notationSettings.title')"
+        icon="music-note"
+        :default-open="true"
+      >
+        <div class="flex items-center justify-between py-2.5">
+          <span class="text-sm">{{
+            t("settings.notationSettings.keySignature")
+          }}</span>
+          <InputNote
+            :model-value="settingsStore.settings.notation.key"
+            @update:model-value="
+              settingsStore.updateSetting('notation.key', $event)
+            "
+            learn
+          />
+        </div>
+        <SettingsSelect
+          :model-value="settingsStore.settings.notation.accidentals"
+          :label="t('settings.notationSettings.accidentalsInC')"
+          :options="accidentalsOptions"
+          :disabled="settingsStore.settings.notation.key !== 'C'"
           @update:model-value="
-            settingsStore.updateSetting('notation.key', $event)
+            settingsStore.updateSetting('notation.accidentals', $event)
           "
-          learn
         />
-      </div>
-      <SettingsSelect
-        :model-value="settingsStore.settings.notation.accidentals"
-        :label="t('settings.notationSettings.accidentalsInC')"
-        :options="accidentalsOptions"
-        :disabled="settingsStore.settings.notation.key !== 'C'"
-        @update:model-value="
-          settingsStore.updateSetting('notation.accidentals', $event)
-        "
-      />
-      <SettingsSelect
-        :model-value="settingsStore.settings.notation.staffClef"
-        :label="t('settings.notationSettings.staffClef')"
-        :options="staffClefOptions"
-        @update:model-value="
-          settingsStore.updateSetting('notation.staffClef', $event)
-        "
-      />
-      <SettingsRange
-        :model-value="settingsStore.settings.notation.staffTranspose"
-        :label="t('settings.notationSettings.staffTranspose')"
-        :description="t('settings.notationSettings.staffTransposeHint')"
-        :min="-24"
-        :max="24"
-        :step="1"
-        @update:model-value="
-          settingsStore.updateSetting('notation.staffTranspose', $event)
-        "
-      />
-    </SettingsCollapse>
+        <SettingsSelect
+          :model-value="settingsStore.settings.notation.staffClef"
+          :label="t('settings.notationSettings.staffClef')"
+          :options="staffClefOptions"
+          @update:model-value="
+            settingsStore.updateSetting('notation.staffClef', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settingsStore.settings.notation.staffTranspose"
+          :label="t('settings.notationSettings.staffTranspose')"
+          :description="t('settings.notationSettings.staffTransposeHint')"
+          :min="-24"
+          :max="24"
+          :step="1"
+          @update:model-value="
+            settingsStore.updateSetting('notation.staffTranspose', $event)
+          "
+        />
+      </SettingsCollapse>
 
-    <SettingsCollapse
-      :title="t('settings.notationSettings.displayOptions')"
-      icon="eye"
-      :default-open="true"
-    >
-      <SettingsToggle
-        :model-value="displayConfig.clef"
-        :label="t('settings.notationSettings.showClef')"
-        :description="t('settings.notationSettings.showClefHint')"
-        @update:model-value="updateDisplay('clef', $event)"
-      />
-      <SettingsToggle
-        :model-value="displayConfig.keySignature"
-        :label="t('settings.notationSettings.showKeySignature')"
-        :description="t('settings.notationSettings.showKeySignatureHint')"
-        @update:model-value="updateDisplay('keySignature', $event)"
-      />
-      <SettingsToggle
-        :model-value="displayConfig.keySignatureText"
-        :label="t('settings.notationSettings.showKeySignatureText')"
-        :description="t('settings.notationSettings.showKeySignatureTextHint')"
-        @update:model-value="updateDisplay('keySignatureText', $event)"
-      />
-      <SettingsToggle
-        :model-value="displayConfig.barlines"
-        :label="t('settings.notationSettings.showBarlines')"
-        :description="t('settings.notationSettings.showBarlinesHint')"
-        @update:model-value="updateDisplay('barlines', $event)"
-      />
-      <SettingsToggle
-        :model-value="displayConfig.noteNames"
-        :label="t('settings.notationSettings.showNoteNames')"
-        :description="t('settings.notationSettings.showNoteNamesHint')"
-        @update:model-value="updateDisplay('noteNames', $event)"
-      />
-      <SettingsToggle
-        :model-value="displayConfig.staffLines"
-        :label="t('settings.notationSettings.showStaffLines')"
-        :description="t('settings.notationSettings.showStaffLinesHint')"
-        @update:model-value="updateDisplay('staffLines', $event)"
-      />
-    </SettingsCollapse>
+      <SettingsCollapse
+        :title="t('settings.notationSettings.displayOptions')"
+        icon="eye"
+        :default-open="true"
+      >
+        <SettingsToggle
+          :model-value="displayConfig.clef"
+          :label="t('settings.notationSettings.showClef')"
+          :description="t('settings.notationSettings.showClefHint')"
+          @update:model-value="updateDisplay('clef', $event)"
+        />
+        <SettingsToggle
+          :model-value="displayConfig.keySignature"
+          :label="t('settings.notationSettings.showKeySignature')"
+          :description="t('settings.notationSettings.showKeySignatureHint')"
+          @update:model-value="updateDisplay('keySignature', $event)"
+        />
+        <SettingsToggle
+          :model-value="displayConfig.keySignatureText"
+          :label="t('settings.notationSettings.showKeySignatureText')"
+          :description="t('settings.notationSettings.showKeySignatureTextHint')"
+          @update:model-value="updateDisplay('keySignatureText', $event)"
+        />
+        <SettingsToggle
+          :model-value="displayConfig.barlines"
+          :label="t('settings.notationSettings.showBarlines')"
+          :description="t('settings.notationSettings.showBarlinesHint')"
+          @update:model-value="updateDisplay('barlines', $event)"
+        />
+        <SettingsToggle
+          :model-value="displayConfig.noteNames"
+          :label="t('settings.notationSettings.showNoteNames')"
+          :description="t('settings.notationSettings.showNoteNamesHint')"
+          @update:model-value="updateDisplay('noteNames', $event)"
+        />
+        <SettingsToggle
+          :model-value="displayConfig.staffLines"
+          :label="t('settings.notationSettings.showStaffLines')"
+          :description="t('settings.notationSettings.showStaffLinesHint')"
+          @update:model-value="updateDisplay('staffLines', $event)"
+        />
+      </SettingsCollapse>
 
-    <NotationLayoutSettings />
+      <NotationLayoutSettings />
 
-    <NotationStyleSettings />
+      <NotationStyleSettings />
     </div>
   </SettingsSection>
 </template>

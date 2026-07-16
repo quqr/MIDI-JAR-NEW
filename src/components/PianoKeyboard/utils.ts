@@ -12,6 +12,9 @@ import type { KeyboardSettings } from "./types";
 
 // ── Strategy interface for highlight logic ──────────────────────────
 
+/**
+ * 键盘高亮策略接口，定义了如何获取高亮音符、判断是否应用策略等行为
+ */
 export interface HighlightStrategy {
   getNotes: () => number[] | undefined;
   className: string;
@@ -29,6 +32,10 @@ export const FADE_CLASSES = [
   "wrapExactTarget",
 ] as const;
 
+/**
+ * 移除所有高亮效果（包括演奏态、目标态和标签）
+ * @param el - 钢琴键盘容器元素
+ */
 export function fadeAllHighlights(el: HTMLElement) {
   for (const cls of FADE_CLASSES) {
     fadeNotes(el, cls);
@@ -37,6 +44,14 @@ export function fadeAllHighlights(el: HTMLElement) {
   fadeLabels(el);
 }
 
+/**
+ * 根据策略对键盘应用高亮效果，包括音符高亮、wrap 高亮和标签
+ * @param el - 钢琴键盘容器元素
+ * @param strategy - 高亮策略
+ * @param keyboard - 键盘配置
+ * @param keySignature - 调号配置
+ * @param chord - 当前和弦（可选）
+ */
 export function applyHighlightStrategy(
   el: HTMLElement,
   strategy: HighlightStrategy,
@@ -50,7 +65,13 @@ export function applyHighlightStrategy(
   highlightNotes(el, notes, strategy.className);
 
   if (keyboard.wrap && strategy.wrapClassName) {
-    highlightWrapNotes(el, keyboard.from, keyboard.to, notes, strategy.wrapClassName);
+    highlightWrapNotes(
+      el,
+      keyboard.from,
+      keyboard.to,
+      notes,
+      strategy.wrapClassName,
+    );
   }
 
   const labelNotes = strategy.getLabelNotes?.(keyboard);
@@ -65,6 +86,14 @@ export function applyHighlightStrategy(
 
 // ── Original utilities ─────────────────────────────────────────────
 
+/**
+ * 将超出键盘范围的 MIDI 音符按八度折回到范围内
+ * 超出范围的音符会找到最近的同音名替代位置
+ * @param from - 键盘起始音名
+ * @param to - 键盘结束音名
+ * @param midiNotes - 原始 MIDI 音符列表
+ * @returns 折回后的 MIDI 音符，无需折回的位置返回 null
+ */
 function wrapMidiNotes(
   from: string,
   to: string,
@@ -122,6 +151,14 @@ export const highlightNotes = (
   }
 };
 
+/**
+ * 对超出键盘范围的 MIDI 音符进行 wrap 高亮（八度折回）
+ * @param containerEl - 钢琴键盘容器元素
+ * @param from - 键盘起始音名
+ * @param to - 键盘结束音名
+ * @param midi - 需要高亮的 MIDI 音符列表
+ * @param className - 高亮 CSS 类名
+ */
 export const highlightWrapNotes = (
   containerEl: HTMLElement,
   from: string,
@@ -143,6 +180,12 @@ export const fadeNotes = (containerEl: HTMLElement, className = "active") => {
   fade(containerEl, className);
 };
 
+/**
+ * 在键盘上显示和弦信息（根音标记为 tonic，其他音标记音程）
+ * @param containerEl - 钢琴键盘容器元素
+ * @param keyInfo - 信息显示模式："none" | "tonic" | "interval" | "tonicAndInterval"
+ * @param chord - 当前和弦
+ */
 export const highlightInfo = (
   containerEl: HTMLElement,
   keyInfo: KeyboardSettings["keyInfo"],
@@ -208,6 +251,14 @@ const highlightLabel = (
   }
 };
 
+/**
+ * 根据标签模式在键盘上显示音符标签（音名、音级或和弦音名）
+ * @param containerEl - 钢琴键盘容器元素
+ * @param keySignature - 调号配置
+ * @param keyboard - 键盘配置
+ * @param midi - 需要标记的 MIDI 音符列表
+ * @param chord - 当前和弦（音程/和弦音名模式下需要）
+ */
 export const highlightLabels = (
   containerEl: HTMLElement,
   keySignature: KeySignatureConfig,
@@ -260,6 +311,14 @@ export const highlightLabels = (
   }
 };
 
+/**
+ * 对 wrap 折回后的音符显示标签
+ * @param containerEl - 钢琴键盘容器元素
+ * @param keySignature - 调号配置
+ * @param keyboard - 键盘配置
+ * @param midi - 原始 MIDI 音符列表
+ * @param chord - 当前和弦（可选）
+ */
 export const highlightWrapLabels = (
   containerEl: HTMLElement,
   keySignature: KeySignatureConfig,
@@ -315,6 +374,11 @@ export const fadeLabels = (containerEl: HTMLElement) => {
   fade(containerEl, "labelled");
 };
 
+/**
+ * 在键盘上高亮所有同音名的目标音（按 chroma 匹配）
+ * @param containerEl - 钢琴键盘容器元素
+ * @param targets - 目标 MIDI 音符列表
+ */
 export const highlightTargets = (
   containerEl: HTMLElement,
   targets: number[],

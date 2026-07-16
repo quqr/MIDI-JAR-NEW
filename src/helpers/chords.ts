@@ -28,6 +28,12 @@ const IN_KEY_SCALE_CHROMA = "101011010101";
 export const CHORD_TYPE_REGEX = new RegExp(
   `^(${CHORD_TYPE_SPECIALCASE_TOKEN}|${CHORD_TYPE_ALTERATIONS_TOKEN}|${CHORD_TYPE_QUALITY_TOKEN})`,
 );
+/**
+ * 将和弦名称拆分为 [根音, 和弦类型, 转位根音]
+ * @param chordName - 和弦名称（如 "Cm7/Eb"）
+ * @returns 拆分结果数组 [根音, 类型, 转位根音]
+ * @throws 和弦名称无法解析时抛出错误
+ */
 export const tokenizeChord = (chordName: string): string[] => {
   const match = chordName.match(CHORD_NAME_REGEX);
   if (match) {
@@ -41,6 +47,11 @@ export const tokenizeChord = (chordName: string): string[] => {
   throw new Error(`Chord parsing error: "${chordName}"`);
 };
 
+/**
+ * 将和弦类型字符串拆分为语义 token 列表（如 "m7b5" → ["m", "7", "b5"]）
+ * @param chordType - 和弦类型字符串
+ * @returns token 列表
+ */
 export const tokenizeChordType = (chordType: string): string[] => {
   let remains = chordType;
   const tokens = [];
@@ -66,10 +77,21 @@ export const tokenizeChordType = (chordType: string): string[] => {
   return tokens;
 };
 
+/**
+ * 将和弦品质中的连字符替换为数学减号（用于更美观的显示）
+ * @param quality - 和弦品质字符串
+ * @returns 替换后的品质字符串
+ */
 export function formatQuality(quality: string) {
   return quality ? quality.replace(/-/g, "−") : "";
 }
 
+/**
+ * 获取给定 pitch class 在和弦中对应的音程度数
+ * @param chord - 和弦实例
+ * @param pitchClasses - pitch class 列表
+ * @returns 对应的音程度数列表，不在和弦中的音返回空字符串
+ */
 export function getChordDegrees(
   chord: TChord,
   pitchClasses: readonly string[],
@@ -84,6 +106,12 @@ export function getChordDegrees(
   });
 }
 
+/**
+ * 获取给定 pitch class 在和弦中对应的完整音名
+ * @param chord - 和弦实例
+ * @param pitchClasses - pitch class 列表
+ * @returns 对应的音名列表，不在和弦中的音返回空字符串
+ */
 export function getChordNotes(chord: TChord, pitchClasses: string[]) {
   return pitchClasses.map((pc: string) => {
     const i = chord.notes.findIndex(
@@ -95,6 +123,12 @@ export function getChordNotes(chord: TChord, pitchClasses: string[]) {
   });
 }
 
+/**
+ * 获取指定调号中包含某音的所有自然和弦（即和弦音全部属于该调的音阶）
+ * @param keySignature - 调号配置
+ * @param chroma - 根音的 chroma 值
+ * @returns 属于该调的和弦类型列表
+ */
 export function getChordsInKey(
   keySignature: KeySignatureConfig,
   chroma: number | null,
@@ -123,6 +157,9 @@ export function removeIntervalWildcards(intervals: string[]) {
   return intervals.map((interval) => interval.replace("*", ""));
 }
 
+/**
+ * 用自定义和弦数据覆盖 @tonaljs 内置的和弦类型字典，使和弦检测使用项目自定义的别名和音程定义
+ */
 export function overrideDictionary() {
   ChordType.removeAll();
   chordsData.forEach(([intervals, fullName, aliases]: string[]) =>

@@ -3,11 +3,7 @@
 
 import type { GLExtensions } from "./GLContext";
 import { Program } from "./GLUtils";
-import {
-  type FBO,
-  createFBO,
-  getResolution,
-} from "./FramebufferManager";
+import { type FBO, createFBO, getResolution } from "./FramebufferManager";
 import type { FluidSimulationConfig } from "./FluidConfig";
 
 export class BloomPass {
@@ -96,16 +92,31 @@ export class BloomPass {
     const curve0 = config.BLOOM_THRESHOLD - knee;
     const curve1 = knee * 2;
     const curve2 = 0.25 / knee;
-    gl.uniform3f(this.bloomPrefilterProgram.uniforms.curve, curve0, curve1, curve2);
-    gl.uniform1f(this.bloomPrefilterProgram.uniforms.threshold, config.BLOOM_THRESHOLD);
-    gl.uniform1i(this.bloomPrefilterProgram.uniforms.uTexture, source.attach(0));
+    gl.uniform3f(
+      this.bloomPrefilterProgram.uniforms.curve,
+      curve0,
+      curve1,
+      curve2,
+    );
+    gl.uniform1f(
+      this.bloomPrefilterProgram.uniforms.threshold,
+      config.BLOOM_THRESHOLD,
+    );
+    gl.uniform1i(
+      this.bloomPrefilterProgram.uniforms.uTexture,
+      source.attach(0),
+    );
     this.blit(last);
 
     this.bloomBlurProgram.bind();
     // 下采样：destination → 各级 bloomFramebuffers
     for (let i = 0; i < this.bloomFramebuffers.length; i++) {
       const dest = this.bloomFramebuffers[i];
-      gl.uniform2f(this.bloomBlurProgram.uniforms.texelSize, last.texelSizeX, last.texelSizeY);
+      gl.uniform2f(
+        this.bloomBlurProgram.uniforms.texelSize,
+        last.texelSizeX,
+        last.texelSizeY,
+      );
       gl.uniform1i(this.bloomBlurProgram.uniforms.uTexture, last.attach(0));
       this.blit(dest);
       last = dest;
@@ -117,7 +128,11 @@ export class BloomPass {
     // 上采样：从最小级别反向回写到大级别
     for (let i = this.bloomFramebuffers.length - 2; i >= 0; i--) {
       const baseTex = this.bloomFramebuffers[i];
-      gl.uniform2f(this.bloomBlurProgram.uniforms.texelSize, last.texelSizeX, last.texelSizeY);
+      gl.uniform2f(
+        this.bloomBlurProgram.uniforms.texelSize,
+        last.texelSizeX,
+        last.texelSizeY,
+      );
       gl.uniform1i(this.bloomBlurProgram.uniforms.uTexture, last.attach(0));
       gl.viewport(0, 0, baseTex.width, baseTex.height);
       this.blit(baseTex);
@@ -126,9 +141,16 @@ export class BloomPass {
 
     gl.disable(gl.BLEND);
     this.bloomFinalProgram.bind();
-    gl.uniform2f(this.bloomFinalProgram.uniforms.texelSize, last.texelSizeX, last.texelSizeY);
+    gl.uniform2f(
+      this.bloomFinalProgram.uniforms.texelSize,
+      last.texelSizeX,
+      last.texelSizeY,
+    );
     gl.uniform1i(this.bloomFinalProgram.uniforms.uTexture, last.attach(0));
-    gl.uniform1f(this.bloomFinalProgram.uniforms.intensity, config.BLOOM_INTENSITY);
+    gl.uniform1f(
+      this.bloomFinalProgram.uniforms.intensity,
+      config.BLOOM_INTENSITY,
+    );
     this.blit(destination);
   }
 

@@ -32,13 +32,18 @@ export function getWebGLContext(canvas: HTMLCanvasElement): GLContextResult {
     preserveDrawingBuffer: false,
   };
 
-  let gl: WebGLRenderingContext | null =
-    canvas.getContext("webgl2", params) as WebGL2RenderingContext | null;
+  let gl: WebGLRenderingContext | null = canvas.getContext(
+    "webgl2",
+    params,
+  ) as WebGL2RenderingContext | null;
   const isWebGL2 = !!gl;
   if (!isWebGL2) {
     gl =
       (canvas.getContext("webgl", params) as WebGLRenderingContext | null) ||
-      (canvas.getContext("experimental-webgl", params) as WebGLRenderingContext | null);
+      (canvas.getContext(
+        "experimental-webgl",
+        params,
+      ) as WebGLRenderingContext | null);
   }
   if (!gl) {
     throw new Error("WebGL not supported");
@@ -58,7 +63,7 @@ export function getWebGLContext(canvas: HTMLCanvasElement): GLContextResult {
 
   const halfFloatTexType = isWebGL2
     ? (gl as WebGL2RenderingContext).HALF_FLOAT
-    : halfFloat?.HALF_FLOAT_OES ?? 0;
+    : (halfFloat?.HALF_FLOAT_OES ?? 0);
 
   let formatRGBA: GLFormat | null;
   let formatRG: GLFormat | null;
@@ -105,17 +110,7 @@ function supportRenderTextureFormat(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    internalFormat,
-    4,
-    4,
-    0,
-    format,
-    type,
-    null,
-  );
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
 
   const fbo = gl.createFramebuffer();
   if (!fbo) return false;

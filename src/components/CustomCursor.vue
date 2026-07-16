@@ -12,7 +12,9 @@ let isHovering = false;
 let halfElementWidth = 6;
 let halfElementWidth2 = 21;
 // RAF 节流：保存最新鼠标位置，每帧最多更新一次
-let latestX = 0, latestY = 0, latestTarget: HTMLElement | null = null;
+let latestX = 0,
+  latestY = 0,
+  latestTarget: HTMLElement | null = null;
 let rafPending = false;
 
 const isHoverState = ref(false);

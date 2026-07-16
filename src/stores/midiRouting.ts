@@ -93,6 +93,10 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   let offWires: UnlistenFn | null = null;
   let pollingTimer: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * 当不存在任何路由时，创建一条默认的 internal 路由，
+   * 将第一个可用的输入设备连接到 internal 输出
+   */
   function createDefaultRoutes(): void {
     if (routes.value.length > 0) return;
     if (inputs.value.length === 0) return;
@@ -188,6 +192,10 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     }
   }
 
+  /**
+   * 启动定时轮询以周期性刷新 MIDI 设备列表
+   * @param intervalMs - 轮询间隔（毫秒），默认 3000ms
+   */
   function startPolling(intervalMs: number = 3000): void {
     if (pollingTimer) return;
     pollingTimer = setInterval(() => {
@@ -238,6 +246,11 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     logger.warn(`路由已删除: ${route.input} → ${route.output} (${route.type})`);
   }
 
+  /**
+   * 将旧路由替换为新路由
+   * @param oldRoute - 需要被替换的旧路由
+   * @param newRoute - 替换后的新路由
+   */
   async function updateRoute(
     oldRoute: MidiRoute,
     newRoute: MidiRoute,
@@ -321,6 +334,9 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
     logger.warn(`虚拟输出端口已删除: ${name}`);
   }
 
+  /**
+   * 清理 store 资源：停止轮询并注销所有 Tauri 事件监听器
+   */
   function cleanup() {
     stopPolling();
     if (offInputs) {

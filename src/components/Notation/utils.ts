@@ -15,6 +15,7 @@ import {
 const NOTE_REGEX = /([a-g])(b|#)?(\d+)/i;
 const NOTE_C4_MIDI = Note.midi("C4") as number;
 
+/** VexFlow 音符表示，包含音名键、变音记号、谱号和 MIDI 编号 */
 type VexNote = {
   key: string;
   accidental: string | null;
@@ -22,6 +23,11 @@ type VexNote = {
   midi: number;
 };
 
+/**
+ * 将音符字符串转换为 VexFlow 内部表示
+ * @param note - 音符字符串（如 "C#4"、"Bb3"）
+ * @returns VexNote 对象，解析失败返回 null
+ */
 export const noteToVex = (note: string): VexNote | null => {
   const match = note.match(NOTE_REGEX);
   const midi = Note.midi(note);
@@ -37,6 +43,13 @@ export const noteToVex = (note: string): VexNote | null => {
   return null;
 };
 
+/**
+ * 将音符列表构建为 VexFlow Voice 对象，按谱号过滤、去重并排序
+ * @param notes - 音符字符串列表
+ * @param clef - 目标谱号
+ * @param filterClef - 是否按谱号过滤音符，默认为 true
+ * @returns 包含音符的 Voice 对象，无有效音符时返回 null
+ */
 export const getVoice = (
   notes: string[],
   clef: "treble" | "bass",
@@ -81,6 +94,13 @@ function sortVexNotes(notes: VexNote[]): VexNote[] {
   return [...notes].sort((a, b) => a.midi - b.midi);
 }
 
+/**
+ * 对 MIDI 音符列表进行移调，并根据调号格式化音符名称
+ * @param midiNotes - 原始 MIDI 音符列表
+ * @param keySignatureNotes - 调号音符列表，用于确定升降号
+ * @param transpose - 移调半音数，默认为 0
+ * @returns 移调后的音符名称列表
+ */
 export const getTransposedNotes = (
   midiNotes: number[],
   keySignatureNotes: readonly string[],

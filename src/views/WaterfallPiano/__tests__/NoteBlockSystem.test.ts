@@ -100,7 +100,14 @@ describe("NoteBlockSystem", () => {
       nbs.init(mockCanvas(), cloneSettings());
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
-        { midi: 60, velocity: 100, time: 1, duration: 0.5, hand: "right", trackIndex: 0 },
+        {
+          midi: 60,
+          velocity: 100,
+          time: 1,
+          duration: 0.5,
+          hand: "right",
+          trackIndex: 0,
+        },
       ];
       const triggerSpy = vi.fn();
       nbs.callbacks = { onNoteTrigger: triggerSpy };
@@ -117,7 +124,14 @@ describe("NoteBlockSystem", () => {
       nbs.init(mockCanvas(), cloneSettings());
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
-        { midi: 60, velocity: 100, time: 1, duration: 0.5, hand: "right", trackIndex: 0 },
+        {
+          midi: 60,
+          velocity: 100,
+          time: 1,
+          duration: 0.5,
+          hand: "right",
+          trackIndex: 0,
+        },
       ];
       const triggerSpy = vi.fn();
       nbs.callbacks = { onNoteTrigger: triggerSpy };
@@ -136,7 +150,14 @@ describe("NoteBlockSystem", () => {
       nbs.init(mockCanvas(), cloneSettings());
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
-        { midi: 60, velocity: 100, time: 1, duration: 0.5, hand: "right", trackIndex: 0 },
+        {
+          midi: 60,
+          velocity: 100,
+          time: 1,
+          duration: 0.5,
+          hand: "right",
+          trackIndex: 0,
+        },
       ];
       const endSpy = vi.fn();
       nbs.callbacks = { onNoteEnd: endSpy };
@@ -157,7 +178,14 @@ describe("NoteBlockSystem", () => {
       nbs.init(mockCanvas(), cloneSettings());
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
-        { midi: 60, velocity: 100, time: 0, duration: 0.5, hand: "right", trackIndex: 0 },
+        {
+          midi: 60,
+          velocity: 100,
+          time: 0,
+          duration: 0.5,
+          hand: "right",
+          trackIndex: 0,
+        },
       ];
       const triggerSpy = vi.fn();
       nbs.callbacks = { onNoteTrigger: triggerSpy };

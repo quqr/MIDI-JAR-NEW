@@ -128,10 +128,7 @@ export function compileShader(
   return shader;
 }
 
-function addKeywords(
-  source: string,
-  keywords?: string[] | null,
-): string {
+function addKeywords(source: string, keywords?: string[] | null): string {
   if (keywords == null) return source;
   let keywordsString = "";
   keywords.forEach((keyword) => {
@@ -143,7 +140,9 @@ function addKeywords(
 /**
  * 创建全屏 quad blit 函数：在初始化时设置 VBO/EBO，调用时绑定 FBO 并 drawElements
  */
-export function createBlit(gl: WebGLRenderingContext): (target: FBO | null, clear?: boolean) => void {
+export function createBlit(
+  gl: WebGLRenderingContext,
+): (target: FBO | null, clear?: boolean) => void {
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(
     gl.ARRAY_BUFFER,

@@ -1,6 +1,13 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
+/**
+ * 监测 MIDI 设备延迟：通过 Tauri 后端采集延迟数据，计算当前平均延迟与历史最高延迟。
+ * 使用缓冲区 + setTimeout(0) 合并同帧内多次回调，避免频繁更新。
+ *
+ * @param filterDevice - 过滤的设备名称，"*" 表示监听所有设备
+ * @returns 当前延迟、最高延迟及重置方法
+ */
 export function useMidiLatency(filterDevice = "*") {
   const currentLatency = ref<number>(0);
   const highestLatency = ref<number>(0);

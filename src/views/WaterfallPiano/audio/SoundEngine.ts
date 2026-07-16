@@ -6,8 +6,17 @@ const DEFAULT_VOLUME = 0.8;
 const DEFAULT_REVERB_DECAY = 2;
 const DEFAULT_REVERB_WET = 0.3;
 
+/**
+ * 将自定义 SynthEnvelopeConfig 转换为 Tone.js 原生 envelope 参数格式，
+ * 过滤掉多余字段（如 hand、trackIndex 等）
+ */
 function toEnvelopeConfig(e: SynthEnvelopeConfig) {
-  return { attack: e.attack, decay: e.decay, sustain: e.sustain, release: e.release };
+  return {
+    attack: e.attack,
+    decay: e.decay,
+    sustain: e.sustain,
+    release: e.release,
+  };
 }
 
 export interface SoundEngineOptions {
@@ -18,6 +27,11 @@ export interface SoundEngineOptions {
   velocitySensitivity?: boolean;
 }
 
+/**
+ * 基于 Tone.js FMSynth 的钢琴音源引擎，
+ * 支持 MIDI 音符触发、延音踏板、力度灵敏度及混响效果。
+ * 内部通过引用计数机制处理同一音高被多个音符同时按住的情况。
+ */
 export class SoundEngine {
   private synth: Tone.PolySynth | null = null;
   private reverb: Tone.Reverb | null = null;
@@ -29,6 +43,11 @@ export class SoundEngine {
   private volume = DEFAULT_VOLUME;
   private initialized = false;
 
+  /**
+   * 初始化音频引擎，创建 FMSynth、Reverb 等音频节点。
+   * 若已初始化则仅尝试恢复被浏览器暂停的音频上下文。
+   * @param config - 可选的用户配置，未指定的字段使用默认值
+   */
   async init(config?: Partial<SoundEngineUserConfig>): Promise<void> {
     if (this.initialized) {
       // 已初始化，但音频上下文可能被浏览器自动播放策略暂停（尤其在首次 init
@@ -70,7 +89,10 @@ export class SoundEngine {
     this.synth = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: c.harmonicity ?? 2,
       modulationIndex: c.modulationIndex ?? 10,
-      oscillator: { type: c.oscillatorType ?? "triangle" } as Record<string, unknown>,
+      oscillator: { type: c.oscillatorType ?? "triangle" } as Record<
+        string,
+        unknown
+      >,
       envelope: toEnvelopeConfig(envelope),
       modulation: { type: "sine" },
       modulationEnvelope: toEnvelopeConfig(modEnvelope),
@@ -94,7 +116,8 @@ export class SoundEngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const currentDecay = (this.reverb as any).decay as number;
       if (Math.abs(currentDecay - config.reverbDecay) > 0.5) {
-        (this.reverb as unknown as Record<string, unknown>).decay = config.reverbDecay;
+        (this.reverb as unknown as Record<string, unknown>).decay =
+          config.reverbDecay;
         this.reverb.generate();
       }
     }
@@ -111,6 +134,11 @@ export class SoundEngine {
     }
   }
 
+  /**
+   * 触发 MIDI 音符发声，同一音高多次触发会累加引用计数
+   * @param midi - MIDI 音符编号 (0-127)
+   * @param velocity - 力度值 (0-127)
+   */
   noteOn(midi: number, velocity: number): void {
     if (!this.synth || !this.initialized) return;
     const note = midiToNoteName(midi);
@@ -120,6 +148,11 @@ export class SoundEngine {
     this.synth.triggerAttack(note, undefined, vel);
   }
 
+  /**
+   * 释放 MIDI 音符，引用计数归零时才真正停止发声；
+   * 若延音踏板开启，音符会暂存到 sustainedNotes 中待踏板释放时统一释放
+   * @param midi - MIDI 音符编号 (0-127)
+   */
   noteOff(midi: number): void {
     if (!this.synth || !this.initialized) return;
     const note = midiToNoteName(midi);

@@ -1,4 +1,4 @@
-﻿import {
+import {
   getMidiChannel,
   getMidiCommand,
   getMidiNote,
@@ -38,8 +38,7 @@ function isNoteOff(
   ch: number,
 ): boolean {
   return (
-    (cmd === MIDI_CMD_NOTE_OFF ||
-      (cmd === MIDI_CMD_NOTE_ON && value === 0)) &&
+    (cmd === MIDI_CMD_NOTE_OFF || (cmd === MIDI_CMD_NOTE_ON && value === 0)) &&
     (midiChannel === MIDI_CHANNEL_ALL || midiChannel === ch)
   );
 }
@@ -57,6 +56,13 @@ function isSustainCC(
   );
 }
 
+/**
+ * 创建 MIDI 消息处理器：解析原始 MIDI 消息并分发到对应的事件回调。
+ *
+ * @param midiChannel - 目标 MIDI 通道，0 表示监听所有通道
+ * @param handlers - Note On / Note Off / Sustain On / Sustain Off 回调集合
+ * @returns 接收原始 MIDI 消息数组的处理函数
+ */
 export function createMidiHandler(
   midiChannel: number,
   handlers: MidiMessageHandlers,

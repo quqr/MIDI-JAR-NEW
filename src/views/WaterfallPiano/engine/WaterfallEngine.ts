@@ -25,6 +25,9 @@ interface EngineCallbacks {
 
 const DEFAULT_VELOCITY = 90;
 
+/**
+ * 瀑布钢琴主引擎，协调键盘渲染、音符方块系统、背景渲染、流体模拟与音频输出
+ */
 export class WaterfallEngine {
   private canvases: WaterfallCanvases | null = null;
   private settings: WaterfallPianoSettings | null = null;
@@ -50,6 +53,11 @@ export class WaterfallEngine {
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
 
+  /**
+   * 初始化引擎：绑定画布、初始化各子系统、启动流体模拟与主循环
+   * @param canvases - 四层画布（背景、流体、瀑布、键盘）
+   * @param settings - 瀑布钢琴配置
+   */
   init(canvases: WaterfallCanvases, settings: WaterfallPianoSettings): void {
     this.canvases = canvases;
     this.settings = settings;
@@ -73,16 +81,26 @@ export class WaterfallEngine {
     this.soundEngine?.setSustain(enabled);
   }
 
+  /**
+   * 响应配置变更：更新各子系统，并在键盘高度比例或流体开关变化时重新布局
+   * @param settings - 新的瀑布钢琴配置
+   */
   applySettings(settings: WaterfallPianoSettings): void {
     // 用保存的数值副本检测变更（不依赖 watch 传递旧值，避免引用问题）
-    const oldHeightRatio = this.prevKeyboardHeightRatio ?? settings.keyboard.heightRatio;
-    const oldFluidEnabled = this.prevFluidEnabled ?? settings.background.fluidEnabled;
+    const oldHeightRatio =
+      this.prevKeyboardHeightRatio ?? settings.keyboard.heightRatio;
+    const oldFluidEnabled =
+      this.prevFluidEnabled ?? settings.background.fluidEnabled;
     this.settings = settings;
     // 保存数值副本供下次比较
     this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
     this.prevFluidEnabled = settings.background.fluidEnabled;
     // 键盘高度比例变化时需要重新布局所有 canvas
-    if (settings.keyboard.heightRatio !== oldHeightRatio && this.width > 0 && this.height > 0) {
+    if (
+      settings.keyboard.heightRatio !== oldHeightRatio &&
+      this.width > 0 &&
+      this.height > 0
+    ) {
       this.resize(this.width, this.height);
     }
     this.keyboardRenderer.resize(this.width, this.keyboardHeight, this.dpr);
@@ -94,7 +112,11 @@ export class WaterfallEngine {
       if (this.width > 0 && this.height > 0) {
         this.resize(this.width, this.height);
       }
-    } else if (!settings.background.fluidEnabled && oldFluidEnabled && this.fluid) {
+    } else if (
+      !settings.background.fluidEnabled &&
+      oldFluidEnabled &&
+      this.fluid
+    ) {
       this.fluid.destroy();
       this.fluid = null;
     } else if (this.fluid && settings.background.fluidEnabled) {
@@ -102,6 +124,10 @@ export class WaterfallEngine {
     }
   }
 
+  /**
+   * 切换音符方块模式；模式变化时清空已有音符方块
+   * @param mode - 音符方块模式（realtime / synthesia）
+   */
   setMode(mode: NoteBlockMode): void {
     if (this.noteBlockSystem.getMode() !== mode) {
       this.noteBlockSystem.clearNoteBlocks();
@@ -113,6 +139,11 @@ export class WaterfallEngine {
     return this.perfMonitor.getFps();
   }
 
+  /**
+   * 重新计算布局：根据键盘高度比例分配画布尺寸，并通知各子系统与流体
+   * @param width - 画布总宽度（CSS 像素）
+   * @param height - 画布总高度（CSS 像素）
+   */
   resize(width: number, height: number): void {
     this.width = width;
     this.height = height;
@@ -121,7 +152,12 @@ export class WaterfallEngine {
     this.keyboardHeight = Math.max(80, Math.floor(height * kbRatio));
     const waterfallHeight = height - this.keyboardHeight;
     this.keyboardRenderer.resize(width, this.keyboardHeight, this.dpr);
-    this.noteBlockSystem.resize(width, waterfallHeight, this.dpr, this.keyboardRenderer);
+    this.noteBlockSystem.resize(
+      width,
+      waterfallHeight,
+      this.dpr,
+      this.keyboardRenderer,
+    );
     this.backgroundRenderer.resize(width, height, this.dpr);
     this.layoutCanvases(waterfallHeight);
     if (this.fluid) {
@@ -129,6 +165,10 @@ export class WaterfallEngine {
     }
   }
 
+  /**
+   * 设置四层画布的 CSS 定位：背景/流体全屏，瀑布区占顶部，键盘区占底部
+   * @param waterfallHeight - 瀑布区域高度（像素）
+   */
   private layoutCanvases(waterfallHeight: number): void {
     if (!this.canvases) return;
     const setBox = (c: HTMLCanvasElement, top: number, h: number) => {
@@ -144,18 +184,33 @@ export class WaterfallEngine {
     setBox(this.canvases.keyboard, waterfallHeight, this.keyboardHeight);
   }
 
+  /**
+   * 根据当前设置构建流体模拟配置
+   * @returns 流体模拟的部分配置对象
+   */
   private buildFluidConfig(): Partial<FluidSimulationConfig> {
     if (!this.settings) return {};
     const bg = this.settings.background;
-    return resolveConfig(bg.fluidQuality, bg.fluidStyle, bg.fluidAdvanced, bg.fluidParams);
+    return resolveConfig(
+      bg.fluidQuality,
+      bg.fluidStyle,
+      bg.fluidAdvanced,
+      bg.fluidParams,
+    );
   }
 
+  /**
+   * 在设置启用流体且尚未创建实例时，初始化 FluidSimulation 并启动
+   */
   private maybeInitFluid(): void {
     if (!this.canvases || !this.settings) return;
     if (!this.settings.background.fluidEnabled) return;
     if (this.fluid) return;
     try {
-      this.fluid = new FluidSimulation(this.canvases.fluid, this.buildFluidConfig());
+      this.fluid = new FluidSimulation(
+        this.canvases.fluid,
+        this.buildFluidConfig(),
+      );
       this.fluid.start();
     } catch {
       this.fluid = null;
@@ -212,6 +267,11 @@ export class WaterfallEngine {
     }
   };
 
+  /**
+   * 触发音符发声：驱动音频、实时音符方块、键盘高亮、流体喷射及命中爆炸效果
+   * @param midi - MIDI 音符编号（0-127）
+   * @param velocity - 力度（0-127）
+   */
   triggerNoteOn(midi: number, velocity: number): void {
     if (!this.settings) return;
     this.soundEngine?.noteOn(midi, velocity);
@@ -236,6 +296,11 @@ export class WaterfallEngine {
     this.callbacks.onNoteOff?.(midi);
   }
 
+  /**
+   * Synthesia 模式下音符触发回调：驱动音频、键盘高亮与流体效果（不产生实时方块）
+   * @param midi - MIDI 音符编号
+   * @param velocity - 力度
+   */
   private onSynthesiaTrigger(midi: number, velocity: number): void {
     this.soundEngine?.noteOn(midi, velocity);
     this.keyboardRenderer.highlightNote(midi);
@@ -246,11 +311,20 @@ export class WaterfallEngine {
     }
   }
 
+  /**
+   * Synthesia 模式下音符结束回调：停止音频并清除键盘高亮
+   * @param midi - MIDI 音符编号
+   */
   private onSynthesiaEnd(midi: number): void {
     this.soundEngine?.noteOff(midi);
     this.keyboardRenderer.clearHighlight(midi);
   }
 
+  /**
+   * 在命中线位置发射流体 splat，颜色取自音符色或单一色相配置
+   * @param midi - MIDI 音符编号，用于确定 splat 的水平位置和颜色
+   * @param velocity - 力度，影响颜色亮度与喷射强度
+   */
   private fluidSplat(midi: number, velocity = DEFAULT_VELOCITY): void {
     if (!this.fluid || !this.canvases) return;
     const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
@@ -263,7 +337,12 @@ export class WaterfallEngine {
       const lightness = 0.4 + (velocity / 127) * 0.3;
       rgb = hslToRgbNorm(hue, 0.8, lightness);
     } else {
-      const colorHex = noteToColor(midi, this.settings?.particles.colorScheme ?? "pitch", undefined, this.settings?.particles.customColors);
+      const colorHex = noteToColor(
+        midi,
+        this.settings?.particles.colorScheme ?? "pitch",
+        undefined,
+        this.settings?.particles.customColors,
+      );
       rgb = hexToRgbNorm(colorHex);
     }
     this.fluid.splat(x, y, 0, 200, rgb);
@@ -274,22 +353,39 @@ export class WaterfallEngine {
     if (!this.fluid || !this.settings) return;
     const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
     // 命中线Y = 瀑布区域底部（键盘顶部）
-    const hitLineY = (this.height - this.keyboardHeight) / Math.max(1, this.height);
+    const hitLineY =
+      (this.height - this.keyboardHeight) / Math.max(1, this.height);
     let rgb: { r: number; g: number; b: number };
     const hue = this.settings.background.fluidParams.splatColorHue;
     if (hue !== undefined && hue > 0) {
       rgb = hslToRgbNorm(hue, 0.9, 0.6);
     } else {
-      const colorHex = noteToColor(midi, this.settings.particles.colorScheme, undefined, this.settings.particles.customColors);
+      const colorHex = noteToColor(
+        midi,
+        this.settings.particles.colorScheme,
+        undefined,
+        this.settings.particles.customColors,
+      );
       rgb = hexToRgbNorm(colorHex);
     }
     // 力度与 hitExplosionRadius 缩放联动
     const spread = this.settings.particles.hitExplosionRadius ?? 0.03;
     const force = spread * 5000;
-    this.fluid.splat(x - spread, hitLineY, -force * 0.6, force, { r: rgb.r * 0.7, g: rgb.g * 0.7, b: rgb.b * 0.7 });
-    this.fluid.splat(x + spread, hitLineY, force * 0.6, force, { r: rgb.r * 0.7, g: rgb.g * 0.7, b: rgb.b * 0.7 });
+    this.fluid.splat(x - spread, hitLineY, -force * 0.6, force, {
+      r: rgb.r * 0.7,
+      g: rgb.g * 0.7,
+      b: rgb.b * 0.7,
+    });
+    this.fluid.splat(x + spread, hitLineY, force * 0.6, force, {
+      r: rgb.r * 0.7,
+      g: rgb.g * 0.7,
+      b: rgb.b * 0.7,
+    });
   }
 
+  /**
+   * 启动 rAF 主循环：每帧推进播放、渲染各子系统、降帧更新流体并叠加持续 splat
+   */
   private startLoop(): void {
     this.lastTime = performance.now();
     let fluidFrameCount = 0;
@@ -330,17 +426,28 @@ export class WaterfallEngine {
         // 长按持续触发：对键盘上持续按住的音符发射弱 splat
         if (this.fluid && this.settings?.background.fluidEnabled) {
           for (const midi of this.keyboardRenderer.getActiveNotes()) {
-            const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
+            const x =
+              this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
             const y = this.keyboardHeight / Math.max(1, this.height);
             const hue = this.settings.background.fluidParams.splatColorHue;
             let rgb: { r: number; g: number; b: number };
             if (hue !== undefined && hue > 0) {
               rgb = hslToRgbNorm(hue, 0.8, 0.4);
             } else {
-              const colorHex = noteToColor(midi, this.settings.particles.colorScheme, undefined, this.settings.particles.customColors);
+              const colorHex = noteToColor(
+                midi,
+                this.settings.particles.colorScheme,
+                undefined,
+                this.settings.particles.customColors,
+              );
               rgb = hexToRgbNorm(colorHex);
             }
-            this.fluid.splat(x, y, 0, 60, { r: rgb.r * 0.4, g: rgb.g * 0.4, b: rgb.b * 0.4 });
+            // 持续触发：从键盘位置向上喷射弱 splat（dy > 0 在 WebGL 中向上）
+            this.fluid.splat(x, y, 0, 60, {
+              r: rgb.r * 0.4,
+              g: rgb.g * 0.4,
+              b: rgb.b * 0.4,
+            });
           }
         }
 
@@ -348,7 +455,7 @@ export class WaterfallEngine {
         if (this.settings?.background.fluidParams.blockCoverage && this.fluid) {
           const blockPositions = this.noteBlockSystem.getActiveBlockPositions(
             this.keyboardRenderer,
-            this.height // 整个 canvas 高度
+            this.height, // 整个 canvas 高度
           );
           for (const pos of blockPositions) {
             const hue = this.settings.background.fluidParams.splatColorHue;
@@ -356,11 +463,17 @@ export class WaterfallEngine {
             if (hue !== undefined && hue > 0) {
               rgb = hslToRgbNorm(hue, 0.8, 0.5);
             } else {
-              const colorHex = noteToColor(pos.midi, this.settings.particles.colorScheme, undefined, this.settings.particles.customColors);
+              const colorHex = noteToColor(
+                pos.midi,
+                this.settings.particles.colorScheme,
+                undefined,
+                this.settings.particles.customColors,
+              );
               rgb = hexToRgbNorm(colorHex);
             }
-            // 尾焰：从方块中心向下喷射小 splat（dy > 0 表示向下）
-            this.fluid.splat(pos.normX, pos.normY, 0, 25, { r: rgb.r * 0.3, g: rgb.g * 0.3, b: rgb.b * 0.3 });
+            // 尾焰：从方块底部向命中线方向喷射小 splat
+            // dy < 0 表示在 WebGL 坐标中向下（朝向键盘/命中线）
+            this.fluid.splat(pos.normX, pos.normY, 0, -25, { r: rgb.r * 0.3, g: rgb.g * 0.3, b: rgb.b * 0.3 });
           }
         }
       }
@@ -400,6 +513,11 @@ export class WaterfallEngine {
   }
 }
 
+/**
+ * 十六进制颜色字符串转归一化 RGB（各分量 0-1）
+ * @param hex - 十六进制颜色（如 "#ff8800"）
+ * @returns 归一化 RGB 对象
+ */
 function hexToRgbNorm(hex: string): { r: number; g: number; b: number } {
   const normalized = hex.replace("#", "").padEnd(6, "0");
   return {
@@ -410,7 +528,11 @@ function hexToRgbNorm(hex: string): { r: number; g: number; b: number } {
 }
 
 /** HSL (0-1 范围) → 归一化 RGB (0-1) */
-function hslToRgbNorm(h: number, s: number, l: number): { r: number; g: number; b: number } {
+function hslToRgbNorm(
+  h: number,
+  s: number,
+  l: number,
+): { r: number; g: number; b: number } {
   const a = s * Math.min(l, 1 - l);
   const f = (n: number) => {
     const k = (n + h * 12) % 12;

@@ -87,7 +87,9 @@ const currentStrokeWidth = computed(() => {
 <style scoped>
 .wire-delete-btn:hover {
   opacity: 1;
-  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--color-error) 60%, transparent));
+  filter: drop-shadow(
+    0 0 6px color-mix(in oklch, var(--color-error) 60%, transparent)
+  );
 }
 .wire-delete-btn:hover circle {
   fill: var(--color-error);

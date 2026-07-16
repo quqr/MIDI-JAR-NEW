@@ -18,6 +18,7 @@ import { getVoice } from "./utils";
 
 type StaveClef = "treble" | "bass";
 
+/** 渲染单个谱表的配置选项 */
 type RenderStaveOptions = {
   x: number;
   y: number;
@@ -30,6 +31,12 @@ type RenderStaveOptions = {
   keySignatureText?: string;
 };
 
+/**
+ * 创建并绘制单个谱表（含谱号、调号、小节线等）
+ * @param context - VexFlow 渲染上下文
+ * @param options - 谱表渲染选项
+ * @returns 绘制完成的 Stave 对象
+ */
 function createAndDrawStave(context: any, options: RenderStaveOptions): Stave {
   const stave = new Stave(options.x, options.y, options.width);
 
@@ -59,6 +66,7 @@ function createAndDrawStave(context: any, options: RenderStaveOptions): Stave {
   return stave;
 }
 
+/** 渲染音符到谱表的配置选项 */
 type RenderNotesOptions = {
   notes: string[];
   clef: StaveClef;
@@ -69,6 +77,10 @@ type RenderNotesOptions = {
   style: NotationStyleConfig;
 };
 
+/**
+ * 将音符渲染到指定谱表上（含变音记号处理、格式化和绘制）
+ * @param options - 音符渲染选项
+ */
 function renderNotesToStave(options: RenderNotesOptions): void {
   const { notes, clef, stave, context, keySignatureTonic, filterClef, style } =
     options;
@@ -99,6 +111,7 @@ function applyNoteColor(voice: Voice, color: string): void {
   }
 }
 
+/** 大谱表（高低音联合谱表）渲染配置 */
 export type GrandStaffOptions = {
   context: any;
   layout: LayoutDimensions;
@@ -109,6 +122,10 @@ export type GrandStaffOptions = {
   style: NotationStyleConfig;
 };
 
+/**
+ * 渲染大谱表（高低音双行谱），包括花括号连接和跨谱表格式对齐
+ * @param options - 大谱表渲染配置
+ */
 export function renderGrandStaff(options: GrandStaffOptions): void {
   const {
     context,
@@ -186,6 +203,7 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
   }
 }
 
+/** 单谱表渲染配置 */
 export type SingleStaffOptions = {
   context: any;
   layout: LayoutDimensions;
@@ -197,6 +215,10 @@ export type SingleStaffOptions = {
   style: NotationStyleConfig;
 };
 
+/**
+ * 渲染单行谱表（高音或低音谱号）
+ * @param options - 单谱表渲染配置
+ */
 export function renderSingleStaff(options: SingleStaffOptions): void {
   const {
     context,

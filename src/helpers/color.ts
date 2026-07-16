@@ -4,6 +4,12 @@ interface RGBColor {
   b: number;
 }
 
+/**
+ * 将十六进制颜色字符串转换为 RGB 对象，各通道值为 0-1 浮点数
+ * 支持 "#RGB"、"#RRGGBB"、"RGB"、"RRGGBB" 格式
+ * @param color - 十六进制颜色字符串
+ * @returns RGB 颜色对象，各通道值为 0-1
+ */
 export function colorHexToRGB(color: string): RGBColor {
   if (typeof color !== "string") return colorHexToRGB("000000");
   if (color.startsWith("#")) {
@@ -26,6 +32,11 @@ export function colorHexToRGB(color: string): RGBColor {
   return colorHexToRGB("000000");
 }
 
+/**
+ * 将 RGB 对象转换为十六进制颜色字符串，输入各通道值为 0-1 浮点数
+ * @param rgb - RGB 颜色对象，各通道值为 0-1
+ * @returns 十六进制颜色字符串（如 "#ff0000"）
+ */
 export function colorRGBToHex(rgb: RGBColor): string {
   return `#${(
     (1 << 24) |
@@ -37,6 +48,11 @@ export function colorRGBToHex(rgb: RGBColor): string {
     .slice(1)}`;
 }
 
+/**
+ * 计算颜色的相对亮度（基于 WCAG 2.0 标准的 sRGB 亮度公式）
+ * @param color - 十六进制颜色字符串
+ * @returns 相对亮度值（0-1）
+ */
 function getLuminance(color: string) {
   function normalize(value: number) {
     return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
@@ -46,6 +62,13 @@ function getLuminance(color: string) {
   return 0.2126 * normalize(r) + 0.7152 * normalize(g) + 0.0722 * normalize(b);
 }
 
+/**
+ * 根据背景色亮度返回合适的对比色（深色或浅色），用于保证文字可读性
+ * @param color - 背景色的十六进制字符串
+ * @param darkColor - 亮背景时使用的深色，默认 "#000000"
+ * @param lightColor - 暗背景时使用的浅色，默认 "#ffffff"
+ * @returns 对比色的十六进制字符串
+ */
 export function getContrastColor(
   color: string,
   darkColor = "#000000",
@@ -54,6 +77,13 @@ export function getContrastColor(
   return getLuminance(color) < getLuminance("808080") ? lightColor : darkColor;
 }
 
+/**
+ * 按比例混合两种颜色
+ * @param colorA - 起始颜色的十六进制字符串
+ * @param colorB - 目标颜色的十六进制字符串
+ * @param factor - 混合比例，0 返回 colorA，1 返回 colorB，默认 0.5
+ * @returns 混合后颜色的十六进制字符串
+ */
 export function mixColor(colorA: string, colorB: string, factor = 0.5) {
   const a = colorHexToRGB(colorA);
   const b = colorHexToRGB(colorB);

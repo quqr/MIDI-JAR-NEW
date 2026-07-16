@@ -10,10 +10,12 @@
 
 :root {
   /* 系统字体栈 - 自动适配平台原生字体 */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
 
   /* 音乐专用颜色变量（基于 oklch 色彩空间，符合 WCAG AA） */
   --note-c: oklch(65% 0.25 25); /* 红色 */

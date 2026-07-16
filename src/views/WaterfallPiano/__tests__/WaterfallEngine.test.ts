@@ -36,7 +36,10 @@ function mockCanvas(): HTMLCanvasElement {
     {
       get: (_t, prop) => {
         if (prop === "canvas") return null;
-        if (prop === "createLinearGradient" || prop === "createRadialGradient") {
+        if (
+          prop === "createLinearGradient" ||
+          prop === "createRadialGradient"
+        ) {
           return () => gradient;
         }
         if (prop === "createPattern") {
@@ -98,9 +101,7 @@ describe("WaterfallEngine", () => {
 
   describe("生命周期", () => {
     it("init 不抛错，推进时间后 getPerformanceFps > 0", () => {
-      expect(() =>
-        engine.init(mockCanvases(), cloneSettings()),
-      ).not.toThrow();
+      expect(() => engine.init(mockCanvases(), cloneSettings())).not.toThrow();
       expect(engine.getPerformanceFps()).toBe(0);
       vi.advanceTimersByTime(16);
       vi.advanceTimersByTime(16);

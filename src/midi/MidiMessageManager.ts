@@ -6,6 +6,9 @@ function debugLog(...args: unknown[]) {
   }
 }
 
+/**
+ * MIDI 消息事件，封装单条 MIDI 消息及其元信息
+ */
 export class MidiMessageEvent extends Event {
   message: number[];
   timestamp: number;
@@ -24,6 +27,9 @@ export class MidiMessageEvent extends Event {
   }
 }
 
+/**
+ * MidiMessageManager 的类型接口，扩展 EventTarget 以提供类型安全的 MIDI 消息事件监听
+ */
 interface MidiMessageManager extends EventTarget {
   addEventListener(
     type: "message",
@@ -48,6 +54,9 @@ interface MidiMessageManager extends EventTarget {
   dispose(): void;
 }
 
+/**
+ * MIDI 消息管理器基类，基于命名空间隔离不同来源的 MIDI 消息流
+ */
 class MidiMessageManager extends EventTarget {
   namespace: string;
 
@@ -57,6 +66,10 @@ class MidiMessageManager extends EventTarget {
   }
 }
 
+/**
+ * 内部 MIDI 消息管理器，负责从 Tauri 后端接收指定命名空间的 MIDI 消息并转发为 DOM 事件
+ * 内置并发初始化保护与异步释放安全处理
+ */
 export class InternalMidiMessages extends MidiMessageManager {
   private offListener: UnlistenFn | null = null;
   private initialized = false;
@@ -72,6 +85,11 @@ export class InternalMidiMessages extends MidiMessageManager {
     return this.disposed;
   }
 
+  /**
+   * 初始化消息监听，注册 Tauri 端的 MIDI 消息回调
+   * 具有并发保护：重复调用或已在初始化中时会被忽略
+   * 若在初始化完成前调用 dispose，会自动清理已注册的监听器
+   */
   public async initialize(): Promise<void> {
     if (this.initialized || this.disposed) {
       return;
@@ -120,6 +138,12 @@ export class InternalMidiMessages extends MidiMessageManager {
     }
   }
 
+  /**
+   * 将后端推送的 MIDI 消息转换为 MidiMessageEvent 并派发
+   * @param message - MIDI 消息的字节数组
+   * @param timestamp - 消息时间戳
+   * @param device - 来源设备名称
+   */
   private handleMessage(message: number[], timestamp: number, device: string) {
     this.dispatchEvent(
       new MidiMessageEvent("message", message, timestamp, device),

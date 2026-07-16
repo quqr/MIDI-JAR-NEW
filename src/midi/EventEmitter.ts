@@ -1,5 +1,6 @@
 import { logger } from "@/utils/logger";
 
+/** 事件监听器函数类型 */
 type EventListener = (...args: any[]) => void;
 
 /**

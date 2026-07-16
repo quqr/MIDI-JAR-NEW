@@ -77,10 +77,7 @@ function getVisibleTreeitems(container: HTMLElement): HTMLElement[] {
   return all.filter((el) => {
     let parent = el.parentElement;
     while (parent && parent !== container) {
-      if (
-        parent.tagName === "DETAILS" &&
-        !(parent as HTMLDetailsElement).open
-      )
+      if (parent.tagName === "DETAILS" && !(parent as HTMLDetailsElement).open)
         return false;
       parent = parent.parentElement;
     }

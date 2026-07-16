@@ -4,6 +4,7 @@ import { MIDI_NAMESPACE } from "../constants";
 import type { WaterfallEngine } from "../engine/WaterfallEngine";
 import type { Recorder } from "../audio/Recorder";
 
+/** 实时 MIDI 输入的事件回调集合 */
 export interface RealtimeMidiOptions {
   onNoteOn?: (midi: number, velocity: number) => void;
   onNoteOff?: (midi: number) => void;
@@ -11,6 +12,13 @@ export interface RealtimeMidiOptions {
   onControlChange?: (controller: number, value: number) => void;
 }
 
+/**
+ * 注册实时 MIDI 输入处理，将 NoteOn/NoteOff/CC 消息分发到引擎、录制器和回调
+ * @param engine - 瀑布流引擎引用，用于触发音符的可视反馈
+ * @param recorder - 录制器引用，用于在录制状态下记录音符事件
+ * @param isRecording - 是否正在录制的响应式标志
+ * @param options - 可选的 MIDI 事件回调（NoteOn / NoteOff / 延音踏板 / CC）
+ */
 export function useRealtimeMidi(
   engine: Ref<WaterfallEngine | null>,
   recorder: Ref<Recorder | null>,

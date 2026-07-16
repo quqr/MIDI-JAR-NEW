@@ -1,5 +1,7 @@
 <template>
-  <div class="flex flex-col items-center p-4 max-w-[var(--hig-container-max)] mx-auto">
+  <div
+    class="flex flex-col items-center p-4 max-w-[var(--hig-container-max)] mx-auto"
+  >
     <!-- Header -->
     <div class="text-center mb-6">
       <Icon

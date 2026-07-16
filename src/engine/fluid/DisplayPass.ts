@@ -67,9 +67,18 @@ export class DisplayPass {
     this.drawDisplay(target, dye, bloom, sunrays, ditheringTexture);
   }
 
-  private drawColor(target: FBO | null, color: { r: number; g: number; b: number }) {
+  private drawColor(
+    target: FBO | null,
+    color: { r: number; g: number; b: number },
+  ) {
     this.colorProgram.bind();
-    this.gl.uniform4f(this.colorProgram.uniforms.color, color.r, color.g, color.b, 1);
+    this.gl.uniform4f(
+      this.colorProgram.uniforms.color,
+      color.r,
+      color.g,
+      color.b,
+      1,
+    );
     this.blit(target);
   }
 
@@ -87,12 +96,19 @@ export class DisplayPass {
 
     this.displayMaterial.bind();
     if (config.SHADING) {
-      gl.uniform2f(this.displayMaterial.uniforms.texelSize, 1.0 / width, 1.0 / height);
+      gl.uniform2f(
+        this.displayMaterial.uniforms.texelSize,
+        1.0 / width,
+        1.0 / height,
+      );
     }
     gl.uniform1i(this.displayMaterial.uniforms.uTexture, dye.attach(0));
     if (config.BLOOM && bloom) {
       gl.uniform1i(this.displayMaterial.uniforms.uBloom, bloom.attach(1));
-      gl.uniform1i(this.displayMaterial.uniforms.uDithering, ditheringTexture.attach(2));
+      gl.uniform1i(
+        this.displayMaterial.uniforms.uDithering,
+        ditheringTexture.attach(2),
+      );
       const scale = getTextureScale(ditheringTexture, width, height);
       gl.uniform2f(this.displayMaterial.uniforms.ditherScale, scale.x, scale.y);
     }

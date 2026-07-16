@@ -7,6 +7,14 @@ import { MIDI_CHANNEL_ALL } from "./useMidiHandler";
 
 const MIDI_CMD_NOTE_ON = 0x90;
 
+/**
+ * MIDI Learn 功能：监听下一个 MIDI 音符并回调通知，用于将控件绑定到 MIDI 音符。
+ *
+ * @param midiManager - 内部 MIDI 消息管理器实例，为 null 时无法开始学习
+ * @param onLearn - 学习到音符时的回调，接收 MIDI 音符编号
+ * @param channel - 限制监听的 MIDI 通道，默认监听所有通道
+ * @returns 学习状态、已学习音符及控制方法
+ */
 export function useMidiLearn(
   midiManager: InternalMidiMessages | null,
   onLearn: (note: number) => void,

@@ -3,6 +3,13 @@ import { useMidiMessagesStore } from "@/stores/midiMessages";
 
 export type MidiMessagesBuffer = Array<[number[], number, string]>;
 
+/**
+ * 批量监听 MIDI 消息：缓冲同一事件循环内的所有消息，在下一个微任务中一次性回调。
+ * 避免高频 MIDI 消息导致的频繁渲染。
+ *
+ * @param onMessages - 批量消息回调，接收 [消息, 时间戳, 设备] 数组
+ * @param namespace - MIDI 消息订阅的命名空间
+ */
 export function useMidiMessages(
   onMessages: (messages: MidiMessagesBuffer) => void,
   namespace: string = "debugger",

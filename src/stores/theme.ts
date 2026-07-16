@@ -81,6 +81,9 @@ export const useThemeStore = defineStore("theme", () => {
     logger.info(`主题已切换为: ${theme}`);
   }
 
+  /**
+   * 在亮色与暗色主题之间切换。当前为暗色则切换为默认亮色主题，否则切换为 dark
+   */
   function toggleTheme() {
     const newTheme = isDark.value ? defaultTheme : "dark";
     setTheme(newTheme);

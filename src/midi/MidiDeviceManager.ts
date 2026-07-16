@@ -4,12 +4,17 @@ import { isTauri } from "@/utils/tauri";
 import { logger } from "@/utils/logger";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
+/** 内部模块输出设备的名称列表，这些设备会被合并展示为单个 "internal" 输出 */
 const MODULE_OUTPUTS = [
   "chord-dictionary",
   "chord-display/default",
   "debugger",
 ];
 
+/**
+ * MIDI 设备管理器
+ * 负责监听和管理局域内所有 MIDI 输入/输出设备的热插拔与状态同步
+ */
 export class MidiDeviceManager {
   private inputs: Map<string, MidiInputDevice> = new Map();
   private outputs: Map<string, MidiOutputDevice> = new Map();
@@ -17,6 +22,9 @@ export class MidiDeviceManager {
   private offOutputs: UnlistenFn | null = null;
   private offWires: UnlistenFn | null = null;
 
+  /**
+   * 初始化设备管理器，注册 Tauri 端的设备变更监听并拉取当前设备列表
+   */
   async initialize(): Promise<void> {
     logger.info("MidiDeviceManager: 初始化...");
 
@@ -45,6 +53,10 @@ export class MidiDeviceManager {
     logger.success("MidiDeviceManager: 初始化完成");
   }
 
+  /**
+   * 根据后端返回的设备列表重建输入设备映射
+   * @param apiInputs - 后端返回的原始输入设备数据
+   */
   private updateInputs(apiInputs: ApiMidiInput[]): void {
     this.inputs.clear();
     for (const apiInput of apiInputs) {
@@ -52,6 +64,10 @@ export class MidiDeviceManager {
     }
   }
 
+  /**
+   * 根据后端返回的设备列表重建输出设备映射
+   * @param apiOutputs - 后端返回的原始输出设备数据
+   */
   private updateOutputs(apiOutputs: ApiMidiOutput[]): void {
     this.outputs.clear();
     for (const apiOutput of apiOutputs) {
@@ -69,6 +85,10 @@ export class MidiDeviceManager {
     return Array.from(this.inputs.values()).map((i) => i.toApi());
   }
 
+  /**
+   * 获取输出设备列表，将内部模块输出合并为单个 "internal" 项，仅包含物理输出设备
+   * @returns 去重后的输出设备 API 数据数组
+   */
   getOutputs(): ApiMidiOutput[] {
     const result: ApiMidiOutput[] = [];
 

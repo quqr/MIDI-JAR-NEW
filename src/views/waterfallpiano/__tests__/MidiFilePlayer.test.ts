@@ -7,7 +7,12 @@ vi.mock("@tonejs/midi", () => {
       tracks: Array<{
         name: string;
         instrument: { name: string };
-        notes: Array<{ midi: number; velocity: number; time: number; duration: number }>;
+        notes: Array<{
+          midi: number;
+          velocity: number;
+          time: number;
+          duration: number;
+        }>;
       }>;
       duration: number;
       constructor() {
@@ -37,10 +42,18 @@ vi.mock("tone", () => {
     seconds: 0,
     bpm: { value: 120 },
     loop: false,
-    start: vi.fn(function (this: typeof transport) { return this; }),
-    pause: vi.fn(function (this: typeof transport) { return this; }),
-    stop: vi.fn(function (this: typeof transport) { return this; }),
-    cancel: vi.fn(function (this: typeof transport) { return this; }),
+    start: vi.fn(function (this: typeof transport) {
+      return this;
+    }),
+    pause: vi.fn(function (this: typeof transport) {
+      return this;
+    }),
+    stop: vi.fn(function (this: typeof transport) {
+      return this;
+    }),
+    cancel: vi.fn(function (this: typeof transport) {
+      return this;
+    }),
   };
   return {
     getTransport: () => transport,

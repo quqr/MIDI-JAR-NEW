@@ -10,7 +10,11 @@
         <button
           class="btn btn-sm btn-outline"
           :disabled="!virtualPortSupported"
-          :title="!virtualPortSupported ? t('settings.routingSettings.notSupportedOnWindows') : ''"
+          :title="
+            !virtualPortSupported
+              ? t('settings.routingSettings.notSupportedOnWindows')
+              : ''
+          "
           @click="showVirtualPortModal = true"
         >
           <Icon name="plus" :size="16" aria-hidden="true" />
@@ -83,8 +87,12 @@
       <table class="table table-zebra">
         <thead>
           <tr>
-            <th class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-sm">
-              <span class="text-xs font-semibold uppercase tracking-wider text-base-content/60">
+            <th
+              class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-sm"
+            >
+              <span
+                class="text-xs font-semibold uppercase tracking-wider text-base-content/60"
+              >
                 {{ t("settings.routingSettings.inputOutput") }}
               </span>
             </th>
@@ -96,10 +104,19 @@
               <div class="flex items-center gap-2 min-w-[120px]">
                 <span
                   class="w-2 h-2 rounded-full flex-shrink-0"
-                  :class="output.connected ? 'bg-success' : 'bg-base-content/30'"
-                  :aria-label="output.connected ? $t('common.connected') : $t('common.disconnected')"
+                  :class="
+                    output.connected ? 'bg-success' : 'bg-base-content/30'
+                  "
+                  :aria-label="
+                    output.connected
+                      ? $t('common.connected')
+                      : $t('common.disconnected')
+                  "
                 ></span>
-                <span class="text-xs font-semibold truncate" :title="output.name">
+                <span
+                  class="text-xs font-semibold truncate"
+                  :title="output.name"
+                >
                   {{ output.name }}
                 </span>
               </div>
@@ -113,15 +130,26 @@
                 <span
                   class="w-2 h-2 rounded-full flex-shrink-0"
                   :class="input.connected ? 'bg-success' : 'bg-base-content/30'"
-                  :aria-label="input.connected ? $t('common.connected') : $t('common.disconnected')"
+                  :aria-label="
+                    input.connected
+                      ? $t('common.connected')
+                      : $t('common.disconnected')
+                  "
                 ></span>
                 <span class="text-sm truncate" :title="input.name">
                   {{ input.name }}
                 </span>
               </div>
             </td>
-            <td v-for="output in outputs" :key="output.name" class="text-center">
-              <label class="inline-flex items-center cursor-pointer" :aria-label="`${input.name} → ${output.name}`">
+            <td
+              v-for="output in outputs"
+              :key="output.name"
+              class="text-center"
+            >
+              <label
+                class="inline-flex items-center cursor-pointer"
+                :aria-label="`${input.name} → ${output.name}`"
+              >
                 <input
                   type="checkbox"
                   class="toggle toggle-sm toggle-primary"
@@ -170,18 +198,24 @@
         </h3>
         <div class="form-control w-full mb-4">
           <label class="label">
-            <span class="label-text">{{ t("settings.routingSettings.virtualPortName") }}</span>
+            <span class="label-text">{{
+              t("settings.routingSettings.virtualPortName")
+            }}</span>
           </label>
           <input
             v-model="virtualPortName"
             type="text"
             class="input input-bordered w-full"
-            :placeholder="t('settings.routingSettings.virtualPortNamePlaceholder')"
+            :placeholder="
+              t('settings.routingSettings.virtualPortNamePlaceholder')
+            "
           />
         </div>
         <div class="form-control w-full mb-4">
           <label class="label">
-            <span class="label-text">{{ t("settings.routingSettings.virtualPortType") }}</span>
+            <span class="label-text">{{
+              t("settings.routingSettings.virtualPortType")
+            }}</span>
           </label>
           <div class="flex gap-4">
             <label class="label cursor-pointer gap-2">
@@ -191,7 +225,9 @@
                 value="input"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text">{{ t("settings.routingSettings.virtualInput") }}</span>
+              <span class="label-text">{{
+                t("settings.routingSettings.virtualInput")
+              }}</span>
             </label>
             <label class="label cursor-pointer gap-2">
               <input
@@ -200,12 +236,17 @@
                 value="output"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text">{{ t("settings.routingSettings.virtualOutput") }}</span>
+              <span class="label-text">{{
+                t("settings.routingSettings.virtualOutput")
+              }}</span>
             </label>
           </div>
         </div>
         <div class="modal-action">
-          <button class="btn btn-ghost btn-sm" @click="showVirtualPortModal = false">
+          <button
+            class="btn btn-ghost btn-sm"
+            @click="showVirtualPortModal = false"
+          >
             {{ t("common.cancel") }}
           </button>
           <button
@@ -225,7 +266,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { onMounted as vueOnMounted, onUnmounted, onActivated, onDeactivated } from "vue";
+import {
+  onMounted as vueOnMounted,
+  onUnmounted,
+  onActivated,
+  onDeactivated,
+} from "vue";
 import { storeToRefs } from "pinia";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 import type { MidiRoute } from "@/stores/midiRouting";
@@ -237,7 +283,13 @@ const { t } = useI18n();
 const routingStore = useMidiRoutingStore();
 
 const { inputs, outputs, wires, routes } = storeToRefs(routingStore);
-const { addRoute, deleteRoute, isVirtualPortSupported, createVirtualInput, createVirtualOutput } = routingStore;
+const {
+  addRoute,
+  deleteRoute,
+  isVirtualPortSupported,
+  createVirtualInput,
+  createVirtualOutput,
+} = routingStore;
 
 const viewMode = ref<"matrix" | "flow">("matrix");
 const showClearConfirm = ref(false);

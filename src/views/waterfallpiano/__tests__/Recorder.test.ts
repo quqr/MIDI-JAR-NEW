@@ -8,7 +8,13 @@ vi.mock("@/helpers/storage", () => ({
   saveToStorage: <T>(key: string, data: T): void => {
     store.set(key, JSON.stringify(data));
   },
-  loadFromStorage: <T>({ key, defaultValue }: { key: string; defaultValue: T }): T => {
+  loadFromStorage: <T>({
+    key,
+    defaultValue,
+  }: {
+    key: string;
+    defaultValue: T;
+  }): T => {
     const v = store.get(key);
     if (v) return JSON.parse(v) as T;
     return defaultValue;
@@ -99,18 +105,14 @@ describe("Recorder", () => {
 
   describe("播放", () => {
     it("startPlayback 后 getIsPlaying 为 true", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 1 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 1 }]);
       recorder.startPlayback();
       expect(recorder.getIsPlaying()).toBe(true);
       expect(recorder.getIsPaused()).toBe(false);
     });
 
     it("推进时间 → onNoteOn 被调用", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 1 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 1 }]);
       const noteOnSpy = vi.fn();
       recorder.setCallbacks({ onNoteOn: noteOnSpy });
       recorder.startPlayback();
@@ -120,9 +122,7 @@ describe("Recorder", () => {
     });
 
     it("推进到 note 结束 → onNoteOff 被调用", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 1 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 1 }]);
       const noteOffSpy = vi.fn();
       recorder.setCallbacks({ onNoteOff: noteOffSpy });
       recorder.startPlayback();
@@ -132,9 +132,7 @@ describe("Recorder", () => {
     });
 
     it("推进到 duration → onPlaybackEnd 触发", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 1 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 1 }]);
       const endSpy = vi.fn();
       recorder.setCallbacks({ onPlaybackEnd: endSpy });
       recorder.startPlayback();
@@ -145,9 +143,7 @@ describe("Recorder", () => {
     });
 
     it("pausePlayback 后 getCurrentTime 冻结", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 2 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 2 }]);
       recorder.startPlayback();
       vi.advanceTimersByTime(500);
       recorder.pausePlayback();
@@ -158,9 +154,7 @@ describe("Recorder", () => {
     });
 
     it("resumePlayback 后继续播放", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 2 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 2 }]);
       recorder.startPlayback();
       vi.advanceTimersByTime(500);
       recorder.pausePlayback();
@@ -171,9 +165,7 @@ describe("Recorder", () => {
     });
 
     it("stopPlayback 后状态归零", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 2 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 2 }]);
       recorder.startPlayback();
       recorder.stopPlayback();
       expect(recorder.getIsPlaying()).toBe(false);
@@ -181,9 +173,7 @@ describe("Recorder", () => {
     });
 
     it("seekTo 后 getCurrentTime 返回 seek 值", () => {
-      recorder.loadNotes([
-        { midi: 60, velocity: 100, time: 0, duration: 2 },
-      ]);
+      recorder.loadNotes([{ midi: 60, velocity: 100, time: 0, duration: 2 }]);
       recorder.startPlayback();
       recorder.seekTo(1.0);
       expect(recorder.getCurrentTime()).toBeCloseTo(1.0, 2);

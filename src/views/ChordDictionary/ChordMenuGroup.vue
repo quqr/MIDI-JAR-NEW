@@ -1,5 +1,10 @@
 <template>
-  <details ref="detailsRef" class="group" open @toggle="isOpen = detailsRef?.open ?? true">
+  <details
+    ref="detailsRef"
+    class="group"
+    open
+    @toggle="isOpen = detailsRef?.open ?? true"
+  >
     <summary
       role="treeitem"
       tabindex="0"

@@ -24,6 +24,13 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     (ev: MidiMessageEvent) => void
   >();
 
+  /**
+   * 添加一条 MIDI 消息到消息列表，超出 maxMessages 上限时自动裁剪最早的记录
+   * @param message - MIDI 消息的字节数组
+   * @param timestamp - 消息时间戳
+   * @param device - 来源设备名称
+   * @param namespace - 消息所属命名空间
+   */
   function addMessage(
     message: number[],
     timestamp: number,
@@ -37,6 +44,10 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     }
   }
 
+  /**
+   * 释放并移除指定命名空间的 InternalMidiMessages 实例及引用计数
+   * @param namespace - 需要清理的命名空间
+   */
   function cleanupManager(namespace: string): void {
     const manager = managerMap.get(namespace);
     if (manager) {
@@ -46,6 +57,12 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     refCountMap.delete(namespace);
   }
 
+  /**
+   * 获取指定命名空间的 InternalMidiMessages 管理器。
+   * 若管理器已被销毁则重新创建，若不存在则新建并初始化
+   * @param namespace - 目标命名空间
+   * @returns 初始化完成的 InternalMidiMessages 实例
+   */
   async function getManager(namespace: string): Promise<InternalMidiMessages> {
     let manager = managerMap.get(namespace);
 
@@ -65,6 +82,12 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     return manager;
   }
 
+  /**
+   * 订阅指定命名空间的 MIDI 消息。同时将消息记录到 store 内部列表，
+   * 并通过回调通知调用方。采用引用计数管理生命周期
+   * @param namespace - 订阅的命名空间
+   * @param onMessage - 消息回调函数
+   */
   async function subscribeToNamespace(
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
@@ -82,6 +105,12 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     refCountMap.set(namespace, currentCount + 1);
   }
 
+  /**
+   * 取消订阅指定命名空间的 MIDI 消息。
+   * 当引用计数归零时自动释放对应的 InternalMidiMessages 管理器
+   * @param namespace - 取消订阅的命名空间
+   * @param onMessage - 之前注册的消息回调函数
+   */
   function unsubscribeFromNamespace(
     namespace: string,
     onMessage: (message: number[], timestamp: number, device: string) => void,
@@ -107,6 +136,9 @@ export const useMidiMessagesStore = defineStore("midiMessages", () => {
     messages.value = [];
   }
 
+  /**
+   * 重置 store：释放所有 InternalMidiMessages 管理器并清空消息列表
+   */
   function $reset(): void {
     for (const manager of managerMap.values()) {
       manager.dispose();

@@ -1,7 +1,5 @@
 import { Chord, Interval } from "tonal";
-import {
-  getNoteInKeySignature,
-} from "@/helpers";
+import { getNoteInKeySignature } from "@/helpers";
 import { detect } from "@/helpers/chord-detect";
 import { tokenizeChord } from "@/helpers";
 
@@ -12,6 +10,14 @@ interface ChordInfo extends ReturnType<typeof Chord.getChord> {
   rootDegree: number;
 }
 
+/**
+ * 将和弦符号转换为包含详细信息的 ChordInfo 对象。
+ * 解析和弦根音、类型、转位，并在当前调号下计算转位音程与度数。
+ *
+ * @param chord - 和弦符号，如 "Cmaj7/D"
+ * @param keySignatureNotes - 当前调号的音名列表，用于升降号映射
+ * @returns 和弦信息对象，解析失败返回 null
+ */
 function getChordInfo(
   chord: string,
   keySignatureNotes: readonly string[],
@@ -28,6 +34,15 @@ function getChordInfo(
   return null;
 }
 
+/**
+ * 根据当前演奏的音名列表检测可能的和弦。
+ *
+ * @param notes - 当前活跃的音名列表
+ * @param keySignatureNotes - 当前调号的音名列表，用于升降号映射
+ * @param allowOmissions - 是否允许省略音的和弦匹配
+ * @param disabledChords - 需要排除的和弦名称列表
+ * @returns 检测到的和弦信息数组（可能包含 null 项）
+ */
 export function getChords(
   notes: string[],
   keySignatureNotes: readonly string[],

@@ -1,37 +1,9 @@
 // ─── 颜色方案 ───
 export type ColorScheme =
-  | "pitch"
-  | "hands"
-  | "rainbow"
-  | "warm"
-  | "cool"
-  | "neon"
-  | "custom";
+  "pitch" | "hands" | "rainbow" | "warm" | "cool" | "neon" | "custom";
 
-// ─── 背景类型 ───
-export type BackgroundType =
-  | "solid"
-  | "gradient"
-  | "preset"
-  | "image"
-  | "stars";
-
-// ─── 图片适配方式 ───
-export type ImageFitMode = "cover" | "stretch" | "center" | "tile";
-
-// ─── 渐变方向 ───
-export type GradientDirection =
-  | "linear-vertical"
-  | "linear-horizontal"
-  | "radial";
-
-// ─── 预设主题 ───
-export type PresetTheme =
-  | "night-sky"
-  | "ocean"
-  | "sunset"
-  | "aurora"
-  | "forest";
+// ─── 背景类型（仅保留纯色） ───
+export type BackgroundType = "solid";
 
 // ─── Synthesia 流动方向 ───
 export type FlowDirection = "up" | "down";
@@ -54,19 +26,20 @@ export type FluidQuality = "low" | "medium" | "high";
 // ─── 流体模拟风格预设 ───
 export type FluidStyle = "gentle" | "standard" | "turbulent";
 
-// ─── 多色渐变停靠点 ───
+/** 多色渐变停靠点，用于流体预设中的颜色渐变定义 */
 export interface GradientStop {
   position: number; // 0-1
   color: string; // hex
 }
 
-// ─── 瀑布流视觉配置 ───
+/** 瀑布流命中线（音符触底线）的视觉配置 */
 export interface HitLineConfig {
   visible: boolean;
   color: string;
   thickness: number;
 }
 
+/** 瀑布流音符方块的视觉与行为配置 */
 export interface ParticleConfig {
   colorScheme: ColorScheme;
   customColors: { low: string; mid: string; high: string };
@@ -81,31 +54,18 @@ export interface ParticleConfig {
 // ─── 流体高级参数（从 @/engine/fluid 重新导出，保持单一类型源） ───
 export type { FluidAdvancedParams } from "@/engine/fluid";
 
-// ─── 背景配置 ───
+/** 背景渲染配置，支持纯色底色和流体动画效果 */
 export interface BackgroundConfig {
   type: BackgroundType;
   solidColor: string;
-  gradientDirection: GradientDirection;
-  gradientStart: string;
-  gradientEnd: string;
-  gradientStops: GradientStop[];
-  presetTheme: PresetTheme;
-  imageFile: string;
-  imageBlur: number;
-  imageDarken: number;
-  imageFitMode: ImageFitMode;
-  starfieldEnabled: boolean;
-  starfieldDensity: number;
   fluidEnabled: boolean;
   fluidQuality: FluidQuality;
   fluidStyle: FluidStyle;
   fluidAdvanced: boolean;
   fluidParams: import("@/engine/fluid").FluidAdvancedParams;
-  flowAnimation: boolean;
-  flowSpeed: number;
 }
 
-// ─── 键盘配置 ───
+/** 钢琴键盘的布局、外观与交互配置 */
 export interface KeyboardConfig {
   visible: boolean;
   range: KeyboardRange;
@@ -128,7 +88,7 @@ export interface KeyboardConfig {
   showNoteNames: boolean;
 }
 
-// ─── MIDI 文件配置 ───
+/** MIDI 文件播放控制与音轨显示配置 */
 export interface MidiFileConfig {
   playbackSpeed: number;
   selectedTracks: number[];
@@ -137,7 +97,7 @@ export interface MidiFileConfig {
   showNoteNames: boolean;
 }
 
-// ─── 合成器包络配置 ───
+/** 合成器 ADSR 包络参数 */
 export interface SynthEnvelopeConfig {
   attack: number;
   decay: number;
@@ -148,7 +108,7 @@ export interface SynthEnvelopeConfig {
 // ─── 振荡器类型 ───
 export type OscillatorType = "triangle" | "sine" | "square" | "sawtooth";
 
-// ─── 音频引擎用户配置 ───
+/** 音频合成引擎的全部用户可调参数 */
 export interface SoundEngineUserConfig {
   volume: number;
   reverbAmount: number;
@@ -162,7 +122,7 @@ export interface SoundEngineUserConfig {
   modulationEnvelope: SynthEnvelopeConfig;
 }
 
-// ─── 瀑布流钢琴总配置 ───
+/** 瀑布流钢琴的完整设置项，由五个子配置段组成 */
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
   background: BackgroundConfig;
@@ -171,7 +131,7 @@ export interface WaterfallPianoSettings {
   sound: SoundEngineUserConfig;
 }
 
-// ─── 录制的音符 ───
+/** 实时录制产生的单个音符记录 */
 export interface RecordedNote {
   midi: number;
   velocity: number;
@@ -188,7 +148,7 @@ export interface MidiTrackInfo {
   instrument: string;
 }
 
-// ─── 调度的音符事件（Synthesia 模式） ───
+/** Synthesia 模式下已调度待播放的音符事件 */
 export interface ScheduledNote {
   midi: number;
   velocity: number;

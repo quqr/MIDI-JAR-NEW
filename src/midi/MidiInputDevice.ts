@@ -1,3 +1,4 @@
+/** MIDI 输入设备的 API 层数据结构 */
 export interface ApiMidiInput {
   name: string;
   opened: boolean;
@@ -5,6 +6,7 @@ export interface ApiMidiInput {
   error: boolean;
 }
 
+/** MIDI 输入设备，封装设备名称与连接状态信息 */
 export class MidiInputDevice {
   name: string;
   connected: boolean;
