@@ -26,7 +26,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     fluidParams: {
       hitExplosion: true,
       blockCoverage: false,
-      splatRadius: 0.005,
+      splatRadius: 0.0001,
     },
   },
   keyboard: {

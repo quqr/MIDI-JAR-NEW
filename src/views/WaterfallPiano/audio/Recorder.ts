@@ -28,7 +28,10 @@ export class Recorder {
   private pending = new Map<number, { velocity: number; startTime: number }>();
   private recordStartTime = 0;
   private isRecording = false;
+  /** 内部防护标志，仅用于 startPlayback/pausePlayback 等方法的防御性检查。
+   *  播放状态的权威来源是 PlayerStateMachine，外部代码不应依赖此字段。 */
   private isPlaying = false;
+  /** @see isPlaying */
   private isPaused = false;
   private playStartTime = 0;
   private pausedAt = 0;
@@ -255,6 +258,7 @@ export class Recorder {
     if (current >= this.getDuration() && this.getDuration() > 0) {
       this.isPlaying = false;
       this.isPaused = false;
+      this.resetPlaybackState();
       this.callbacks.onPlaybackEnd?.();
     }
   }

@@ -374,7 +374,8 @@ export class NoteBlockSystem {
     this.triggeredSet.clear();
     this.triggeredNoteKeys.clear();
     this.activeMidiCount.clear();
-    this.active = []; // 清空活跃方块，确保重播时状态干净
+    for (const b of this.active) this.release(b);
+    this.active = [];
   }
 
   setTransportTime(t: number): void {
@@ -383,6 +384,21 @@ export class NoteBlockSystem {
 
   setTransportPlaying(playing: boolean): void {
     this.transportPlaying = playing;
+  }
+
+  /** 清空所有活跃的 synthesia 方块并重置内部状态（用于停止播放） */
+  clearBlocks(): void {
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      this.release(this.active[i]);
+    }
+    this.active = [];
+    this.synthesiaBlockMap.clear();
+    this.triggeredSet.clear();
+    this.triggeredNoteKeys.clear();
+    this.endedNoteKeys.clear();
+    this.activeMidiCount.clear();
+    this.transportTime = 0;
+    this.lastTransportTime = 0;
   }
 
   /**
@@ -640,9 +656,9 @@ export class NoteBlockSystem {
     while (
       this.synthesiaCursor < len &&
       t -
-        (notes[this.synthesiaCursor].time +
-          notes[this.synthesiaCursor].duration) >
-        lookAhead + notes[this.synthesiaCursor].duration + 1
+      (notes[this.synthesiaCursor].time +
+        notes[this.synthesiaCursor].duration) >
+      lookAhead + notes[this.synthesiaCursor].duration + 1
     ) {
       this.synthesiaCursor++;
     }

@@ -14,6 +14,23 @@ import { createLogger } from "@/utils/logger";
 
 const logger = createLogger("WaterfallEngine");
 
+/** Box-Muller 高斯随机数（均值 0，标准差 1） */
+function gaussian(): number {
+  const u1 = Math.max(1e-12, Math.random());
+  const u2 = Math.random();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+/** 判断扰动参数是否全部为 0/undefined（用于跳过计算） */
+function hasPerturbation(p?: import("@/engine/fluid").SplatPerturbation): boolean {
+  if (!p) return false;
+  return !!(
+    (p.positionJitter && p.positionJitter > 0) ||
+    (p.forceJitter && p.forceJitter > 0) ||
+    (p.colorJitter && p.colorJitter > 0)
+  );
+}
+
 export interface WaterfallCanvases {
   background: HTMLCanvasElement;
   fluid: HTMLCanvasElement;
@@ -58,6 +75,8 @@ export class WaterfallEngine {
   /** 资源清理任务注册表（增强型 RAII 模式） */
   private cleanupTasks: Map<string, () => void | Promise<void>> = new Map();
   private disposed = false;
+  /** MIDI 模式暂停标志：为 true 时渲染循环跳过 fluid.update() 和所有 splat 调用 */
+  private fluidPaused = false;
 
   /**
    * 注册资源清理任务
@@ -86,6 +105,8 @@ export class WaterfallEngine {
         onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
       };
       this.maybeInitFluid();
+      this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
+      this.prevFluidEnabled = settings.background.fluidEnabled;
       this.bindPointerEvents();
       this.startLoop();
 
@@ -371,13 +392,12 @@ export class WaterfallEngine {
    */
   private fluidSplat(midi: number, velocity = DEFAULT_VELOCITY): void {
     if (!this.fluid || !this.canvases) return;
-    const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-    const y = this.keyboardHeight / Math.max(1, this.height);
+    let x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
+    let y = this.keyboardHeight / Math.max(1, this.height);
 
     let rgb: { r: number; g: number; b: number };
     const hue = this.settings?.background.fluidParams.splatColorHue;
     if (hue !== undefined && hue > 0) {
-      // splatColorHue 完全覆盖模式：单一色相 + 亮度随力度变化
       const lightness = 0.4 + (velocity / 127) * 0.3;
       rgb = hslToRgbNorm(hue, 0.8, lightness);
     } else {
@@ -389,14 +409,34 @@ export class WaterfallEngine {
       );
       rgb = hexToRgbNorm(colorHex);
     }
-    this.fluid.splat(x, y, 0, 200, rgb);
+
+    let dx = 0;
+    let dy = 200;
+    const p = this.settings?.background.fluidParams.fluidSplatPerturbation;
+    if (hasPerturbation(p)) {
+      if (p!.positionJitter && p!.positionJitter > 0) {
+        x += gaussian() * p!.positionJitter * 0.02;
+        y += gaussian() * p!.positionJitter * 0.02;
+      }
+      if (p!.forceJitter && p!.forceJitter > 0) {
+        dx += gaussian() * dy * p!.forceJitter;
+        dy += gaussian() * dy * p!.forceJitter;
+      }
+      if (p!.colorJitter && p!.colorJitter > 0) {
+        rgb = {
+          r: Math.max(0, rgb.r + gaussian() * p!.colorJitter * 0.15),
+          g: Math.max(0, rgb.g + gaussian() * p!.colorJitter * 0.15),
+          b: Math.max(0, rgb.b + gaussian() * p!.colorJitter * 0.15),
+        };
+      }
+    }
+    this.fluid.splat(x, y, dx, dy, rgb);
   }
 
   /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
   private hitExplosionSplat(midi: number, _velocity: number): void {
     if (!this.fluid || !this.settings) return;
-    const x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-    // 命中线Y = 瀑布区域底部（键盘顶部）
+    let x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
     const hitLineY =
       (this.height - this.keyboardHeight) / Math.max(1, this.height);
     let rgb: { r: number; g: number; b: number };
@@ -412,18 +452,30 @@ export class WaterfallEngine {
       );
       rgb = hexToRgbNorm(colorHex);
     }
-    // 力度与 hitExplosionRadius 缩放联动
-    const spread = this.settings.particles.hitExplosionRadius ?? 0.03;
-    const force = spread * 5000;
+    let spread = this.settings.particles.hitExplosionRadius ?? 0.03;
+    let force = spread * 5000;
+    let colorMul = 0.7;
+
+    const p = this.settings.background.fluidParams.hitExplosionPerturbation;
+    if (hasPerturbation(p)) {
+      if (p!.positionJitter && p!.positionJitter > 0) {
+        x += gaussian() * p!.positionJitter * 0.02;
+      }
+      if (p!.forceJitter && p!.forceJitter > 0) {
+        force += gaussian() * force * p!.forceJitter;
+        spread += gaussian() * spread * p!.forceJitter;
+      }
+      if (p!.colorJitter && p!.colorJitter > 0) {
+        colorMul += gaussian() * p!.colorJitter * 0.15;
+        colorMul = Math.max(0, colorMul);
+      }
+    }
+
     this.fluid.splat(x - spread, -hitLineY, -force * 0.6, force, {
-      r: rgb.r * 0.7,
-      g: rgb.g * 0.7,
-      b: rgb.b * 0.7,
+      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
     });
     this.fluid.splat(x + spread, -hitLineY, force * 0.6, force, {
-      r: rgb.r * 0.7,
-      g: rgb.g * 0.7,
-      b: rgb.b * 0.7,
+      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
     });
   }
 
@@ -433,19 +485,31 @@ export class WaterfallEngine {
   private startLoop(): void {
     this.lastTime = performance.now();
     let fluidFrameCount = 0;
+    let lastPerfLog = 0;
     const FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
 
     const loop = (now: number) => {
       const dt = now - this.lastTime;
       this.lastTime = now;
       this.perfMonitor.recordFrame(dt);
+
+      const t0 = performance.now();
       // 先推进播放器时间（通过 tick → onProgress → setTransportTime），
       // 再更新音符方块系统，确保 updateSynthesia 使用最新的 transportTime
       this.frameCallback?.();
+      const tFrame = performance.now();
+
       this.backgroundRenderer.render(now);
+      const tBg = performance.now();
+
       this.noteBlockSystem.update(dt / 1000);
+      const tNbUpdate = performance.now();
+
       this.noteBlockSystem.render();
+      const tNbRender = performance.now();
+
       this.keyboardRenderer.render();
+      const tKb = performance.now();
 
       // FPS 显示：在所有渲染完成后绘制（避免被 clearRect 清掉）
       if (this.showFPS && this.canvases) {
@@ -462,17 +526,22 @@ export class WaterfallEngine {
       }
 
       // 流体模拟由主循环驱动，但降帧运行
+      // MIDI 暂停时 fluidPaused=true，完全跳过 fluid.update() 和 splat 调用
       fluidFrameCount++;
-      if (this.fluid && fluidFrameCount > FLUID_SKIP_FRAMES) {
+      let tFluid = 0;
+      if (this.fluid && !this.fluidPaused && fluidFrameCount > FLUID_SKIP_FRAMES) {
+        const tf0 = performance.now();
         this.fluid.update();
         fluidFrameCount = 0;
 
         // 长按持续触发：对键盘上持续按住的音符发射弱 splat
         if (this.fluid && this.settings?.background.fluidEnabled) {
+          const sP = this.settings.background.fluidParams.sustainedSplatPerturbation;
+          const sHas = hasPerturbation(sP);
           for (const midi of this.keyboardRenderer.getActiveNotes()) {
-            const x =
+            let x =
               this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-            const y = this.keyboardHeight / Math.max(1, this.height);
+            let y = this.keyboardHeight / Math.max(1, this.height);
             const hue = this.settings.background.fluidParams.splatColorHue;
             let rgb: { r: number; g: number; b: number };
             if (hue !== undefined && hue > 0) {
@@ -486,22 +555,42 @@ export class WaterfallEngine {
               );
               rgb = hexToRgbNorm(colorHex);
             }
-            //持续触发：从键盘位置向上喷射弱 splat（dy > 0 在 WebGL 中向上）
-            this.fluid.splat(x, y, 0, 60, {
-              r: rgb.r * 0.4,
-              g: rgb.g * 0.4,
-              b: rgb.b * 0.4,
+            let dx = 0;
+            let dy = 60;
+            let colorMul = 0.4;
+            if (sHas) {
+              if (sP!.positionJitter && sP!.positionJitter > 0) {
+                x += gaussian() * sP!.positionJitter * 0.02;
+                y += gaussian() * sP!.positionJitter * 0.02;
+              }
+              if (sP!.forceJitter && sP!.forceJitter > 0) {
+                dx += gaussian() * dy * sP!.forceJitter;
+                dy += gaussian() * dy * sP!.forceJitter;
+              }
+              if (sP!.colorJitter && sP!.colorJitter > 0) {
+                colorMul += gaussian() * sP!.colorJitter * 0.15;
+                colorMul = Math.max(0, colorMul);
+              }
+            }
+            this.fluid.splat(x, y, dx, dy, {
+              r: rgb.r * colorMul,
+              g: rgb.g * colorMul,
+              b: rgb.b * colorMul,
             });
           }
         }
 
         // blockCoverage: 对每个活跃音符块持续发射尾焰式 splat
         if (this.settings?.background.fluidParams.blockCoverage && this.fluid) {
+          const bP = this.settings.background.fluidParams.blockCoveragePerturbation;
+          const bHas = hasPerturbation(bP);
           const blockPositions = this.noteBlockSystem.getActiveBlockPositions(
             this.keyboardRenderer,
-            this.height, // 整个 canvas 高度
+            this.height,
           );
           for (const pos of blockPositions) {
+            let px = pos.normX;
+            let py = pos.normY;
             const hue = this.settings.background.fluidParams.splatColorHue;
             let rgb: { r: number; g: number; b: number };
             if (hue !== undefined && hue > 0) {
@@ -515,15 +604,40 @@ export class WaterfallEngine {
               );
               rgb = hexToRgbNorm(colorHex);
             }
-            // 尾焰：从方块底部向命中线方向喷射小 splat
-            // dy < 0 表示在 WebGL 坐标中向下（朝向键盘 / 命中线）
-            this.fluid.splat(pos.normX, pos.normY, 0, -20, {
-              r: rgb.r * 0.3,
-              g: rgb.g * 0.3,
-              b: rgb.b * 0.3,
+            let dx = 0;
+            let dy = -20;
+            let colorMul = 0.3;
+            if (bHas) {
+              if (bP!.positionJitter && bP!.positionJitter > 0) {
+                px += gaussian() * bP!.positionJitter * 0.02;
+                py += gaussian() * bP!.positionJitter * 0.02;
+              }
+              if (bP!.forceJitter && bP!.forceJitter > 0) {
+                dx += gaussian() * Math.abs(dy) * bP!.forceJitter;
+                dy += gaussian() * Math.abs(dy) * bP!.forceJitter;
+              }
+              if (bP!.colorJitter && bP!.colorJitter > 0) {
+                colorMul += gaussian() * bP!.colorJitter * 0.15;
+                colorMul = Math.max(0, colorMul);
+              }
+            }
+            this.fluid.splat(px, py, dx, dy, {
+              r: rgb.r * colorMul,
+              g: rgb.g * colorMul,
+              b: rgb.b * colorMul,
             });
           }
         }
+        tFluid = performance.now() - tf0;
+      }
+
+      // [DEBUG-perf] 每秒输出一次关键路径耗时
+      if (now - lastPerfLog > 1000) {
+        lastPerfLog = now;
+        const total = performance.now() - t0;
+        logger.info(
+          `[DEBUG-perf] total=${total.toFixed(1)}ms frame=${tFrame - t0 > 0 ? (tFrame - t0).toFixed(1) : "0"}ms bg=${(tBg - tFrame).toFixed(1)}ms nbUpd=${(tNbUpdate - tBg).toFixed(1)}ms nbRdr=${(tNbRender - tNbUpdate).toFixed(1)}ms kb=${(tKb - tNbRender).toFixed(1)}ms fluid=${tFluid.toFixed(1)}ms fps=${Math.round(this.perfMonitor.getFps())}`,
+        );
       }
 
       this.rafId = requestAnimationFrame(loop);
@@ -541,6 +655,40 @@ export class WaterfallEngine {
 
   get backgroundRendererRef(): BackgroundRenderer {
     return this.backgroundRenderer;
+  }
+
+  /**
+   * 停止播放时的清理：清除所有键盘高亮、停止所有音频、释放实时方块
+   */
+  stopAllSounds(): void {
+    this.keyboardRenderer.clearAllHighlights();
+    this.soundEngine?.allNotesOff();
+    if (this.noteBlockSystem.getMode() === "realtime") {
+      this.noteBlockSystem.clearNoteBlocks();
+    }
+  }
+
+  /**
+   * MIDI 模式专用：暂停/恢复流体模拟。
+   * 设置 fluidPaused 标志后，渲染循环完全跳过 fluid.update()（solver.step + render + splat），
+   * 从根源上消除暂停时的 GPU 开销和帧率下降。
+   */
+  setFluidPaused(paused: boolean): void {
+    this.fluidPaused = paused;
+  }
+
+  /**
+   * MIDI 模式专用：清空流体模拟中的所有粒子和染料。
+   * 销毁当前实例并重建，重建后保持暂停状态（fluidPaused = true），
+   * 直到下次播放时 setFluidPaused(false) 才开始更新。
+   */
+  clearFluid(): void {
+    if (this.fluid) {
+      this.fluid.destroy();
+      this.fluid = null;
+      this.maybeInitFluid();
+      this.fluidPaused = true;
+    }
   }
 
   getPerformanceFps(): number {

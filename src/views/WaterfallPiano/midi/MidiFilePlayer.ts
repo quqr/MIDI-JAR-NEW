@@ -31,7 +31,10 @@ export class MidiFilePlayer {
   private notes: ScheduledNote[] = [];
   private tracks: MidiTrackInfo[] = [];
   private duration = 0;
+  /** 内部防护标志，仅用于 startPlayback/pausePlayback 等方法的防御性检查。
+   *  播放状态的权威来源是 PlayerStateMachine，外部代码不应依赖此字段。 */
   private isPlaying = false;
+  /** @see isPlaying */
   private isPaused = false;
   private playbackSpeed = 1;
   private selectedTracks: number[] = [];
@@ -260,6 +263,8 @@ export class MidiFilePlayer {
         this.isPlaying = false;
         this.isPaused = false;
         Tone.getTransport().stop();
+        Tone.getTransport().seconds = 0;
+        this.resetPlaybackState();
         this.callbacks.onPlaybackEnd?.();
       }
     }

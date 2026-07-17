@@ -106,7 +106,7 @@ export interface ParticleConfig {
 }
 
 // ─── 流体高级参数（从 @/engine/fluid 重新导出，保持单一类型源） ───
-export type { FluidAdvancedParams } from "@/engine/fluid";
+export type { FluidAdvancedParams, SplatPerturbation } from "@/engine/fluid";
 
 /** 背景渲染配置，支持纯色底色和流体动画效果 */
 export interface BackgroundConfig {

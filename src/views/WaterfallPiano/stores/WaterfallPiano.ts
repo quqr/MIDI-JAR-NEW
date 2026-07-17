@@ -51,6 +51,17 @@ function migrateFluidParams(
   if (raw.blockCoverage !== undefined)
     result.blockCoverage = raw.blockCoverage as boolean;
 
+  // 扰动参数迁移（直接透传）
+  for (const k of [
+    "fluidSplatPerturbation",
+    "hitExplosionPerturbation",
+    "blockCoveragePerturbation",
+    "sustainedSplatPerturbation",
+  ] as const) {
+    if (raw[k] !== undefined)
+      (result as Record<string, unknown>)[k] = raw[k];
+  }
+
   if (raw.SPLAT_RADIUS !== undefined && result.splatRadius === undefined) {
     let v = raw.SPLAT_RADIUS as number;
     if (v > 10) v = v / 100;
@@ -179,8 +190,6 @@ function loadSettings(): WaterfallPianoSettings {
 export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
   const settings = ref<WaterfallPianoSettings>(loadSettings());
   const recordedNotes = ref<RecordedNote[]>([]);
-  const isRecording = ref(false);
-  const isPlaying = ref(false);
   const currentMidiFileName = ref<string>("");
   /** 将全部设置恢复为默认值 */
   function resetSettings() {
@@ -220,8 +229,6 @@ export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
   return {
     settings,
     recordedNotes,
-    isRecording,
-    isPlaying,
     currentMidiFileName,
     resetSettings,
     resetGroup,

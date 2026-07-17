@@ -177,9 +177,11 @@ async function ensureAudioReady(): Promise<void> {
 function onEngineReady(engine: WaterfallEngine): void {
   engineRef.value = engine;
   engine.frameCallback = () => {
-    if (contentType.value === "midi" && player?.getIsPlaying()) {
+    // 状态机是播放状态的唯一真相源
+    if (!stateMachine.isPlaying) return;
+    if (contentType.value === "midi" && player) {
       player.tick();
-    } else if (contentType.value === "recording" && recorder?.getIsPlaying()) {
+    } else if (contentType.value === "recording" && recorder) {
       recorder.tick();
     }
   };
@@ -202,6 +204,7 @@ function onCanvasNoteOff(midi: number): void {
 
 /**
  * 切换音符块显示模式（严格限制：仅 idle/ready 时允许切换）
+ * canSwitchMode 已保证 playing/paused 时无法切换，无需额外检查 contentType
  * @param m - 目标模式（realtime / synthesia）
  */
 function onModeChange(m: NoteBlockMode): void {
@@ -285,6 +288,10 @@ async function onPlay(): Promise<void> {
     }
     engineRef.value?.noteBlockSystemRef.setTransportPlaying(true);
   }
+  // MIDI 模式：恢复流体渲染
+  if (contentType.value === "midi") {
+    engineRef.value?.setFluidPaused(false);
+  }
   stateMachine.setState("playing");
 }
 
@@ -298,6 +305,10 @@ function onPause(): void {
     recorder.pausePlayback();
   stateMachine.setState("paused");
   engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
+  // MIDI 模式：暂停流体渲染，防止空转导致帧率下降
+  if (contentType.value === "midi") {
+    engineRef.value?.setFluidPaused(true);
+  }
 }
 
 function onStop(): void {
@@ -310,8 +321,13 @@ function onStop(): void {
     recorder.stopPlayback();
   currentTime.value = 0;
   stateMachine.setState("ready");
+  engineRef.value?.stopAllSounds();
+  engineRef.value?.noteBlockSystemRef.clearBlocks();
   engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
-  engineRef.value?.noteBlockSystemRef.setTransportTime(0);
+  // MIDI 模式：暂停流体（不销毁，避免重新播放时无法恢复）
+  if (contentType.value === "midi") {
+    engineRef.value?.setFluidPaused(true);
+  }
 }
 
 /**
@@ -376,6 +392,7 @@ onMounted(() => {
       currentTime.value = 0;
       stateMachine.setState("ready");
       engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
+      engineRef.value?.setFluidPaused(true);
     },
     onSyncTime: (time) => {
       logger.debug(`Syncing note blocks to time: ${time.toFixed(2)}s`);

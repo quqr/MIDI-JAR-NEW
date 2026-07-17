@@ -177,8 +177,8 @@
           <SettingsRange
             :model-value="settings.aura.innerBlur"
             :label="t('WaterfallPiano.auraInnerBlur')"
-            :min="1"
-            :max="30"
+            :min="0"
+            :max="100"
             :step="1"
             @update:model-value="
               store.updateSetting('aura', 'innerBlur', $event)
@@ -197,8 +197,8 @@
           <SettingsRange
             :model-value="settings.aura.outerBlur"
             :label="t('WaterfallPiano.auraOuterBlur')"
-            :min="4"
-            :max="60"
+            :min="0"
+            :max="100"
             :step="1"
             @update:model-value="
               store.updateSetting('aura', 'outerBlur', $event)
@@ -299,8 +299,8 @@
             <SettingsRange
               :model-value="settings.aura.glowPeakBlur"
               :label="t('WaterfallPiano.auraGlowPeakBlur')"
-              :min="4"
-              :max="30"
+              :min="0"
+              :max="100"
               :step="1"
               @update:model-value="
                 store.updateSetting('aura', 'glowPeakBlur', $event)
@@ -319,8 +319,8 @@
             <SettingsRange
               :model-value="settings.aura.glowAfterPeakBlur"
               :label="t('WaterfallPiano.auraGlowAfterPeakBlur')"
-              :min="10"
-              :max="40"
+              :min="0"
+              :max="100"
               :step="1"
               @update:model-value="
                 store.updateSetting('aura', 'glowAfterPeakBlur', $event)
@@ -456,11 +456,11 @@
         :default-open="false"
       >
         <SettingsRange
-          :model-value="settings.background.fluidParams.splatRadius ?? 0.005"
+          :model-value="settings.background.fluidParams.splatRadius ?? 0.0001"
           :label="t('WaterfallPiano.splatRadius')"
           :min="0.0001"
           :max="0.01"
-          :step="0.0005"
+          :step="0.0001"
           @update:model-value="
             store.updateSetting('background', 'fluidParams', {
               ...settings.background.fluidParams,
@@ -482,7 +482,7 @@
           "
         />
         <SettingsRange
-          :model-value="settings.background.fluidParams.trailLength ?? 0.5"
+          :model-value="settings.background.fluidParams.trailLength ?? 0.2"
           :label="t('WaterfallPiano.trailLength')"
           :min="0"
           :max="1"
@@ -495,7 +495,7 @@
           "
         />
         <SettingsRange
-          :model-value="settings.background.fluidParams.flowPersistence ?? 0.5"
+          :model-value="settings.background.fluidParams.flowPersistence ?? 0.2"
           :label="t('WaterfallPiano.flowPersistence')"
           :min="0"
           :max="1"
@@ -550,6 +550,86 @@
               blockCoverage: $event,
             })
           "
+        />
+
+        <!-- 随机扰动：每个发射点独立控制 -->
+        <div class="divider my-2" />
+        <p class="text-xs opacity-60 mb-1">{{ t('WaterfallPiano.perturbation') }}</p>
+
+        <SettingsRange
+          :model-value="settings.background.fluidParams.fluidSplatPerturbation?.positionJitter ?? 0.5"
+          :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, fluidSplatPerturbation: { ...settings.background.fluidParams.fluidSplatPerturbation, positionJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.fluidSplatPerturbation?.forceJitter ?? 0.5"
+          :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, fluidSplatPerturbation: { ...settings.background.fluidParams.fluidSplatPerturbation, forceJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.fluidSplatPerturbation?.colorJitter ?? 0.5"
+          :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, fluidSplatPerturbation: { ...settings.background.fluidParams.fluidSplatPerturbation, colorJitter: $event } })"
+        />
+
+        <SettingsRange
+          :model-value="settings.background.fluidParams.hitExplosionPerturbation?.positionJitter ?? 0.5"
+          :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, hitExplosionPerturbation: { ...settings.background.fluidParams.hitExplosionPerturbation, positionJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.hitExplosionPerturbation?.forceJitter ?? 0.5"
+          :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, hitExplosionPerturbation: { ...settings.background.fluidParams.hitExplosionPerturbation, forceJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.hitExplosionPerturbation?.colorJitter ?? 0.5"
+          :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, hitExplosionPerturbation: { ...settings.background.fluidParams.hitExplosionPerturbation, colorJitter: $event } })"
+        />
+
+        <SettingsRange
+          :model-value="settings.background.fluidParams.blockCoveragePerturbation?.positionJitter ?? 0.5"
+          :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, blockCoveragePerturbation: { ...settings.background.fluidParams.blockCoveragePerturbation, positionJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.blockCoveragePerturbation?.forceJitter ?? 0.5"
+          :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, blockCoveragePerturbation: { ...settings.background.fluidParams.blockCoveragePerturbation, forceJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.blockCoveragePerturbation?.colorJitter ?? 0.5"
+          :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, blockCoveragePerturbation: { ...settings.background.fluidParams.blockCoveragePerturbation, colorJitter: $event } })"
+        />
+
+        <SettingsRange
+          :model-value="settings.background.fluidParams.sustainedSplatPerturbation?.positionJitter ?? 0.5"
+          :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, sustainedSplatPerturbation: { ...settings.background.fluidParams.sustainedSplatPerturbation, positionJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.sustainedSplatPerturbation?.forceJitter ?? 0.5"
+          :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, sustainedSplatPerturbation: { ...settings.background.fluidParams.sustainedSplatPerturbation, forceJitter: $event } })"
+        />
+        <SettingsRange
+          :model-value="settings.background.fluidParams.sustainedSplatPerturbation?.colorJitter ?? 0.5"
+          :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
+          :min="0" :max="1" :step="0.05"
+          @update:model-value="store.updateSetting('background', 'fluidParams', { ...settings.background.fluidParams, sustainedSplatPerturbation: { ...settings.background.fluidParams.sustainedSplatPerturbation, colorJitter: $event } })"
         />
       </SettingsCollapse>
 

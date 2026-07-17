@@ -19,7 +19,9 @@ vi.mock("@/engine/fluid", () => ({
     splat = vi.fn();
     resize = vi.fn();
     destroy = vi.fn();
+    update = vi.fn();
     updateConfig = vi.fn();
+    setPaused = vi.fn();
     constructor() {
       fluidMock.instances.push(this);
     }
@@ -149,7 +151,9 @@ describe("WaterfallEngine", () => {
 
   describe("流体开关", () => {
     it("applySettings fluid ON → FluidSimulation 创建并 start", () => {
-      engine.init(mockCanvases(), cloneSettings());
+      const initSettings = cloneSettings();
+      initSettings.background.fluidEnabled = false;
+      engine.init(mockCanvases(), initSettings);
       expect(fluidMock.instances).toHaveLength(0);
       const settings = cloneSettings();
       settings.background.fluidEnabled = true;
