@@ -134,6 +134,89 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+        :title="t('WaterfallPiano.aura')"
+        icon="sparkles"
+        :default-open="false"
+      >
+        <SettingsToggle
+          :model-value="settings.aura.enabled"
+          :label="t('WaterfallPiano.auraEnabled')"
+          @update:model-value="
+            store.updateSetting('aura', 'enabled', $event)
+          "
+        />
+        <SettingsRadioGroup
+          :model-value="settings.aura.style"
+          :label="t('WaterfallPiano.auraStyle')"
+          :options="auraStyleOptions"
+          @update:model-value="
+            store.updateSetting('aura', 'style', $event)
+          "
+        />
+        <SettingsRadioGroup
+          :model-value="settings.aura.target"
+          :label="t('WaterfallPiano.auraTarget')"
+          :options="auraTargetOptions"
+          @update:model-value="
+            store.updateSetting('aura', 'target', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settings.aura.intensity"
+          :label="t('WaterfallPiano.auraIntensity')"
+          :min="0"
+          :max="100"
+          :step="1"
+          @update:model-value="
+            store.updateSetting('aura', 'intensity', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settings.aura.radius"
+          :label="t('WaterfallPiano.auraRadius')"
+          :min="0"
+          :max="30"
+          :step="1"
+          @update:model-value="
+            store.updateSetting('aura', 'radius', $event)
+          "
+        />
+        <SettingsRange
+          v-if="
+            settings.aura.style === 'rainbow' ||
+            settings.aura.style === 'dual'
+          "
+          :model-value="settings.aura.animationSpeed"
+          :label="t('WaterfallPiano.auraAnimationSpeed')"
+          :min="0.1"
+          :max="3"
+          :step="0.1"
+          @update:model-value="
+            store.updateSetting('aura', 'animationSpeed', $event)
+          "
+        />
+        <SettingsColorPicker
+          v-if="settings.aura.style === 'custom'"
+          :model-value="settings.aura.primaryColor ?? '#6366f1'"
+          :label="t('WaterfallPiano.auraPrimaryColor')"
+          @update:model-value="
+            store.updateSetting('aura', 'primaryColor', $event)
+          "
+        />
+        <SettingsColorPicker
+          v-if="
+            settings.aura.style === 'custom' ||
+            settings.aura.style === 'dual'
+          "
+          :model-value="settings.aura.backgroundColor ?? '#000000'"
+          :label="t('WaterfallPiano.auraBackgroundColor')"
+          @update:model-value="
+            store.updateSetting('aura', 'backgroundColor', $event)
+          "
+        />
+      </SettingsCollapse>
+
+      <SettingsCollapse
         :title="t('WaterfallPiano.background')"
         icon="image"
         :default-open="false"
@@ -415,6 +498,7 @@ import {
   SettingsSelect,
   SettingsRange,
   SettingsColorPicker,
+  SettingsRadioGroup,
 } from "@/components/Settings";
 
 const { t } = useI18n();
@@ -449,5 +533,19 @@ const keyLabelOptions = computed(() => [
   { value: "note", label: "Note" },
   { value: "pitchClass", label: "Pitch Class" },
   { value: "octave", label: "Octave" },
+]);
+
+const auraStyleOptions = computed(() => [
+  { value: "none", label: t("WaterfallPiano.auraStyleNone") },
+  { value: "glow", label: t("WaterfallPiano.auraStyleGlow") },
+  { value: "rainbow", label: t("WaterfallPiano.auraStyleRainbow") },
+  { value: "dual", label: t("WaterfallPiano.auraStyleDual") },
+  { value: "custom", label: t("WaterfallPiano.auraStyleCustom") },
+]);
+
+const auraTargetOptions = computed(() => [
+  { value: "triggered", label: t("WaterfallPiano.auraTargetTriggered") },
+  { value: "all", label: t("WaterfallPiano.auraTargetAll") },
+  { value: "off", label: t("WaterfallPiano.auraTargetOff") },
 ]);
 </script>
