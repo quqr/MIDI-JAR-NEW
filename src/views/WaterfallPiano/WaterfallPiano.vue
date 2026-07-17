@@ -120,6 +120,7 @@ import { PlayerStateMachine } from "./state/PlayerStateMachine";
 import type { WaterfallEngine } from "./engine/WaterfallEngine";
 import type { NoteBlockMode } from "./engine/NoteBlockSystem";
 import type { MidiTrackInfo } from "./types";
+import type { PlayerState } from "./state/PlayerStateMachine";
 import { createLogger } from "@/utils/logger";
 
 const logger = createLogger("WaterfallPianoView");
@@ -129,6 +130,7 @@ const store = useWaterfallPianoStore();
 
 // ── 状态机 ──
 const stateMachine = new PlayerStateMachine();
+const playerState = ref<PlayerState>(stateMachine.getState());
 
 const mode = ref<NoteBlockMode>("realtime");
 const contentType = ref<"none" | "recording" | "midi">("none");
@@ -151,10 +153,10 @@ const recorderRef = shallowRef<Recorder | null>(null);
 let player: MidiFilePlayer | null = null;
 let recorder: Recorder | null = null;
 
-// ── 从状态机派生的计算属性 ──
-const isPlaying = computed(() => stateMachine.isPlaying);
-const isPaused = computed(() => stateMachine.isPaused);
-const isError = computed(() => stateMachine.isError);
+// ── 从 playerState ref 派生的计算属性（确保 Vue 响应式追踪） ──
+const isPlaying = computed(() => playerState.value === "playing");
+const isPaused = computed(() => playerState.value === "paused");
+const isError = computed(() => playerState.value === "error");
 
 // ── 窗口可见性刷新 ──
 useVisibilityRefresh({
@@ -348,6 +350,11 @@ function onToggleLoop(): void {
 }
 
 onMounted(() => {
+  // 将状态机状态同步到 Vue 响应式系统
+  stateMachine.onStateChange((newState) => {
+    playerState.value = newState;
+  });
+
   player = new MidiFilePlayer();
   player.setCallbacks({
     onProgress: (current, dur) => {

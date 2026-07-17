@@ -87,7 +87,7 @@
                   class="btn btn-sm btn-circle tooltip tooltip-bottom"
                   data-tip="播放"
                   :class="isPlaying && !isPaused ? 'btn-primary' : 'btn-ghost'"
-                  :disabled="!hasContent"
+                  :disabled="!hasContent || isPlaying"
                   @click="$emit('play')"
                 >
                   <Icon name="play" :size="14" />
