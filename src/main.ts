@@ -8,6 +8,7 @@ import { useMidiRoutingStore } from "@/stores/midiRouting";
 import { createLogger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
 import tauriAPI from "@/utils/tauri";
+import { initRustLogListener } from "@/composables/useDebuggerLogs";
 
 const logger = createLogger("Main");
 
@@ -72,6 +73,10 @@ if (isTauri()) {
     window.tauriAPI = tauriAPI;
   }
 }
+
+// 全局注册 Rust 日志监听器（应用启动即开始收集）
+// 浏览器环境自动跳过，Tauri 环境监听 "rust:log" 事件
+initRustLogListener();
 
 initializeMidi();
 setupTauriListeners();

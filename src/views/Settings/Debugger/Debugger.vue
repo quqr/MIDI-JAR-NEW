@@ -69,15 +69,11 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
 import { useMidiMessages } from "@/composables";
-import { useDebuggerLogs } from "@/composables/useDebuggerLogs";
 import { debuggerLogger, LogType } from "./debugger-logger";
 import { MIDI_CLOCK_CMD, MIDI_SYSEX_CMD } from "./constants";
 import { formatMidiMessage } from "./utils";
 
 const { t } = useI18n();
-
-// 启动日志监听（Pino + Rust）
-useDebuggerLogs();
 
 const displayTimingClock = ref(false);
 const autoScroll = ref(true);
@@ -145,6 +141,8 @@ const onMessages = (messages: Array<[number[], number, string]>) => {
 };
 
 const filteredLogs = computed(() => {
+  // 读取 logVersion 建立 Vue 依赖追踪——每次日志变更时此 ref 递增，触发重新计算
+  void debuggerLogger.logVersion.value;
   return debuggerLogger.filterByType(activeFilter.value);
 });
 
