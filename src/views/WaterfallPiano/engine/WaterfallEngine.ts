@@ -10,6 +10,9 @@ import {
   resolveConfig,
   type FluidSimulationConfig,
 } from "@/engine/fluid";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("WaterfallEngine");
 
 export interface WaterfallCanvases {
   background: HTMLCanvasElement;
@@ -52,25 +55,54 @@ export class WaterfallEngine {
   callbacks: EngineCallbacks = {};
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
+  /** 资源清理任务注册表（增强型 RAII 模式） */
+  private cleanupTasks: Map<string, () => void | Promise<void>> = new Map();
+  private disposed = false;
+
+  /**
+   * 注册资源清理任务
+   * @param name - 资源名称（用于日志和调试）
+   * @param task - 清理函数（支持异步）
+   */
+  registerCleanup(name: string, task: () => void | Promise<void>): void {
+    this.cleanupTasks.set(name, task);
+  }
 
   /**
    * 初始化引擎：绑定画布、初始化各子系统、启动流体模拟与主循环
+   * 初始化失败时自动执行完整清理（dispose），避免半初始化状态
    * @param canvases - 四层画布（背景、流体、瀑布、键盘）
    * @param settings - 瀑布钢琴配置
    */
   init(canvases: WaterfallCanvases, settings: WaterfallPianoSettings): void {
-    this.canvases = canvases;
-    this.settings = settings;
-    this.keyboardRenderer.init(canvases.keyboard, settings);
-    this.noteBlockSystem.init(canvases.waterfall, settings);
-    this.backgroundRenderer.init(canvases.background, settings);
-    this.noteBlockSystem.callbacks = {
-      onNoteTrigger: (midi, vel) => this.onSynthesiaTrigger(midi, vel),
-      onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
-    };
-    this.maybeInitFluid();
-    this.bindPointerEvents();
-    this.startLoop();
+    try {
+      this.canvases = canvases;
+      this.settings = settings;
+      this.keyboardRenderer.init(canvases.keyboard, settings);
+      this.noteBlockSystem.init(canvases.waterfall, settings);
+      this.backgroundRenderer.init(canvases.background, settings);
+      this.noteBlockSystem.callbacks = {
+        onNoteTrigger: (midi, vel) => this.onSynthesiaTrigger(midi, vel),
+        onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
+      };
+      this.maybeInitFluid();
+      this.bindPointerEvents();
+      this.startLoop();
+
+      // 注册清理任务
+      this.registerCleanup("pointerEvents", () => this.unbindPointerEvents());
+      this.registerCleanup("noteBlockSystem", () => this.noteBlockSystem.dispose());
+      this.registerCleanup("backgroundRenderer", () => this.backgroundRenderer.dispose());
+      this.registerCleanup("fluid", () => {
+        this.fluid?.destroy();
+        this.fluid = null;
+      });
+      this.registerCleanup("keyboardHighlights", () => this.keyboardRenderer.clearAllHighlights());
+    } catch (error) {
+      logger.error({ err: error }, "Initialization failed");
+      this.dispose();
+      throw error;
+    }
   }
 
   setSoundEngine(engine: SoundEngine): void {
@@ -509,17 +541,57 @@ export class WaterfallEngine {
     return this.perfMonitor.getFps();
   }
 
-  dispose(): void {
+  /**
+   * 增强型 dispose：执行所有注册的清理任务，支持异步等待完成
+   * 初始化失败时直接调用 dispose 即可，无需 partialCleanup
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) return;
+    this.disposed = true;
+
+    // 停止渲染循环
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
-    this.unbindPointerEvents();
-    this.fluid?.destroy();
-    this.fluid = null;
-    this.noteBlockSystem.dispose();
-    this.backgroundRenderer.dispose();
-    this.keyboardRenderer.clearAllHighlights();
+
+    // 执行所有注册的清理任务
+    const results = await Promise.allSettled(
+      Array.from(this.cleanupTasks.entries()).map(async ([name, task]) => {
+        try {
+          await task();
+          logger.debug(`Cleaned up ${name}`);
+        } catch (e) {
+          logger.error({ err: e }, `Cleanup ${name} failed`);
+          throw e;
+        }
+      }),
+    );
+
+    this.cleanupTasks.clear();
+
+    // 报告失败的清理
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      logger.warn(`${failed.length} cleanup tasks failed`);
+    }
+  }
+
+  /** 检查引擎是否已被销毁 */
+  isDisposed(): boolean {
+    return this.disposed;
+  }
+
+  /**
+   * 强制重绘：清空所有 canvas 并重新渲染当前帧
+   * 用于窗口最小化恢复后消除残留显示问题
+   */
+  forceRedraw(): void {
+    if (this.disposed) return;
+    this.backgroundRenderer.render(performance.now());
+    this.noteBlockSystem.render();
+    this.keyboardRenderer.render();
+    logger.debug("Force redraw completed");
   }
 }
 

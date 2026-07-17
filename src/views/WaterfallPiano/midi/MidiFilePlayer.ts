@@ -1,6 +1,9 @@
 import { Midi } from "@tonejs/midi";
 import * as Tone from "tone";
 import type { ScheduledNote, MidiTrackInfo } from "../types";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("MidiFilePlayer");
 
 /** MIDI 文件播放器的回调集合，用于通知外部组件音符触发、播放结束、进度变化等事件 */
 export interface MidiPlayerCallbacks {
@@ -15,6 +18,8 @@ export interface MidiPlayerCallbacks {
   onProgress?: (current: number, duration: number) => void;
   onScheduledNotesReady?: (notes: ScheduledNote[]) => void;
   onTracksReady?: (tracks: MidiTrackInfo[]) => void;
+  /** 暂停恢复后的时间同步回调，触发 NoteBlockSystem 的 syncToTime */
+  onSyncTime?: (time: number) => void;
 }
 
 /**
@@ -130,6 +135,10 @@ export class MidiFilePlayer {
     Tone.getTransport().start();
     this.isPlaying = true;
     this.isPaused = false;
+    // 恢复后同步时间到 NoteBlockSystem，确保方块显示与播放进度一致
+    const currentTime = this.getCurrentTime();
+    this.callbacks.onSyncTime?.(currentTime);
+    logger.info(`Resumed at ${currentTime.toFixed(2)}s`);
   }
 
   stopPlayback(): void {

@@ -164,9 +164,11 @@ import { useRoute, RouterLink } from "vue-router";
 import AppBreadcrumb from "./AppBreadcrumb.vue";
 import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 import Icon from "@/components/Icon/Icon.vue";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
+
+const logger = createLogger("AppNavbar");
 
 const { t } = useI18n();
 const route = useRoute();

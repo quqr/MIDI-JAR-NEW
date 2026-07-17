@@ -1,7 +1,9 @@
 import { defineStore } from "pinia";
 import { computed, ref, watchEffect } from "vue";
 import { loadFromStorage, saveToStorage } from "@/helpers";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("ThemeStore");
 
 const THEME_STORAGE_KEY = "midi-jar-theme";
 

@@ -88,6 +88,14 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
       release: 0.5,
     },
   },
+  aura: {
+    enabled: false,
+    style: "glow",
+    target: "triggered",
+    intensity: 50,
+    radius: 12,
+    animationSpeed: 1.0,
+  },
 };
 
 // ─── 键盘快捷键映射（A-K → C4-C5） ───

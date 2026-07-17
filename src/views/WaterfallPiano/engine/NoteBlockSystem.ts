@@ -1,6 +1,9 @@
 import type { WaterfallPianoSettings, ScheduledNote } from "../types";
 import { noteToColor, type CustomColors } from "./NoteColorMapper";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("NoteBlockSystem");
 
 /** note block 的渲染模式：realtime 为实时下落，synthesia 为跟随传输时间线滚动 */
 export type NoteBlockMode = "realtime" | "synthesia";
@@ -76,6 +79,136 @@ export class NoteBlockSystem {
   /** MIDI 音符的引用计数，用于在多个同音高音符并发时正确清理 triggeredSet */
   private activeMidiCount = new Map<number, number>();
   callbacks: NoteBlockCallbacks = {};
+
+  /**
+   * 辅助：判断颜色是否有效
+   */
+  private isValidColor(color: unknown): color is string {
+    return typeof color === 'string' && color.length > 0;
+  }
+
+  /**
+   * 提取绘制路径逻辑，避免重复代码
+   */
+  private drawPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+    ctx.beginPath();
+    if (r > 0) {
+      this.roundRect(ctx, x, y, w, h, r);
+    } else {
+      ctx.rect(x, y, w, h);
+    }
+    ctx.closePath();
+  }
+
+  /**
+   * 渲染 Aura 发光效果（高斯模糊 + 混合模式）
+   */
+  private renderAura(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    cornerRadius: number,
+    color: string,
+    time: number,
+  ): void {
+    const config = this.settings?.aura;
+    if (!config?.enabled || config.radius <= 0 || config.intensity <= 0) return;
+
+    const baseAlpha = (config.intensity / 100) * 0.8;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    switch (config.style) {
+      case "glow": {
+        ctx.save();
+        const blurPad = config.radius * 2;
+        ctx.filter = `blur(${config.radius}px)`;
+        ctx.globalAlpha = baseAlpha;
+        ctx.fillStyle = color;
+        this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      case "rainbow": {
+        const hue = (time * config.animationSpeed * 0.05) % 360;
+        const rainbowColor = `hsl(${hue}, 80%, 60%)`;
+        ctx.save();
+        const blurPad = config.radius * 2;
+        ctx.filter = `blur(${config.radius}px)`;
+        ctx.globalAlpha = baseAlpha;
+        ctx.fillStyle = rainbowColor;
+        this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      case "dual": {
+        if (config.backgroundColor && this.isValidColor(config.backgroundColor)) {
+          ctx.save();
+          const outerPad = config.radius * 3;
+          ctx.filter = `blur(${config.radius * 1.5}px)`;
+          ctx.globalAlpha = baseAlpha * 0.5;
+          ctx.fillStyle = config.backgroundColor;
+          this.drawPath(ctx, x - outerPad, y - outerPad, width + outerPad * 2, height + outerPad * 2, cornerRadius);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        ctx.save();
+        const innerPad = config.radius * 2;
+        ctx.filter = `blur(${config.radius}px)`;
+        ctx.globalAlpha = baseAlpha;
+        ctx.fillStyle = color;
+        this.drawPath(ctx, x - innerPad, y - innerPad, width + innerPad * 2, height + innerPad * 2, cornerRadius);
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      case "custom": {
+        const pColor = config.primaryColor || color;
+        const bColor = config.backgroundColor;
+
+        if (bColor && this.isValidColor(bColor)) {
+          ctx.save();
+          const outerPad = config.radius * 3;
+          ctx.filter = `blur(${config.radius * 1.5}px)`;
+          ctx.globalAlpha = baseAlpha * 0.5;
+          ctx.fillStyle = bColor;
+          this.drawPath(ctx, x - outerPad, y - outerPad, width + outerPad * 2, height + outerPad * 2, cornerRadius);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          const innerPad = config.radius * 2;
+          ctx.filter = `blur(${config.radius}px)`;
+          ctx.globalAlpha = baseAlpha;
+          ctx.fillStyle = pColor;
+          this.drawPath(ctx, x - innerPad, y - innerPad, width + innerPad * 2, height + innerPad * 2, cornerRadius);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.save();
+          const blurPad = config.radius * 2;
+          ctx.filter = `blur(${config.radius}px)`;
+          ctx.globalAlpha = baseAlpha;
+          ctx.fillStyle = pColor;
+          this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+          ctx.fill();
+          ctx.restore();
+        }
+        break;
+      }
+    }
+
+    ctx.restore();
+  }
 
   /**
    * 初始化画布和配置
@@ -397,8 +530,8 @@ export class NoteBlockSystem {
 
     // 检测向后跳转或循环：transport 时间回退超过 0.1 秒
     if (t < this.lastTransportTime - 0.1) {
-      console.log(
-        `[NBS] Seek backward detected: ${this.lastTransportTime.toFixed(2)}s → ${t.toFixed(2)}s, resetting state`,
+      logger.debug(
+        `Seek backward detected: ${this.lastTransportTime.toFixed(2)}s → ${t.toFixed(2)}s, resetting state`,
       );
       this.synthesiaCursor = 0;
       this.synthesiaBlockMap.clear();
@@ -430,9 +563,9 @@ export class NoteBlockSystem {
     while (
       this.synthesiaCursor < len &&
       t -
-        (notes[this.synthesiaCursor].time +
-          notes[this.synthesiaCursor].duration) >
-        lookAhead + notes[this.synthesiaCursor].duration + 1
+      (notes[this.synthesiaCursor].time +
+        notes[this.synthesiaCursor].duration) >
+      lookAhead + notes[this.synthesiaCursor].duration + 1
     ) {
       this.synthesiaCursor++;
     }
@@ -463,8 +596,8 @@ export class NoteBlockSystem {
       if (!this.triggeredNoteKeys.has(key) && timeUntilHit <= 0) {
         this.triggeredNoteKeys.add(key);
         this.addActiveMidi(note.midi);
-        console.log(
-          `[NBS] Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
+        logger.debug(
+          `Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
         );
         this.callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
         frameTriggered++;
@@ -517,8 +650,8 @@ export class NoteBlockSystem {
         frameSkipped > 0 ||
         frameAlreadyTriggered > 0
       ) {
-        console.log(
-          `[NBS] t=${t.toFixed(2)}s active=${this.active.length} created=${frameCreated} triggered=${frameTriggered} skipped=${frameSkipped} reuse-skip=${frameAlreadyTriggered} triggeredKeys=${this.triggeredNoteKeys.size} midiActive=${this.activeMidiCount.size}`,
+        logger.debug(
+          `t=${t.toFixed(2)}s active=${this.active.length} created=${frameCreated} triggered=${frameTriggered} skipped=${frameSkipped} reuse-skip=${frameAlreadyTriggered} triggeredKeys=${this.triggeredNoteKeys.size} midiActive=${this.activeMidiCount.size}`,
         );
       }
     }
@@ -553,6 +686,12 @@ export class NoteBlockSystem {
     const p = this.settings.particles;
     ctx.clearRect(0, 0, this.width, this.height);
 
+    // ✨ 新增：裁剪区域，防止光晕溢出
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, this.width, this.height);
+    ctx.clip();
+
     if (p.hitLine.visible) {
       ctx.strokeStyle = p.hitLine.color;
       ctx.lineWidth = p.hitLine.thickness;
@@ -566,6 +705,9 @@ export class NoteBlockSystem {
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const isHighlighted = (midi: number) => this.triggeredSet.has(midi);
+
+    // 获取时间戳用于 Rainbow 动画
+    const time = performance.now();
 
     for (const b of this.active) {
       const isBlack = isBlackKey(b.midi);
@@ -584,6 +726,18 @@ export class NoteBlockSystem {
       const isTriggered = isHighlighted(b.midi);
       // Brighten color when triggered (Synthesia-style glow)
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
+
+      // ✨ 新增：渲染 Aura 发光效果（在实体方块之前）
+      if (this.settings.aura.enabled) {
+        const shouldApplyAura =
+          this.settings.aura.target === "all" ||
+          (this.settings.aura.target === "triggered" && isTriggered);
+
+        if (shouldApplyAura) {
+          this.renderAura(ctx, x, y, blockWidth, h, p.cornerRadius, color, time);
+        }
+      }
+
       ctx.globalAlpha = alpha;
       ctx.fillStyle = color;
       if (p.cornerRadius > 0) {
@@ -592,14 +746,12 @@ export class NoteBlockSystem {
       } else {
         ctx.fillRect(x, y, blockWidth, h);
       }
-      if (isTriggered) {
-        // Outer glow
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, blockWidth, h);
-      }
+      // 触发状态的视觉反馈通过颜色增亮实现，不再使用边框
       ctx.globalAlpha = 1;
     }
+
+    // ✨ 恢复裁剪
+    ctx.restore();
   }
 
   private roundRect(
@@ -626,6 +778,90 @@ export class NoteBlockSystem {
 
   getPoolSize(): number {
     return this.pool.length;
+  }
+
+  /**
+   * 完整状态同步：根据给定时间重建所有方块的 Y 坐标、触发状态、结束状态和活跃状态
+   * 用于暂停恢复后确保方块显示与当前播放进度一致，避免视觉撕裂
+   * @param time - 当前播放时间（秒）
+   */
+  syncToTime(time: number): void {
+    if (this.mode !== "synthesia") return;
+
+    const pps = this.pixelsPerSecond();
+    const lookAhead = this.settings ? this.settings.particles.lookAhead : 3;
+
+    // 同步所有方块状态
+    for (const block of this.active) {
+      if (block.trackIndex < 0) continue; // 跳过 realtime 方块
+      const timeUntilHit = block.startTime - time;
+      block.y = this.height - timeUntilHit * pps;
+      block.height = block.duration * pps;
+      const key = this.noteKey({
+        trackIndex: block.trackIndex,
+        midi: block.midi,
+        time: block.startTime,
+      });
+      block.triggered = this.triggeredNoteKeys.has(key);
+      block.ended = this.endedNoteKeys.has(key);
+    }
+
+    // 清理已离开屏幕的方块
+    const recycleThreshold = this.height * 0.5;
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const b = this.active[i];
+      if (b.trackIndex < 0) continue;
+      const blockTop = b.y - b.height;
+      if (
+        blockTop > this.height + recycleThreshold ||
+        time - (b.startTime + b.duration) > lookAhead + b.duration + 1
+      ) {
+        const key = `${b.trackIndex}-${b.midi}-${b.startTime}`;
+        this.synthesiaBlockMap.delete(key);
+        this.active.splice(i, 1);
+        this.release(b);
+      }
+    }
+
+    // 重建 triggeredNoteKeys 和 endedNoteKeys
+    this.rebuildTriggeredState(time);
+
+    logger.debug(
+      `syncToTime: t=${time.toFixed(2)}s, active=${this.active.length}, triggeredKeys=${this.triggeredNoteKeys.size}`,
+    );
+  }
+
+  /**
+   * 根据给定时间重新构建已触发和已结束的音符追踪集合
+   * @param time - 当前播放时间（秒）
+   */
+  private rebuildTriggeredState(time: number): void {
+    this.triggeredNoteKeys.clear();
+    this.endedNoteKeys.clear();
+    this.activeMidiCount.clear();
+    this.triggeredSet.clear();
+
+    for (const note of this.synthesiaNotes) {
+      const key = this.noteKey(note);
+      if (note.time <= time) {
+        this.triggeredNoteKeys.add(key);
+        // 引用计数管理
+        const count = this.activeMidiCount.get(note.midi) ?? 0;
+        this.activeMidiCount.set(note.midi, count + 1);
+        this.triggeredSet.add(note.midi);
+      }
+      if (note.time + note.duration <= time) {
+        this.endedNoteKeys.add(key);
+        // 引用计数减少
+        const count = this.activeMidiCount.get(note.midi) ?? 0;
+        if (count <= 1) {
+          this.activeMidiCount.delete(note.midi);
+          this.triggeredSet.delete(note.midi);
+        } else {
+          this.activeMidiCount.set(note.midi, count - 1);
+        }
+      }
+    }
   }
 
   dispose(): void {

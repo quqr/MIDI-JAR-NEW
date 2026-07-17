@@ -1,7 +1,9 @@
 import { MidiInputDevice, ApiMidiInput } from "./MidiInputDevice";
 import { MidiOutputDevice, ApiMidiOutput } from "./MidiOutputDevice";
 import { isTauri } from "@/utils/tauri";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("MidiDeviceManager");
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
 /** 内部模块输出设备的名称列表，这些设备会被合并展示为单个 "internal" 输出 */
@@ -50,7 +52,7 @@ export class MidiDeviceManager {
       this.updateOutputs(outputs);
     }
 
-    logger.success("MidiDeviceManager: 初始化完成");
+    logger.info("MidiDeviceManager: 初始化完成");
   }
 
   /**

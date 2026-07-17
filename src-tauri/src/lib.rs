@@ -1,4 +1,5 @@
 mod midi;
+mod tauri_log_sink;
 
 use midi::MidiManager;
 use serde::{Deserialize, Serialize};
@@ -366,7 +367,25 @@ fn delete_virtual_output(app: AppHandle, name: String) -> Result<(), String> {
     midi.delete_virtual_output(&app, &name)
 }
 
+#[tauri::command]
+fn get_virtual_inputs(app: AppHandle) -> Vec<String> {
+    let state = app.state::<AppState>();
+    let midi = state.midi.lock().unwrap();
+    midi.get_virtual_inputs()
+}
+
+#[tauri::command]
+fn get_virtual_outputs(app: AppHandle) -> Vec<String> {
+    let state = app.state::<AppState>();
+    let midi = state.midi.lock().unwrap();
+    midi.get_virtual_outputs()
+}
+
 pub fn run() {
+    // 初始化 Tauri 自定义 logger（替代 env_logger）
+    // 同时输出到控制台和前端 Debugger 页面
+    tauri_log_sink::init_logger();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
@@ -374,6 +393,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
+
+            // 设置 AppHandle 到 logger，使其能够发送日志到前端
+            tauri_log_sink::set_app_handle(std::sync::Arc::new(app_handle.clone()));
 
             let midi_manager = MidiManager::new(app_handle.clone());
 
@@ -444,6 +466,8 @@ pub fn run() {
             create_virtual_output,
             delete_virtual_input,
             delete_virtual_output,
+            get_virtual_inputs,
+            get_virtual_outputs,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

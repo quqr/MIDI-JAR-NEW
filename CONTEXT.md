@@ -1,115 +1,80 @@
-# MIDI-JAR 领域上下文
+# MIDI-JAR
 
-## 项目概述
+跨平台 MIDI 应⽤，⽀持 Tauri 和浏览器环境，提供钢琴键盘可视化、和弦检测、MIDI ⽂件播放和瀑布流演奏等功能。
 
-MIDI-JAR 是一个基于 Tauri + Vue 3 + TypeScript 的桌面音乐应用程序,提供 MIDI 设备管理、和弦字典、瀑布钢琴可视化等功能。
+## Language
 
-## 核心领域概念
+**WaterfallPiano**:
+瀑布钢琴页面，提供 MIDI ⽂件播放和实时 MIDI 输⼊的瀑布流可视化。
+_Avoid_: waterfall view, waterfall display
 
-### MIDI 设备管理
+**PlayerState**:
+播放器状态枚举，包含七种状态：idle（空闲）、loading（加载中）、ready（就绪）、playing（播放中）、paused（已暂停）、recording（录制中）、error（错误）。
+_Avoid_: playback state, player status
 
-**MIDI 路由 (MidiRoute)**
+**NoteBlock**:
+音符块，瀑布流视图中表示单个音符的可视化元素，包含位置、颜⾊和时⻓信息。
+_Avoid_: note brick, note tile, piano block
 
-- 定义 MIDI 输入设备到输出设备的映射关系
-- 包含输入设备名称、输出设备名称、路由类型(physical/internal)、启用状态
+**Mode**:
+播放模式，分为 realtime（实时模式，响应 MIDI 输⼊）和 synthesia（瀑布流模式，播放 MIDI ⽂件）。
+_Avoid_: play mode, display mode
 
-**MIDI 线路 (MidiWire)**
+**State Transition**:
+状态转换，播放器状态之间的合法转换路径，遵循严格的状态机规则。
+_Avoid_: state change, state switch
 
-- 表示一个已建立的 MIDI 连接
-- 包含路由配置和连接状态
-- 由 Rust 后端管理连接生命周期
+**Cleanup**:
+清理机制，根据状态转换执⾏不同粒度的资源释放（视觉、⾳频、数据）。
+_Avoid_: dispose, release, teardown
 
-**内部输出 (Internal Output)**
+**AudioContext**:
+Web Audio API 的⾳频上下⽂，管理所有⾳频资源的⽣命周期。
+_Avoid_: audio engine, sound context
 
-- 特殊的 MIDI 输出类型,指向应用内部模块
-- 预定义模块: chord-dictionary, chord-display/default, debugger
-- 通过 Tauri 事件系统分发 MIDI 消息
+**MidiFilePlayer**:
+MIDI ⽂件播放器，解析和播放 MIDI ⽂件，⽣成 NoteBlock 数据。
+_Avoid_: midi player, file player
 
-### 和弦字典 (Chord Dictionary)
+**VisibilityRefresh**:
+窗⼝状态刷新机制，在窗⼝从最⼩化恢复时触发强制刷新。
+_Avoid_: window refresh, visibility handler
 
-**和弦 (Chord)**
+## Subsystems
 
-- 音乐理论中的和弦实体
-- 由根音(tonic)和和弦类型(type)组成
-- 使用 @tonaljs 库进行音乐理论计算
+### State Management
 
-**和弦别名 (Chord Alias)**
+状态管理子系统，实现七状态模型和状态转换规则：
+- playing/paused 状态不能切换模式或加载新⽂件
+- recording 状态不能播放或加载⽂件
+- error 状态只能转换为 idle
+- 状态转换⾃动触发相应的清理流程
 
-- 用户自定义的和弦名称映射
-- 用于显示偏好(如: "Cmaj7" → "CM7")
+### Rendering
 
-**和弦分组 (Chord Grouping)**
+渲染子系统，负责瀑布流可视化：
+- BackgroundRenderer：背景渲染
+- KeyboardRenderer：钢琴键盘渲染
+- NoteBlockSystem：音符块系统
+- NoteColorMapper：音符颜⾊映射
 
-- 按质量(quality)或音程(intervals)分组显示
-- 支持在调性内筛选和弦
+### Audio
 
-### 瀑布钢琴 (Waterfall Piano)
+⾳频⼦系统，管理⾳频资源和播放：
+- SoundEngine：⾳频引擎
+- Recorder：录制器
 
-**音符块 (Note Block)**
+### MIDI
 
-- 瀑布流中下落的音符可视化单元
-- 包含 MIDI 音符编号、开始/结束时间、颜色等信息
-- 支持实时模式和播放模式
+MIDI ⼦系统，处理 MIDI 输⼊输出：
+- MidiFilePlayer：MIDI ⽂件播放器
+- MidiDeviceManager：MIDI 设备管理器
+- 实时 MIDI 输⼊处理
 
-**流体模拟 (Fluid Simulation)**
+## Constraints
 
-- 基于 Navier-Stokes 方程的 WebGL 流体特效
-- 由 MIDI 事件驱动产生视觉反馈
-- 作为瀑布钢琴的背景层渲染
-
-**音高映射 (Pitch Mapping)**
-
-- MIDI 音符编号到视觉属性的映射
-- 包括颜色、位置、键盘显示等
-
-### 设置管理 (Settings)
-
-**设置路径 (Setting Path)**
-
-- 使用点分隔的路径标识设置项(如: "notation.key")
-- 支持深层嵌套的对象结构
-- 通过 `setValueByPath` 实现动态更新
-
-**预设配置 (Preset)**
-
-- 质量预设: low/medium/high
-- 风格预设: gentle/standard/turbulent
-- 用户语义映射到底层参数
-
-## 架构层次
-
-### 前端层 (Vue 3)
-
-- **视图层 (Views)**: 页面级组件(ChordDictionary, WaterfallPiano, Settings)
-- **组件层 (Components)**: 可复用的 UI 组件(Notation, PianoKeyboard, SettingsDrawer)
-- **状态层 (Stores)**: Pinia store 管理 应用状态
-- **组合式函数 (Composables)**: 封装可复用的响应式逻辑
-
-### 引擎层 (TypeScript)
-
-- **流体引擎 (Fluid Engine)**: WebGL 流体模拟系统
-- **渲染引擎 (Renderer)**: Canvas 2D 绘制逻辑
-- **音频引擎 (Audio Engine)**: Tone.js 音频合成
-
-### 后端层 (Rust/Tauri)
-
-- **MIDI 管理**: 底层 MIDI 设备连接和消息路由
-- **文件系统**: 文件读写和监听
-- **窗口管理**: 应用窗口生命周期
-
-## 技术约束
-
-1. **平台**: 桌面应用(Windows/macOS/Linux)
-2. **实时性**: MIDI 消息处理需低延迟(< 5ms)
-3. **性能**: 流体模拟保持 45fps+
-4. **类型安全**: TypeScript strict mode
-5. **测试**: 核心引擎单元测试覆盖
-
-## 术语表
-
-- **MIDI**: Musical Instrument Digital Interface,数字音乐接口标准
-- **Tauri**: Rust 驱动的跨平台桌面应用框架
-- **Pinia**: Vue 3 官方状态管理库
-- **WebGL**: Web Graphics Library,浏览器 3D 图形 API
-- **Navier-Stokes**: 流体力学方程
-- **Composable**: Vue 3 组合式函数模式
+- **Cross-platform Compatibility**: 必须同时⽀持 Tauri 和浏览器环境
+- **State Machine Enforcement**: 严格遵循七状态模型的转换规则
+- **Resource Lifecycle**: 使⽤ RAII 模式管理资源，初始化失败触发完整清理
+- **Logging**: 使⽤ Pino 库，开发环境 DEBUG 级别，⽣产环境 WARN 级别，仅输出到控制台
+- **Visual Distinction**: 琴块边框必须完全移除，仅通过颜⾊和阴影区分

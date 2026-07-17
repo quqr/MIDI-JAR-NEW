@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { isTauri } from "@/utils/tauri";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
 import { loadFromStorage, saveToStorage, removeFromStorage } from "@/helpers";
+
+const logger = createLogger("MidiRoutingStore");
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
 export interface MidiRoute {
@@ -226,7 +228,7 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
       ];
       saveRoutes(routes.value);
       await syncRoutesToMain();
-      logger.success(
+      logger.info(
         `路由已创建: ${route.input} → ${route.output} (${route.type})`,
       );
     }
@@ -257,8 +259,8 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   ): Promise<void> {
     routes.value = routes.value.map((r) =>
       r.input === oldRoute.input &&
-      r.output === oldRoute.output &&
-      r.type === oldRoute.type
+        r.output === oldRoute.output &&
+        r.type === oldRoute.type
         ? newRoute
         : r,
     );
@@ -313,13 +315,13 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   async function createVirtualInput(name: string): Promise<void> {
     if (!isTauri()) return;
     await window.tauriAPI.midi.createVirtualInput(name);
-    logger.success(`虚拟输入端口已创建: ${name}`);
+    logger.info(`虚拟输入端口已创建: ${name}`);
   }
 
   async function createVirtualOutput(name: string): Promise<void> {
     if (!isTauri()) return;
     await window.tauriAPI.midi.createVirtualOutput(name);
-    logger.success(`虚拟输出端口已创建: ${name}`);
+    logger.info(`虚拟输出端口已创建: ${name}`);
   }
 
   async function deleteVirtualInput(name: string): Promise<void> {

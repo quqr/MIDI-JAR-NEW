@@ -1,4 +1,6 @@
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("Storage");
 
 export interface StorageOptions<T> {
   key: string;

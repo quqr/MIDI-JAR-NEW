@@ -69,11 +69,15 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
 import { useMidiMessages } from "@/composables";
-import { logger, LogType } from "@/utils/logger";
+import { useDebuggerLogs } from "@/composables/useDebuggerLogs";
+import { debuggerLogger, LogType } from "./debugger-logger";
 import { MIDI_CLOCK_CMD, MIDI_SYSEX_CMD } from "./constants";
 import { formatMidiMessage } from "./utils";
 
 const { t } = useI18n();
+
+// 启动日志监听（Pino + Rust）
+useDebuggerLogs();
 
 const displayTimingClock = ref(false);
 const autoScroll = ref(true);
@@ -133,7 +137,7 @@ function shouldDisplayMessage(m: [number, number, number]) {
 const onMessages = (messages: Array<[number[], number, string]>) => {
   for (const [message, , device] of messages) {
     if (shouldDisplayMessage(message as [number, number, number])) {
-      logger.info(
+      debuggerLogger.info(
         `[${device}] ${formatMidiMessage(message as [number, number, number])}`,
       );
     }
@@ -141,7 +145,7 @@ const onMessages = (messages: Array<[number[], number, string]>) => {
 };
 
 const filteredLogs = computed(() => {
-  return logger.filterByType(activeFilter.value);
+  return debuggerLogger.filterByType(activeFilter.value);
 });
 
 watch(
@@ -159,7 +163,7 @@ watch(
 );
 
 const clearLogs = () => {
-  logger.clearLogs();
+  debuggerLogger.clearLogs();
 };
 
 useMidiMessages(onMessages, "debugger");

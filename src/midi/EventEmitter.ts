@@ -1,4 +1,6 @@
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("EventEmitter");
 
 /** 事件监听器函数类型 */
 type EventListener = (...args: any[]) => void;

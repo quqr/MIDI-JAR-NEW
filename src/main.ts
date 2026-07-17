@@ -5,11 +5,11 @@ import router from "./router";
 import i18n from "@/locales/i18n";
 import "@/styles/tailwind.css";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
-import { logger } from "@/utils/logger";
+import { createLogger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
 import tauriAPI from "@/utils/tauri";
 
-logger.interceptConsole();
+const logger = createLogger("Main");
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -21,9 +21,9 @@ async function initializeMidi() {
     logger.info("应用初始化开始...");
     const routingStore = useMidiRoutingStore(pinia);
     await routingStore.initialize();
-    logger.success("应用初始化完成");
+    logger.info("应用初始化完成");
   } catch (error) {
-    logger.error(`MIDI 初始化失败: ${error}`);
+    logger.error({ err: error }, "MIDI 初始化失败");
   }
 }
 

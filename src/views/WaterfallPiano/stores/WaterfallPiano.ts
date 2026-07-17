@@ -169,6 +169,10 @@ function loadSettings(): WaterfallPianoSettings {
             ?.modulationEnvelope as Partial<SynthEnvelopeConfig> | undefined,
         ),
       },
+      aura: mergeSection(
+        defaultWaterfallSettings.aura,
+        stored.aura,
+      ),
     };
   }
   return { ...defaultWaterfallSettings };

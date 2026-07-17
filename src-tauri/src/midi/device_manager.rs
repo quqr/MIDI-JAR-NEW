@@ -1,3 +1,4 @@
+use log::{debug, error, info, trace, warn};
 use midir::{MidiInput, MidiOutput, MidiOutputConnection};
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, Mutex};
@@ -18,16 +19,11 @@ const IGNORE_INPUT_REGEX: &str = "^output-internal";
 const DEDUP_INTERVAL_MS: u128 = 5;
 const DEDUP_CACHE_SIZE: usize = 32;
 
-#[cfg(debug_assertions)]
-const DEBUG_MIDI: bool = true;
-#[cfg(not(debug_assertions))]
-const DEBUG_MIDI: bool = false;
-
 static IGNORE_INPUT_RE: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(IGNORE_INPUT_REGEX).unwrap()
 });
 
-const MODULE_OUTPUTS: &[&str] = &[
+const MODULE_OUTPUTS: &[&str; 3] = &[
     "chord-dictionary",
     "chord-display/default",
     "debugger",
@@ -86,7 +82,7 @@ pub struct MidiDeviceManager {
     outputs: HashMap<String, OutputEntry>,
     wires: Vec<MidiWire>,
     active_connections: HashMap<String, MidiInputConnection>,
-    active_output_connections: HashMap<String, MidiOutputConnection>,
+    active_output_connections: Arc<Mutex<HashMap<String, MidiOutputConnection>>>,
     dedup: Arc<Mutex<MidiDedup>>,
     // Virtual ports (not supported on Windows)
     #[cfg(not(target_os = "windows"))]
@@ -109,7 +105,7 @@ impl MidiDeviceManager {
             outputs: HashMap::new(),
             wires: Vec::new(),
             active_connections: HashMap::new(),
-            active_output_connections: HashMap::new(),
+            active_output_connections: Arc::new(Mutex::new(HashMap::new())),
             dedup: Arc::new(Mutex::new(MidiDedup::new())),
             #[cfg(not(target_os = "windows"))]
             virtual_inputs: HashMap::new(),
@@ -160,9 +156,7 @@ impl MidiDeviceManager {
 
                 let is_loopback = name.contains("Loopback");
                 if is_loopback && has_loopback {
-                    if DEBUG_MIDI {
-                        eprintln!("[MIDI_DEBUG] refresh_inputs: skipping duplicate loopback '{}'", name);
-                    }
+                    warn!("refresh_inputs: skipping duplicate loopback '{}'", name);
                     continue;
                 }
 
@@ -245,9 +239,7 @@ impl MidiDeviceManager {
     }
 
     pub fn route_midi(&mut self, routes: &[MidiRoute], app_handle: &AppHandle) {
-        if DEBUG_MIDI {
-            eprintln!("[MIDI_DEBUG] route_midi: closing all connections and re-routing {} routes", routes.len());
-        }
+        debug!("route_midi: closing all connections and re-routing {} routes", routes.len());
         self.close_all_connections();
         self.wires.clear();
 
@@ -255,20 +247,16 @@ impl MidiDeviceManager {
             if route.enabled {
                 let wire = MidiWire::new(route.clone());
                 self.wires.push(wire);
-                if DEBUG_MIDI {
-                    eprintln!("[MIDI_DEBUG] route_midi: establishing connection for '{}' -> '{}' (type={})",
-                        route.input, route.output, route.route_type);
-                }
+                debug!("route_midi: establishing connection for '{}' -> '{}' (type={})",
+                    route.input, route.output, route.route_type);
                 self.establish_connection(&route, app_handle);
             }
         }
 
-        if DEBUG_MIDI {
-            eprintln!("[MIDI_DEBUG] route_midi: emitting {} wires (final)", self.wires.len());
-            for w in &self.wires {
-                eprintln!("[MIDI_DEBUG]   wire: '{}' -> '{}' connected={}",
-                    w.route.input, w.route.output, w.connected);
-            }
+        debug!("route_midi: emitting {} wires (final)", self.wires.len());
+        for w in &self.wires {
+            debug!("  wire: '{}' -> '{}' connected={}",
+                w.route.input, w.route.output, w.connected);
         }
 
         let _ = app_handle.emit("midi:wires", self.get_wires());
@@ -276,7 +264,7 @@ impl MidiDeviceManager {
 
     fn close_all_connections(&mut self) {
         self.active_connections.clear();
-        self.active_output_connections.clear();
+        self.active_output_connections.lock().unwrap().clear();
     }
 
     fn mark_wire_connected(&mut self, route: &MidiRoute) {
@@ -294,56 +282,81 @@ impl MidiDeviceManager {
         let output_name = &route.output;
         let is_internal = route.route_type == "internal";
 
-        if DEBUG_MIDI {
-            eprintln!("[MIDI_DEBUG] establish_connection: input='{}' output='{}' is_internal={}",
-                input_name, output_name, is_internal);
+        debug!("establish_connection: input='{}' output='{}' is_internal={}",
+            input_name, output_name, is_internal);
+
+        // Step 1: For physical output, establish output connection FIRST
+        if !is_internal {
+            debug!("establish_connection: establishing physical output connection for '{}'", output_name);
+
+            if let Ok(midi_out) = MidiOutput::new("midi-jar-output") {
+                let out_port = midi_out.ports().into_iter().find(|p| {
+                    midi_out.port_name(p).ok().as_deref() == Some(output_name)
+                });
+
+                if let Some(port_ref) = out_port {
+                    debug!("establish_connection: found output port '{}', connecting...", output_name);
+
+                    match midi_out.connect(&port_ref, "midi-jar-output") {
+                        Ok(conn) => {
+                            info!("establish_connection: SUCCESS - connected to output '{}'", output_name);
+                            self.active_output_connections.lock().unwrap().insert(output_name.clone(), conn);
+                            if let Some(entry) = self.outputs.get_mut(output_name) {
+                                if let OutputEntry::Physical(dev) = entry {
+                                    dev.opened = true;
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            error!("establish_connection: FAILED to connect output '{}': {}", output_name, e);
+                        }
+                    }
+                } else {
+                    warn!("establish_connection: output port '{}' not found", output_name);
+                }
+            }
         }
 
+        // Step 2: Find input port
         let midi_in = match MidiInput::new("midi-jar-route") {
             Ok(m) => m,
             Err(e) => {
-                eprintln!("[MIDI_DEBUG] establish_connection: FAILED to create MidiInput for '{}': {:?}", input_name, e);
+                error!("establish_connection: FAILED to create MidiInput for '{}': {:?}", input_name, e);
                 return;
             }
         };
 
         let all_ports = midi_in.ports();
-        if DEBUG_MIDI {
-            eprintln!("[MIDI_DEBUG] establish_connection: available input ports ({})", all_ports.len());
-            for p in &all_ports {
-                match midi_in.port_name(p) {
-                    Ok(name) => eprintln!("[MIDI_DEBUG]   port: '{}'", name),
-                    Err(e) => eprintln!("[MIDI_DEBUG]   port: <unnamed> error={:?}", e),
-                }
+        debug!("establish_connection: available input ports ({})", all_ports.len());
+        for p in &all_ports {
+            match midi_in.port_name(p) {
+                Ok(name) => debug!("  port: '{}'", name),
+                Err(e) => debug!("  port: <unnamed> error={:?}", e),
             }
-            eprintln!("[MIDI_DEBUG] establish_connection: searching for port matching '{}'", input_name);
         }
+        debug!("establish_connection: searching for port matching '{}'", input_name);
 
         let target_port = all_ports.into_iter().find(|p| {
             let ok = midi_in.port_name(p).ok().as_deref() == Some(input_name);
-            if DEBUG_MIDI {
-                match midi_in.port_name(p) {
-                    Ok(name) => eprintln!("[MIDI_DEBUG]   comparing: '{}' == '{}' => {}", name, input_name, ok),
-                    Err(_) => eprintln!("[MIDI_DEBUG]   comparing: <unnamed> == '{}' => false", input_name),
-                }
+            match midi_in.port_name(p) {
+                Ok(name) => debug!("  comparing: '{}' == '{}' => {}", name, input_name, ok),
+                Err(_) => debug!("  comparing: <unnamed> == '{}' => false", input_name),
             }
             ok
         });
 
         let port = match target_port {
             Some(p) => {
-                if DEBUG_MIDI {
-                    eprintln!("[MIDI_DEBUG] establish_connection: FOUND port for '{}'", input_name);
-                }
+                debug!("establish_connection: FOUND port for '{}'", input_name);
                 p
             }
             None => {
-                eprintln!("[MIDI_DEBUG] establish_connection: PORT NOT FOUND for '{}'", input_name);
-                eprintln!("[MIDI_DEBUG] establish_connection: available ports:");
+                error!("establish_connection: PORT NOT FOUND for '{}'", input_name);
+                error!("establish_connection: available ports:");
                 if let Ok(midi_in2) = MidiInput::new("midi-jar-debug") {
                     for p in midi_in2.ports() {
                         if let Ok(name) = midi_in2.port_name(&p) {
-                            eprintln!("[MIDI_DEBUG]   '{}'", name);
+                            error!("  '{}'", name);
                         }
                     }
                 }
@@ -351,13 +364,14 @@ impl MidiDeviceManager {
             }
         };
 
+        // Step 3: Prepare closures
         let app_handle_clone = app_handle.clone();
         let input_name_clone = input_name.clone();
+        let output_name_clone = output_name.clone();
         let dedup_clone = self.dedup.clone();
+        let output_connections_clone = self.active_output_connections.clone();
 
-        if DEBUG_MIDI {
-            eprintln!("[MIDI_DEBUG] establish_connection: calling midi_in.connect() for '{}'", input_name);
-        }
+        debug!("establish_connection: calling midi_in.connect() for '{}'", input_name);
 
         let conn_result = midi_in.connect(
             &port,
@@ -365,26 +379,24 @@ impl MidiDeviceManager {
             move |stamp, message, _| {
                 let timestamp = (stamp as f64) * 1000.0;
 
+                // Dedup check
                 {
                     let mut dedup = dedup_clone.lock().unwrap();
                     if dedup.is_duplicate(message, timestamp as u128) {
-                        if DEBUG_MIDI {
-                            eprintln!("[MIDI_DEBUG] >>> DEDUP SKIP device='{}' message={:?}",
-                                input_name_clone, message);
-                        }
+                        trace!(">>> DEDUP SKIP device='{}' message={:?}",
+                            input_name_clone, message);
                         return;
                     }
                 }
 
-                if DEBUG_MIDI {
-                    eprintln!("[MIDI_DEBUG] >>> MIDI CALLBACK FIRED! device='{}' timestamp={} message={:?}",
-                        input_name_clone, timestamp, message);
-                }
+                trace!(">>> MIDI CALLBACK device='{}' timestamp={} message={:?}",
+                    input_name_clone, timestamp, message);
 
                 if is_internal {
+                    // Internal routing: emit to all module outputs
                     for &module_name in MODULE_OUTPUTS {
                         let event_name = format!("midi:message:{}", module_name);
-                        eprintln!("[MIDI_DEBUG] >>> emitting '{}' message={:?}",
+                        trace!(">>> emitting '{}' message={:?}",
                             event_name, message);
                         let _ = app_handle_clone.emit(&event_name, serde_json::json!({
                             "message": message,
@@ -393,13 +405,25 @@ impl MidiDeviceManager {
                         }));
                     }
 
-                    eprintln!("[MIDI_DEBUG] >>> emitting 'midi:activity'");
                     let _ = app_handle_clone.emit("midi:activity", serde_json::json!({
                         "latency": 0.0,
                         "device": &input_name_clone
                     }));
                 } else {
-                    eprintln!("[MIDI_DEBUG] >>> physical output route (not yet implemented for external routing)");
+                    // Physical output routing: send MIDI data to output connection
+                    let mut connections = output_connections_clone.lock().unwrap();
+                    if let Some(conn) = connections.get_mut(&output_name_clone) {
+                        trace!(">>> sending to physical output '{}' message={:?}",
+                            output_name_clone, message);
+                        if let Err(e) = conn.send(message) {
+                            error!(">>> FAILED to send to '{}': {}", output_name_clone, e);
+                        }
+                    } else {
+                        warn!(">>> output connection '{}' not found", output_name_clone);
+                    }
+
+                    drop(connections); // Release lock before emitting event
+
                     let _ = app_handle_clone.emit("midi:activity", serde_json::json!({
                         "latency": 0.0,
                         "device": &input_name_clone
@@ -411,48 +435,18 @@ impl MidiDeviceManager {
 
         match conn_result {
             Ok(conn) => {
-                eprintln!("[MIDI_DEBUG] establish_connection: SUCCESS - connected to '{}'", input_name);
+                info!("establish_connection: SUCCESS - connected to '{}'", input_name);
                 self.active_connections.insert(input_name.clone(), conn);
                 self.mark_wire_connected(route);
                 if let Some(dev) = self.inputs.get_mut(input_name) {
                     dev.opened = true;
-                    eprintln!("[MIDI_DEBUG] establish_connection: marked input '{}' as opened", input_name);
+                    debug!("establish_connection: marked input '{}' as opened", input_name);
                 }
             }
             Err(e) => {
-                eprintln!("[MIDI_DEBUG] establish_connection: FAILED to connect to '{}': {}", input_name, e);
+                error!("establish_connection: FAILED to connect to '{}': {}", input_name, e);
                 if let Some(dev) = self.inputs.get_mut(input_name) {
                     dev.error = true;
-                }
-            }
-        }
-
-        if !is_internal {
-            eprintln!("[MIDI_DEBUG] establish_connection: physical output routing for '{}'", output_name);
-            if let Ok(midi_out) = MidiOutput::new("midi-jar-output") {
-                let out_port = midi_out.ports().into_iter().find(|p| {
-                    midi_out.port_name(p).ok().as_deref() == Some(output_name)
-                });
-
-                if let Some(port_ref) = out_port {
-                    eprintln!("[MIDI_DEBUG] establish_connection: found output port '{}', connecting...", output_name);
-                    match midi_out.connect(&port_ref, "midi-jar-output") {
-                        Ok(conn) => {
-                            eprintln!("[MIDI_DEBUG] establish_connection: SUCCESS - connected to output '{}'", output_name);
-                            self.active_output_connections.insert(output_name.clone(), conn);
-                            self.mark_wire_connected(route);
-                            if let Some(entry) = self.outputs.get_mut(output_name) {
-                                if let OutputEntry::Physical(dev) = entry {
-                                    dev.opened = true;
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("[MIDI_DEBUG] establish_connection: FAILED to connect output '{}': {}", output_name, e);
-                        }
-                    }
-                } else {
-                    eprintln!("[MIDI_DEBUG] establish_connection: output port '{}' not found among physical outputs", output_name);
                 }
             }
         }

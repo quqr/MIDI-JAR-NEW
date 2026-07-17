@@ -79,11 +79,35 @@
       @toggle-loop="onToggleLoop"
     />
     <SettingsPanel v-model="settingsOpen" />
+
+    <!-- Error 状态提示 -->
+    <div
+      v-if="isError"
+      class="absolute inset-0 flex items-center justify-center bg-black/60 z-50"
+    >
+      <div class="bg-base-200 rounded-xl p-6 max-w-md text-center shadow-2xl">
+        <div class="text-error text-5xl mb-4">
+          <Icon name="alert-circle" :size="48" aria-hidden="true" />
+        </div>
+        <h3 class="text-lg font-bold text-base-content mb-2">
+          {{ t("WaterfallPiano.errors.playbackFailed") || "播放失败" }}
+        </h3>
+        <p class="text-sm text-base-content/70 mb-4">
+          {{ errorMessage }}
+        </p>
+        <button
+          class="btn btn-primary btn-sm"
+          @click="onRetry"
+        >
+          {{ t("common.retry") || "重试" }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, onUnmounted } from "vue";
+import { ref, shallowRef, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
@@ -94,18 +118,27 @@ import { useWaterfallPianoStore } from "./stores/WaterfallPiano";
 import { MidiFilePlayer } from "./midi/MidiFilePlayer";
 import { Recorder } from "./audio/Recorder";
 import { useRealtimeMidi } from "./composables/useRealtimeMidi";
+import { useVisibilityRefresh } from "./composables/useVisibilityRefresh";
+import {
+  PlayerStateMachine,
+} from "./state/PlayerStateMachine";
 import type { WaterfallEngine } from "./engine/WaterfallEngine";
 import type { NoteBlockMode } from "./engine/NoteBlockSystem";
 import type { MidiTrackInfo } from "./types";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger("WaterfallPianoView");
 
 const { t } = useI18n();
 const store = useWaterfallPianoStore();
 
+// ── 状态机 ──
+const stateMachine = new PlayerStateMachine();
+
 const mode = ref<NoteBlockMode>("realtime");
 const contentType = ref<"none" | "recording" | "midi">("none");
 const isRecording = ref(false);
-const isPlaying = ref(false);
-const isPaused = ref(false);
+const errorMessage = ref("");
 const currentTime = ref(0);
 const duration = ref(0);
 const fileName = ref("");
@@ -113,7 +146,7 @@ const tracks = ref<MidiTrackInfo[]>([]);
 const selectedTracks = ref<number[]>([]);
 const settingsOpen = ref(false);
 const midiDrawerOpen = ref(false);
-const showFPS = ref(true); // FPS 显示开关
+const showFPS = ref(true);
 const waterfallCanvasRef = ref<InstanceType<typeof WaterfallCanvas> | null>(
   null,
 );
@@ -122,6 +155,16 @@ const engineRef = shallowRef<WaterfallEngine | null>(null);
 const recorderRef = shallowRef<Recorder | null>(null);
 let player: MidiFilePlayer | null = null;
 let recorder: Recorder | null = null;
+
+// ── 从状态机派生的计算属性 ──
+const isPlaying = computed(() => stateMachine.isPlaying);
+const isPaused = computed(() => stateMachine.isPaused);
+const isError = computed(() => stateMachine.isError);
+
+// ── 窗口可见性刷新 ──
+useVisibilityRefresh({
+  forceRedraw: () => engineRef.value?.forceRedraw(),
+});
 
 /**
  * 确保 AudioContext 已初始化（处理浏览器自动播放策略限制）
@@ -161,20 +204,28 @@ function onCanvasNoteOff(midi: number): void {
 }
 
 /**
- * 切换音符块显示模式，切回实时模式时同步重置 transport 播放状态
+ * 切换音符块显示模式（严格限制：仅 idle/ready 时允许切换）
  * @param m - 目标模式（realtime / synthesia）
  */
 function onModeChange(m: NoteBlockMode): void {
+  if (!stateMachine.canSwitchMode) {
+    logger.warn(`Cannot switch mode in state: ${stateMachine.getState()}`);
+    return;
+  }
   mode.value = m;
   engineRef.value?.setMode(m);
 }
 
 /**
- * 加载 MIDI 文件并切换至 synthesia 模式，同步更新播放时长与状态
+ * 加载 MIDI 文件并切换至 synthesia 模式（严格限制：仅 idle/ready 时允许加载）
  * @param file - 用户选择的 MIDI 文件
  */
 async function onLoadMidi(file: File): Promise<void> {
-  if (!player) return;
+  if (!player || !stateMachine.canLoadFile) {
+    logger.warn(`Cannot load MIDI in state: ${stateMachine.getState()}`);
+    return;
+  }
+  if (!stateMachine.setState("loading")) return;
   try {
     mode.value = "synthesia";
     engineRef.value?.setMode("synthesia");
@@ -183,13 +234,16 @@ async function onLoadMidi(file: File): Promise<void> {
     contentType.value = "midi";
     duration.value = player.getDuration();
     currentTime.value = 0;
+    stateMachine.setState("ready");
   } catch (e) {
-    console.error("[MIDI] loadFile failed:", e);
+    logger.error({ err: e }, "loadFile failed");
+    errorMessage.value = e instanceof Error ? e.message : String(e);
+    stateMachine.setState("error");
   }
 }
 
 /**
- * 切换录制状态：停止时保存录制数据并更新内容类型；开始前先停止当前播放
+ * 切换录制状态（严格限制：idle → recording → idle）
  */
 function onToggleRecord(): void {
   if (!recorder) return;
@@ -200,24 +254,29 @@ function onToggleRecord(): void {
       contentType.value = "recording";
       duration.value = recorder.getDuration();
     }
+    stateMachine.setState("idle");
   } else {
     if (isPlaying.value) onStop();
+    if (!stateMachine.setState("recording")) return;
     recorder.startRecording();
     isRecording.value = true;
   }
 }
 
 /**
- * 开始或恢复播放，根据当前内容类型（MIDI 文件 / 录制）分别驱动对应播放器
+ * 开始或恢复播放（严格限制：ready/paused → playing）
  */
 async function onPlay(): Promise<void> {
+  if (!stateMachine.canPlay) {
+    logger.warn(`Cannot play in state: ${stateMachine.getState()}`);
+    return;
+  }
   await ensureAudioReady();
   if (contentType.value === "midi" && player) {
     if (isPaused.value) {
       player.resumePlayback();
     } else {
       player.startPlayback();
-      // 确保重播时时间归零
       engineRef.value?.noteBlockSystemRef.setTransportTime(0);
     }
     engineRef.value?.noteBlockSystemRef.setTransportPlaying(true);
@@ -229,28 +288,41 @@ async function onPlay(): Promise<void> {
     }
     engineRef.value?.noteBlockSystemRef.setTransportPlaying(true);
   }
-  isPlaying.value = true;
-  isPaused.value = false;
+  stateMachine.setState("playing");
 }
 
 function onPause(): void {
+  if (!stateMachine.canPause) {
+    logger.warn(`Cannot pause in state: ${stateMachine.getState()}`);
+    return;
+  }
   if (contentType.value === "midi" && player) player.pausePlayback();
   else if (contentType.value === "recording" && recorder)
     recorder.pausePlayback();
-  isPlaying.value = false;
-  isPaused.value = true;
+  stateMachine.setState("paused");
   engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
 }
 
 function onStop(): void {
+  if (!stateMachine.canStop) {
+    logger.warn(`Cannot stop in state: ${stateMachine.getState()}`);
+    return;
+  }
   if (contentType.value === "midi" && player) player.stopPlayback();
   else if (contentType.value === "recording" && recorder)
     recorder.stopPlayback();
-  isPlaying.value = false;
-  isPaused.value = false;
   currentTime.value = 0;
+  stateMachine.setState("ready");
   engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
   engineRef.value?.noteBlockSystemRef.setTransportTime(0);
+}
+
+/**
+ * 从 error 状态恢复到 idle
+ */
+function onRetry(): void {
+  errorMessage.value = "";
+  stateMachine.setState("idle");
 }
 
 function onSeek(seconds: number): void {
@@ -289,7 +361,7 @@ onMounted(() => {
       engineRef.value?.noteBlockSystemRef.setTransportTime(current);
     },
     onScheduledNotesReady: (notes) => {
-      console.log("[MIDI] Scheduled notes ready:", notes.length);
+      logger.info(`Scheduled notes ready: ${notes.length}`);
       engineRef.value?.noteBlockSystemRef.scheduleSynthesiaNotes(notes);
     },
     onTracksReady: (t) => {
@@ -299,10 +371,13 @@ onMounted(() => {
       }
     },
     onPlaybackEnd: () => {
-      isPlaying.value = false;
-      isPaused.value = false;
       currentTime.value = 0;
+      stateMachine.setState("ready");
       engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
+    },
+    onSyncTime: (time) => {
+      logger.debug(`Syncing note blocks to time: ${time.toFixed(2)}s`);
+      engineRef.value?.noteBlockSystemRef.syncToTime(time);
     },
   });
 
@@ -318,9 +393,8 @@ onMounted(() => {
       engineRef.value?.noteBlockSystemRef.scheduleSynthesiaNotes(notes);
     },
     onPlaybackEnd: () => {
-      isPlaying.value = false;
-      isPaused.value = false;
       currentTime.value = 0;
+      stateMachine.setState("ready");
       engineRef.value?.noteBlockSystemRef.setTransportPlaying(false);
     },
   });
@@ -337,5 +411,7 @@ onUnmounted(() => {
   recorder?.dispose();
   player = null;
   recorder = null;
+  engineRef.value?.dispose();
+  engineRef.value = null;
 });
 </script>

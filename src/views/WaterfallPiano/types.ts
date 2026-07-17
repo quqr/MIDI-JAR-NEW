@@ -26,6 +26,12 @@ export type FluidQuality = "low" | "medium" | "high";
 // ─── 流体模拟风格预设 ───
 export type FluidStyle = "gentle" | "standard" | "turbulent";
 
+// ─── Aura 样式类型 ───
+export type AuraStyle = "none" | "glow" | "rainbow" | "dual" | "custom";
+
+// ─── Aura 应用场景 ───
+export type AuraTarget = "triggered" | "all" | "off";
+
 /** 多色渐变停靠点，用于流体预设中的颜色渐变定义 */
 export interface GradientStop {
   position: number; // 0-1
@@ -37,6 +43,18 @@ export interface HitLineConfig {
   visible: boolean;
   color: string;
   thickness: number;
+}
+
+/** Aura 发光效果配置 */
+export interface AuraConfig {
+  enabled: boolean;           // 是否启用 Aura
+  style: AuraStyle;           // Aura 样式
+  target: AuraTarget;         // 应用场景
+  intensity: number;          // 发光强度 (0-100)
+  radius: number;             // 发光半径 (px, 0-30)
+  animationSpeed: number;     // 动画速度 (0.1-3.0)
+  primaryColor?: string;      // 主色（仅 custom 模式）
+  backgroundColor?: string;    // 背景色（仅 custom 和 dual 模式）
 }
 
 /** 瀑布流音符方块的视觉与行为配置 */
@@ -122,13 +140,14 @@ export interface SoundEngineUserConfig {
   modulationEnvelope: SynthEnvelopeConfig;
 }
 
-/** 瀑布流钢琴的完整设置项，由五个子配置段组成 */
+/** 瀑布流钢琴的完整设置项，由六个子配置段组成 */
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
   background: BackgroundConfig;
   keyboard: KeyboardConfig;
   midiFile: MidiFileConfig;
   sound: SoundEngineUserConfig;
+  aura: AuraConfig;
 }
 
 /** 实时录制产生的单个音符记录 */
