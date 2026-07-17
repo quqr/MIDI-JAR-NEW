@@ -20,7 +20,7 @@
             :title="$t('nav.chordDictionary')"
             :description="$t('home.moduleDescriptions.chordDictionary')"
             icon="mdi-book-open-page-variant"
-          />
+          />          
           <ModuleCard
             to="/waterfall-piano"
             settings-to="/settings/waterfall-piano"

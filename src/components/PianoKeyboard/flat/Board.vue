@@ -35,6 +35,7 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :offset="noteDef.offset"
       :key-name="props.keyboard.keyName"
       :is-black="noteDef.isBlack"
+      class="note"
       :clickable="props.clickable"
       @click="emit('click', $event)"
     />

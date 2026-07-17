@@ -58,11 +58,13 @@ function createAndDrawStave(context: any, options: RenderStaveOptions): Stave {
 
   stave.setNoteStartX(options.noteStartX);
 
-  if (options.style.staffLineColor !== "#000000") {
-    stave.setStyle({ strokeStyle: options.style.staffLineColor });
-  }
+  stave.setDefaultLedgerLineStyle({ fillStyle: options.style.staffLineColor, strokeStyle: options.style.staffLineColor });
+
+  context.setStrokeStyle(options.style.staffLineColor);
+  context.setFillStyle(options.style.staffLineColor);
 
   stave.setContext(context).draw();
+
   return stave;
 }
 
@@ -76,6 +78,7 @@ type RenderNotesOptions = {
   filterClef: boolean;
   style: NotationStyleConfig;
 };
+
 
 /**
  * 将音符渲染到指定谱表上（含变音记号处理、格式化和绘制）
@@ -92,9 +95,7 @@ function renderNotesToStave(options: RenderNotesOptions): void {
 
   Accidental.applyAccidentals([voice], keySignatureTonic);
 
-  if (style.noteColor !== "#000000") {
-    applyNoteColor(voice, style.noteColor);
-  }
+  applyNoteColor(voice, style.noteColor);
 
   const formatter = new Formatter();
   formatter.joinVoices([voice]).formatToStave([voice], stave);
@@ -160,6 +161,7 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
     noteStartX: layout.noteStartX,
   });
 
+
   if (display.clef) {
     const connector = new StaveConnector(staveTreble, staveBass);
     connector.setType("single");
@@ -174,17 +176,13 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
 
     if (voiceTreble) {
       Accidental.applyAccidentals([voiceTreble], keySignatureTonic);
-      if (style.noteColor !== "#000000") {
-        applyNoteColor(voiceTreble, style.noteColor);
-      }
+      applyNoteColor(voiceTreble, style.noteColor);
       formatter.joinVoices([voiceTreble]);
     }
 
     if (voiceBass) {
       Accidental.applyAccidentals([voiceBass], keySignatureTonic);
-      if (style.noteColor !== "#000000") {
-        applyNoteColor(voiceBass, style.noteColor);
-      }
+      applyNoteColor(voiceBass, style.noteColor);
       formatter.joinVoices([voiceBass]);
     }
 
@@ -193,6 +191,8 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
       formatter.createTickContexts(v);
       formatter.preFormat(layout.staveWidth, context, v);
     }
+
+
 
     if (voiceTreble) {
       voiceTreble.draw(context, staveTreble);

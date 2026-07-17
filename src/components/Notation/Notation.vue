@@ -111,6 +111,8 @@ function renderNotation() {
       style: style.value,
     });
   }
+
+
 }
 
 function setupResizeObserver() {
@@ -174,5 +176,45 @@ onBeforeUnmount(() => {
     }
     renderer = null;
   }
+});
+
+let observer: MutationObserver;
+
+function oklchToRgb(oklchString: string): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  ctx.fillStyle = oklchString;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  return `rgb(${r},${g},${b})`;
+}
+
+function updateNoteAndStaveColor(){
+  const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-base-content')
+      .trim();
+  const color = oklchToRgb(raw);
+  style.value.staffLineColor = color;
+  style.value.noteColor = color;
+}
+
+onMounted(() => {
+  // 初始化颜色并首次绘制
+  updateNoteAndStaveColor();
+  // 监听主题变化，重新获取颜色并重绘
+  observer = new MutationObserver(() => {
+    updateNoteAndStaveColor();
+    renderNotation(); // 需要显式重绘
+  });
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'class'],
+  });
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
 });
 </script>

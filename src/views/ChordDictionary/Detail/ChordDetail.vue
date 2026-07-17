@@ -56,7 +56,7 @@
           {{ t("chordDictionary.intervals") }}
         </h3>
         <ChordIntervals
-          class="text-2xl"
+          class="text-2xl "
           :intervals="playedIntervals"
           :targets="chord.intervals"
           :pitch-classes="pitchClasses"

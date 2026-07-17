@@ -29,7 +29,6 @@ export type NotationStyleConfig = {
   backgroundColor: string;
   staffLineColor: string;
   noteColor: string;
-  noteHighlightColor: string | null;
   fontSize: number;
 };
 
@@ -86,6 +85,5 @@ export const defaultStyleConfig: NotationStyleConfig = {
   backgroundColor: "transparent",
   staffLineColor: "#000000",
   noteColor: "#000000",
-  noteHighlightColor: null,
   fontSize: 10,
 };

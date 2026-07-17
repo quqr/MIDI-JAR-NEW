@@ -52,6 +52,7 @@ const INTERACTIVE_SELECTOR = [
   ".vue-flow__node",
   ".wire-delete-btn",
   ".cursor-interactive",
+  //".note",
 ].join(",");
 
 function findInteractiveTarget(el: HTMLElement): HTMLElement | null {
