@@ -129,49 +129,52 @@ export class NoteBlockSystem {
    *
    * 逐行对照 DaisyUI aura CSS，所有硬编码值均已提取为配置项。
    */
-  private renderAura(
+  /**
+   * 批量渲染所有 Aura 图层（按层批处理，减少 save/restore 和 filter 切换）
+   *
+   * 性能对比（N=方块数）：
+   *   旧: save/restore 3N + filter 2N + gradient N
+   *   新: save/restore 3 + filter 2 + gradient N
+   */
+  private renderAuraLayers(
     ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
+    blocks: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      color: string;
+    }>,
     cornerRadius: number,
-    color: string,
     time: number,
   ): void {
-    const config = this.settings?.aura;
-    if (!config?.enabled) return;
+    const cfg = this.settings?.aura;
+    if (!cfg) return;
 
-    const style = config.style;
-    const cx = x + width / 2;
-    const cy = y + height / 2;
+    const style = cfg.style;
+    const p = cfg.padding;
+    const auraR = p + cornerRadius;
 
-    // ── 第 1 层：Aura 区域 ──
-    const p = config.padding;
-    const auraRadius = p + cornerRadius;
-    const ax = x - p;
-    const ay = y - p;
-    const aw = width + p * 2;
-    const ah = height + p * 2;
-
-    // ── 第 3 层：动画 ──
-    const animMs = config.duration * 1000;
+    // 帧常量（一次计算，所有方块复用）
+    const animMs = cfg.duration * 1000;
     const animT = (time % animMs) / animMs;
-    const angleDeg = animT * config.rotationRange;
-    const angleRad = (angleDeg * Math.PI) / 180;
-
-    // glow 脉冲周期同步于 duration
+    const angleRad = (animT * cfg.rotationRange * Math.PI) / 180;
     const pulseT = animT;
+    const innerA = cfg.innerOpacity / 100;
+    const outerA = cfg.outerOpacity / 100;
+    const beamStartNorm = cfg.beamAngle / 360;
+    const beamEndNorm = (cfg.beamAngle + cfg.beamWidth) / 360;
+    const glowStyle = style === "glow";
+    const isCustom = style === "custom";
 
-    // ── 第 4 层：光束形状参数 ──
-    const beamStartNorm = config.beamAngle / 360;
-    const beamEndNorm = (config.beamAngle + config.beamWidth) / 360;
-
-    // ── 创建渐变 ──
-    const buildGradient = (): CanvasGradient | null => {
-      if (style === "glow") {
-        const extentNorm = config.glowExtent / 100;
-        const r = Math.min(aw, ah) * 0.5;
+    const buildGradient = (
+      cx: number,
+      cy: number,
+      color: string,
+    ): CanvasGradient | null => {
+      if (glowStyle) {
+        const extentNorm = cfg.glowExtent / 100;
+        const r = Math.min(p * 2, 200) * 0.5;
         const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r / extentNorm);
         g.addColorStop(0, color);
         g.addColorStop(extentNorm, "transparent");
@@ -181,7 +184,7 @@ export class NoteBlockSystem {
       const g = ctx.createConicGradient(angleRad, cx, cy);
 
       if (style === "rainbow") {
-        const m = config.rainbowMargin / 100;
+        const m = cfg.rainbowMargin / 100;
         g.addColorStop(0, "transparent");
         g.addColorStop(m, "hsl(0, 80%, 60%)");
         g.addColorStop(0.25, "hsl(90, 80%, 60%)");
@@ -192,12 +195,11 @@ export class NoteBlockSystem {
         return g;
       }
 
-      const useColor =
-        style === "custom" && config.primaryColor ? config.primaryColor : color;
+      const useColor = isCustom && cfg.primaryColor ? cfg.primaryColor : color;
 
       if (style === "dual") {
-        const offN = config.dualOffRatio / 100;
-        const onN = config.dualOnRatio / 100;
+        const offN = cfg.dualOffRatio / 100;
+        const onN = cfg.dualOnRatio / 100;
         const total = offN + onN;
         for (let i = 0; i < 1; i += total) {
           g.addColorStop(Math.min(i, 1), "transparent");
@@ -208,7 +210,7 @@ export class NoteBlockSystem {
         return g;
       }
 
-      // 基底 .aura: conic-gradient(from angle, transparent beamAngle, currentColor beamAngle+beamWidth)
+      // 基底 conic
       g.addColorStop(0, "transparent");
       g.addColorStop(beamStartNorm, "transparent");
       g.addColorStop(beamStartNorm + 0.001, useColor);
@@ -218,69 +220,57 @@ export class NoteBlockSystem {
       return g;
     };
 
-    const gradient = buildGradient();
-    if (!gradient) return;
-
-    // ── 三层绘图（从后往前：after → before → 基底） ──
-
-    const innerB = config.innerBlur;
-    const innerA = config.innerOpacity / 100;
-    const outerB = config.outerBlur;
-    const outerA = config.outerOpacity / 100;
+    const drawOne = (
+      bx: number,
+      by: number,
+      bw: number,
+      bh: number,
+      color: string,
+    ): void => {
+      const cx = bx + bw / 2;
+      const cy = by + bh / 2;
+      const g = buildGradient(cx, cy, color);
+      if (g) {
+        ctx.fillStyle = g;
+        this.drawPath(ctx, bx - p, by - p, bw + p * 2, bh + p * 2, auraR);
+        ctx.fill();
+      }
+    };
 
     // Layer 1: ::after
-    {
-      ctx.save();
-      if (style === "glow") {
-        const a = this.glowProgress(
-          pulseT,
-          outerA,
-          config.glowAfterPeakOpacity / 100,
-        );
-        const b = this.glowProgress(pulseT, outerB, config.glowAfterPeakBlur);
-        ctx.filter = `blur(${b}px)`;
-        ctx.globalAlpha = a;
-      } else {
-        ctx.filter = `blur(${outerB}px)`;
-        ctx.globalAlpha = outerA;
-      }
-      ctx.fillStyle = gradient;
-      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
-      ctx.fill();
-      ctx.restore();
+    ctx.save();
+    if (glowStyle) {
+      ctx.filter = `blur(${this.glowProgress(pulseT, cfg.outerBlur, cfg.glowAfterPeakBlur)}px)`;
+      ctx.globalAlpha = this.glowProgress(
+        pulseT,
+        outerA,
+        cfg.glowAfterPeakOpacity / 100,
+      );
+    } else {
+      ctx.filter = `blur(${cfg.outerBlur}px)`;
+      ctx.globalAlpha = outerA;
     }
+    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    ctx.restore();
 
     // Layer 2: ::before
-    {
-      ctx.save();
-      if (style === "glow") {
-        const a = this.glowProgress(
-          pulseT,
-          innerA,
-          config.glowPeakOpacity / 100,
-        );
-        const b = this.glowProgress(pulseT, innerB, config.glowPeakBlur);
-        ctx.filter = `blur(${b}px)`;
-        ctx.globalAlpha = a;
-      } else {
-        ctx.filter = `blur(${innerB}px)`;
-        ctx.globalAlpha = innerA;
-      }
-      ctx.fillStyle = gradient;
-      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
-      ctx.fill();
-      ctx.restore();
+    ctx.save();
+    if (glowStyle) {
+      ctx.filter = `blur(${this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur)}px)`;
+      ctx.globalAlpha = this.glowProgress(
+        pulseT,
+        innerA,
+        cfg.glowPeakOpacity / 100,
+      );
+    } else {
+      ctx.filter = `blur(${cfg.innerBlur}px)`;
+      ctx.globalAlpha = innerA;
     }
+    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    ctx.restore();
 
-    // Layer 3: 基底 — no blur
-    {
-      ctx.save();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = gradient;
-      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
-      ctx.fill();
-      ctx.restore();
-    }
+    // Layer 3: 基底
+    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
   }
 
   /**
@@ -757,9 +747,10 @@ export class NoteBlockSystem {
     if (!this.ctx || !this.settings || !this.keyboardRenderer) return;
     const ctx = this.ctx;
     const p = this.settings.particles;
+    const auraCfg = this.settings.aura;
     ctx.clearRect(0, 0, this.width, this.height);
 
-    // ✨ 新增：裁剪区域，防止光晕溢出
+    // 裁剪区域，防止光晕溢出
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, this.width, this.height);
@@ -778,18 +769,55 @@ export class NoteBlockSystem {
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const isHighlighted = (midi: number) => this.triggeredSet.has(midi);
-
-    // 获取时间戳用于 Rainbow 动画
     const time = performance.now();
 
+    // Pass 1: 收集需要 aura 的方块 → 批量渲染
+    if (auraCfg.enabled) {
+      const auraBlocks: Array<{
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+        color: string;
+      }> = [];
+      for (const b of this.active) {
+        const isBlack = isBlackKey(b.midi);
+        const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
+        const h = b.height <= 0 ? blockWidth : b.height;
+        const y = b.y - h;
+        const baseColor = noteToColor(
+          b.midi,
+          p.colorScheme,
+          b.hand,
+          customColors,
+        );
+        const isTriggered = isHighlighted(b.midi);
+        const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
+        const applyAura =
+          auraCfg.target === "all" ||
+          (auraCfg.target === "triggered" && isTriggered);
+        if (applyAura) {
+          auraBlocks.push({
+            x: this.keyboardRenderer!.midiToX(b.midi) - blockWidth / 2,
+            y,
+            w: blockWidth,
+            h,
+            color,
+          });
+        }
+      }
+      if (auraBlocks.length > 0) {
+        this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time);
+      }
+    }
+
+    // Pass 2: 渲染所有实体方块
     for (const b of this.active) {
       const isBlack = isBlackKey(b.midi);
       const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
       const x = this.keyboardRenderer!.midiToX(b.midi) - blockWidth / 2;
       const h = b.height <= 0 ? blockWidth : b.height;
-      // b.y 是方块底部，绘制时需要从底部减去高度，使方块向上生长
       const y = b.y - h;
-      let alpha = p.opacity;
       const baseColor = noteToColor(
         b.midi,
         p.colorScheme,
@@ -797,30 +825,9 @@ export class NoteBlockSystem {
         customColors,
       );
       const isTriggered = isHighlighted(b.midi);
-      // Brighten color when triggered (Synthesia-style glow)
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
-      // ✨ 新增：渲染 Aura 发光效果（在实体方块之前）
-      if (this.settings.aura.enabled) {
-        const shouldApplyAura =
-          this.settings.aura.target === "all" ||
-          (this.settings.aura.target === "triggered" && isTriggered);
-
-        if (shouldApplyAura) {
-          this.renderAura(
-            ctx,
-            x,
-            y,
-            blockWidth,
-            h,
-            p.cornerRadius,
-            color,
-            time,
-          );
-        }
-      }
-
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = p.opacity;
       ctx.fillStyle = color;
       if (p.cornerRadius > 0) {
         this.roundRect(ctx, x, y, blockWidth, h, p.cornerRadius);
@@ -828,11 +835,9 @@ export class NoteBlockSystem {
       } else {
         ctx.fillRect(x, y, blockWidth, h);
       }
-      // 触发状态的视觉反馈通过颜色增亮实现，不再使用边框
       ctx.globalAlpha = 1;
     }
 
-    // ✨ 恢复裁剪
     ctx.restore();
   }
 
