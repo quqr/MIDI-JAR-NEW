@@ -17,7 +17,8 @@ export const deepClone = <T>(obj: T): T => {
   let cloneObj: T;
   try {
     cloneObj = structuredClone(obj);
-  } catch (err) {
+    // oxlint-disable-next-line no-unused-vars
+  } catch (_err) {
     cloneObj = isObject(obj) ? ({ ...obj } as T) : (undefined as unknown as T);
   }
   return cloneObj;

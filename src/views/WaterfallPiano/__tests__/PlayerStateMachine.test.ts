@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  PlayerStateMachine,
-} from "../state/PlayerStateMachine";
+import { PlayerStateMachine } from "../state/PlayerStateMachine";
 
 describe("PlayerStateMachine", () => {
   let sm: PlayerStateMachine;

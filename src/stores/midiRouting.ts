@@ -259,8 +259,8 @@ export const useMidiRoutingStore = defineStore("midiRouting", () => {
   ): Promise<void> {
     routes.value = routes.value.map((r) =>
       r.input === oldRoute.input &&
-        r.output === oldRoute.output &&
-        r.type === oldRoute.type
+      r.output === oldRoute.output &&
+      r.type === oldRoute.type
         ? newRoute
         : r,
     );

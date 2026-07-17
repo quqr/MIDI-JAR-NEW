@@ -91,13 +91,19 @@ export class WaterfallEngine {
 
       // 注册清理任务
       this.registerCleanup("pointerEvents", () => this.unbindPointerEvents());
-      this.registerCleanup("noteBlockSystem", () => this.noteBlockSystem.dispose());
-      this.registerCleanup("backgroundRenderer", () => this.backgroundRenderer.dispose());
+      this.registerCleanup("noteBlockSystem", () =>
+        this.noteBlockSystem.dispose(),
+      );
+      this.registerCleanup("backgroundRenderer", () =>
+        this.backgroundRenderer.dispose(),
+      );
       this.registerCleanup("fluid", () => {
         this.fluid?.destroy();
         this.fluid = null;
       });
-      this.registerCleanup("keyboardHighlights", () => this.keyboardRenderer.clearAllHighlights());
+      this.registerCleanup("keyboardHighlights", () =>
+        this.keyboardRenderer.clearAllHighlights(),
+      );
     } catch (error) {
       logger.error({ err: error }, "Initialization failed");
       this.dispose();

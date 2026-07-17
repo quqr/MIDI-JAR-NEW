@@ -95,10 +95,7 @@
         <p class="text-sm text-base-content/70 mb-4">
           {{ errorMessage }}
         </p>
-        <button
-          class="btn btn-primary btn-sm"
-          @click="onRetry"
-        >
+        <button class="btn btn-primary btn-sm" @click="onRetry">
           {{ t("common.retry") || "重试" }}
         </button>
       </div>
@@ -119,9 +116,7 @@ import { MidiFilePlayer } from "./midi/MidiFilePlayer";
 import { Recorder } from "./audio/Recorder";
 import { useRealtimeMidi } from "./composables/useRealtimeMidi";
 import { useVisibilityRefresh } from "./composables/useVisibilityRefresh";
-import {
-  PlayerStateMachine,
-} from "./state/PlayerStateMachine";
+import { PlayerStateMachine } from "./state/PlayerStateMachine";
 import type { WaterfallEngine } from "./engine/WaterfallEngine";
 import type { NoteBlockMode } from "./engine/NoteBlockSystem";
 import type { MidiTrackInfo } from "./types";

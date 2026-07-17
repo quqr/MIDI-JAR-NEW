@@ -45,6 +45,7 @@ _Avoid_: window refresh, visibility handler
 ### State Management
 
 状态管理子系统，实现七状态模型和状态转换规则：
+
 - playing/paused 状态不能切换模式或加载新⽂件
 - recording 状态不能播放或加载⽂件
 - error 状态只能转换为 idle
@@ -53,6 +54,7 @@ _Avoid_: window refresh, visibility handler
 ### Rendering
 
 渲染子系统，负责瀑布流可视化：
+
 - BackgroundRenderer：背景渲染
 - KeyboardRenderer：钢琴键盘渲染
 - NoteBlockSystem：音符块系统
@@ -61,12 +63,14 @@ _Avoid_: window refresh, visibility handler
 ### Audio
 
 ⾳频⼦系统，管理⾳频资源和播放：
+
 - SoundEngine：⾳频引擎
 - Recorder：录制器
 
 ### MIDI
 
 MIDI ⼦系统，处理 MIDI 输⼊输出：
+
 - MidiFilePlayer：MIDI ⽂件播放器
 - MidiDeviceManager：MIDI 设备管理器
 - 实时 MIDI 输⼊处理

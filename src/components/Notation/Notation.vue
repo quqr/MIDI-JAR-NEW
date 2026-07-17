@@ -169,7 +169,9 @@ onBeforeUnmount(() => {
   if (renderer) {
     try {
       renderer.getContext().clear();
-    } catch (e) {}
+    } catch (e) {
+      // ignore — renderer may already be disposed
+    }
     renderer = null;
   }
 });

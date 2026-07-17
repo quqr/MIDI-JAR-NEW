@@ -211,7 +211,8 @@ export function searchChords(searchText: string): ChordSearchResult[] {
     results.sort((a, b) => a.score - b.score);
 
     return results.slice(0, 12);
-  } catch (err) {
+    // oxlint-disable-next-line no-unused-vars
+  } catch (_err) {
     // If tokenization fails entirely, try type-only search
     return searchChordTypes(cleaned);
   }

@@ -38,8 +38,8 @@ const ALLOWED_TRANSITIONS: Record<PlayerState, PlayerState[]> = {
   idle: ["loading", "recording"],
   loading: ["ready", "error"],
   ready: ["playing", "recording", "loading"],
-  playing: ["paused", "ready", "error"],   // playing → ready（停止）
-  paused: ["playing", "ready", "error"],   // paused → ready（停止）
+  playing: ["paused", "ready", "error"], // playing → ready（停止）
+  paused: ["playing", "ready", "error"], // paused → ready（停止）
   recording: ["idle", "error"],
   error: ["idle"],
 };
@@ -76,9 +76,7 @@ export class PlayerStateMachine {
    */
   setState(newState: PlayerState): boolean {
     if (!this.canTransition(this.state, newState)) {
-      logger.warn(
-        `Invalid transition: ${this.state} → ${newState}`,
-      );
+      logger.warn(`Invalid transition: ${this.state} → ${newState}`);
       return false;
     }
     const oldState = this.state;

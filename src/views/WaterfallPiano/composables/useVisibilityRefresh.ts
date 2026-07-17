@@ -41,12 +41,14 @@ export function useVisibilityRefresh(target: VisibilityRefreshTarget) {
       try {
         const { getCurrentWindow } = await import("@tauri-apps/api/window");
         const appWindow = getCurrentWindow();
-        const unlisten = await appWindow.onFocusChanged(({ payload: focused }) => {
-          if (focused && !document.hidden) {
-            logger.debug("Tauri window focused, forcing redraw");
-            target.forceRedraw();
-          }
-        });
+        const unlisten = await appWindow.onFocusChanged(
+          ({ payload: focused }) => {
+            if (focused && !document.hidden) {
+              logger.debug("Tauri window focused, forcing redraw");
+              target.forceRedraw();
+            }
+          },
+        );
         tauriUnlisten = unlisten;
       } catch (e) {
         logger.warn({ err: e }, "Failed to setup Tauri focus listener");

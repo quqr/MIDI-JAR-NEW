@@ -1,39 +1,38 @@
 {
   "name": "midi-jar",
   "version": "2.0.0",
-  "description": "",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "npm run build:pre",
-    "build:pre": "npm run format:fix && node --max-old-space-size=8192 ./node_modules/vue-tsc/bin/vue-tsc.js --noEmit && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
-    "preview": "vite preview",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "tauri:build:win": "tauri build --target nsis",
-    "tauri:build:mac": "tauri build --target dmg",
-    "lint": "eslint --ext .js,.ts,.vue -f ./node_modules/eslint-friendly-formatter src",
-    "lint:fix": "eslint --ext .js,.ts,.vue -f ./node_modules/eslint-friendly-formatter --fix src",
-    "format": "prettier .",
-    "format:fix": "prettier . --write",
-    "setup-hooks": "bash setup-hooks.sh",
-    "type-check": "vue-tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "audit": "npm audit --audit-level=moderate",
-    "audit:fix": "npm audit fix",
-    "analyze": "vite-bundle-visualizer",
-    "generate-licenses": "node scripts/generate-licenses.js"
-  },
+  "description": "MIDI 键盘工具 — 和弦检测、瀑布流钢琴、MIDI 文件播放",
   "keywords": [
-    "vue3",
-    "vite",
     "typescript",
+    "vite",
+    "vue3",
     "web-app"
   ],
-  "author": "",
   "license": "MIT",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "analyze": "vite-bundle-visualizer",
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix",
+    "build": "npm run build:pre",
+    "build:pre": "npm run format:fix && cross-env NODE_OPTIONS=--max-old-space-size=8192 vue-tsc --noEmit && vite build",
+    "dev": "vite",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "format:fix": "oxfmt",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "preview": "vite preview",
+    "tauri:build": "tauri build",
+    "tauri:build:mac": "tauri build --target dmg",
+    "tauri:build:win": "tauri build --target nsis",
+    "tauri:dev": "tauri dev",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "type-check": "vue-tsc --noEmit"
+  },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
     "@tauri-apps/api": "^2.11.1",
@@ -46,7 +45,6 @@
     "@tonaljs/core": "^5.0.2",
     "@tonaljs/pcset": "^4.10.1",
     "@tonejs/midi": "^2.0.28",
-    "@vitejs/plugin-vue": "6.0.8",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",
@@ -55,7 +53,6 @@
     "normalize.css": "8.0.1",
     "pinia": "4.0.2",
     "pino": "^10.3.1",
-    "pino-pretty": "^13.1.3",
     "splitpanes": "^4.1.2",
     "tonal": "^6.4.3",
     "tone": "^15.1.22",
@@ -65,45 +62,41 @@
     "vue-router": "5.2.0"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.2",
     "@tauri-apps/cli": "^2.11.4",
-    "@types/dagre": "^0.7.54",
     "@types/node": "^26.1.1",
+    "@vitejs/plugin-vue": "6.0.8",
     "@vitest/coverage-v8": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
+    "cross-env": "^10.1.0",
     "daisyui": "^5.6.18",
-    "eslint": "10.7.0",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-friendly-formatter": "4.0.1",
-    "eslint-plugin-prettier": "5.5.6",
-    "eslint-plugin-vue": "10.9.2",
-    "globals": "^17.7.0",
     "jsdom": "^29.1.1",
-    "less": "4.6.7",
     "lint-staged": "17.0.8",
-    "prettier": "3.9.5",
+    "oxfmt": "^0.59.0",
+    "oxlint": "^1.74.0",
+    "pino-pretty": "^13.1.3",
     "sass": "1.101.0",
-    "sass-loader": "17.0.0",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
     "unplugin-auto-import": "21.0.0",
     "unplugin-vue-components": "32.1.0",
     "vite": "^8.1.5",
     "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-eslint": "1.8.1",
     "vitest": "^4.1.10",
-    "vue-eslint-parser": "10.4.1",
     "vue-tsc": "^3.3.7"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "npm run lint",
-      "git add"
-    ],
-    "*.vue": [
-      "npm run lint",
-      "git add"
+    "*.{js,ts,tsx,vue}": [
+      "oxfmt --no-error-on-unmatched-pattern",
+      "oxlint --fix"
     ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.9.7",
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "vue-demi@0.14.10": true
   }
 }

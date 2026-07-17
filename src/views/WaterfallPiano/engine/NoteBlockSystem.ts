@@ -84,13 +84,20 @@ export class NoteBlockSystem {
    * 辅助：判断颜色是否有效
    */
   private isValidColor(color: unknown): color is string {
-    return typeof color === 'string' && color.length > 0;
+    return typeof color === "string" && color.length > 0;
   }
 
   /**
    * 提取绘制路径逻辑，避免重复代码
    */
-  private drawPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  private drawPath(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ): void {
     ctx.beginPath();
     if (r > 0) {
       this.roundRect(ctx, x, y, w, h, r);
@@ -119,7 +126,7 @@ export class NoteBlockSystem {
     const baseAlpha = (config.intensity / 100) * 0.8;
 
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalCompositeOperation = "lighter";
 
     switch (config.style) {
       case "glow": {
@@ -128,7 +135,14 @@ export class NoteBlockSystem {
         ctx.filter = `blur(${config.radius}px)`;
         ctx.globalAlpha = baseAlpha;
         ctx.fillStyle = color;
-        this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+        this.drawPath(
+          ctx,
+          x - blurPad,
+          y - blurPad,
+          width + blurPad * 2,
+          height + blurPad * 2,
+          cornerRadius,
+        );
         ctx.fill();
         ctx.restore();
         break;
@@ -142,20 +156,37 @@ export class NoteBlockSystem {
         ctx.filter = `blur(${config.radius}px)`;
         ctx.globalAlpha = baseAlpha;
         ctx.fillStyle = rainbowColor;
-        this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+        this.drawPath(
+          ctx,
+          x - blurPad,
+          y - blurPad,
+          width + blurPad * 2,
+          height + blurPad * 2,
+          cornerRadius,
+        );
         ctx.fill();
         ctx.restore();
         break;
       }
 
       case "dual": {
-        if (config.backgroundColor && this.isValidColor(config.backgroundColor)) {
+        if (
+          config.backgroundColor &&
+          this.isValidColor(config.backgroundColor)
+        ) {
           ctx.save();
           const outerPad = config.radius * 3;
           ctx.filter = `blur(${config.radius * 1.5}px)`;
           ctx.globalAlpha = baseAlpha * 0.5;
           ctx.fillStyle = config.backgroundColor;
-          this.drawPath(ctx, x - outerPad, y - outerPad, width + outerPad * 2, height + outerPad * 2, cornerRadius);
+          this.drawPath(
+            ctx,
+            x - outerPad,
+            y - outerPad,
+            width + outerPad * 2,
+            height + outerPad * 2,
+            cornerRadius,
+          );
           ctx.fill();
           ctx.restore();
         }
@@ -165,7 +196,14 @@ export class NoteBlockSystem {
         ctx.filter = `blur(${config.radius}px)`;
         ctx.globalAlpha = baseAlpha;
         ctx.fillStyle = color;
-        this.drawPath(ctx, x - innerPad, y - innerPad, width + innerPad * 2, height + innerPad * 2, cornerRadius);
+        this.drawPath(
+          ctx,
+          x - innerPad,
+          y - innerPad,
+          width + innerPad * 2,
+          height + innerPad * 2,
+          cornerRadius,
+        );
         ctx.fill();
         ctx.restore();
         break;
@@ -181,7 +219,14 @@ export class NoteBlockSystem {
           ctx.filter = `blur(${config.radius * 1.5}px)`;
           ctx.globalAlpha = baseAlpha * 0.5;
           ctx.fillStyle = bColor;
-          this.drawPath(ctx, x - outerPad, y - outerPad, width + outerPad * 2, height + outerPad * 2, cornerRadius);
+          this.drawPath(
+            ctx,
+            x - outerPad,
+            y - outerPad,
+            width + outerPad * 2,
+            height + outerPad * 2,
+            cornerRadius,
+          );
           ctx.fill();
           ctx.restore();
 
@@ -190,7 +235,14 @@ export class NoteBlockSystem {
           ctx.filter = `blur(${config.radius}px)`;
           ctx.globalAlpha = baseAlpha;
           ctx.fillStyle = pColor;
-          this.drawPath(ctx, x - innerPad, y - innerPad, width + innerPad * 2, height + innerPad * 2, cornerRadius);
+          this.drawPath(
+            ctx,
+            x - innerPad,
+            y - innerPad,
+            width + innerPad * 2,
+            height + innerPad * 2,
+            cornerRadius,
+          );
           ctx.fill();
           ctx.restore();
         } else {
@@ -199,7 +251,14 @@ export class NoteBlockSystem {
           ctx.filter = `blur(${config.radius}px)`;
           ctx.globalAlpha = baseAlpha;
           ctx.fillStyle = pColor;
-          this.drawPath(ctx, x - blurPad, y - blurPad, width + blurPad * 2, height + blurPad * 2, cornerRadius);
+          this.drawPath(
+            ctx,
+            x - blurPad,
+            y - blurPad,
+            width + blurPad * 2,
+            height + blurPad * 2,
+            cornerRadius,
+          );
           ctx.fill();
           ctx.restore();
         }
@@ -563,9 +622,9 @@ export class NoteBlockSystem {
     while (
       this.synthesiaCursor < len &&
       t -
-      (notes[this.synthesiaCursor].time +
-        notes[this.synthesiaCursor].duration) >
-      lookAhead + notes[this.synthesiaCursor].duration + 1
+        (notes[this.synthesiaCursor].time +
+          notes[this.synthesiaCursor].duration) >
+        lookAhead + notes[this.synthesiaCursor].duration + 1
     ) {
       this.synthesiaCursor++;
     }
@@ -734,7 +793,16 @@ export class NoteBlockSystem {
           (this.settings.aura.target === "triggered" && isTriggered);
 
         if (shouldApplyAura) {
-          this.renderAura(ctx, x, y, blockWidth, h, p.cornerRadius, color, time);
+          this.renderAura(
+            ctx,
+            x,
+            y,
+            blockWidth,
+            h,
+            p.cornerRadius,
+            color,
+            time,
+          );
         }
       }
 

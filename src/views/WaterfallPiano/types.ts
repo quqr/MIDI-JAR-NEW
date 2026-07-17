@@ -1,6 +1,12 @@
 // ─── 颜色方案 ───
 export type ColorScheme =
-  "pitch" | "hands" | "rainbow" | "warm" | "cool" | "neon" | "custom";
+  | "pitch"
+  | "hands"
+  | "rainbow"
+  | "warm"
+  | "cool"
+  | "neon"
+  | "custom";
 
 // ─── 背景类型（仅保留纯色） ───
 export type BackgroundType = "solid";
@@ -47,14 +53,14 @@ export interface HitLineConfig {
 
 /** Aura 发光效果配置 */
 export interface AuraConfig {
-  enabled: boolean;           // 是否启用 Aura
-  style: AuraStyle;           // Aura 样式
-  target: AuraTarget;         // 应用场景
-  intensity: number;          // 发光强度 (0-100)
-  radius: number;             // 发光半径 (px, 0-30)
-  animationSpeed: number;     // 动画速度 (0.1-3.0)
-  primaryColor?: string;      // 主色（仅 custom 模式）
-  backgroundColor?: string;    // 背景色（仅 custom 和 dual 模式）
+  enabled: boolean; // 是否启用 Aura
+  style: AuraStyle; // Aura 样式
+  target: AuraTarget; // 应用场景
+  intensity: number; // 发光强度 (0-100)
+  radius: number; // 发光半径 (px, 0-30)
+  animationSpeed: number; // 动画速度 (0.1-3.0)
+  primaryColor?: string; // 主色（仅 custom 模式）
+  backgroundColor?: string; // 背景色（仅 custom 和 dual 模式）
 }
 
 /** 瀑布流音符方块的视觉与行为配置 */

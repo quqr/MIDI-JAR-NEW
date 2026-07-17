@@ -139,9 +139,7 @@ async function setupRustLogListener() {
       const { level, message, module } = logData;
 
       // 格式化消息，添加模块标签
-      const formattedMessage = module
-        ? `[${module}] ${message}`
-        : message;
+      const formattedMessage = module ? `[${module}] ${message}` : message;
 
       // 根据级别转发到对应的 logger 方法
       switch (level.toLowerCase()) {
@@ -163,7 +161,8 @@ async function setupRustLogListener() {
         default:
           debuggerLogger.info(formattedMessage);
       }
-    } catch (e) {
+      // oxlint-disable-next-line no-unused-vars
+    } catch (_e) {
       // 如果解析失败，直接记录原始消息
       debuggerLogger.info(event.payload);
     }

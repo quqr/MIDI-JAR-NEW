@@ -69,5 +69,3 @@ declare global {
     tauriAPI: TauriAPI;
   }
 }
-
-export {};

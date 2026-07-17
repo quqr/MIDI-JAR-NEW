@@ -141,25 +141,19 @@
         <SettingsToggle
           :model-value="settings.aura.enabled"
           :label="t('WaterfallPiano.auraEnabled')"
-          @update:model-value="
-            store.updateSetting('aura', 'enabled', $event)
-          "
+          @update:model-value="store.updateSetting('aura', 'enabled', $event)"
         />
         <SettingsRadioGroup
           :model-value="settings.aura.style"
           :label="t('WaterfallPiano.auraStyle')"
           :options="auraStyleOptions"
-          @update:model-value="
-            store.updateSetting('aura', 'style', $event)
-          "
+          @update:model-value="store.updateSetting('aura', 'style', $event)"
         />
         <SettingsRadioGroup
           :model-value="settings.aura.target"
           :label="t('WaterfallPiano.auraTarget')"
           :options="auraTargetOptions"
-          @update:model-value="
-            store.updateSetting('aura', 'target', $event)
-          "
+          @update:model-value="store.updateSetting('aura', 'target', $event)"
         />
         <SettingsRange
           :model-value="settings.aura.intensity"
@@ -167,9 +161,7 @@
           :min="0"
           :max="100"
           :step="1"
-          @update:model-value="
-            store.updateSetting('aura', 'intensity', $event)
-          "
+          @update:model-value="store.updateSetting('aura', 'intensity', $event)"
         />
         <SettingsRange
           :model-value="settings.aura.radius"
@@ -177,14 +169,11 @@
           :min="0"
           :max="30"
           :step="1"
-          @update:model-value="
-            store.updateSetting('aura', 'radius', $event)
-          "
+          @update:model-value="store.updateSetting('aura', 'radius', $event)"
         />
         <SettingsRange
           v-if="
-            settings.aura.style === 'rainbow' ||
-            settings.aura.style === 'dual'
+            settings.aura.style === 'rainbow' || settings.aura.style === 'dual'
           "
           :model-value="settings.aura.animationSpeed"
           :label="t('WaterfallPiano.auraAnimationSpeed')"
@@ -205,8 +194,7 @@
         />
         <SettingsColorPicker
           v-if="
-            settings.aura.style === 'custom' ||
-            settings.aura.style === 'dual'
+            settings.aura.style === 'custom' || settings.aura.style === 'dual'
           "
           :model-value="settings.aura.backgroundColor ?? '#000000'"
           :label="t('WaterfallPiano.auraBackgroundColor')"

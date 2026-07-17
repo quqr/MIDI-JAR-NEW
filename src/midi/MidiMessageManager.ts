@@ -30,6 +30,7 @@ export class MidiMessageEvent extends Event {
 /**
  * MidiMessageManager 的类型接口，扩展 EventTarget 以提供类型安全的 MIDI 消息事件监听
  */
+// oxlint-disable-next-line typescript/no-unsafe-declaration-merging
 interface MidiMessageManager extends EventTarget {
   addEventListener(
     type: "message",

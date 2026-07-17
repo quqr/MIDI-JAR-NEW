@@ -209,38 +209,42 @@ onMounted(() => {
   applyInfo();
 });
 
-const style = computed((): Record<string, string | undefined> => ({
-  "--PianoKeyboard-white_background": props.keyboard.colors.white ?? undefined,
-  "--PianoKeyboard-white_color": getContrastColor(
-    props.keyboard.colors.white ?? "#ffffff",
-  ),
-  "--PianoKeyboard-black_background": props.keyboard.colors.black ?? undefined,
-  "--PianoKeyboard-black_color": getContrastColor(
-    props.keyboard.colors.black ?? "#000000",
-  ),
-  "--PianoKeyboard--played_background":
-    props.keyboard.colors.played ?? undefined,
-  "--PianoKeyboard--played_color": getContrastColor(
-    props.keyboard.colors.played ?? "#ff0000",
-  ),
-  "--PianoKeyboard--sustained_background":
-    props.keyboard.colors.sustained ?? undefined,
-  "--PianoKeyboard--sustained_color": getContrastColor(
-    props.keyboard.colors.sustained ?? "#777777",
-  ),
-  "--PianoKeyboard--wrapPlayed_background":
-    props.keyboard.colors.wrapped ?? "#800000",
-  "--PianoKeyboard--wrapPlayed_color": getContrastColor(
-    props.keyboard.colors.wrapped ?? "#800000",
-  ),
-  "--PianoKeyboard--wrapSustained_background":
-    props.keyboard.colors.sustained ?? "#777777",
-  "--PianoKeyboard--wrapSustained_color": getContrastColor(
-    props.keyboard.colors.sustained ?? "#777777",
-  ),
-  "--PianoKeyboard-fadeOut_duration": `${props.keyboard.fadeOutDuration}s`,
-  "--PianoKeyboard-text_opacity": `${props.keyboard.textOpacity}`,
-}));
+const style = computed(
+  (): Record<string, string | undefined> => ({
+    "--PianoKeyboard-white_background":
+      props.keyboard.colors.white ?? undefined,
+    "--PianoKeyboard-white_color": getContrastColor(
+      props.keyboard.colors.white ?? "#ffffff",
+    ),
+    "--PianoKeyboard-black_background":
+      props.keyboard.colors.black ?? undefined,
+    "--PianoKeyboard-black_color": getContrastColor(
+      props.keyboard.colors.black ?? "#000000",
+    ),
+    "--PianoKeyboard--played_background":
+      props.keyboard.colors.played ?? undefined,
+    "--PianoKeyboard--played_color": getContrastColor(
+      props.keyboard.colors.played ?? "#ff0000",
+    ),
+    "--PianoKeyboard--sustained_background":
+      props.keyboard.colors.sustained ?? undefined,
+    "--PianoKeyboard--sustained_color": getContrastColor(
+      props.keyboard.colors.sustained ?? "#777777",
+    ),
+    "--PianoKeyboard--wrapPlayed_background":
+      props.keyboard.colors.wrapped ?? "#800000",
+    "--PianoKeyboard--wrapPlayed_color": getContrastColor(
+      props.keyboard.colors.wrapped ?? "#800000",
+    ),
+    "--PianoKeyboard--wrapSustained_background":
+      props.keyboard.colors.sustained ?? "#777777",
+    "--PianoKeyboard--wrapSustained_color": getContrastColor(
+      props.keyboard.colors.sustained ?? "#777777",
+    ),
+    "--PianoKeyboard-fadeOut_duration": `${props.keyboard.fadeOutDuration}s`,
+    "--PianoKeyboard-text_opacity": `${props.keyboard.textOpacity}`,
+  }),
+);
 
 function buildClassicKeys() {
   const sizes = getClassicSizes(props.keyboard);

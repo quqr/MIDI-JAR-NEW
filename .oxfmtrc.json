@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "ignorePatterns": [
+    "dist/",
+    "dist-ssr/",
+    "coverage/",
+    "node_modules/",
+    "src-tauri/"
+  ]
+}
