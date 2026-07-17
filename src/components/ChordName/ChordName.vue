@@ -1,34 +1,39 @@
 <template>
   <div
     v-if="displaySymbol"
-    class="inline-flex text-accent items-end"
-    style="height: 1.5em; line-height: 1.5em; vertical-align: bottom"
+    class="inline-flex items-end text-accent"
+    style="line-height: 1.2; vertical-align: baseline"
   >
-    <span class="font-bold">{{
-      latinSharpsFlats ? tonicPart : formatSharpsFlats(tonicPart)
-    }}</span>
-    <span class="text-base" style="line-height: 1.5em">
+    <!-- 根音 -->
+    <span class="font-bold text-lg">
+      {{ latinSharpsFlats ? tonicPart : formatSharpsFlats(tonicPart) }}
+    </span>
+
+    <!-- 质量 + 上标扩展 -->
+    <span class="text-base font-bold italic" style="line-height: inherit">
       <span
-        class="font-bold italic"
         :class="{ 'rounded bg-error/20': highlightAlterations }"
         style="margin: 0 0.05em"
       >
         {{ formatQuality(firstToken) }}
       </span>
-      <span
-        v-for="(part, index) in restTokens"
-        :key="`${part}_${index}`"
-        class="align-super text-xs italic"
-        :class="{ 'rounded bg-info/20': highlightAlterations }"
-        style="margin: 0 0.05em"
-      >
-        {{ latinSharpsFlats ? part : formatSharpsFlats(part) }}
-      </span>
+
+      <template v-for="(part, index) in restTokens" :key="`${part}_${index}`">
+        <sup
+          class="text-xs italic"
+          :class="{ 'rounded bg-info/20': highlightAlterations }"
+          style="margin: 0 0.05em; font-weight: inherit"
+        >
+          {{ latinSharpsFlats ? part : formatSharpsFlats(part) }}
+        </sup>
+      </template>
     </span>
+
+    <!-- 低音（可选） -->
     <span
       v-if="!hideRoot && chord?.root"
       class="text-xs"
-      style="line-height: 1.5em; opacity: 0.5; margin-left: 0.25em"
+      style="line-height: inherit; opacity: 0.5; margin-left: 0.25em"
     >
       /{{ latinSharpsFlats ? chord.root : formatSharpsFlats(chord.root) }}
     </span>
@@ -119,6 +124,5 @@ const chordTokens = computed(() => {
 });
 
 const firstToken = computed(() => chordTokens.value[0] || "");
-
 const restTokens = computed(() => chordTokens.value.slice(1));
 </script>

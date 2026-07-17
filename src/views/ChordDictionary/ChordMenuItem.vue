@@ -2,7 +2,8 @@
   <li
     role="treeitem"
     tabindex="0"
-    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors hover:bg-base-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors
+     focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-full cursor-interactive"
     :class="{
       'bg-primary/10 text-primary font-semibold':
         selected === item.chordType.aliases[0],

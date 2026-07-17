@@ -11,18 +11,18 @@ import {
   type FluidSimulationConfig,
 } from "@/engine/fluid";
 import { createLogger } from "@/utils/logger";
+import { SplatPerturbation } from "@/engine/fluid/FluidConfig";
+import { PerlinNoise1D } from "@/utils/PerlinNoise1D";
 
 const logger = createLogger("WaterfallEngine");
-
+const noise = new PerlinNoise1D();
 /** Box-Muller 高斯随机数（均值 0，标准差 1） */
-function gaussian(): number {
-  const u1 = Math.max(1e-12, Math.random());
-  const u2 = Math.random();
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+function PerlinNoise1DRandomNumber(): number {
+  return noise.noise(Math.random() * 1000);
 }
 
 /** 判断扰动参数是否全部为 0/undefined（用于跳过计算） */
-function hasPerturbation(p?: import("@/engine/fluid").SplatPerturbation): boolean {
+function hasPerturbation(p: SplatPerturbation | undefined): boolean {
   if (!p) return false;
   return !!(
     (p.positionJitter && p.positionJitter > 0) ||
@@ -264,11 +264,12 @@ export class WaterfallEngine {
   private maybeInitFluid(): void {
     if (!this.canvases || !this.settings) return;
     if (!this.settings.background.fluidEnabled) return;
-    if (this.fluid) return;
+    const config = this.buildFluidConfig();
+    if (this.fluid || (config.SIM_RESOLUTION ?? 0) <= 0) return;
     try {
       this.fluid = new FluidSimulation(
         this.canvases.fluid,
-        this.buildFluidConfig(),
+        config,
       );
       this.fluid.start();
     } catch {
@@ -415,18 +416,18 @@ export class WaterfallEngine {
     const p = this.settings?.background.fluidParams.fluidSplatPerturbation;
     if (hasPerturbation(p)) {
       if (p!.positionJitter && p!.positionJitter > 0) {
-        x += gaussian() * p!.positionJitter * 0.02;
-        y += gaussian() * p!.positionJitter * 0.02;
+        x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
+        y += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
       }
       if (p!.forceJitter && p!.forceJitter > 0) {
-        dx += gaussian() * dy * p!.forceJitter;
-        dy += gaussian() * dy * p!.forceJitter;
+        dx += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
+        dy += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
       }
       if (p!.colorJitter && p!.colorJitter > 0) {
         rgb = {
-          r: Math.max(0, rgb.r + gaussian() * p!.colorJitter * 0.15),
-          g: Math.max(0, rgb.g + gaussian() * p!.colorJitter * 0.15),
-          b: Math.max(0, rgb.b + gaussian() * p!.colorJitter * 0.15),
+          r: Math.max(0, rgb.r + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
+          g: Math.max(0, rgb.g + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
+          b: Math.max(0, rgb.b + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
         };
       }
     }
@@ -459,14 +460,14 @@ export class WaterfallEngine {
     const p = this.settings.background.fluidParams.hitExplosionPerturbation;
     if (hasPerturbation(p)) {
       if (p!.positionJitter && p!.positionJitter > 0) {
-        x += gaussian() * p!.positionJitter * 0.02;
+        x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
       }
       if (p!.forceJitter && p!.forceJitter > 0) {
-        force += gaussian() * force * p!.forceJitter;
-        spread += gaussian() * spread * p!.forceJitter;
+        force += PerlinNoise1DRandomNumber() * force * p!.forceJitter;
+        spread += PerlinNoise1DRandomNumber() * spread * p!.forceJitter;
       }
       if (p!.colorJitter && p!.colorJitter > 0) {
-        colorMul += gaussian() * p!.colorJitter * 0.15;
+        colorMul += PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15;
         colorMul = Math.max(0, colorMul);
       }
     }
@@ -560,15 +561,15 @@ export class WaterfallEngine {
             let colorMul = 0.4;
             if (sHas) {
               if (sP!.positionJitter && sP!.positionJitter > 0) {
-                x += gaussian() * sP!.positionJitter * 0.02;
-                y += gaussian() * sP!.positionJitter * 0.02;
+                x += PerlinNoise1DRandomNumber() * sP!.positionJitter * 0.02;
+                y += PerlinNoise1DRandomNumber() * sP!.positionJitter * 0.02;
               }
               if (sP!.forceJitter && sP!.forceJitter > 0) {
-                dx += gaussian() * dy * sP!.forceJitter;
-                dy += gaussian() * dy * sP!.forceJitter;
+                dx += PerlinNoise1DRandomNumber() * dy * sP!.forceJitter;
+                dy += PerlinNoise1DRandomNumber() * dy * sP!.forceJitter;
               }
               if (sP!.colorJitter && sP!.colorJitter > 0) {
-                colorMul += gaussian() * sP!.colorJitter * 0.15;
+                colorMul += PerlinNoise1DRandomNumber() * sP!.colorJitter * 0.15;
                 colorMul = Math.max(0, colorMul);
               }
             }
@@ -609,15 +610,15 @@ export class WaterfallEngine {
             let colorMul = 0.3;
             if (bHas) {
               if (bP!.positionJitter && bP!.positionJitter > 0) {
-                px += gaussian() * bP!.positionJitter * 0.02;
-                py += gaussian() * bP!.positionJitter * 0.02;
+                px += PerlinNoise1DRandomNumber() * bP!.positionJitter * 0.02;
+                py += PerlinNoise1DRandomNumber() * bP!.positionJitter * 0.02;
               }
               if (bP!.forceJitter && bP!.forceJitter > 0) {
-                dx += gaussian() * Math.abs(dy) * bP!.forceJitter;
-                dy += gaussian() * Math.abs(dy) * bP!.forceJitter;
+                dx += PerlinNoise1DRandomNumber() * Math.abs(dy) * bP!.forceJitter;
+                dy += PerlinNoise1DRandomNumber() * Math.abs(dy) * bP!.forceJitter;
               }
               if (bP!.colorJitter && bP!.colorJitter > 0) {
-                colorMul += gaussian() * bP!.colorJitter * 0.15;
+                colorMul += PerlinNoise1DRandomNumber() * bP!.colorJitter * 0.15;
                 colorMul = Math.max(0, colorMul);
               }
             }

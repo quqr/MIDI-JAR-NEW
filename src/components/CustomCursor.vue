@@ -41,6 +41,7 @@ const INTERACTIVE_SELECTOR = [
   "button",
   "input",
   "select",
+  "li",
   "summary",
   '[role="button"]',
   '[role="link"]',
@@ -50,6 +51,7 @@ const INTERACTIVE_SELECTOR = [
   ".drawer-toggle",
   ".vue-flow__node",
   ".wire-delete-btn",
+  ".cursor-interactive",
 ].join(",");
 
 function findInteractiveTarget(el: HTMLElement): HTMLElement | null {

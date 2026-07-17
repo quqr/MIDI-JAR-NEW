@@ -1,7 +1,7 @@
 <template>
-  <div class="chord-dictionary-chord-menu p-4 h-full">
+  <div class="chord-dictionary-chord-menu p-4 h-full w-full">
     <ul
-      class="menu bg-base-100"
+      class="menu bg-base-100 w-full"
       role="tree"
       :aria-label="t('chordDictionary.chordTypesNavigation')"
       @keydown="handleKeydown"

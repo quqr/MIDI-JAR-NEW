@@ -47,7 +47,7 @@
               <Icon name="x" :size="16" aria-hidden="true" />
             </button>
           </div>
-          <div class="flex-1 min-h-0 overflow-y-auto">
+          <div class="flex-1 min-h-0 minw-full overflow-y-auto">
             <ChordDictionaryChordMenu
               v-bind="chordMenuProps"
               @select="handleChordTypeChangeDrawer"
@@ -66,7 +66,7 @@
           :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
           class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-200 bg-base-100/50"
         >
-          <div class="w-[240px] min-h-0 overflow-y-auto">
+          <div class="min-h-0 w-full overflow-y-auto">
             <ChordDictionaryChordMenu
               v-bind="chordMenuProps"
               @select="handleChordTypeChange"
@@ -81,7 +81,7 @@
         style="grid-template-columns: minmax(180px, 240px) 3fr"
       >
         <!-- Left: Chord type list -->
-        <div class="min-h-0 overflow-y-auto border-r border-base-200">
+        <div class="min-h-0 overflow-y-auto min-w-full border-r border-base-200">
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"
             @select="handleChordTypeChange"

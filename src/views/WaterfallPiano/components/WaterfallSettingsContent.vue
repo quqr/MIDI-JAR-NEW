@@ -17,7 +17,7 @@
         <SettingsRange
           :model-value="settings.particles.speed"
           :label="t('WaterfallPiano.speed')"
-          :min="0.5"
+          :min="0"
           :max="5"
           :step="0.1"
           @update:model-value="
@@ -27,7 +27,7 @@
         <SettingsRange
           :model-value="settings.particles.lookAhead"
           :label="t('WaterfallPiano.lookAhead')"
-          :min="1"
+          :min="0"
           :max="10"
           :step="0.5"
           @update:model-value="
@@ -37,7 +37,7 @@
         <SettingsRange
           :model-value="settings.particles.opacity"
           :label="t('WaterfallPiano.opacity')"
-          :min="0.1"
+          :min="0"
           :max="1"
           :step="0.05"
           @update:model-value="
@@ -57,7 +57,7 @@
         <SettingsRange
           :model-value="settings.particles.hitExplosionRadius"
           :label="t('WaterfallPiano.hitExplosionRadius')"
-          :min="0.01"
+          :min="0"
           :max="0.1"
           :step="0.005"
           @update:model-value="
@@ -89,7 +89,7 @@
           v-if="settings.particles.hitLine.visible"
           :model-value="settings.particles.hitLine.thickness"
           :label="t('WaterfallPiano.hitLine')"
-          :min="1"
+          :min="0"
           :max="10"
           :step="1"
           @update:model-value="
@@ -222,7 +222,7 @@
           <SettingsRange
             :model-value="settings.aura.duration"
             :label="t('WaterfallPiano.auraDuration')"
-            :min="1"
+            :min="0"
             :max="60"
             :step="1"
             @update:model-value="
@@ -232,7 +232,7 @@
           <SettingsRange
             :model-value="settings.aura.rotationRange"
             :label="t('WaterfallPiano.auraRotationRange')"
-            :min="90"
+            :min="0"
             :max="1080"
             :step="15"
             @update:model-value="
@@ -260,7 +260,7 @@
             <SettingsRange
               :model-value="settings.aura.beamWidth"
               :label="t('WaterfallPiano.auraBeamWidth')"
-              :min="10"
+              :min="0"
               :max="350"
               :step="5"
               @update:model-value="
@@ -279,7 +279,7 @@
             <SettingsRange
               :model-value="settings.aura.glowExtent"
               :label="t('WaterfallPiano.auraGlowExtent')"
-              :min="50"
+              :min="0"
               :max="150"
               :step="5"
               @update:model-value="
@@ -365,7 +365,7 @@
             <SettingsRange
               :model-value="settings.aura.dualOnRatio"
               :label="t('WaterfallPiano.auraDualOnRatio')"
-              :min="10"
+              :min="0"
               :max="90"
               :step="1"
               @update:model-value="
@@ -422,7 +422,7 @@
           <SettingsRange
             :model-value="settings.background.fluidParams.simResolution ?? 128"
             :label="t('WaterfallPiano.fluidQuality')"
-            :min="32"
+            :min="0"
             :max="256"
             :step="32"
             @update:model-value="
@@ -458,7 +458,7 @@
         <SettingsRange
           :model-value="settings.background.fluidParams.splatRadius ?? 0.0001"
           :label="t('WaterfallPiano.splatRadius')"
-          :min="0.0001"
+          :min="0"
           :max="0.01"
           :step="0.0001"
           @update:model-value="
@@ -521,7 +521,7 @@
           v-if="settings.background.fluidParams.bloom !== false"
           :model-value="settings.background.fluidParams.bloomIntensity ?? 0.8"
           :label="t('WaterfallPiano.bloomIntensity')"
-          :min="0.1"
+          :min="0"
           :max="2"
           :step="0.1"
           @update:model-value="
@@ -662,7 +662,7 @@
         <SettingsRange
           :model-value="settings.keyboard.heightRatio"
           :label="t('WaterfallPiano.heightRatio')"
-          :min="0.15"
+          :min="0"
           :max="0.5"
           :step="0.05"
           @update:model-value="
@@ -723,7 +723,7 @@
         <SettingsRange
           :model-value="settings.midiFile.playbackSpeed"
           :label="t('WaterfallPiano.playbackSpeed')"
-          :min="0.25"
+          :min="0"
           :max="3"
           :step="0.25"
           @update:model-value="
