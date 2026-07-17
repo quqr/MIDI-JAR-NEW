@@ -240,33 +240,47 @@ export class NoteBlockSystem {
     // Layer 1: ::after
     ctx.save();
     if (glowStyle) {
-      ctx.filter = `blur(${this.glowProgress(pulseT, cfg.outerBlur, cfg.glowAfterPeakBlur)}px)`;
+      ctx.shadowBlur = this.glowProgress(
+        pulseT,
+        cfg.outerBlur,
+        cfg.glowAfterPeakBlur,
+      );
       ctx.globalAlpha = this.glowProgress(
         pulseT,
         outerA,
         cfg.glowAfterPeakOpacity / 100,
       );
     } else {
-      ctx.filter = `blur(${cfg.outerBlur}px)`;
+      ctx.shadowBlur = cfg.outerBlur;
       ctx.globalAlpha = outerA;
     }
-    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    for (const blk of blocks) {
+      ctx.shadowColor = blk.color;
+      drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    }
     ctx.restore();
 
     // Layer 2: ::before
     ctx.save();
     if (glowStyle) {
-      ctx.filter = `blur(${this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur)}px)`;
+      ctx.shadowBlur = this.glowProgress(
+        pulseT,
+        cfg.innerBlur,
+        cfg.glowPeakBlur,
+      );
       ctx.globalAlpha = this.glowProgress(
         pulseT,
         innerA,
         cfg.glowPeakOpacity / 100,
       );
     } else {
-      ctx.filter = `blur(${cfg.innerBlur}px)`;
+      ctx.shadowBlur = cfg.innerBlur;
       ctx.globalAlpha = innerA;
     }
-    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    for (const blk of blocks) {
+      ctx.shadowColor = blk.color;
+      drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    }
     ctx.restore();
 
     // Layer 3: 基底
