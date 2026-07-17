@@ -81,13 +81,6 @@ export class NoteBlockSystem {
   callbacks: NoteBlockCallbacks = {};
 
   /**
-   * 辅助：判断颜色是否有效
-   */
-  private isValidColor(color: unknown): color is string {
-    return typeof color === "string" && color.length > 0;
-  }
-
-  /**
    * 提取绘制路径逻辑，避免重复代码
    */
   private drawPath(
@@ -108,7 +101,15 @@ export class NoteBlockSystem {
   }
 
   /**
-   * 渲染 Aura 发光效果（shadowBlur + lighter 混合模式）
+   * 渲染 Aura 发光效果（DaisyUI 风格：conic-gradient + 双层 blur）
+   *
+   * 参考 DaisyUI aura CSS:
+   *   ::before — blur(4px), opacity 0.7
+   *   ::after  — blur(16px), opacity 0.3
+   *   .aura       → conic-gradient(from angle, transparent 225deg, currentColor)
+   *   .aura-glow  → radial-gradient(closest-corner at center, currentColor 0%, transparent 90%)
+   *   .aura-rainbow → conic-gradient 全色相旋转
+   *   .aura-dual  → repeating-conic-gradient 交替透明/颜色
    */
   private renderAura(
     ctx: CanvasRenderingContext2D,
@@ -121,84 +122,115 @@ export class NoteBlockSystem {
     time: number,
   ): void {
     const config = this.settings?.aura;
-    if (!config?.enabled || config.radius <= 0 || config.intensity <= 0) return;
+    if (!config?.enabled || config.intensity <= 0) return;
 
-    const baseAlpha = (config.intensity / 100) * 0.6;
+    const intensity = config.intensity / 100;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+    const style = config.style;
+
+    // DaisyUI padding 映射：radius 0-30 → aura-sm ~ aura-xl
+    const padding = Math.max(1, config.radius * 0.15);
+    const ox = x - padding;
+    const oy = y - padding;
+    const ow = width + padding * 2;
+    const oh = height + padding * 2;
+
+    // 旋转角度：DaisyUI @keyframes aura { to { --aura-angle: 360deg } }
+    const deg =
+      ((time * config.animationSpeed * 0.05 * 360) % 360) * (Math.PI / 180);
+
+    // Glow 脉冲：DaisyUI aura-glow keyframes 的正弦近似
+    const pulse = 0.7 + 0.3 * Math.sin(time * 0.003 * config.animationSpeed);
+
+    // --- 创建渐变图案 ---
+    const createGradient = (): CanvasGradient | null => {
+      if (style === "glow") {
+        // aura-glow: radial-gradient(closest-corner at center, currentColor 0%, transparent 90%)
+        const r = Math.max(ow, oh) * 0.7;
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, color);
+        g.addColorStop(0.9, "transparent");
+        return g;
+      }
+
+      const g = ctx.createConicGradient(deg, cx, cy);
+
+      if (style === "rainbow") {
+        // aura-rainbow: 透明 10% → 色相旋转 10-90% → 透明 90-100%
+        g.addColorStop(0, "transparent");
+        g.addColorStop(0.1, "hsl(0, 80%, 60%)");
+        g.addColorStop(0.35, "hsl(120, 80%, 60%)");
+        g.addColorStop(0.6, "hsl(240, 80%, 60%)");
+        g.addColorStop(0.9, "hsl(0, 80%, 60%)");
+        g.addColorStop(1, "transparent");
+        return g;
+      }
+
+      const useColor =
+        style === "custom" && config.primaryColor ? config.primaryColor : color;
+
+      if (style === "dual") {
+        // aura-dual: repeating-conic-gradient(transparent 40%, currentColor 50%)
+        for (let i = 0; i <= 1; i += 0.5) {
+          g.addColorStop(i, "transparent");
+          g.addColorStop(Math.min(i + 0.4, 1), "transparent");
+          g.addColorStop(Math.min(i + 0.41, 1), useColor);
+          g.addColorStop(Math.min(i + 0.5, 1), useColor);
+        }
+        return g;
+      }
+
+      // 基础 aura: conic-gradient(from angle, transparent 225deg, currentColor)
+      g.addColorStop(0, "transparent");
+      g.addColorStop(0.625, "transparent"); // 225deg/360
+      g.addColorStop(0.626, useColor);
+      g.addColorStop(1, useColor);
+      return g;
+    };
 
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
 
-    switch (config.style) {
-      case "glow": {
-        ctx.shadowColor = color;
-        ctx.shadowBlur = config.radius;
-        ctx.globalAlpha = baseAlpha;
-        ctx.fillStyle = color;
-        this.drawPath(ctx, x, y, width, height, cornerRadius);
+    // ── Layer 1 ::before — 内层 blur(4px), opacity 0.7 ──
+    {
+      ctx.save();
+      const blurPx = style === "glow" ? 4 * pulse : 4 + config.radius * 0.5;
+      ctx.filter = `blur(${blurPx}px)`;
+      ctx.globalAlpha = 0.7 * intensity * (style === "glow" ? pulse : 1);
+
+      const g = createGradient();
+      if (g) {
+        ctx.fillStyle = g;
+        this.drawPath(ctx, ox, oy, ow, oh, cornerRadius);
         ctx.fill();
-        break;
       }
+      ctx.restore();
+    }
 
-      case "rainbow": {
-        const hue = (time * config.animationSpeed * 0.05) % 360;
-        const rainbowColor = `hsl(${hue}, 80%, 60%)`;
-        ctx.shadowColor = rainbowColor;
-        ctx.shadowBlur = config.radius;
-        ctx.globalAlpha = baseAlpha;
-        ctx.fillStyle = rainbowColor;
-        this.drawPath(ctx, x, y, width, height, cornerRadius);
+    // ── Layer 2 ::after — 外层 blur(16px), opacity 0.3 ──
+    {
+      ctx.save();
+      const blurPx = style === "glow" ? 16 * pulse : 16 + config.radius * 2;
+      ctx.filter = `blur(${blurPx}px)`;
+      ctx.globalAlpha =
+        0.3 * intensity * (style === "glow" ? 0.5 + 0.5 * pulse : 1);
+
+      const g = createGradient();
+      if (g) {
+        ctx.fillStyle = g;
+        // 外层稍微放大一点制造扩散感
+        this.drawPath(
+          ctx,
+          ox - padding * 0.5,
+          oy - padding * 0.5,
+          ow + padding,
+          oh + padding,
+          cornerRadius,
+        );
         ctx.fill();
-        break;
       }
-
-      case "dual": {
-        if (
-          config.backgroundColor &&
-          this.isValidColor(config.backgroundColor)
-        ) {
-          ctx.shadowColor = config.backgroundColor;
-          ctx.shadowBlur = config.radius * 1.5;
-          ctx.globalAlpha = baseAlpha * 0.5;
-          ctx.fillStyle = config.backgroundColor;
-          this.drawPath(ctx, x, y, width, height, cornerRadius);
-          ctx.fill();
-        }
-        ctx.shadowColor = color;
-        ctx.shadowBlur = config.radius;
-        ctx.globalAlpha = baseAlpha;
-        ctx.fillStyle = color;
-        this.drawPath(ctx, x + 1, y + 1, width - 2, height - 2, cornerRadius);
-        ctx.fill();
-        break;
-      }
-
-      case "custom": {
-        const pColor = config.primaryColor || color;
-        const bColor = config.backgroundColor;
-
-        if (bColor && this.isValidColor(bColor)) {
-          ctx.shadowColor = bColor;
-          ctx.shadowBlur = config.radius;
-          ctx.globalAlpha = baseAlpha;
-          ctx.fillStyle = bColor;
-          this.drawPath(ctx, x, y, width, height, cornerRadius);
-          ctx.fill();
-
-          ctx.shadowColor = pColor;
-          ctx.shadowBlur = config.radius * 0.8;
-          ctx.fillStyle = pColor;
-          this.drawPath(ctx, x + 1, y + 1, width - 2, height - 2, cornerRadius);
-          ctx.fill();
-        } else {
-          ctx.shadowColor = pColor;
-          ctx.shadowBlur = config.radius;
-          ctx.globalAlpha = baseAlpha;
-          ctx.fillStyle = pColor;
-          this.drawPath(ctx, x, y, width, height, cornerRadius);
-          ctx.fill();
-        }
-        break;
-      }
+      ctx.restore();
     }
 
     ctx.restore();
