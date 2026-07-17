@@ -256,9 +256,6 @@
       </SettingsCollapse>
 
       <SettingsCollapse
-        v-if="
-          settings.background.fluidEnabled && settings.background.fluidAdvanced
-        "
         :title="t('WaterfallPiano.fluidAdvancedParams')"
         icon="droplet"
         :default-open="false"

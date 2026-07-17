@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 max-w-2xl mx-auto">
+  <div class="p-4 mx-auto">
     <WaterfallSettingsContent />
   </div>
 </template>

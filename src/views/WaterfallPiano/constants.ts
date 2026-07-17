@@ -19,7 +19,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
   background: {
     type: "solid",
     solidColor: "#1a1a2e",
-    fluidEnabled: false,
+    fluidEnabled: true,
     fluidQuality: "medium",
     fluidStyle: "standard",
     fluidAdvanced: false,
@@ -89,7 +89,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     },
   },
   aura: {
-    enabled: false,
+    enabled: true,
     style: "glow",
     target: "triggered",
     intensity: 50,

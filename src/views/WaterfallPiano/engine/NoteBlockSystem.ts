@@ -101,15 +101,55 @@ export class NoteBlockSystem {
   }
 
   /**
-   * 渲染 Aura 发光效果（DaisyUI 风格：conic-gradient + 双层 blur）
+   * DaisyUI aura ease-out 插值：1 - (1 - t)^2
+   */
+  private easeOut(t: number): number {
+    return 1 - (1 - t) * (1 - t);
+  }
+
+  /**
+   * DaisyUI aura-glow / aura-glow-after 关键帧插值
    *
-   * 参考 DaisyUI aura CSS:
-   *   ::before — blur(4px), opacity 0.7
-   *   ::after  — blur(16px), opacity 0.3
-   *   .aura       → conic-gradient(from angle, transparent 225deg, currentColor)
-   *   .aura-glow  → radial-gradient(closest-corner at center, currentColor 0%, transparent 90%)
-   *   .aura-rainbow → conic-gradient 全色相旋转
-   *   .aura-dual  → repeating-conic-gradient 交替透明/颜色
+   * @keyframes aura-glow:
+   *   20%, 80% { opacity: 0.7; filter: blur(0.25rem); }
+   *   50%      { opacity: 1;   filter: blur(0.75rem); }
+   *
+   * @keyframes aura-glow-after:
+   *   20%, 80% { opacity: 0.3; filter: blur(1rem); }
+   *   50%      { opacity: 0.6; filter: blur(1.5rem); }
+   */
+  private glowProgress(t: number, valley: number, peak: number): number {
+    if (t < 0.2) return valley;
+    if (t < 0.5) {
+      const p = (t - 0.2) / 0.3;
+      return valley + (peak - valley) * this.easeOut(p);
+    }
+    if (t < 0.8) {
+      const p = (t - 0.5) / 0.3;
+      return peak - (peak - valley) * this.easeOut(p);
+    }
+    return valley;
+  }
+
+  /**
+   * 渲染 Aura 发光效果
+   *
+   * 逐行对照 DaisyUI aura CSS 实现：
+   *   .aura {
+   *     padding: var(--aura-padding);
+   *     border-radius: calc(var(--aura-padding) + var(--aura-radius, var(--radius-box)));
+   *     animation: aura var(--tw-duration, 6s) linear infinite;
+   *     background: conic-gradient(from var(--aura-angle), transparent 225deg, currentColor);
+   *     &::before { filter: blur(0.25rem); opacity: 0.7; }  ← 3 层渲染：after → before → 基底
+   *     &::after  { filter: blur(1rem);    opacity: 0.3; }
+   *   }
+   *   .aura-glow {
+   *     background: radial-gradient(closest-corner at center, currentColor 0%, transparent 90%);
+   *     &::before { animation: aura-glow ... }
+   *     &::after  { animation: aura-glow-after ... }
+   *   }
+   *   .aura-rainbow { ... }
+   *   .aura-dual { ... }
    */
   private renderAura(
     ctx: CanvasRenderingContext2D,
@@ -125,44 +165,52 @@ export class NoteBlockSystem {
     if (!config?.enabled || config.intensity <= 0) return;
 
     const intensity = config.intensity / 100;
+    const style = config.style;
     const cx = x + width / 2;
     const cy = y + height / 2;
-    const style = config.style;
 
-    // DaisyUI padding 映射：radius 0-30 → aura-sm ~ aura-xl
-    const padding = Math.max(1, config.radius * 0.15);
-    const ox = x - padding;
-    const oy = y - padding;
-    const ow = width + padding * 2;
-    const oh = height + padding * 2;
+    // DaisyUI --aura-padding: radius 0-30 → xs(0px) ~ xl(4px)
+    const auraPadding = (config.radius / 30) * 4;
+    const auraRadius = auraPadding + cornerRadius; // calc(padding + var(--radius-box))
 
-    // 旋转角度：DaisyUI @keyframes aura { to { --aura-angle: 360deg } }
-    const deg =
-      ((time * config.animationSpeed * 0.05 * 360) % 360) * (Math.PI / 180);
+    // aura 区域 = 方块 + padding
+    const ax = x - auraPadding;
+    const ay = y - auraPadding;
+    const aw = width + auraPadding * 2;
+    const ah = height + auraPadding * 2;
 
-    // Glow 脉冲：DaisyUI aura-glow keyframes 的正弦近似
-    const pulse = 0.7 + 0.3 * Math.sin(time * 0.003 * config.animationSpeed);
+    // @keyframes aura: to { --aura-angle: 360deg; }
+    // duration: var(--tw-duration, 6s)
+    const animDuration = 6000;
+    const angleDeg =
+      (((time * config.animationSpeed) % animDuration) / animDuration) * 360;
+    const angleRad = (angleDeg * Math.PI) / 180;
 
-    // --- 创建渐变图案 ---
-    const createGradient = (): CanvasGradient | null => {
+    // aura-glow pulse cycle: same 6s duration
+    const pulseT =
+      ((time * config.animationSpeed) % animDuration) / animDuration;
+
+    // ── 创建渐变（每种 style 创建一次供三层复用） ──
+    const buildGradient = (): CanvasGradient | null => {
       if (style === "glow") {
-        // aura-glow: radial-gradient(closest-corner at center, currentColor 0%, transparent 90%)
-        const r = Math.max(ow, oh) * 0.7;
+        // .aura-glow: radial-gradient(closest-corner at center, currentColor 0%, transparent 90%)
+        const r = Math.min(aw, ah) * 0.5;
         const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
         g.addColorStop(0, color);
         g.addColorStop(0.9, "transparent");
         return g;
       }
 
-      const g = ctx.createConicGradient(deg, cx, cy);
+      const g = ctx.createConicGradient(angleRad, cx, cy);
 
       if (style === "rainbow") {
-        // aura-rainbow: 透明 10% → 色相旋转 10-90% → 透明 90-100%
+        // .aura-rainbow: 透明 10% → 色相全旋转 10-90% → 透明 90-100%
         g.addColorStop(0, "transparent");
         g.addColorStop(0.1, "hsl(0, 80%, 60%)");
-        g.addColorStop(0.35, "hsl(120, 80%, 60%)");
-        g.addColorStop(0.6, "hsl(240, 80%, 60%)");
-        g.addColorStop(0.9, "hsl(0, 80%, 60%)");
+        g.addColorStop(0.3, "hsl(120, 80%, 60%)");
+        g.addColorStop(0.5, "hsl(200, 80%, 60%)");
+        g.addColorStop(0.7, "hsl(280, 80%, 60%)");
+        g.addColorStop(0.9, "hsl(360, 80%, 60%)");
         g.addColorStop(1, "transparent");
         return g;
       }
@@ -171,69 +219,74 @@ export class NoteBlockSystem {
         style === "custom" && config.primaryColor ? config.primaryColor : color;
 
       if (style === "dual") {
-        // aura-dual: repeating-conic-gradient(transparent 40%, currentColor 50%)
-        for (let i = 0; i <= 1; i += 0.5) {
+        // .aura-dual: repeating-conic-gradient(transparent 0%, transparent 40%, currentColor 50%)
+        for (let i = 0; i < 1; i += 0.5) {
           g.addColorStop(i, "transparent");
-          g.addColorStop(Math.min(i + 0.4, 1), "transparent");
-          g.addColorStop(Math.min(i + 0.41, 1), useColor);
-          g.addColorStop(Math.min(i + 0.5, 1), useColor);
+          g.addColorStop(i + 0.4, "transparent");
+          g.addColorStop(i + 0.41, useColor);
+          g.addColorStop(i + 0.5, useColor);
         }
         return g;
       }
 
-      // 基础 aura: conic-gradient(from angle, transparent 225deg, currentColor)
+      // 基底 .aura: conic-gradient(from angle, transparent 225deg, currentColor)
       g.addColorStop(0, "transparent");
-      g.addColorStop(0.625, "transparent"); // 225deg/360
+      g.addColorStop(0.625, "transparent"); // 225deg / 360
       g.addColorStop(0.626, useColor);
       g.addColorStop(1, useColor);
       return g;
     };
 
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
+    const gradient = buildGradient();
+    if (!gradient) return;
 
-    // ── Layer 1 ::before — 内层 blur(4px), opacity 0.7 ──
+    // ── 三层绘图（从后往前：after → before → 基底） ──
+
+    // Layer 1: ::after — furthest back, blur(1rem)≈16px, opacity 0.3
     {
       ctx.save();
-      const blurPx = style === "glow" ? 4 * pulse : 4 + config.radius * 0.5;
-      ctx.filter = `blur(${blurPx}px)`;
-      ctx.globalAlpha = 0.7 * intensity * (style === "glow" ? pulse : 1);
-
-      const g = createGradient();
-      if (g) {
-        ctx.fillStyle = g;
-        this.drawPath(ctx, ox, oy, ow, oh, cornerRadius);
-        ctx.fill();
+      if (style === "glow") {
+        const aft = this.glowProgress(pulseT, 0.3, 0.6);
+        const blurAft = this.glowProgress(pulseT, 16, 24);
+        ctx.filter = `blur(${blurAft}px)`;
+        ctx.globalAlpha = aft * intensity;
+      } else {
+        ctx.filter = "blur(16px)";
+        ctx.globalAlpha = 0.3 * intensity;
       }
+      ctx.fillStyle = gradient;
+      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
+      ctx.fill();
       ctx.restore();
     }
 
-    // ── Layer 2 ::after — 外层 blur(16px), opacity 0.3 ──
+    // Layer 2: ::before — blur(0.25rem)≈4px, opacity 0.7
     {
       ctx.save();
-      const blurPx = style === "glow" ? 16 * pulse : 16 + config.radius * 2;
-      ctx.filter = `blur(${blurPx}px)`;
-      ctx.globalAlpha =
-        0.3 * intensity * (style === "glow" ? 0.5 + 0.5 * pulse : 1);
-
-      const g = createGradient();
-      if (g) {
-        ctx.fillStyle = g;
-        // 外层稍微放大一点制造扩散感
-        this.drawPath(
-          ctx,
-          ox - padding * 0.5,
-          oy - padding * 0.5,
-          ow + padding,
-          oh + padding,
-          cornerRadius,
-        );
-        ctx.fill();
+      if (style === "glow") {
+        const bf = this.glowProgress(pulseT, 0.7, 1);
+        const blurBf = this.glowProgress(pulseT, 4, 12);
+        ctx.filter = `blur(${blurBf}px)`;
+        ctx.globalAlpha = bf * intensity;
+      } else {
+        ctx.filter = "blur(4px)";
+        ctx.globalAlpha = 0.7 * intensity;
       }
+      ctx.fillStyle = gradient;
+      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
+      ctx.fill();
       ctx.restore();
     }
 
-    ctx.restore();
+    // Layer 3: 基底 — no blur, full opacity (the actual .aura background)
+    {
+      ctx.save();
+      ctx.globalAlpha = 1 * intensity;
+      ctx.fillStyle = gradient;
+      this.drawPath(ctx, ax, ay, aw, ah, auraRadius);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   /**
