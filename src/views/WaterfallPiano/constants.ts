@@ -89,12 +89,33 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     },
   },
   aura: {
-    enabled: true,
+    enabled: false,
     style: "glow",
     target: "triggered",
-    intensity: 50,
-    radius: 12,
-    animationSpeed: 1.0,
+    // 第 1 层：Aura 区域
+    padding: 2,
+    // 第 2 层：双层光晕
+    innerBlur: 4,
+    innerOpacity: 70,
+    outerBlur: 16,
+    outerOpacity: 30,
+    // 第 3 层：动画
+    duration: 6,
+    rotationRange: 360,
+    // 第 4 层：光束形状
+    beamAngle: 225,
+    beamWidth: 135,
+    // 第 5 层：Glow 专属
+    glowExtent: 90,
+    glowPeakOpacity: 100,
+    glowPeakBlur: 12,
+    glowAfterPeakOpacity: 60,
+    glowAfterPeakBlur: 24,
+    // 第 5 层：Rainbow 专属
+    rainbowMargin: 10,
+    // 第 5 层：Dual 专属
+    dualOffRatio: 40,
+    dualOnRatio: 50,
   },
 };
 
@@ -117,7 +138,7 @@ export const keyboardMap: Record<string, number> = {
 
 // ─── 持久化键 ───
 export const STORAGE_KEY = "waterfall-piano-settings";
-export const SETTINGS_VERSION = 4; // 递增此版本号可强制重置 localStorage 中的旧设置
+export const SETTINGS_VERSION = 5; // 递增此版本号可强制重置 localStorage 中的旧设置
 export const RECORDING_STORAGE_KEY = "waterfall-piano-recordings";
 
 // ─── MIDI 路由 namespace ───

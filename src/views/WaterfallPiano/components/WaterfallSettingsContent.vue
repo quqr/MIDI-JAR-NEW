@@ -143,65 +143,260 @@
           :label="t('WaterfallPiano.auraEnabled')"
           @update:model-value="store.updateSetting('aura', 'enabled', $event)"
         />
-        <SettingsRadioGroup
-          :model-value="settings.aura.style"
-          :label="t('WaterfallPiano.auraStyle')"
-          :options="auraStyleOptions"
-          @update:model-value="store.updateSetting('aura', 'style', $event)"
-        />
-        <SettingsRadioGroup
-          :model-value="settings.aura.target"
-          :label="t('WaterfallPiano.auraTarget')"
-          :options="auraTargetOptions"
-          @update:model-value="store.updateSetting('aura', 'target', $event)"
-        />
-        <SettingsRange
-          :model-value="settings.aura.intensity"
-          :label="t('WaterfallPiano.auraIntensity')"
-          :min="0"
-          :max="100"
-          :step="1"
-          @update:model-value="store.updateSetting('aura', 'intensity', $event)"
-        />
-        <SettingsRange
-          :model-value="settings.aura.radius"
-          :label="t('WaterfallPiano.auraRadius')"
-          :min="0"
-          :max="30"
-          :step="1"
-          @update:model-value="store.updateSetting('aura', 'radius', $event)"
-        />
-        <SettingsRange
-          v-if="
-            settings.aura.style === 'rainbow' || settings.aura.style === 'dual'
-          "
-          :model-value="settings.aura.animationSpeed"
-          :label="t('WaterfallPiano.auraAnimationSpeed')"
-          :min="0.1"
-          :max="3"
-          :step="0.1"
-          @update:model-value="
-            store.updateSetting('aura', 'animationSpeed', $event)
-          "
-        />
-        <SettingsColorPicker
-          v-if="settings.aura.style === 'custom'"
-          :model-value="settings.aura.primaryColor ?? '#6366f1'"
-          :label="t('WaterfallPiano.auraPrimaryColor')"
-          @update:model-value="
-            store.updateSetting('aura', 'primaryColor', $event)
-          "
-        />
-        <SettingsColorPicker
-          v-if="
-            settings.aura.style === 'custom' || settings.aura.style === 'dual'
-          "
-          :model-value="settings.aura.backgroundColor ?? '#000000'"
-          :label="t('WaterfallPiano.auraBackgroundColor')"
-          @update:model-value="
-            store.updateSetting('aura', 'backgroundColor', $event)
-          "
-        />
+        <template v-if="settings.aura.enabled">
+          <SettingsRadioGroup
+            :model-value="settings.aura.style"
+            :label="t('WaterfallPiano.auraStyle')"
+            :options="auraStyleOptions"
+            @update:model-value="store.updateSetting('aura', 'style', $event)"
+          />
+          <SettingsRadioGroup
+            :model-value="settings.aura.target"
+            :label="t('WaterfallPiano.auraTarget')"
+            :options="auraTargetOptions"
+            @update:model-value="store.updateSetting('aura', 'target', $event)"
+          />
+
+          <!-- 第 1 层：Aura 区域 -->
+          <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+            Area
+          </div>
+          <SettingsRange
+            :model-value="settings.aura.padding"
+            :label="t('WaterfallPiano.auraPadding')"
+            :min="0"
+            :max="30"
+            :step="1"
+            @update:model-value="store.updateSetting('aura', 'padding', $event)"
+          />
+
+          <!-- 第 2 层：双层光晕 -->
+          <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+            Glow Layers
+          </div>
+          <SettingsRange
+            :model-value="settings.aura.innerBlur"
+            :label="t('WaterfallPiano.auraInnerBlur')"
+            :min="1"
+            :max="30"
+            :step="1"
+            @update:model-value="
+              store.updateSetting('aura', 'innerBlur', $event)
+            "
+          />
+          <SettingsRange
+            :model-value="settings.aura.innerOpacity"
+            :label="t('WaterfallPiano.auraInnerOpacity')"
+            :min="0"
+            :max="100"
+            :step="1"
+            @update:model-value="
+              store.updateSetting('aura', 'innerOpacity', $event)
+            "
+          />
+          <SettingsRange
+            :model-value="settings.aura.outerBlur"
+            :label="t('WaterfallPiano.auraOuterBlur')"
+            :min="4"
+            :max="60"
+            :step="1"
+            @update:model-value="
+              store.updateSetting('aura', 'outerBlur', $event)
+            "
+          />
+          <SettingsRange
+            :model-value="settings.aura.outerOpacity"
+            :label="t('WaterfallPiano.auraOuterOpacity')"
+            :min="0"
+            :max="100"
+            :step="1"
+            @update:model-value="
+              store.updateSetting('aura', 'outerOpacity', $event)
+            "
+          />
+
+          <!-- 第 3 层：动画 -->
+          <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+            Animation
+          </div>
+          <SettingsRange
+            :model-value="settings.aura.duration"
+            :label="t('WaterfallPiano.auraDuration')"
+            :min="1"
+            :max="60"
+            :step="1"
+            @update:model-value="
+              store.updateSetting('aura', 'duration', $event)
+            "
+          />
+          <SettingsRange
+            :model-value="settings.aura.rotationRange"
+            :label="t('WaterfallPiano.auraRotationRange')"
+            :min="90"
+            :max="1080"
+            :step="15"
+            @update:model-value="
+              store.updateSetting('aura', 'rotationRange', $event)
+            "
+          />
+
+          <!-- 第 4 层：光束形状（仅 conic 样式） -->
+          <template v-if="settings.aura.style !== 'glow'">
+            <div
+              class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1"
+            >
+              Beam Shape
+            </div>
+            <SettingsRange
+              :model-value="settings.aura.beamAngle"
+              :label="t('WaterfallPiano.auraBeamAngle')"
+              :min="0"
+              :max="360"
+              :step="5"
+              @update:model-value="
+                store.updateSetting('aura', 'beamAngle', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.beamWidth"
+              :label="t('WaterfallPiano.auraBeamWidth')"
+              :min="10"
+              :max="350"
+              :step="5"
+              @update:model-value="
+                store.updateSetting('aura', 'beamWidth', $event)
+              "
+            />
+          </template>
+
+          <!-- 第 5 层：样式专属参数 -->
+          <template v-if="settings.aura.style === 'glow'">
+            <div
+              class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1"
+            >
+              Glow Settings
+            </div>
+            <SettingsRange
+              :model-value="settings.aura.glowExtent"
+              :label="t('WaterfallPiano.auraGlowExtent')"
+              :min="50"
+              :max="150"
+              :step="5"
+              @update:model-value="
+                store.updateSetting('aura', 'glowExtent', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.glowPeakOpacity"
+              :label="t('WaterfallPiano.auraGlowPeakOpacity')"
+              :min="0"
+              :max="100"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'glowPeakOpacity', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.glowPeakBlur"
+              :label="t('WaterfallPiano.auraGlowPeakBlur')"
+              :min="4"
+              :max="30"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'glowPeakBlur', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.glowAfterPeakOpacity"
+              :label="t('WaterfallPiano.auraGlowAfterPeakOpacity')"
+              :min="0"
+              :max="100"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'glowAfterPeakOpacity', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.glowAfterPeakBlur"
+              :label="t('WaterfallPiano.auraGlowAfterPeakBlur')"
+              :min="10"
+              :max="40"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'glowAfterPeakBlur', $event)
+              "
+            />
+          </template>
+
+          <template v-if="settings.aura.style === 'rainbow'">
+            <div
+              class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1"
+            >
+              Rainbow Settings
+            </div>
+            <SettingsRange
+              :model-value="settings.aura.rainbowMargin"
+              :label="t('WaterfallPiano.auraRainbowMargin')"
+              :min="0"
+              :max="50"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'rainbowMargin', $event)
+              "
+            />
+          </template>
+
+          <template v-if="settings.aura.style === 'dual'">
+            <div
+              class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1"
+            >
+              Dual Settings
+            </div>
+            <SettingsRange
+              :model-value="settings.aura.dualOffRatio"
+              :label="t('WaterfallPiano.auraDualOffRatio')"
+              :min="0"
+              :max="80"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'dualOffRatio', $event)
+              "
+            />
+            <SettingsRange
+              :model-value="settings.aura.dualOnRatio"
+              :label="t('WaterfallPiano.auraDualOnRatio')"
+              :min="10"
+              :max="90"
+              :step="1"
+              @update:model-value="
+                store.updateSetting('aura', 'dualOnRatio', $event)
+              "
+            />
+          </template>
+
+          <!-- 第 6 层：颜色 -->
+          <template v-if="settings.aura.style === 'custom'">
+            <div
+              class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1"
+            >
+              Colors
+            </div>
+            <SettingsColorPicker
+              :model-value="settings.aura.primaryColor ?? '#6366f1'"
+              :label="t('WaterfallPiano.auraPrimaryColor')"
+              @update:model-value="
+                store.updateSetting('aura', 'primaryColor', $event)
+              "
+            />
+            <SettingsColorPicker
+              :model-value="settings.aura.backgroundColor ?? '#000000'"
+              :label="t('WaterfallPiano.auraBackgroundColor')"
+              @update:model-value="
+                store.updateSetting('aura', 'backgroundColor', $event)
+              "
+            />
+          </template>
+        </template>
       </SettingsCollapse>
 
       <SettingsCollapse

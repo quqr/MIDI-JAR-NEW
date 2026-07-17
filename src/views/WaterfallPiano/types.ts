@@ -51,16 +51,46 @@ export interface HitLineConfig {
   thickness: number;
 }
 
-/** Aura 发光效果配置 */
+/** Aura 发光效果配置 — 全部变量对标 DaisyUI CSS */
 export interface AuraConfig {
   enabled: boolean; // 是否启用 Aura
   style: AuraStyle; // Aura 样式
   target: AuraTarget; // 应用场景
-  intensity: number; // 发光强度 (0-100)
-  radius: number; // 发光半径 (px, 0-30)
-  animationSpeed: number; // 动画速度 (0.1-3.0)
+
+  // ── 第 1 层：Aura 区域（--aura-padding） ──
+  padding: number; // 发光范围 (px, 0-30, default: 2)
+
+  // ── 第 2 层：双层光晕（::before / ::after） ──
+  innerBlur: number; // 内层模糊 (px, 1-30, default: 4)
+  innerOpacity: number; // 内层亮度 (%, 0-100, default: 70)
+  outerBlur: number; // 外层模糊 (px, 4-60, default: 16)
+  outerOpacity: number; // 外层亮度 (%, 0-100, default: 30)
+
+  // ── 第 3 层：动画（@keyframes aura） ──
+  duration: number; // 旋转周期 (s, 1-60, default: 6)
+  rotationRange: number; // 旋转范围 (deg, 90-1080, default: 360)
+
+  // ── 第 4 层：光束形状（conic-gradient 参数） ──
+  beamAngle: number; // 光束起始角 (deg, 0-360, default: 225)
+  beamWidth: number; // 光束宽度 (deg, 10-350, default: 135)
+
+  // ── 第 5 层：Glow 样式专属 ──
+  glowExtent: number; // 径向渐变截止点 (%, 50-150, default: 90)
+  glowPeakOpacity: number; // glow ::before 峰值透明度 (%, 0-100, default: 100)
+  glowPeakBlur: number; // glow ::before 峰值模糊 (px, 4-30, default: 12)
+  glowAfterPeakOpacity: number; // glow ::after 峰值透明度 (%, 0-100, default: 60)
+  glowAfterPeakBlur: number; // glow ::after 峰值模糊 (px, 10-40, default: 24)
+
+  // ── 第 5 层：Rainbow 样式专属 ──
+  rainbowMargin: number; // 彩虹透明边缘 (%, 0-50, default: 10)
+
+  // ── 第 5 层：Dual 样式专属 ──
+  dualOffRatio: number; // Dual 关闭占空比 (%, 0-80, default: 40)
+  dualOnRatio: number; // Dual 开启占空比 (%, 10-90, default: 50)
+
+  // ── 第 6 层：颜色 ──
   primaryColor?: string; // 主色（仅 custom 模式）
-  backgroundColor?: string; // 背景色（仅 custom 和 dual 模式）
+  backgroundColor?: string; // 背景色（仅 dual 和 custom 模式）
 }
 
 /** 瀑布流音符方块的视觉与行为配置 */
