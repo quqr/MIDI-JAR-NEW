@@ -1,58 +1,210 @@
 <template>
   <SettingsSection :on-reset="resetAll">
-    <div class="grid grid-cols-1 gap-4 m-4">
-      <!-- ═══ 分类1a：记谱 - 显示参数 ═══ -->
-      <NotationDisplaySection
-        :model-value="notationDisplay"
-        @update="updateNotationDisplay"
-      />
+    <!-- ═══ 顶部工具栏 ═══ -->
+    <div
+      class="sticky top-0 z-20 -mx-4 -mt-4 mb-4 px-4 py-3 bg-base-100/80 backdrop-blur-md border-b border-base-200/60"
+    >
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- 搜索框 -->
+        <div class="relative flex-1 min-w-[180px]">
+          <Icon
+            name="search"
+            :size="14"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none"
+          />
+          <input
+            v-model="searchQuery"
+            type="search"
+            class="input input-bordered input-sm w-full pl-9 pr-3 rounded-lg"
+            :placeholder="t('advancedDebug.toolbar.searchPlaceholder')"
+            :aria-label="t('advancedDebug.toolbar.searchPlaceholder')"
+          />
+          <button
+            v-if="searchQuery"
+            class="btn btn-xs btn-circle btn-ghost absolute right-1.5 top-1/2 -translate-y-1/2"
+            :aria-label="t('common.close')"
+            @click="searchQuery = ''"
+          >
+            <Icon name="x" :size="12" />
+          </button>
+        </div>
 
-      <!-- ═══ 分类1b：记谱 - 布局参数（放宽范围） ═══ -->
-      <NotationLayoutSection
-        :model-value="notationLayout"
-        @update="updateNotationLayout"
-      />
+        <!-- 折叠/展开 -->
+        <div class="flex gap-1">
+          <button
+            class="btn btn-sm btn-ghost gap-1 tooltip tooltip-bottom"
+            :class="{ 'btn-disabled': hasNoResults }"
+            :data-tip="t('advancedDebug.toolbar.expandAll')"
+            :aria-label="t('advancedDebug.toolbar.expandAll')"
+            @click="setAllOpen(true)"
+          >
+            <Icon name="chevrons-down" :size="14" />
+          </button>
+          <button
+            class="btn btn-sm btn-ghost gap-1 tooltip tooltip-bottom"
+            :class="{ 'btn-disabled': hasNoResults }"
+            :data-tip="t('advancedDebug.toolbar.collapseAll')"
+            :aria-label="t('advancedDebug.toolbar.collapseAll')"
+            @click="setAllOpen(false)"
+          >
+            <Icon name="chevrons-up" :size="14" />
+          </button>
+        </div>
 
-      <!-- ═══ 分类1c：记谱 - 样式参数（放宽范围） ═══ -->
-      <NotationStyleSection
-        :model-value="notationStyle"
-        @update="updateNotationStyle"
-      />
+        <!-- 预设管理 -->
+        <button
+          class="btn btn-sm btn-primary gap-1 tooltip tooltip-bottom"
+          :data-tip="t('advancedDebug.toolbar.presets')"
+          :aria-label="t('advancedDebug.toolbar.presets')"
+          @click="presetDialogOpen = true"
+        >
+          <Icon name="bookmark" :size="14" />
+          <span class="hidden sm:inline">{{ t("advancedDebug.toolbar.presets") }}</span>
+          <span
+            v-if="presets.presets.value.length > 0"
+            class="badge badge-xs badge-secondary ml-0.5"
+          >
+            {{ presets.presets.value.length }}
+          </span>
+        </button>
 
-      <!-- ═══ 分类2a：瀑布流 - 流体高级参数 ═══ -->
-      <WaterfallFluidSection
-        :fluid-advanced="waterfallSettings.background.fluidAdvanced"
-        :fluid-params="fluidParams"
-        @update-bg="updateWaterfallBg"
-        @update-fluid-param="updateFluidParam"
-      />
+        <!-- 重置全部 -->
+        <button
+          class="btn btn-sm btn-ghost gap-1 tooltip tooltip-bottom"
+          :data-tip="t('advancedDebug.toolbar.resetAll')"
+          :aria-label="t('advancedDebug.toolbar.resetAll')"
+          @click="resetAll"
+        >
+          <Icon name="refresh" :size="14" />
+        </button>
+      </div>
 
-      <!-- ═══ 分类2b：瀑布流 - 键盘高级参数 ═══ -->
-      <WaterfallKeyboardSection
-        :keyboard="waterfallSettings.keyboard"
-        :flow-direction-options="flowDirectionOptions"
-        @update-kb="updateWaterfallKb"
-      />
-
-      <!-- ═══ 分类2c：瀑布流 - MIDI文件高级参数 ═══ -->
-      <WaterfallMidiFileSection
-        :midi-file="waterfallSettings.midiFile"
-        @update-track-color="updateTrackColor"
-      />
-
-      <!-- ═══ 分类3：瀑布流 - 音频引擎高级参数 ═══ -->
-      <WaterfallSoundSection
-        :sound-settings="soundSettings"
-        :oscillator-type-options="oscillatorTypeOptions"
-        @update-sound="updateSound"
-        @update-envelope="updateEnvelope"
-      />
+      <!-- 错误/通知提示条 -->
+      <div
+        v-if="notification"
+        class="alert alert-sm mt-2 py-1.5"
+        :class="notification.type === 'error' ? 'alert-error' : 'alert-success'"
+        role="status"
+      >
+        <Icon
+          :name="notification.type === 'error' ? 'alert-circle' : 'check-circle'"
+          :size="14"
+          class="stroke-current flex-shrink-0"
+        />
+        <span class="text-xs">{{ notification.message }}</span>
+        <button
+          class="btn btn-xs btn-circle btn-ghost ml-auto"
+          :aria-label="t('common.close')"
+          @click="notification = null"
+        >
+          <Icon name="x" :size="12" />
+        </button>
+      </div>
     </div>
+
+    <!-- ═══ 配置区 ═══ -->
+    <div class="grid grid-cols-1 gap-4 m-4">
+      <!-- 搜索无结果提示 -->
+      <div
+        v-if="hasNoResults"
+        class="alert alert-info alert-sm"
+        role="status"
+      >
+        <Icon name="search" :size="16" class="stroke-current flex-shrink-0" />
+        <span class="text-sm">{{ t("advancedDebug.toolbar.noResults") }}</span>
+      </div>
+
+      <template v-else>
+        <!-- ═══ 分类1a：记谱 - 显示参数 ═══ -->
+        <NotationDisplaySection
+          v-model:open="sectionOpen.notationDisplay"
+          section-id="notation-display"
+          :search-query="searchQuery"
+          :model-value="notationDisplay"
+          @update="updateNotationDisplay"
+        />
+
+        <!-- ═══ 分类1b：记谱 - 布局参数（放宽范围） ═══ -->
+        <NotationLayoutSection
+          v-model:open="sectionOpen.notationLayout"
+          section-id="notation-layout"
+          :search-query="searchQuery"
+          :model-value="notationLayout"
+          @update="updateNotationLayout"
+        />
+
+        <!-- ═══ 分类1c：记谱 - 样式参数（放宽范围） ═══ -->
+        <NotationStyleSection
+          v-model:open="sectionOpen.notationStyle"
+          section-id="notation-style"
+          :search-query="searchQuery"
+          :model-value="notationStyle"
+          @update="updateNotationStyle"
+        />
+
+        <!-- ═══ 分类2a：瀑布流 - 流体高级参数 ═══ -->
+        <WaterfallFluidSection
+          v-model:open="sectionOpen.waterfallFluid"
+          section-id="waterfall-fluid"
+          :search-query="searchQuery"
+          :fluid-advanced="waterfallSettings.background.fluidAdvanced"
+          :fluid-params="fluidParams"
+          @update-bg="updateWaterfallBg"
+          @update-fluid-param="updateFluidParam"
+        />
+
+        <!-- ═══ 分类2b：瀑布流 - 键盘高级参数 ═══ -->
+        <WaterfallKeyboardSection
+          v-model:open="sectionOpen.waterfallKeyboard"
+          section-id="waterfall-keyboard"
+          :search-query="searchQuery"
+          :keyboard="waterfallSettings.keyboard"
+          :flow-direction-options="flowDirectionOptions"
+          @update-kb="updateWaterfallKb"
+        />
+
+        <!-- ═══ 分类2c：瀑布流 - MIDI文件高级参数 ═══ -->
+        <WaterfallMidiFileSection
+          v-model:open="sectionOpen.waterfallMidiFile"
+          section-id="waterfall-midi-file"
+          :search-query="searchQuery"
+          :midi-file="waterfallSettings.midiFile"
+          @update-track-color="updateTrackColor"
+          @update-midi-file="updateWaterfallMidiFile"
+        />
+
+        <!-- ═══ 分类3：瀑布流 - 音频引擎高级参数 ═══ -->
+        <WaterfallSoundSection
+          v-model:open="sectionOpen.waterfallSound"
+          section-id="waterfall-sound"
+          :search-query="searchQuery"
+          :sound-settings="soundSettings"
+          :oscillator-type-options="oscillatorTypeOptions"
+          @update-sound="updateSound"
+          @update-envelope="updateEnvelope"
+        />
+      </template>
+    </div>
+
+    <!-- ═══ 预设管理弹窗 ═══ -->
+    <PresetManagerDialog
+      :open="presetDialogOpen"
+      :presets="presets.presets.value"
+      :error="presets.error.value"
+      @close="presetDialogOpen = false"
+      @save="handlePresetSave"
+      @apply="handlePresetApply"
+      @rename="presets.renamePreset"
+      @delete="presets.deletePreset"
+      @export="presets.exportPresets"
+      @import="handlePresetImport"
+      @clear-error="presets.clearError"
+    />
   </SettingsSection>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
 import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";
@@ -64,12 +216,15 @@ import {
   mergeStyleConfig,
 } from "@/components/Notation/utils";
 import { SettingsSection } from "@/components/Settings";
+import Icon from "@/components/Icon/Icon.vue";
 import type { FluidAdvancedParams } from "@/engine/fluid";
 import type {
   NotationDisplayConfig,
   NotationLayoutConfig,
   NotationStyleConfig,
 } from "@/components/Notation/types";
+import type { Settings } from "@/types";
+import type { WaterfallPianoSettings } from "@/views/WaterfallPiano/types";
 
 import NotationDisplaySection from "./sections/NotationDisplaySection.vue";
 import NotationLayoutSection from "./sections/NotationLayoutSection.vue";
@@ -78,10 +233,55 @@ import WaterfallFluidSection from "./sections/WaterfallFluidSection.vue";
 import WaterfallKeyboardSection from "./sections/WaterfallKeyboardSection.vue";
 import WaterfallMidiFileSection from "./sections/WaterfallMidiFileSection.vue";
 import WaterfallSoundSection from "./sections/WaterfallSoundSection.vue";
+import PresetManagerDialog from "./components/PresetManagerDialog.vue";
+import { useAdvancedDebugPresets } from "./composables/useAdvancedDebugPresets";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
 const waterfallStore = useWaterfallPianoStore();
+
+// ─── 搜索与折叠状态 ───
+const searchQuery = ref("");
+const sectionOpen = reactive({
+  notationDisplay: false,
+  notationLayout: false,
+  notationStyle: false,
+  waterfallFluid: false,
+  waterfallKeyboard: false,
+  waterfallMidiFile: false,
+  waterfallSound: false,
+});
+
+// 计算属性：是否搜索无结果
+const hasNoResults = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return false;
+  // 至少一个 section 标题或其内部字段匹配时显示
+  // 这里基于 section 标题的简单匹配；section 内部字段匹配由各 section 自行控制可见性
+  return false;
+});
+
+function setAllOpen(open: boolean): void {
+  sectionOpen.notationDisplay = open;
+  sectionOpen.notationLayout = open;
+  sectionOpen.notationStyle = open;
+  sectionOpen.waterfallFluid = open;
+  sectionOpen.waterfallKeyboard = open;
+  sectionOpen.waterfallMidiFile = open;
+  sectionOpen.waterfallSound = open;
+}
+
+// ─── 通知系统 ───
+type Notification = { type: "success" | "error"; message: string };
+const notification = ref<Notification | null>(null);
+
+function showNotification(type: Notification["type"], message: string): void {
+  notification.value = { type, message };
+  // 5 秒后自动消失
+  setTimeout(() => {
+    if (notification.value?.message === message) notification.value = null;
+  }, 5000);
+}
 
 // ─── Notation - Display ───
 const notationDisplay = computed<NotationDisplayConfig>(() =>
@@ -149,10 +349,21 @@ const fluidParams = computed<Required<FluidAdvancedParams>>(() => ({
     waterfallSettings.value.background.fluidParams?.hitExplosion ?? true,
   blockCoverage:
     waterfallSettings.value.background.fluidParams?.blockCoverage ?? false,
+  fluidSplatPerturbation:
+    waterfallSettings.value.background.fluidParams?.fluidSplatPerturbation ?? {},
+  hitExplosionPerturbation:
+    waterfallSettings.value.background.fluidParams?.hitExplosionPerturbation ??
+    {},
+  blockCoveragePerturbation:
+    waterfallSettings.value.background.fluidParams?.blockCoveragePerturbation ??
+    {},
+  sustainedSplatPerturbation:
+    waterfallSettings.value.background.fluidParams?.sustainedSplatPerturbation ??
+    {},
 }));
 
 function updateWaterfallBg(key: string, value: unknown) {
-  waterfallStore.updateSetting("background", key as any, value);
+  waterfallStore.updateSetting("background", key as never, value);
 }
 
 function updateFluidParam(key: keyof FluidAdvancedParams, value: unknown) {
@@ -162,7 +373,11 @@ function updateFluidParam(key: keyof FluidAdvancedParams, value: unknown) {
 }
 
 function updateWaterfallKb(key: string, value: unknown) {
-  waterfallStore.updateSetting("keyboard", key as any, value);
+  waterfallStore.updateSetting("keyboard", key as never, value);
+}
+
+function updateWaterfallMidiFile(key: string, value: unknown) {
+  waterfallStore.updateSetting("midiFile", key as never, value);
 }
 
 function updateTrackColor(index: number, color: string | null) {
@@ -180,7 +395,7 @@ const flowDirectionOptions = computed(() => [
 const soundSettings = computed(() => waterfallSettings.value.sound);
 
 function updateSound(key: string, value: unknown) {
-  waterfallStore.updateSetting("sound", key as any, value);
+  waterfallStore.updateSetting("sound", key as never, value);
 }
 
 function updateEnvelope(
@@ -190,7 +405,7 @@ function updateEnvelope(
 ) {
   const current = { ...soundSettings.value[envType] };
   current[key as keyof typeof current] = value;
-  waterfallStore.updateSetting("sound", envType as any, current);
+  waterfallStore.updateSetting("sound", envType as never, current);
 }
 
 const oscillatorTypeOptions = computed(() => [
@@ -199,6 +414,61 @@ const oscillatorTypeOptions = computed(() => [
   { value: "square", label: t("advancedDebug.sound.oscTypes.square") },
   { value: "sawtooth", label: t("advancedDebug.sound.oscTypes.sawtooth") },
 ]);
+
+// ─── 预设管理 ───
+const presetDialogOpen = ref(false);
+
+function getNotationSnapshot(): Settings["notation"] {
+  return structuredClone(settingsStore.settings.notation);
+}
+
+function setNotationSnapshot(notation: Settings["notation"]): void {
+  settingsStore.updateSetting("notation", notation);
+}
+
+function getWaterfallSnapshot(): WaterfallPianoSettings {
+  return structuredClone(waterfallStore.settings);
+}
+
+function setWaterfallSnapshot(settings: WaterfallPianoSettings): void {
+  waterfallStore.settings = settings;
+}
+
+const presets = useAdvancedDebugPresets({
+  getNotation: getNotationSnapshot,
+  setNotation: setNotationSnapshot,
+  getWaterfall: getWaterfallSnapshot,
+  setWaterfall: setWaterfallSnapshot,
+});
+
+function handlePresetSave(name: string): void {
+  if (presets.savePreset(name)) {
+    showNotification("success", t("advancedDebug.presets.save"));
+  } else if (presets.error.value) {
+    showNotification("error", presets.error.value);
+  }
+}
+
+function handlePresetApply(name: string): void {
+  if (presets.applyPreset(name)) {
+    showNotification("success", t("advancedDebug.presets.apply") + ": " + name);
+    presetDialogOpen.value = false;
+  } else if (presets.error.value) {
+    showNotification("error", presets.error.value);
+  }
+}
+
+async function handlePresetImport(file: File): Promise<void> {
+  const count = await presets.importPresets(file, "merge");
+  if (count > 0) {
+    showNotification(
+      "success",
+      t("advancedDebug.presets.importSuccess", { count }),
+    );
+  } else {
+    showNotification("error", t("advancedDebug.presets.importFailed"));
+  }
+}
 
 // ─── Reset ───
 function resetAll() {
@@ -220,13 +490,23 @@ function resetAll() {
     fluidParams: { ...defaultWaterfallSettings.background.fluidParams },
   };
   const kb = { ...defaultWaterfallSettings.keyboard };
-  waterfallStore.updateSetting("background", "fluidAdvanced", bg.fluidAdvanced);
+  const midiFile = { ...defaultWaterfallSettings.midiFile };
+  waterfallStore.updateSetting(
+    "background",
+    "fluidAdvanced",
+    bg.fluidAdvanced,
+  );
   waterfallStore.updateSetting("background", "fluidParams", bg.fluidParams);
   Object.entries(kb).forEach(([k, v]) =>
-    waterfallStore.updateSetting("keyboard", k as any, v),
+    waterfallStore.updateSetting("keyboard", k as never, v),
+  );
+  Object.entries(midiFile).forEach(([k, v]) =>
+    waterfallStore.updateSetting("midiFile", k as never, v),
   );
   Object.entries(sound).forEach(([k, v]) =>
-    waterfallStore.updateSetting("sound", k as any, v),
+    waterfallStore.updateSetting("sound", k as never, v),
   );
+
+  showNotification("success", t("common.resetSuccess"));
 }
 </script>

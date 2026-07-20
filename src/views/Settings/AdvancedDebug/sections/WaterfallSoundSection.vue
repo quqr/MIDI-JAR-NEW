@@ -1,8 +1,11 @@
 <template>
   <SettingsCollapse
+    v-if="isVisible"
     :title="t('advancedDebug.sound.title')"
     icon="speaker"
-    :default-open="false"
+    :open="isOpen"
+    :section-id="sectionId"
+    @update:open="$emit('update:open', $event)"
   >
     <!-- 基础参数 -->
     <SettingsRange
@@ -156,6 +159,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   SettingsCollapse,
@@ -189,10 +193,19 @@ interface SelectOption {
   label: string;
 }
 
-defineProps<{
+interface Props {
   soundSettings: SoundSettings;
   oscillatorTypeOptions: SelectOption[];
-}>();
+  open?: boolean;
+  sectionId?: string;
+  searchQuery?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  open: undefined,
+  sectionId: undefined,
+  searchQuery: "",
+});
 
 const emit = defineEmits<{
   (e: "updateSound", key: string, value: unknown): void;
@@ -202,7 +215,19 @@ const emit = defineEmits<{
     key: string,
     value: number,
   ): void;
+  (e: "update:open", value: boolean): void;
 }>();
 
 const { t } = useI18n();
+
+const isVisible = computed(() => {
+  const q = props.searchQuery.trim().toLowerCase();
+  if (!q) return true;
+  return t("advancedDebug.sound.title").toLowerCase().includes(q);
+});
+
+const isOpen = computed(() => {
+  if (props.searchQuery.trim()) return true;
+  return props.open;
+});
 </script>

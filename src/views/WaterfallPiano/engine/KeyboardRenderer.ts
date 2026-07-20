@@ -45,6 +45,11 @@ export class KeyboardRenderer {
   private activeNotes = new Set<number>();
   private _cachedLayout: KeyboardLayout | null = null;
   private _midiToIndex = new Map<number, number>();
+  /** 离屏 Canvas 缓存静态层（键体、边框、分隔线、标签） */
+  private _staticCache: HTMLCanvasElement | null = null;
+  private _staticCacheCtx: CanvasRenderingContext2D | null = null;
+  private _staticCacheDpr = 1;
+  private _staticCacheDirty = true;
 
   /**
    * 初始化渲染器，绑定 Canvas 元素和全局配置
@@ -56,6 +61,14 @@ export class KeyboardRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.settings = settings;
+    this._staticCacheDirty = true;
+    this.applyRangeFromSettings();
+  }
+
+  /** 更新设置并标记静态缓存为脏 */
+  setSettings(settings: WaterfallPianoSettings): void {
+    this.settings = settings;
+    this._staticCacheDirty = true;
     this.applyRangeFromSettings();
   }
 
@@ -86,6 +99,8 @@ export class KeyboardRenderer {
   resize(width: number, height: number, dpr: number): void {
     this.width = width;
     this.height = height;
+    this._staticCacheDpr = dpr;
+    this._staticCacheDirty = true;
     if (this.canvas) {
       this.canvas.width = Math.max(1, Math.floor(width * dpr));
       this.canvas.height = Math.max(1, Math.floor(height * dpr));
@@ -146,6 +161,7 @@ export class KeyboardRenderer {
 
   invalidateLayout(): void {
     this._cachedLayout = null;
+    this._staticCacheDirty = true;
   }
 
   /**
@@ -225,87 +241,151 @@ export class KeyboardRenderer {
     const ctx = this.ctx;
     const layout = this.getLayout();
     const kb = this.settings.keyboard;
-    ctx.clearRect(0, 0, this.width, this.height);
 
+    ctx.clearRect(0, 0, this.width, this.height);
     if (!kb.visible) return;
 
-    for (let i = 0; i < layout.whiteKeys.length; i++) {
-      const midi = layout.whiteKeys[i];
-      const x = i * layout.whiteKeyWidth;
-      const w = layout.whiteKeyWidth;
-      const isActive = this.activeNotes.has(midi);
-      ctx.fillStyle = isActive ? kb.pressedKeyColor : kb.whiteKeyColor;
-      if (kb.keyCornerRadius > 0) {
-        roundRect(ctx, x, 0, w, this.height, kb.keyCornerRadius);
-        ctx.fill();
-      } else {
-        ctx.fillRect(x, 0, w, this.height);
-      }
-      if (kb.keyBorderWidth > 0) {
-        ctx.strokeStyle = kb.keyBorderColor;
-        ctx.lineWidth = kb.keyBorderWidth;
+    // ── 绘制静态底图（从离屏缓存） ──
+    if (this._staticCacheDirty) {
+      this.rebuildStaticCache(layout, kb);
+    }
+    if (this._staticCache) {
+      ctx.drawImage(this._staticCache, 0, 0, this.width, this.height);
+    }
+
+    // ── 仅绘制动态高亮层（按下的键） ──
+    if (this.activeNotes.size > 0) {
+      // 高亮白键
+      for (let i = 0; i < layout.whiteKeys.length; i++) {
+        const midi = layout.whiteKeys[i];
+        if (!this.activeNotes.has(midi)) continue;
+        const x = i * layout.whiteKeyWidth;
+        const w = layout.whiteKeyWidth;
+        ctx.fillStyle = kb.pressedKeyColor;
         if (kb.keyCornerRadius > 0) {
           roundRect(ctx, x, 0, w, this.height, kb.keyCornerRadius);
-          ctx.stroke();
+          ctx.fill();
         } else {
-          ctx.strokeRect(x, 0, w, this.height);
+          ctx.fillRect(x, 0, w, this.height);
+        }
+      }
+      // 高亮黑键
+      for (let m = this.from; m <= this.to; m++) {
+        if (!isBlackKey(m) || !this.activeNotes.has(m)) continue;
+        const x = this.midiToX(m);
+        const bx = x - layout.blackKeyWidth / 2;
+        const bw = layout.blackKeyWidth;
+        const bh = layout.blackKeyHeight;
+        ctx.fillStyle = kb.pressedKeyColor;
+        if (kb.keyCornerRadius > 0) {
+          roundRect(ctx, bx, 0, bw, bh, kb.keyCornerRadius);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bx, 0, bw, bh);
+        }
+      }
+    }
+  }
+
+  /** 重建离屏 Canvas 缓存：静态键体、边框、分隔线、标签 */
+  private rebuildStaticCache(
+    layout: KeyboardLayout,
+    kb: WaterfallPianoSettings["keyboard"],
+  ): void {
+    const dpr = this._staticCacheDpr || 1;
+    // 创建或调整离屏 Canvas
+    if (
+      !this._staticCache ||
+      this._staticCache.width !== Math.max(1, Math.floor(this.width * dpr)) ||
+      this._staticCache.height !== Math.max(1, Math.floor(this.height * dpr))
+    ) {
+      this._staticCache = document.createElement("canvas");
+      this._staticCache.width = Math.max(1, Math.floor(this.width * dpr));
+      this._staticCache.height = Math.max(1, Math.floor(this.height * dpr));
+      this._staticCacheCtx = this._staticCache.getContext("2d");
+    }
+    const sCtx = this._staticCacheCtx;
+    if (!sCtx) return;
+
+    sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sCtx.clearRect(0, 0, this.width, this.height);
+
+    // 白键
+    for (let i = 0; i < layout.whiteKeys.length; i++) {
+      const x = i * layout.whiteKeyWidth;
+      const w = layout.whiteKeyWidth;
+      sCtx.fillStyle = kb.whiteKeyColor;
+      if (kb.keyCornerRadius > 0) {
+        roundRect(sCtx, x, 0, w, this.height, kb.keyCornerRadius);
+        sCtx.fill();
+      } else {
+        sCtx.fillRect(x, 0, w, this.height);
+      }
+      if (kb.keyBorderWidth > 0) {
+        sCtx.strokeStyle = kb.keyBorderColor;
+        sCtx.lineWidth = kb.keyBorderWidth;
+        if (kb.keyCornerRadius > 0) {
+          roundRect(sCtx, x, 0, w, this.height, kb.keyCornerRadius);
+          sCtx.stroke();
+        } else {
+          sCtx.strokeRect(x, 0, w, this.height);
         }
       }
     }
 
+    // 分隔线
     if (kb.separatorEnabled && kb.separatorThickness > 0) {
-      ctx.strokeStyle = kb.separatorColor;
-      ctx.lineWidth = kb.separatorThickness;
-      ctx.beginPath();
-      ctx.moveTo(0, this.height - kb.separatorThickness / 2);
-      ctx.lineTo(this.width, this.height - kb.separatorThickness / 2);
-      ctx.stroke();
+      sCtx.strokeStyle = kb.separatorColor;
+      sCtx.lineWidth = kb.separatorThickness;
+      sCtx.beginPath();
+      sCtx.moveTo(0, this.height - kb.separatorThickness / 2);
+      sCtx.lineTo(this.width, this.height - kb.separatorThickness / 2);
+      sCtx.stroke();
     }
 
-    ctx.fillStyle = kb.blackKeyColor;
+    // 黑键
     for (let m = this.from; m <= this.to; m++) {
       if (!isBlackKey(m)) continue;
       const x = this.midiToX(m);
-      const isActive = this.activeNotes.has(m);
-      ctx.fillStyle = isActive ? kb.pressedKeyColor : kb.blackKeyColor;
       const bx = x - layout.blackKeyWidth / 2;
-      const by = 0;
       const bw = layout.blackKeyWidth;
       const bh = layout.blackKeyHeight;
+      sCtx.fillStyle = kb.blackKeyColor;
       if (kb.keyCornerRadius > 0) {
-        roundRect(ctx, bx, by, bw, bh, kb.keyCornerRadius);
-        ctx.fill();
+        roundRect(sCtx, bx, 0, bw, bh, kb.keyCornerRadius);
+        sCtx.fill();
       } else {
-        ctx.fillRect(bx, by, bw, bh);
+        sCtx.fillRect(bx, 0, bw, bh);
       }
     }
 
+    // 标签
     if (kb.keyLabel !== "none" || kb.showNoteNames) {
       const effectiveLabel =
         kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      // 白键标签
-      ctx.fillStyle = "#666";
-      ctx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
+      sCtx.textAlign = "center";
+      sCtx.textBaseline = "bottom";
+      sCtx.fillStyle = "#666";
+      sCtx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
         const label = this.labelFor(midi, effectiveLabel);
         if (!label) continue;
         const x = (i + 0.5) * layout.whiteKeyWidth;
-        ctx.fillText(label, x, this.height - 4);
+        sCtx.fillText(label, x, this.height - 4);
       }
-      // 黑键标签
-      ctx.fillStyle = "#999";
-      ctx.font = `${Math.max(7, layout.blackKeyWidth * 0.35)}px sans-serif`;
+      sCtx.fillStyle = "#999";
+      sCtx.font = `${Math.max(7, layout.blackKeyWidth * 0.35)}px sans-serif`;
       for (let m = this.from; m <= this.to; m++) {
         if (!isBlackKey(m)) continue;
         const label = this.labelFor(m, effectiveLabel);
         if (!label) continue;
         const bx = this.midiToX(m);
-        ctx.fillText(label, bx, layout.blackKeyHeight - 4);
+        sCtx.fillText(label, bx, layout.blackKeyHeight - 4);
       }
     }
+
+    this._staticCacheDirty = false;
   }
 
   /**

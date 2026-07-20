@@ -49,6 +49,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     staffVisible: false,
     synthesiaFlowDirection: "down",
     showNoteNames: false,
+    defaultVelocity: 90,
   },
   midiFile: {
     playbackSpeed: 1,
@@ -65,6 +66,8 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     ],
     loop: false,
     showNoteNames: false,
+    rightHandTrackIdx: 0,
+    leftHandTrackIdx: 1,
   },
   sound: {
     volume: 0.8,
@@ -153,6 +156,14 @@ export const KEYBOARD_RANGES: Record<string, { from: number; to: number }> = {
 
 // ─── 响应式断点 ───
 export const NARROW_BREAKPOINT = 768;
+
+// ─── 播放速度共享范围（避免 MidiFileSection 与 MidiDrawer 不一致） ───
+export const PLAYBACK_SPEED = {
+  min: 0.25,
+  max: 2,
+  step: 0.05,
+  decimals: 1,
+} as const;
 
 // ─── 窄屏收束范围（C2-C6，49 键） ───
 export const NARROW_RANGE = { from: 36, to: 84 };

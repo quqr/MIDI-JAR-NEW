@@ -3,6 +3,7 @@ import {
   shallowRef,
   onMounted,
   onUnmounted,
+  watch,
   type ComputedRef,
   type Ref,
   type ShallowRef,
@@ -268,14 +269,25 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
   }
 
   // ── 播放源与实时 MIDI 输入的挂载/卸载 ──
+  // onProgress 节流：引擎 setTransportTime 每帧必须调用（状态同步），
+  // 但 Vue ref 写入节流至 10Hz，避免 60fps 重渲染风暴
+  let lastRefSyncTime = 0;
+  const REF_SYNC_INTERVAL = 100; // 10Hz
+
+  function throttledProgressSync(current: number, dur: number): void {
+    engineRef.value?.noteBlockSystemRef.setTransportTime(current);
+    const now = performance.now();
+    if (now - lastRefSyncTime >= REF_SYNC_INTERVAL) {
+      lastRefSyncTime = now;
+      currentTime.value = current;
+      if (dur > 0) duration.value = dur;
+    }
+  }
+
   onMounted(() => {
     player = new MidiFilePlayer();
     player.setCallbacks({
-      onProgress: (current, dur) => {
-        currentTime.value = current;
-        if (dur > 0) duration.value = dur;
-        engineRef.value?.noteBlockSystemRef.setTransportTime(current);
-      },
+      onProgress: throttledProgressSync,
       onScheduledNotesReady: (notes) => {
         logger.info(`Scheduled notes ready: ${notes.length}`);
         engineRef.value?.noteBlockSystemRef.scheduleSynthesiaNotes(notes);
@@ -301,11 +313,7 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
     recorder = new Recorder();
     recorderRef.value = recorder;
     recorder.setCallbacks({
-      onProgress: (current, dur) => {
-        currentTime.value = current;
-        if (dur > 0) duration.value = dur;
-        engineRef.value?.noteBlockSystemRef.setTransportTime(current);
-      },
+      onProgress: throttledProgressSync,
       onScheduledNotesReady: (notes) => {
         engineRef.value?.noteBlockSystemRef.scheduleSynthesiaNotes(notes);
       },
@@ -321,7 +329,24 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
         engineRef.value?.setSustain(enabled);
       },
     });
+
+    // 初始化左右手轨道索引推断配置
+    player.setHandTrackIndices({
+      right: store.settings.midiFile.rightHandTrackIdx,
+      left: store.settings.midiFile.leftHandTrackIdx,
+    });
   });
+
+  // 监听左右手轨道索引变化，同步到 player
+  watch(
+    () => [
+      store.settings.midiFile.rightHandTrackIdx,
+      store.settings.midiFile.leftHandTrackIdx,
+    ],
+    ([right, left]) => {
+      player?.setHandTrackIndices({ right, left });
+    },
+  );
 
   onUnmounted(() => {
     player?.dispose();

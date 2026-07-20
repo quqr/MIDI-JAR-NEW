@@ -48,12 +48,14 @@ export const noteToVex = (note: string): VexNote | null => {
  * @param notes - 音符字符串列表
  * @param clef - 目标谱号
  * @param filterClef - 是否按谱号过滤音符，默认为 true
+ * @param duration - VexFlow 音符时值（"1"=全音符, "2"=二分音符, "4"=四分音符等），默认为 "1"
  * @returns 包含音符的 Voice 对象，无有效音符时返回 null
  */
 export const getVoice = (
   notes: string[],
   clef: "treble" | "bass",
   filterClef = true,
+  duration: string = "1",
 ) => {
   const voice = new Voice();
 
@@ -69,7 +71,7 @@ export const getVoice = (
   if (voiceNotes.length) {
     const staveNote = new StaveNote({
       keys: voiceNotes.map((vn) => vn.key),
-      duration: "1",
+      duration,
       clef,
     });
 

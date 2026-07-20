@@ -114,9 +114,11 @@ export class RealtimeModeController {
       } else {
         b.height += pps * dt;
       }
-      // 方块底部离开屏幕顶部时移除
+      // 方块底部离开屏幕顶部时 swap-remove 回收（O(1) 替代 splice O(n)）
       if (b.releasing && b.y < 0) {
-        active.splice(i, 1);
+        const last = active.length - 1;
+        if (i < last) active[i] = active[last];
+        active.pop();
         this.pool.release(b);
       }
     }

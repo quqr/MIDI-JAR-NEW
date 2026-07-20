@@ -619,6 +619,30 @@
     }
   },
   "advancedDebug": {
+    "toolbar": {
+      "searchPlaceholder": "Search parameters...",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "presets": "Presets",
+      "resetAll": "Reset All",
+      "noResults": "No matching parameters found"
+    },
+    "presets": {
+      "title": "Preset Manager",
+      "saveCurrent": "Save current configuration as preset",
+      "namePlaceholder": "Preset name",
+      "save": "Save",
+      "list": "Saved presets",
+      "empty": "No presets yet. Save current configuration to quickly restore later",
+      "apply": "Apply",
+      "rename": "Rename",
+      "delete": "Delete",
+      "export": "Export",
+      "import": "Import",
+      "confirmDelete": "Delete preset \"{name}\"?",
+      "importSuccess": "Imported {count} presets",
+      "importFailed": "Import failed: invalid file format"
+    },
     "notation": {
       "display": {
         "title": "Notation - Display",
@@ -628,7 +652,9 @@
         "barlines": "Barlines",
         "timeSignature": "Time Signature",
         "noteNames": "Note Names",
-        "staffLines": "Staff Lines"
+        "staffLines": "Staff Lines",
+        "filterClef": "Filter Notes by Clef",
+        "filterClefHint": "Off: render all notes on single staff. On: only render notes matching the clef"
       },
       "layout": {
         "title": "Notation - Layout",
@@ -643,7 +669,11 @@
         "keySignatureWidthPerAlteration": "Key Signature Width Factor",
         "keySignatureWidthPerAlterationHint": "Width per accidental (px), extended range beyond 200",
         "maxScale": "Max Scale",
-        "maxScaleHint": "Extended range beyond 2.0x limit"
+        "maxScaleHint": "Extended range beyond 2.0x limit",
+        "noteStartXOffset": "Note Start X Offset",
+        "noteStartXOffsetHint": "Horizontal offset of notes relative to clef (px)",
+        "minScaleRatio": "Min Scale Ratio",
+        "minScaleRatioHint": "Lower bound of scale relative to container width (0-1)"
       },
       "style": {
         "title": "Notation - Style",
@@ -651,7 +681,9 @@
         "staffLineColor": "Staff Line Color",
         "noteColor": "Note Color",
         "noteHighlightColor": "Note Highlight Color",
-        "fontSize": "Font Size"
+        "fontSize": "Font Size",
+        "noteDuration": "Note Duration",
+        "noteDurationHint": "VexFlow duration string: 1=whole, 2=half, 4=quarter, 8=eighth"
       }
     },
     "waterfall": {
@@ -685,7 +717,9 @@
         "staffVisible": "Show Staff",
         "synthesiaFlowDirection": "Synthesia Flow Direction",
         "flowUp": "Up",
-        "flowDown": "Down"
+        "flowDown": "Down",
+        "defaultVelocity": "Default Velocity",
+        "defaultVelocityHint": "Velocity used when playing via computer keyboard (0-127)"
       },
       "midiFile": {
         "title": "MIDI File Advanced",
@@ -693,7 +727,11 @@
         "selectedTracksHint": "Currently playing track indices",
         "noTracks": "No tracks selected",
         "trackColors": "Track Colors",
-        "trackColorN": "Track {n} Color"
+        "trackColorN": "Track {n} Color",
+        "rightHandTrackIdx": "Right Hand Track Index",
+        "rightHandTrackIdxHint": "Track index inferred as right hand",
+        "leftHandTrackIdx": "Left Hand Track Index",
+        "leftHandTrackIdxHint": "Track index inferred as left hand"
       }
     },
     "sound": {

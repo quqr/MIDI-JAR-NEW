@@ -1,8 +1,11 @@
 <template>
   <SettingsCollapse
+    v-if="isVisible"
     :title="t('advancedDebug.waterfall.keyboard.title')"
     icon="keyboard"
-    :default-open="false"
+    :open="isOpen"
+    :section-id="sectionId"
+    @update:open="$emit('update:open', $event)"
   >
     <template v-if="keyboard.range === 'custom'">
       <SettingsTextInput
@@ -61,10 +64,20 @@
       :options="flowDirectionOptions"
       @update:model-value="emit('updateKb', 'synthesiaFlowDirection', $event)"
     />
+    <SettingsRange
+      :model-value="keyboard.defaultVelocity"
+      :label="t('advancedDebug.waterfall.keyboard.defaultVelocity')"
+      :description="t('advancedDebug.waterfall.keyboard.defaultVelocityHint')"
+      :min="0"
+      :max="127"
+      :step="1"
+      @update:model-value="emit('updateKb', 'defaultVelocity', $event)"
+    />
   </SettingsCollapse>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   SettingsCollapse,
@@ -86,6 +99,7 @@ interface KeyboardSettings {
   separatorThickness: number;
   staffVisible: boolean;
   synthesiaFlowDirection: string;
+  defaultVelocity: number;
 }
 
 interface SelectOption {
@@ -93,14 +107,35 @@ interface SelectOption {
   label: string;
 }
 
-defineProps<{
+interface Props {
   keyboard: KeyboardSettings;
   flowDirectionOptions: SelectOption[];
-}>();
+  open?: boolean;
+  sectionId?: string;
+  searchQuery?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  open: undefined,
+  sectionId: undefined,
+  searchQuery: "",
+});
 
 const emit = defineEmits<{
   (e: "updateKb", key: string, value: unknown): void;
+  (e: "update:open", value: boolean): void;
 }>();
 
 const { t } = useI18n();
+
+const isVisible = computed(() => {
+  const q = props.searchQuery.trim().toLowerCase();
+  if (!q) return true;
+  return t("advancedDebug.waterfall.keyboard.title").toLowerCase().includes(q);
+});
+
+const isOpen = computed(() => {
+  if (props.searchQuery.trim()) return true;
+  return props.open;
+});
 </script>

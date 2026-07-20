@@ -1,5 +1,3 @@
-import type { Ref } from 'vue'
-
 /**
  * Creates a type-safe updater for a config object stored in a settings store.
  * Pattern: read current → spread → set key → call updateSetting(path, newObject)

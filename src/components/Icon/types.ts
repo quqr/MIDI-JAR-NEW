@@ -81,4 +81,13 @@ export type IconName =
   | "cross"
   | "music-note"
   | "palette"
-  | "translate";
+  | "translate"
+  | "bookmark"
+  | "bookmark-outline"
+  | "pencil"
+  | "download"
+  | "filter"
+  | "chevrons-up"
+  | "chevrons-down"
+  | "file-text"
+  | "list";

@@ -140,6 +140,11 @@ export interface KeyboardConfig {
   staffVisible: boolean;
   synthesiaFlowDirection: FlowDirection;
   showNoteNames: boolean;
+  /**
+   * 电脑键盘弹奏时的默认力度（0-127）。
+   * 历史硬编码默认值：90（WaterfallCanvas.vue L79）
+   */
+  defaultVelocity: number;
 }
 
 /** MIDI 文件播放控制与音轨显示配置 */
@@ -149,6 +154,16 @@ export interface MidiFileConfig {
   trackColors: string[];
   loop: boolean;
   showNoteNames: boolean;
+  /**
+   * 推断为右手的轨道索引。
+   * 历史硬编码默认值：0（MidiFilePlayer.ts L93）
+   */
+  rightHandTrackIdx: number;
+  /**
+   * 推断为左手的轨道索引。
+   * 历史硬编码默认值：1（MidiFilePlayer.ts L94）
+   */
+  leftHandTrackIdx: number;
 }
 
 /** 合成器 ADSR 包络参数 */
@@ -211,4 +226,6 @@ export interface ScheduledNote {
   duration: number;
   hand: "left" | "right" | "unknown";
   trackIndex: number;
+  /** 预计算的唯一键 "trackIndex-midi-time"，避免每帧模板字符串分配 */
+  key?: string;
 }

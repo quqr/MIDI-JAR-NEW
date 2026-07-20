@@ -60,7 +60,7 @@ export function getLayoutDimensions(
         effectiveClefWidth +
         effectiveKeySigWidth +
         layout.sidePadding * 2,
-      containerWidth * 0.8,
+      containerWidth * layout.minScaleRatio,
     );
   const scaleY = containerHeight / requiredHeight;
   const scale = Math.min(scaleX, scaleY, layout.maxScale);
@@ -121,6 +121,6 @@ export function getLayoutDimensions(
       layout.sidePadding * scale +
       effectiveClefWidth * scale +
       effectiveKeySigWidth * scale +
-      10 * scale,
+      layout.noteStartXOffset * scale,
   };
 }

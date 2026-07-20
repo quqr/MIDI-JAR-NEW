@@ -30,6 +30,8 @@ export class Recorder {
   private pending = new Map<number, { velocity: number; startTime: number }>();
   private recordStartTime = 0;
   private isRecording = false;
+  /** 增量维护的最大时长（所有音符的最大 endTime），避免每帧 O(n) 扫描 */
+  private _maxDuration = 0;
   /** 内部防护标志，仅用于 startPlayback/pausePlayback 等方法的防御性检查。
    *  播放状态的权威来源是 PlayerStateMachine，外部代码不应依赖此字段。 */
   private isPlaying = false;
@@ -55,6 +57,7 @@ export class Recorder {
   startRecording(): void {
     this.notes = [];
     this.pending.clear();
+    this._maxDuration = 0;
     this.recordStartTime = performance.now();
     this.isRecording = true;
   }
@@ -64,12 +67,14 @@ export class Recorder {
     this.isRecording = false;
     const now = performance.now() - this.recordStartTime;
     for (const [midi, info] of this.pending) {
-      this.notes.push({
+      const note: RecordedNote = {
         midi,
         velocity: info.velocity,
         time: info.startTime / 1000,
         duration: Math.max(0, (now - info.startTime) / 1000),
-      });
+      };
+      this.notes.push(note);
+      this.updateMaxDuration(note);
     }
     this.pending.clear();
     this.saveToStorage();
@@ -97,12 +102,14 @@ export class Recorder {
     const info = this.pending.get(midi);
     if (!info) return;
     const now = performance.now() - this.recordStartTime;
-    this.notes.push({
+    const note: RecordedNote = {
       midi,
       velocity: info.velocity,
       time: info.startTime / 1000,
       duration: Math.max(0, (now - info.startTime) / 1000),
-    });
+    };
+    this.notes.push(note);
+    this.updateMaxDuration(note);
     this.pending.delete(midi);
   }
 
@@ -112,6 +119,7 @@ export class Recorder {
    */
   loadNotes(notes: RecordedNote[]): void {
     this.notes = [...notes];
+    this.recomputeMaxDuration();
     const scheduled = this.getScheduledNotes();
     this.scheduler.setNotes(scheduled);
     this.callbacks.onScheduledNotesReady?.(scheduled);
@@ -160,13 +168,23 @@ export class Recorder {
   }
 
   getDuration(): number {
-    if (this.notes.length === 0) return 0;
+    return this._maxDuration;
+  }
+
+  /** 增量更新 _maxDuration（仅在添加新音符时调用） */
+  private updateMaxDuration(note: RecordedNote): void {
+    const end = note.time + note.duration;
+    if (end > this._maxDuration) this._maxDuration = end;
+  }
+
+  /** 从当前 notes 数组重建 _maxDuration（loadNotes / loadFromStorage 后调用） */
+  private recomputeMaxDuration(): void {
     let max = 0;
     for (const n of this.notes) {
       const end = n.time + n.duration;
       if (end > max) max = end;
     }
-    return max;
+    this._maxDuration = max;
   }
 
   getIsPlaying(): boolean {
@@ -211,12 +229,14 @@ export class Recorder {
       key: RECORDING_STORAGE_KEY,
       defaultValue: [],
     });
+    this.recomputeMaxDuration();
     return this.notes;
   }
 
   clearStorage(): void {
     removeFromStorage(RECORDING_STORAGE_KEY);
     this.notes = [];
+    this._maxDuration = 0;
   }
 
   dispose(): void {
@@ -230,9 +250,10 @@ export class Recorder {
   /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
   tick(): void {
     const current = this.getCurrentTime();
+    const dur = this._maxDuration;
     this.scheduler.tick(current);
-    this.callbacks.onProgress?.(current, this.getDuration());
-    if (current >= this.getDuration() && this.getDuration() > 0) {
+    this.callbacks.onProgress?.(current, dur);
+    if (current >= dur && dur > 0) {
       this.isPlaying = false;
       this.isPaused = false;
       this.scheduler.reset();

@@ -42,6 +42,11 @@ export class NoteBlockSystem {
   private renderer: NoteBlockRenderer;
   private stateSync: NoteBlockStateSync;
   callbacks: NoteBlockCallbacks = {};
+  /** 预分配的 block positions 缓冲区，避免每帧 new Array + new Object */
+  private _blockPosBuffer: Array<{
+    midi: number; normX: number; normY: number;
+    blockWidth: number; blockHeight: number;
+  }> = [];
 
   constructor() {
     this.realtime = new RealtimeModeController(
@@ -192,24 +197,17 @@ export class NoteBlockSystem {
     return this.realtime.getActiveMidiNotes();
   }
 
-  /** 获取活跃音符块的中心位置（归一化坐标），用于方块覆盖流体发射 */
+  /** 获取活跃音符块的中心位置（归一化坐标），用于方块覆盖流体发射。
+   *  复用内部缓冲区，调用方读取后不应持有引用（下一帧会覆写）。 */
   getActiveBlockPositions(
     keyboardRenderer: KeyboardRenderer,
     totalHeight: number,
-  ): Array<{
-    midi: number;
-    normX: number;
-    normY: number;
-    blockWidth: number;
-    blockHeight: number;
+  ): ReadonlyArray<{
+    midi: number; normX: number; normY: number;
+    blockWidth: number; blockHeight: number;
   }> {
-    const result: Array<{
-      midi: number;
-      normX: number;
-      normY: number;
-      blockWidth: number;
-      blockHeight: number;
-    }> = [];
+    const result = this._blockPosBuffer;
+    result.length = 0; // 复用数组，清空但保留容量
     const whiteKeyWidth = keyboardRenderer.getWhiteKeyWidth();
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     for (const b of this.active) {
@@ -218,8 +216,6 @@ export class NoteBlockSystem {
       const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
       const blockHeight = b.height <= 0 ? blockWidth : b.height;
       const normX = keyboardRenderer.midiToX(b.midi) / this.width;
-      // normY: 从屏幕空间转换到 WebGL 坐标（y=0 底部，y=1 顶部）
-      // 使用方块底部 b.y（最靠近命中线的一侧），尾焰从方块底部喷射
       const normY = 1 - b.y / totalHeight;
       result.push({
         midi: b.midi,
@@ -302,12 +298,13 @@ export class NoteBlockSystem {
     return this.settings.particles.speed * 100;
   }
 
-  /** 根据音符的轨道、MIDI 编号和起始时间生成唯一标识键 */
+  /** 根据音符的轨道、MIDI 编号和起始时间生成唯一标识键（优先使用预计算缓存） */
   private noteKey(note: {
     trackIndex: number;
     midi: number;
     time: number;
+    key?: string;
   }): string {
-    return `${note.trackIndex}-${note.midi}-${note.time}`;
+    return note.key ?? `${note.trackIndex}-${note.midi}-${note.time}`;
   }
 }

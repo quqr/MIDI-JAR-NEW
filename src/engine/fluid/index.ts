@@ -4,6 +4,7 @@ export type {
   FluidQuality,
   FluidStyle,
   FluidAdvancedParams,
+  SplatPerturbation,
 } from "./FluidConfig";
 export {
   QUALITY_PRESETS,

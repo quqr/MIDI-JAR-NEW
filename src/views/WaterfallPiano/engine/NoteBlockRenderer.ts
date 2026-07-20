@@ -68,38 +68,14 @@ export class NoteBlockRenderer {
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const triggeredSet = this.getTriggeredSet();
-    const isHighlighted = (midi: number) => triggeredSet.has(midi);
     const time = performance.now();
 
-    // Pass 1: 收集需要 aura 的方块 → 批量渲染
-    if (auraCfg.enabled) {
-      const auraBlocks: Array<{
-        x: number; y: number; w: number; h: number; color: string;
-      }> = [];
-      for (const b of active) {
-        const isBlack = isBlackKey(b.midi);
-        const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
-        const h = b.height <= 0 ? blockWidth : b.height;
-        const y = b.y - h;
-        const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
-        const isTriggered = isHighlighted(b.midi);
-        const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
-        const applyAura =
-          auraCfg.target === "all" ||
-          (auraCfg.target === "triggered" && isTriggered);
-        if (applyAura) {
-          auraBlocks.push({
-            x: keyboardRenderer.midiToX(b.midi) - blockWidth / 2,
-            y, w: blockWidth, h, color,
-          });
-        }
-      }
-      if (auraBlocks.length > 0) {
-        this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time, settings);
-      }
-    }
+    // 单遍遍历：收集 aura 数据 + 绘制实体方块
+    const auraBlocks: Array<{
+      x: number; y: number; w: number; h: number; color: string;
+    }> = [];
+    const needAura = auraCfg.enabled;
 
-    // Pass 2: 渲染所有实体方块
     for (const b of active) {
       const isBlack = isBlackKey(b.midi);
       const blockWidth = isBlack ? blackKeyWidth * 0.9 : whiteKeyWidth * 0.85;
@@ -107,9 +83,10 @@ export class NoteBlockRenderer {
       const h = b.height <= 0 ? blockWidth : b.height;
       const y = b.y - h;
       const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
-      const isTriggered = isHighlighted(b.midi);
+      const isTriggered = triggeredSet.has(b.midi);
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
+      // 绘制实体方块
       ctx.globalAlpha = p.opacity;
       ctx.fillStyle = color;
       if (p.cornerRadius > 0) {
@@ -119,6 +96,21 @@ export class NoteBlockRenderer {
         ctx.fillRect(x, y, blockWidth, h);
       }
       ctx.globalAlpha = 1;
+
+      // 收集 aura 数据
+      if (needAura) {
+        const applyAura =
+          auraCfg.target === "all" ||
+          (auraCfg.target === "triggered" && isTriggered);
+        if (applyAura) {
+          auraBlocks.push({ x, y, w: blockWidth, h, color });
+        }
+      }
+    }
+
+    // 批量渲染 aura 图层
+    if (auraBlocks.length > 0) {
+      this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time, settings);
     }
 
     ctx.restore();

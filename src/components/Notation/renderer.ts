@@ -90,7 +90,7 @@ function renderNotesToStave(options: RenderNotesOptions): void {
 
   if (!notes.length) return;
 
-  const voice = getVoice(notes, clef, filterClef);
+  const voice = getVoice(notes, clef, filterClef, style.noteDuration);
   if (!voice) return;
 
   Accidental.applyAccidentals([voice], keySignatureTonic);
@@ -169,8 +169,8 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
   }
 
   if (notes.length) {
-    const voiceTreble = getVoice(notes, "treble");
-    const voiceBass = getVoice(notes, "bass");
+    const voiceTreble = getVoice(notes, "treble", true, style.noteDuration);
+    const voiceBass = getVoice(notes, "bass", true, style.noteDuration);
 
     const formatter = new Formatter();
 
@@ -250,7 +250,7 @@ export function renderSingleStaff(options: SingleStaffOptions): void {
       stave,
       context,
       keySignatureTonic,
-      filterClef: false,
+      filterClef: display.filterClef,
       style,
     });
   }

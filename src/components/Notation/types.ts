@@ -10,6 +10,13 @@ export type NotationDisplayConfig = {
   timeSignature: boolean;
   noteNames: boolean;
   staffLines: boolean;
+  /**
+   * 单谱表渲染时是否按谱号过滤音符。
+   * false = 渲染所有音符（单谱表显示完整音域），
+   * true = 仅渲染匹配谱号的音符。
+   * 历史硬编码默认值：false（renderer.ts L253）
+   */
+  filterClef: boolean;
 };
 
 export type NotationLayoutConfig = {
@@ -23,13 +30,33 @@ export type NotationLayoutConfig = {
   noteWidth: number;
   keySignatureWidthPerAlteration: number;
   maxScale: number;
+  /**
+   * noteStartX 的额外偏移量（像素，按 scale 缩放）。
+   * 历史硬编码默认值：10（layout.ts L124）
+   */
+  noteStartXOffset: number;
+  /**
+   * 缩放比例下限（占容器宽度的比例）。
+   * 历史硬编码默认值：0.8（layout.ts L63）
+   */
+  minScaleRatio: number;
 };
 
 export type NotationStyleConfig = {
   backgroundColor: string;
   staffLineColor: string;
   noteColor: string;
+  /**
+   * 音符高亮颜色（用于实时触发的高亮态）。
+   * 历史缺失字段：NotationStyleSection 已引用但类型未定义。
+   */
+  noteHighlightColor: string;
   fontSize: number;
+  /**
+   * VexFlow 音符时值字符串（"1"=全音符, "2"=二分音符, "4"=四分音符, "8"=八分音符等）。
+   * 历史硬编码默认值："1"（utils.ts L72）
+   */
+  noteDuration: string;
 };
 
 export type NotationProps = {
@@ -66,6 +93,7 @@ export const defaultDisplayConfig: NotationDisplayConfig = {
   timeSignature: false,
   noteNames: false,
   staffLines: true,
+  filterClef: false,
 };
 
 export const defaultLayoutConfig: NotationLayoutConfig = {
@@ -79,11 +107,15 @@ export const defaultLayoutConfig: NotationLayoutConfig = {
   noteWidth: 120,
   keySignatureWidthPerAlteration: 120,
   maxScale: 1.5,
+  noteStartXOffset: 10,
+  minScaleRatio: 0.8,
 };
 
 export const defaultStyleConfig: NotationStyleConfig = {
   backgroundColor: "transparent",
   staffLineColor: "#000000",
   noteColor: "#000000",
+  noteHighlightColor: "#ff0000",
   fontSize: 10,
+  noteDuration: "1",
 };

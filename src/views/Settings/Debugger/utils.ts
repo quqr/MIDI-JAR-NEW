@@ -29,17 +29,17 @@ export function formatMidiMessage(m: MidiMessage): string {
 
   if (cmd === 0xb0) {
     const cc = note as keyof typeof MIDI_CC;
-    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"}  - CC ${cc} ${MIDI_CC[cc] ?? "Unknown"} - ${value}`;
+    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"} - CC ${cc} ${MIDI_CC[cc] ?? "Unknown"} - ${value}`;
   }
   if (cmd === 0xc0) {
-    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"}  - program ${note}`;
+    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"} - program ${note}`;
   }
   if (cmd === 0xd0) {
-    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"}  - pressure ${note}`;
+    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"} - pressure ${note}`;
   }
   if (cmd === 0xe0) {
     const pitch = getMidiMultiWordValue(m);
-    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"}  - pitch ${pitch}`;
+    return `channel ${ch} - ${cmd}:${MIDI_CMD[cmd] ?? "Unknown"} - pitch ${pitch}`;
   }
   if (cmd === 0xf0) {
     const fCmd = m[0] as keyof typeof MIDI_CMD;

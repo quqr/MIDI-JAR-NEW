@@ -62,6 +62,8 @@ export class WaterfallEngine {
   /** 保存旧值的数值副本，用于检测设置变更（避免 deep watch 引用问题） */
   private prevKeyboardHeightRatio: number | null = null;
   private prevFluidEnabled: boolean | null = null;
+  /** 缓存的 waterfall 2D 上下文引用，避免每帧 getContext 调用 */
+  private _waterfallCtx: CanvasRenderingContext2D | null = null;
   public showFPS = true;
   callbacks: EngineCallbacks = {};
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
@@ -91,6 +93,7 @@ export class WaterfallEngine {
     try {
       this.canvases = canvases;
       this.settings = settings;
+      this._waterfallCtx = canvases.waterfall.getContext("2d");
       this.keyboardRenderer.init(canvases.keyboard, settings);
       this.noteBlockSystem.init(canvases.waterfall, settings);
       this.backgroundRenderer.init(canvases.background, settings);
@@ -399,8 +402,8 @@ export class WaterfallEngine {
 
   /** FPS 叠加层渲染 */
   private renderFPSOverlay(fps: number): void {
-    if (!this.showFPS || !this.canvases) return;
-    const ctx = this.canvases.waterfall.getContext("2d");
+    if (!this.showFPS) return;
+    const ctx = this._waterfallCtx;
     if (ctx) {
       ctx.save();
       ctx.font = "bold 12px monospace";

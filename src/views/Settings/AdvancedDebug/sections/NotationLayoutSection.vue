@@ -1,8 +1,11 @@
 <template>
   <SettingsCollapse
+    v-if="isVisible"
     :title="t('advancedDebug.notation.layout.title')"
     icon="layout"
-    :default-open="false"
+    :open="isOpen"
+    :section-id="sectionId"
+    @update:open="$emit('update:open', $event)"
   >
     <SettingsRange
       :model-value="modelValue.paddingTop"
@@ -92,21 +95,61 @@
       :step="0.1"
       @update:model-value="emit('update', 'maxScale', $event)"
     />
+    <SettingsRange
+      :model-value="modelValue.noteStartXOffset"
+      :label="t('advancedDebug.notation.layout.noteStartXOffset')"
+      :description="t('advancedDebug.notation.layout.noteStartXOffsetHint')"
+      :min="0"
+      :max="100"
+      :step="1"
+      @update:model-value="emit('update', 'noteStartXOffset', $event)"
+    />
+    <SettingsRange
+      :model-value="modelValue.minScaleRatio"
+      :label="t('advancedDebug.notation.layout.minScaleRatio')"
+      :description="t('advancedDebug.notation.layout.minScaleRatioHint')"
+      :min="0.1"
+      :max="1"
+      :step="0.05"
+      @update:model-value="emit('update', 'minScaleRatio', $event)"
+    />
   </SettingsCollapse>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { SettingsCollapse, SettingsRange } from "@/components/Settings";
 import type { NotationLayoutConfig } from "@/components/Notation/types";
 
-defineProps<{
+interface Props {
   modelValue: NotationLayoutConfig;
-}>();
+  open?: boolean;
+  sectionId?: string;
+  searchQuery?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  open: undefined,
+  sectionId: undefined,
+  searchQuery: "",
+});
 
 const emit = defineEmits<{
   (e: "update", key: keyof NotationLayoutConfig, value: number): void;
+  (e: "update:open", value: boolean): void;
 }>();
 
 const { t } = useI18n();
+
+const isVisible = computed(() => {
+  const q = props.searchQuery.trim().toLowerCase();
+  if (!q) return true;
+  return t("advancedDebug.notation.layout.title").toLowerCase().includes(q);
+});
+
+const isOpen = computed(() => {
+  if (props.searchQuery.trim()) return true;
+  return props.open;
+});
 </script>

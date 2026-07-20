@@ -42,6 +42,11 @@ export class MidiFilePlayer {
   private readonly clock: Clock;
   private readonly scheduler: EventScheduler<ScheduledNote>;
   callbacks: MidiPlayerCallbacks = {};
+  /** 左右手轨道索引推断配置，由外部通过 setHandTrackIndices 注入 */
+  private handTrackIndices: { right: number; left: number } = {
+    right: 0,
+    left: 1,
+  };
 
   constructor(clock?: Clock) {
     this.clock = clock ?? new PerfClock();
@@ -109,7 +114,11 @@ export class MidiFilePlayer {
       const track = nonEmptyTracks[trackIdx];
       if (!track) continue;
       const hand: "left" | "right" | "unknown" =
-        trackIdx === 0 ? "right" : trackIdx === 1 ? "left" : "unknown";
+        trackIdx === this.handTrackIndices.right
+          ? "right"
+          : trackIdx === this.handTrackIndices.left
+            ? "left"
+            : "unknown";
       for (const note of track.notes) {
         result.push({
           midi: note.midi,
@@ -118,6 +127,7 @@ export class MidiFilePlayer {
           duration: note.duration,
           hand,
           trackIndex: trackIdx,
+          key: `${trackIdx}-${note.midi}-${note.time}`,
         });
       }
     }
@@ -212,6 +222,22 @@ export class MidiFilePlayer {
    */
   setSelectedTracks(indices: number[]): void {
     this.selectedTracks = indices;
+    if (this.midi) {
+      this.notes = this.collectNotes();
+      this.scheduler.setNotes(this.notes);
+      this.callbacks.onScheduledNotesReady?.(this.notes);
+    }
+  }
+
+  /**
+   * 设置左右手轨道索引推断配置，会重新收集调度音符并通过回调通知外部
+   * @param indices - 包含 right 和 left 轨道索引的对象
+   */
+  setHandTrackIndices(indices: {
+    right: number;
+    left: number;
+  }): void {
+    this.handTrackIndices = indices;
     if (this.midi) {
       this.notes = this.collectNotes();
       this.scheduler.setNotes(this.notes);

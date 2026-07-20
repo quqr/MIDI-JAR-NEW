@@ -76,8 +76,9 @@ function onKeyDown(e: KeyboardEvent): void {
     });
   }
 
-  engine?.triggerNoteOn(midi, 90);
-  emit("noteOn", midi, 90);
+  const velocity = props.settings.keyboard.defaultVelocity;
+  engine?.triggerNoteOn(midi, velocity);
+  emit("noteOn", midi, velocity);
 }
 
 function onKeyUp(e: KeyboardEvent): void {

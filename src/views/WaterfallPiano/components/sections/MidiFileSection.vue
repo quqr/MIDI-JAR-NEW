@@ -6,9 +6,9 @@
     <SettingsRange
       :model-value="settings.playbackSpeed"
       :label="t('WaterfallPiano.playbackSpeed')"
-      :min="0"
-      :max="3"
-      :step="0.25"
+      :min="PLAYBACK_SPEED.min"
+      :max="PLAYBACK_SPEED.max"
+      :step="PLAYBACK_SPEED.step"
       @update:model-value="emit('update', 'playbackSpeed', $event)"
     />
     <SettingsToggle
@@ -31,6 +31,7 @@ import {
   SettingsToggle,
   SettingsRange,
 } from "@/components/Settings";
+import { PLAYBACK_SPEED } from "../../constants";
 import type { MidiFileConfig } from "../../types";
 
 defineProps<{

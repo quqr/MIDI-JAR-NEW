@@ -619,6 +619,30 @@
     }
   },
   "advancedDebug": {
+    "toolbar": {
+      "searchPlaceholder": "搜索参数...",
+      "expandAll": "全部展开",
+      "collapseAll": "全部折叠",
+      "presets": "预设",
+      "resetAll": "重置全部",
+      "noResults": "未找到匹配的参数"
+    },
+    "presets": {
+      "title": "预设管理",
+      "saveCurrent": "保存当前配置为预设",
+      "namePlaceholder": "预设名称",
+      "save": "保存",
+      "list": "已保存的预设",
+      "empty": "暂无预设，保存当前配置以快速恢复",
+      "apply": "应用",
+      "rename": "重命名",
+      "delete": "删除",
+      "export": "导出",
+      "import": "导入",
+      "confirmDelete": "确定删除预设 \"{name}\" 吗？",
+      "importSuccess": "成功导入 {count} 个预设",
+      "importFailed": "导入失败：文件格式无效"
+    },
     "notation": {
       "display": {
         "title": "记谱 - 显示参数",
@@ -628,7 +652,9 @@
         "barlines": "小节线",
         "timeSignature": "拍号",
         "noteNames": "音名",
-        "staffLines": "谱线"
+        "staffLines": "谱线",
+        "filterClef": "按谱号过滤音符",
+        "filterClefHint": "关闭时单谱表渲染所有音符，开启时仅渲染匹配谱号的音符"
       },
       "layout": {
         "title": "记谱 - 布局参数",
@@ -643,7 +669,11 @@
         "keySignatureWidthPerAlteration": "调号宽度系数",
         "keySignatureWidthPerAlterationHint": "每个升降号分配的宽度（像素），高级模式可突破200",
         "maxScale": "最大缩放",
-        "maxScaleHint": "高级模式可突破2.0倍限制"
+        "maxScaleHint": "高级模式可突破2.0倍限制",
+        "noteStartXOffset": "音符起始 X 偏移",
+        "noteStartXOffsetHint": "音符相对谱号的起始水平偏移（像素）",
+        "minScaleRatio": "最小缩放比例",
+        "minScaleRatioHint": "相对容器宽度的缩放下限（0-1）"
       },
       "style": {
         "title": "记谱 - 样式参数",
@@ -651,7 +681,9 @@
         "staffLineColor": "谱线颜色",
         "noteColor": "音符颜色",
         "noteHighlightColor": "音符高亮颜色",
-        "fontSize": "字号"
+        "fontSize": "字号",
+        "noteDuration": "音符时值",
+        "noteDurationHint": "VexFlow 时值字符串：1=全音符, 2=二分音符, 4=四分音符, 8=八分音符"
       }
     },
     "waterfall": {
@@ -685,7 +717,9 @@
         "staffVisible": "显示谱表",
         "synthesiaFlowDirection": "Synthesia 流动方向",
         "flowUp": "上升",
-        "flowDown": "下降"
+        "flowDown": "下降",
+        "defaultVelocity": "默认力度",
+        "defaultVelocityHint": "电脑键盘弹奏时使用的力度（0-127）"
       },
       "midiFile": {
         "title": "MIDI文件高级参数",
@@ -693,7 +727,11 @@
         "selectedTracksHint": "当前正在播放的音轨索引",
         "noTracks": "暂无选中音轨",
         "trackColors": "音轨颜色",
-        "trackColorN": "音轨 {n} 颜色"
+        "trackColorN": "音轨 {n} 颜色",
+        "rightHandTrackIdx": "右手轨道索引",
+        "rightHandTrackIdxHint": "推断为右手的轨道索引",
+        "leftHandTrackIdx": "左手轨道索引",
+        "leftHandTrackIdxHint": "推断为左手的轨道索引"
       }
     },
     "sound": {

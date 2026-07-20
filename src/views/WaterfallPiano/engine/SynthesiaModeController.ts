@@ -246,7 +246,7 @@ export class SynthesiaModeController {
       }
     }
 
-    // 方块回收循环（仅 synthesia 模式）
+    // 方块回收循环（仅 synthesia 模式，swap-remove O(1) 替代 splice O(n)）
     if (createVisualBlocks) {
       const height = this.getHeight();
       for (let i = active.length - 1; i >= 0; i--) {
@@ -255,10 +255,12 @@ export class SynthesiaModeController {
         const blockTop = b.y - b.height;
         const recycleThreshold = height * 0.5;
         if (blockTop > height + recycleThreshold) {
-          active.splice(i, 1);
           this.synthesiaBlockMap.delete(
             `${b.trackIndex}-${b.midi}-${b.startTime}`,
           );
+          const last = active.length - 1;
+          if (i < last) active[i] = active[last];
+          active.pop();
           this.pool.release(b);
         }
       }

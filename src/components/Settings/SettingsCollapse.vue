@@ -2,6 +2,7 @@
   <div
     class="collapse shadow-xl collapse-arrow bg-base-200/50 border border-base-200 rounded-xl mb-3"
     :class="{ 'collapse-open': isOpen }"
+    :data-section-id="sectionId"
   >
     <div
       class="collapse-title text-base font-semibold flex items-center gap-2 cursor-pointer"
@@ -9,6 +10,12 @@
     >
       <Icon v-if="icon" :name="icon" :size="18" class="text-base-content/60" />
       <span>{{ title }}</span>
+      <span
+        v-if="badge"
+        class="badge badge-sm badge-ghost ml-auto mr-4 text-xs font-normal"
+      >
+        {{ badge }}
+      </span>
     </div>
     <div v-if="isOpen" class="collapse-content pt-2 pb-1">
       <slot></slot>
@@ -17,29 +24,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
+import { useId } from "vue";
 import type { IconName } from "@/components/Icon/types";
 import Icon from "@/components/Icon/Icon.vue";
 
 interface Props {
   title: string;
   defaultOpen?: boolean;
-  badge?: string;
+  badge?: string | number;
   icon?: IconName;
+  /** 外部控制展开状态（v-model:open）。不传则使用内部状态 */
+  open?: boolean;
+  /** 用于搜索过滤匹配的唯一标识 */
+  sectionId?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   defaultOpen: true,
   badge: "",
+  open: undefined,
+  sectionId: undefined,
 });
 
-const isOpen = ref(props.defaultOpen);
+const emit = defineEmits<{
+  "update:open": [value: boolean];
+}>();
 
-// 监听 defaultOpen 变化（虽然不常见）
+const internalOpen = ref(props.defaultOpen);
+const id = useId();
+const fallbackSectionId = `section-${id}`;
+
+const sectionId = computed(() => props.sectionId ?? fallbackSectionId);
+
+// 是否受控
+const isControlled = computed(() => props.open !== undefined);
+
+const isOpen = computed({
+  get: () =>
+    isControlled.value ? (props.open as boolean) : internalOpen.value,
+  set: (val: boolean) => {
+    if (isControlled.value) {
+      emit("update:open", val);
+    } else {
+      internalOpen.value = val;
+    }
+  },
+});
+
+// 监听 defaultOpen 变化（仅在非受控模式下生效）
 watch(
   () => props.defaultOpen,
   (val) => {
-    isOpen.value = val;
+    if (!isControlled.value) internalOpen.value = val;
   },
 );
 
