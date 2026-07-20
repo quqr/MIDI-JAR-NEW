@@ -3,7 +3,8 @@ import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
 import { PerformanceMonitor } from "./PerformanceMonitor";
-import { noteToColor } from "./NoteColorMapper";
+import { RenderLoop, type PhaseTimings } from "./RenderLoop";
+import { FluidSplatManager } from "./FluidSplatManager";
 import type { SoundEngine } from "../audio/SoundEngine";
 import {
   FluidSimulation,
@@ -11,25 +12,8 @@ import {
   type FluidSimulationConfig,
 } from "@/engine/fluid";
 import { createLogger } from "@/utils/logger";
-import { SplatPerturbation } from "@/engine/fluid/FluidConfig";
-import { PerlinNoise1D } from "@/utils/PerlinNoise1D";
 
 const logger = createLogger("WaterfallEngine");
-const noise = new PerlinNoise1D();
-/** Box-Muller 高斯随机数（均值 0，标准差 1） */
-function PerlinNoise1DRandomNumber(): number {
-  return noise.noise(Math.random() * 1000);
-}
-
-/** 判断扰动参数是否全部为 0/undefined（用于跳过计算） */
-function hasPerturbation(p: SplatPerturbation | undefined): boolean {
-  if (!p) return false;
-  return !!(
-    (p.positionJitter && p.positionJitter > 0) ||
-    (p.forceJitter && p.forceJitter > 0) ||
-    (p.colorJitter && p.colorJitter > 0)
-  );
-}
 
 export interface WaterfallCanvases {
   background: HTMLCanvasElement;
@@ -57,8 +41,18 @@ export class WaterfallEngine {
   private perfMonitor = new PerformanceMonitor();
   private fluid: FluidSimulation | null = null;
   private soundEngine: SoundEngine | null = null;
-  private rafId: number | null = null;
-  private lastTime = 0;
+  private renderLoop: RenderLoop | null = null;
+  private splatManager = new FluidSplatManager({
+    keyboardRenderer: this.keyboardRenderer,
+    noteBlockSystem: this.noteBlockSystem,
+    getSettings: () => this.settings,
+    getLayout: () => ({
+      width: this.width,
+      height: this.height,
+      keyboardHeight: this.keyboardHeight,
+    }),
+    hasCanvases: () => !!this.canvases,
+  });
   private width = 0;
   private height = 0;
   private keyboardHeight = 0;
@@ -108,7 +102,22 @@ export class WaterfallEngine {
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
       this.prevFluidEnabled = settings.background.fluidEnabled;
       this.bindPointerEvents();
-      this.startLoop();
+      this.renderLoop = new RenderLoop(
+        {
+          advancePlayback: () => this.frameCallback?.(),
+          renderBackground: (now) => this.backgroundRenderer.render(now),
+          updateNoteBlocks: (dtSec) => this.noteBlockSystem.update(dtSec),
+          renderNoteBlocks: () => this.noteBlockSystem.render(),
+          renderKeyboard: () => this.keyboardRenderer.render(),
+          displayFPS: (fps) => this.renderFPSOverlay(fps),
+          shouldUpdateFluid: () => !!this.fluid && !this.fluidPaused,
+          updateFluidAndSplats: () => this.updateFluidAndSplats(),
+          logPerformance: (now, total, timings, fps) =>
+            this.logFramePerf(now, total, timings, fps),
+        },
+        this.perfMonitor,
+      );
+      this.renderLoop.start();
 
       // 注册清理任务
       this.registerCleanup("pointerEvents", () => this.unbindPointerEvents());
@@ -339,10 +348,11 @@ export class WaterfallEngine {
       this.noteBlockSystem.playRealtimeNote(midi, velocity);
     }
     this.keyboardRenderer.highlightNote(midi);
-    this.fluidSplat(midi, velocity);
-    // hitExplosion: 在音符X + 命中线Y位置触发爆发式 splat
-    if (this.settings.background.fluidParams.hitExplosion && this.fluid) {
-      this.hitExplosionSplat(midi, velocity);
+    if (this.fluid) {
+      this.splatManager.fluidSplat(this.fluid, midi, velocity);
+      if (this.settings.background.fluidParams.hitExplosion) {
+        this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
+      }
     }
     this.callbacks.onNoteOn?.(midi, velocity);
   }
@@ -367,10 +377,11 @@ export class WaterfallEngine {
       this.noteBlockSystem.playRealtimeNoteFromMidi(midi, velocity);
     }
     this.keyboardRenderer.highlightNote(midi);
-    this.fluidSplat(midi, velocity);
-    // hitExplosion: 在音符X + 命中线Y位置触发爆发式 splat
-    if (this.settings?.background.fluidParams.hitExplosion && this.fluid) {
-      this.hitExplosionSplat(midi, velocity);
+    if (this.fluid) {
+      this.splatManager.fluidSplat(this.fluid, midi, velocity);
+      if (this.settings?.background.fluidParams.hitExplosion) {
+        this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
+      }
     }
   }
 
@@ -386,264 +397,37 @@ export class WaterfallEngine {
     this.keyboardRenderer.clearHighlight(midi);
   }
 
-  /**
-   * 在命中线位置发射流体 splat，颜色取自音符色或单一色相配置
-   * @param midi - MIDI 音符编号，用于确定 splat 的水平位置和颜色
-   * @param velocity - 力度，影响颜色亮度与喷射强度
-   */
-  private fluidSplat(midi: number, velocity = DEFAULT_VELOCITY): void {
-    if (!this.fluid || !this.canvases) return;
-    let x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-    let y = this.keyboardHeight / Math.max(1, this.height);
-
-    let rgb: { r: number; g: number; b: number };
-    const hue = this.settings?.background.fluidParams.splatColorHue;
-    if (hue !== undefined && hue > 0) {
-      const lightness = 0.4 + (velocity / 127) * 0.3;
-      rgb = hslToRgbNorm(hue, 0.8, lightness);
-    } else {
-      const colorHex = noteToColor(
-        midi,
-        this.settings?.particles.colorScheme ?? "pitch",
-        undefined,
-        this.settings?.particles.customColors,
-      );
-      rgb = hexToRgbNorm(colorHex);
+  /** FPS 叠加层渲染 */
+  private renderFPSOverlay(fps: number): void {
+    if (!this.showFPS || !this.canvases) return;
+    const ctx = this.canvases.waterfall.getContext("2d");
+    if (ctx) {
+      ctx.save();
+      ctx.font = "bold 12px monospace";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = 4;
+      ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 20);
+      ctx.restore();
     }
-
-    let dx = 0;
-    let dy = 200;
-    const p = this.settings?.background.fluidParams.fluidSplatPerturbation;
-    if (hasPerturbation(p)) {
-      if (p!.positionJitter && p!.positionJitter > 0) {
-        x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
-        y += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
-      }
-      if (p!.forceJitter && p!.forceJitter > 0) {
-        dx += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
-        dy += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
-      }
-      if (p!.colorJitter && p!.colorJitter > 0) {
-        rgb = {
-          r: Math.max(0, rgb.r + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
-          g: Math.max(0, rgb.g + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
-          b: Math.max(0, rgb.b + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
-        };
-      }
-    }
-    this.fluid.splat(x, y, dx, dy, rgb);
   }
 
-  /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
-  private hitExplosionSplat(midi: number, _velocity: number): void {
-    if (!this.fluid || !this.settings) return;
-    let x = this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-    const hitLineY =
-      (this.height - this.keyboardHeight) / Math.max(1, this.height);
-    let rgb: { r: number; g: number; b: number };
-    const hue = this.settings.background.fluidParams.splatColorHue;
-    if (hue !== undefined && hue > 0) {
-      rgb = hslToRgbNorm(hue, 0.9, 0.6);
-    } else {
-      const colorHex = noteToColor(
-        midi,
-        this.settings.particles.colorScheme,
-        undefined,
-        this.settings.particles.customColors,
-      );
-      rgb = hexToRgbNorm(colorHex);
-    }
-    let spread = this.settings.particles.hitExplosionRadius ?? 0.03;
-    let force = spread * 5000;
-    let colorMul = 0.7;
-
-    const p = this.settings.background.fluidParams.hitExplosionPerturbation;
-    if (hasPerturbation(p)) {
-      if (p!.positionJitter && p!.positionJitter > 0) {
-        x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
-      }
-      if (p!.forceJitter && p!.forceJitter > 0) {
-        force += PerlinNoise1DRandomNumber() * force * p!.forceJitter;
-        spread += PerlinNoise1DRandomNumber() * spread * p!.forceJitter;
-      }
-      if (p!.colorJitter && p!.colorJitter > 0) {
-        colorMul += PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15;
-        colorMul = Math.max(0, colorMul);
-      }
-    }
-
-    this.fluid.splat(x - spread, -hitLineY, -force * 0.6, force, {
-      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
-    });
-    this.fluid.splat(x + spread, -hitLineY, force * 0.6, force, {
-      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
-    });
+  /** 流体模拟更新 + 持续 splat（委托给 FluidSplatManager） */
+  private updateFluidAndSplats(): void {
+    if (!this.fluid) return;
+    this.splatManager.updateAndSplat(this.fluid);
   }
 
-  /**
-   * 启动 rAF 主循环：每帧推进播放、渲染各子系统、降帧更新流体并叠加持续 splat
-   */
-  private startLoop(): void {
-    this.lastTime = performance.now();
-    let fluidFrameCount = 0;
-    let lastPerfLog = 0;
-    const FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
-
-    const loop = (now: number) => {
-      const dt = now - this.lastTime;
-      this.lastTime = now;
-      this.perfMonitor.recordFrame(dt);
-
-      const t0 = performance.now();
-      // 先推进播放器时间（通过 tick → onProgress → setTransportTime），
-      // 再更新音符方块系统，确保 updateSynthesia 使用最新的 transportTime
-      this.frameCallback?.();
-      const tFrame = performance.now();
-
-      this.backgroundRenderer.render(now);
-      const tBg = performance.now();
-
-      this.noteBlockSystem.update(dt / 1000);
-      const tNbUpdate = performance.now();
-
-      this.noteBlockSystem.render();
-      const tNbRender = performance.now();
-
-      this.keyboardRenderer.render();
-      const tKb = performance.now();
-
-      // FPS 显示：在所有渲染完成后绘制（避免被 clearRect 清掉）
-      if (this.showFPS && this.canvases) {
-        const ctx = this.canvases.waterfall.getContext("2d");
-        if (ctx) {
-          ctx.save();
-          ctx.font = "bold 12px monospace";
-          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-          ctx.shadowBlur = 4;
-          ctx.fillText(`FPS: ${Math.round(this.perfMonitor.getFps())}`, 10, 20);
-          ctx.restore();
-        }
-      }
-
-      // 流体模拟由主循环驱动，但降帧运行
-      // MIDI 暂停时 fluidPaused=true，完全跳过 fluid.update() 和 splat 调用
-      fluidFrameCount++;
-      let tFluid = 0;
-      if (this.fluid && !this.fluidPaused && fluidFrameCount > FLUID_SKIP_FRAMES) {
-        const tf0 = performance.now();
-        this.fluid.update();
-        fluidFrameCount = 0;
-
-        // 长按持续触发：对键盘上持续按住的音符发射弱 splat
-        if (this.fluid && this.settings?.background.fluidEnabled) {
-          const sP = this.settings.background.fluidParams.sustainedSplatPerturbation;
-          const sHas = hasPerturbation(sP);
-          for (const midi of this.keyboardRenderer.getActiveNotes()) {
-            let x =
-              this.keyboardRenderer.midiToX(midi) / Math.max(1, this.width);
-            let y = this.keyboardHeight / Math.max(1, this.height);
-            const hue = this.settings.background.fluidParams.splatColorHue;
-            let rgb: { r: number; g: number; b: number };
-            if (hue !== undefined && hue > 0) {
-              rgb = hslToRgbNorm(hue, 0.8, 0.4);
-            } else {
-              const colorHex = noteToColor(
-                midi,
-                this.settings.particles.colorScheme,
-                undefined,
-                this.settings.particles.customColors,
-              );
-              rgb = hexToRgbNorm(colorHex);
-            }
-            let dx = 0;
-            let dy = 60;
-            let colorMul = 0.4;
-            if (sHas) {
-              if (sP!.positionJitter && sP!.positionJitter > 0) {
-                x += PerlinNoise1DRandomNumber() * sP!.positionJitter * 0.02;
-                y += PerlinNoise1DRandomNumber() * sP!.positionJitter * 0.02;
-              }
-              if (sP!.forceJitter && sP!.forceJitter > 0) {
-                dx += PerlinNoise1DRandomNumber() * dy * sP!.forceJitter;
-                dy += PerlinNoise1DRandomNumber() * dy * sP!.forceJitter;
-              }
-              if (sP!.colorJitter && sP!.colorJitter > 0) {
-                colorMul += PerlinNoise1DRandomNumber() * sP!.colorJitter * 0.15;
-                colorMul = Math.max(0, colorMul);
-              }
-            }
-            this.fluid.splat(x, y, dx, dy, {
-              r: rgb.r * colorMul,
-              g: rgb.g * colorMul,
-              b: rgb.b * colorMul,
-            });
-          }
-        }
-
-        // blockCoverage: 对每个活跃音符块持续发射尾焰式 splat
-        if (this.settings?.background.fluidParams.blockCoverage && this.fluid) {
-          const bP = this.settings.background.fluidParams.blockCoveragePerturbation;
-          const bHas = hasPerturbation(bP);
-          const blockPositions = this.noteBlockSystem.getActiveBlockPositions(
-            this.keyboardRenderer,
-            this.height,
-          );
-          for (const pos of blockPositions) {
-            let px = pos.normX;
-            let py = pos.normY;
-            const hue = this.settings.background.fluidParams.splatColorHue;
-            let rgb: { r: number; g: number; b: number };
-            if (hue !== undefined && hue > 0) {
-              rgb = hslToRgbNorm(hue, 0.8, 0.5);
-            } else {
-              const colorHex = noteToColor(
-                pos.midi,
-                this.settings.particles.colorScheme,
-                undefined,
-                this.settings.particles.customColors,
-              );
-              rgb = hexToRgbNorm(colorHex);
-            }
-            let dx = 0;
-            let dy = -20;
-            let colorMul = 0.3;
-            if (bHas) {
-              if (bP!.positionJitter && bP!.positionJitter > 0) {
-                px += PerlinNoise1DRandomNumber() * bP!.positionJitter * 0.02;
-                py += PerlinNoise1DRandomNumber() * bP!.positionJitter * 0.02;
-              }
-              if (bP!.forceJitter && bP!.forceJitter > 0) {
-                dx += PerlinNoise1DRandomNumber() * Math.abs(dy) * bP!.forceJitter;
-                dy += PerlinNoise1DRandomNumber() * Math.abs(dy) * bP!.forceJitter;
-              }
-              if (bP!.colorJitter && bP!.colorJitter > 0) {
-                colorMul += PerlinNoise1DRandomNumber() * bP!.colorJitter * 0.15;
-                colorMul = Math.max(0, colorMul);
-              }
-            }
-            this.fluid.splat(px, py, dx, dy, {
-              r: rgb.r * colorMul,
-              g: rgb.g * colorMul,
-              b: rgb.b * colorMul,
-            });
-          }
-        }
-        tFluid = performance.now() - tf0;
-      }
-
-      // [DEBUG-perf] 每秒输出一次关键路径耗时
-      if (now - lastPerfLog > 1000) {
-        lastPerfLog = now;
-        const total = performance.now() - t0;
-        logger.info(
-          `[DEBUG-perf] total=${total.toFixed(1)}ms frame=${tFrame - t0 > 0 ? (tFrame - t0).toFixed(1) : "0"}ms bg=${(tBg - tFrame).toFixed(1)}ms nbUpd=${(tNbUpdate - tBg).toFixed(1)}ms nbRdr=${(tNbRender - tNbUpdate).toFixed(1)}ms kb=${(tKb - tNbRender).toFixed(1)}ms fluid=${tFluid.toFixed(1)}ms fps=${Math.round(this.perfMonitor.getFps())}`,
-        );
-      }
-
-      this.rafId = requestAnimationFrame(loop);
-    };
-    this.rafId = requestAnimationFrame(loop);
+  /** 性能日志输出（每秒由 RenderLoop 调用一次） */
+  private logFramePerf(
+    _now: number,
+    totalMs: number,
+    timings: PhaseTimings,
+    fps: number,
+  ): void {
+    logger.info(
+      `[DEBUG-perf] total=${totalMs.toFixed(1)}ms frame=${timings.playback > 0 ? timings.playback.toFixed(1) : "0"}ms bg=${timings.background.toFixed(1)}ms nbUpd=${timings.noteBlockUpdate.toFixed(1)}ms nbRdr=${timings.noteBlockRender.toFixed(1)}ms kb=${timings.keyboard.toFixed(1)}ms fluid=${timings.fluid.toFixed(1)}ms fps=${Math.round(fps)}`,
+    );
   }
 
   get keyboardRendererRef(): KeyboardRenderer {
@@ -705,10 +489,8 @@ export class WaterfallEngine {
     this.disposed = true;
 
     // 停止渲染循环
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
+    this.renderLoop?.stop();
+    this.renderLoop = null;
 
     // 执行所有注册的清理任务
     const results = await Promise.allSettled(
@@ -748,32 +530,4 @@ export class WaterfallEngine {
     this.keyboardRenderer.render();
     logger.debug("Force redraw completed");
   }
-}
-
-/**
- * 十六进制颜色字符串转归一化 RGB（各分量 0-1）
- * @param hex - 十六进制颜色（如 "#ff8800"）
- * @returns 归一化 RGB 对象
- */
-function hexToRgbNorm(hex: string): { r: number; g: number; b: number } {
-  const normalized = hex.replace("#", "").padEnd(6, "0");
-  return {
-    r: (parseInt(normalized.slice(0, 2), 16) || 0) / 255,
-    g: (parseInt(normalized.slice(2, 4), 16) || 0) / 255,
-    b: (parseInt(normalized.slice(4, 6), 16) || 0) / 255,
-  };
-}
-
-/** HSL (0-1 范围) → 归一化 RGB (0-1) */
-function hslToRgbNorm(
-  h: number,
-  s: number,
-  l: number,
-): { r: number; g: number; b: number } {
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h * 12) % 12;
-    return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-  };
-  return { r: f(0), g: f(8), b: f(4) };
 }

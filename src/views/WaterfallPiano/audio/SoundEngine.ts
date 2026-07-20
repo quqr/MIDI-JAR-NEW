@@ -1,9 +1,12 @@
 import { midiToNoteName } from "../constants";
+import { defaultWaterfallSettings } from "../constants";
 import type { SoundEngineUserConfig, SynthEnvelopeConfig } from "../types";
 
-const DEFAULT_VOLUME = 0.8;
-const DEFAULT_REVERB_DECAY = 2;
-const DEFAULT_REVERB_WET = 0.3;
+// 默认配置唯一来源：从 constants.ts 读取
+const D = defaultWaterfallSettings.sound;
+
+/** reverbDecay 变化超过此阈值才重新生成脉冲响应 */
+const REVERB_REGEN_THRESHOLD = 1.0;
 
 /**
  * 将自定义 SynthEnvelopeConfig 转换为 Tone.js 原生 envelope 参数格式，
@@ -32,71 +35,71 @@ export interface SoundEngineOptions {
  * 内部通过引用计数机制处理同一音高被多个音符同时按住的情况。
  */
 export class SoundEngine {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private Tone: any = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private synth: any = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private reverb: any = null;
+  private Tone: typeof import("tone") | null = null;
+  private synth: import("tone").PolySynth | null = null;
+  private reverb: import("tone").Reverb | null = null;
   private sustainedNotes = new Set<string>();
   /** 引用计数：同一音高可被多个音符同时按住，只有计数归零才释放 */
   private heldNotes = new Map<string, number>();
   private sustain = false;
   private velocitySensitivity = true;
-  private volume = DEFAULT_VOLUME;
+  private volume = D.volume;
   private initialized = false;
+  /** 并发 init 去重 */
+  private initPromise: Promise<void> | null = null;
+  /** 防止并发生成脉冲响应 */
+  private reverbGenerating = false;
+  private pendingReverbDecay: number | null = null;
 
   /**
    * 初始化音频引擎，创建 FMSynth、Reverb 等音频节点。
    * 若已初始化则仅尝试恢复被浏览器暂停的音频上下文。
-   * @param config - 可选的用户配置，未指定的字段使用默认值
+   * 并发安全：多次调用只会执行一次初始化。
+   * @param config - 可选的用户配置，未指定的字段使用 constants.ts 中的默认值
    */
   async init(config?: Partial<SoundEngineUserConfig>): Promise<void> {
     if (this.initialized) {
-      // 已初始化，但音频上下文可能被浏览器自动播放策略暂停（尤其在首次 init
-      // 发生在非用户手势时）。每次调用都尝试恢复，确保 Transport 能正常推进。
-      const ctx = this.Tone.getContext();
-      if (ctx.state !== "running") {
+      // 已初始化，但音频上下文可能被浏览器自动播放策略暂停
+      const ctx = this.Tone?.getContext();
+      if (ctx && ctx.state !== "running") {
         await ctx.resume();
       }
       return;
     }
+    // 并发去重
+    if (this.initPromise) return this.initPromise;
+    this.initPromise = this.doInit(config).finally(() => {
+      this.initPromise = null;
+    });
+    return this.initPromise;
+  }
 
+  private async doInit(config?: Partial<SoundEngineUserConfig>): Promise<void> {
     // Dynamic import to defer Tone.js loading until user interaction
     this.Tone = await import("tone");
 
     await this.Tone.start();
 
     const c = config ?? {};
-    this.volume = c.volume ?? DEFAULT_VOLUME;
-    this.sustain = c.sustain ?? false;
-    this.velocitySensitivity = c.velocitySensitivity ?? true;
+    this.volume = c.volume ?? D.volume;
+    this.sustain = c.sustain ?? D.sustain;
+    this.velocitySensitivity = c.velocitySensitivity ?? D.velocitySensitivity;
 
     this.Tone.Destination.volume.value = this.Tone.gainToDb(this.volume);
 
     this.reverb = new this.Tone.Reverb({
-      decay: c.reverbDecay ?? DEFAULT_REVERB_DECAY,
-      wet: c.reverbAmount ?? DEFAULT_REVERB_WET,
+      decay: c.reverbDecay ?? D.reverbDecay,
+      wet: c.reverbAmount ?? D.reverbAmount,
     });
     await this.reverb.generate();
 
-    const envelope = c.envelope ?? {
-      attack: 0.002,
-      decay: 0.3,
-      sustain: 0.3,
-      release: 1.0,
-    };
-    const modEnvelope = c.modulationEnvelope ?? {
-      attack: 0.005,
-      decay: 0.5,
-      sustain: 0.2,
-      release: 0.5,
-    };
+    const envelope = c.envelope ?? D.envelope;
+    const modEnvelope = c.modulationEnvelope ?? D.modulationEnvelope;
 
     this.synth = new this.Tone.PolySynth(this.Tone.FMSynth, {
-      harmonicity: c.harmonicity ?? 2,
-      modulationIndex: c.modulationIndex ?? 10,
-      oscillator: { type: c.oscillatorType ?? "triangle" } as Record<
+      harmonicity: c.harmonicity ?? D.harmonicity,
+      modulationIndex: c.modulationIndex ?? D.modulationIndex,
+      oscillator: { type: c.oscillatorType ?? D.oscillatorType } as Record<
         string,
         unknown
       >,
@@ -104,7 +107,8 @@ export class SoundEngine {
       modulation: { type: "sine" },
       modulationEnvelope: toEnvelopeConfig(modEnvelope),
     });
-    this.synth.maxPolyphony = 64;
+    // 降低复音数：钢琴实际峰值复音 ~10-16，24 足够且大幅降低 CPU
+    this.synth.maxPolyphony = 24;
     this.synth.connect(this.reverb);
     this.reverb.toDestination();
 
@@ -119,11 +123,10 @@ export class SoundEngine {
 
     if (this.reverb) {
       this.reverb.wet.value = config.reverbAmount;
-      // reverbDecay 需要重新 generate，仅在差异较大时执行
+      // reverbDecay 需要重新 generate，仅在差异较大时执行（防抖）
       const currentDecay = this.reverb.decay as number;
-      if (Math.abs(currentDecay - config.reverbDecay) > 0.5) {
-        this.reverb.decay = config.reverbDecay;
-        this.reverb.generate();
+      if (Math.abs(currentDecay - config.reverbDecay) > REVERB_REGEN_THRESHOLD) {
+        this.scheduleReverbGenerate(config.reverbDecay);
       }
     }
 
@@ -134,7 +137,28 @@ export class SoundEngine {
         oscillator: { type: config.oscillatorType },
         envelope: toEnvelopeConfig(config.envelope),
         modulationEnvelope: toEnvelopeConfig(config.modulationEnvelope),
-      });
+      } as Record<string, unknown>);
+    }
+  }
+
+  /**
+   * 防抖式异步生成脉冲响应，避免并发生成和主线程阻塞
+   */
+  private async scheduleReverbGenerate(decay: number): Promise<void> {
+    if (this.reverbGenerating) {
+      // 正在生成，暂存最新值
+      this.pendingReverbDecay = decay;
+      return;
+    }
+    this.reverbGenerating = true;
+    this.reverb!.decay = decay;
+    await this.reverb!.generate();
+    this.reverbGenerating = false;
+    // 处理积压的更新
+    if (this.pendingReverbDecay !== null) {
+      const next = this.pendingReverbDecay;
+      this.pendingReverbDecay = null;
+      await this.scheduleReverbGenerate(next);
     }
   }
 
@@ -211,5 +235,7 @@ export class SoundEngine {
     this.reverb = null;
     this.Tone = null;
     this.initialized = false;
+    this.reverbGenerating = false;
+    this.pendingReverbDecay = null;
   }
 }

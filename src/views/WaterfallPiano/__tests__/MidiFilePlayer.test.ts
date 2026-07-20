@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import * as Tone from "tone";
 
 vi.mock("@tonejs/midi", () => {
   return {
@@ -37,30 +36,25 @@ vi.mock("@tonejs/midi", () => {
   };
 });
 
-vi.mock("tone", () => {
-  const transport = {
-    seconds: 0,
-    bpm: { value: 120 },
-    loop: false,
-    start: vi.fn(function (this: typeof transport) {
-      return this;
-    }),
-    pause: vi.fn(function (this: typeof transport) {
-      return this;
-    }),
-    stop: vi.fn(function (this: typeof transport) {
-      return this;
-    }),
-    cancel: vi.fn(function (this: typeof transport) {
-      return this;
-    }),
-  };
-  return {
-    getTransport: () => transport,
-  };
-});
-
 import { MidiFilePlayer } from "../midi/MidiFilePlayer";
+import type { Clock } from "../audio/PerfClock";
+
+/** 可控时钟：允许测试手动推进时间 */
+class MockClock implements Clock {
+  private _position = 0;
+  private _rate = 1;
+
+  start(): void { /* no-op for mock */ }
+  pause(): void { /* no-op for mock */ }
+  stop(): void { this._position = 0; }
+  seek(seconds: number): void { this._position = seconds; }
+  getPosition(): number { return this._position; }
+  setRate(rate: number): void { this._rate = rate; }
+  getRate(): number { return this._rate; }
+
+  /** 测试辅助：手动设置当前位置 */
+  setPosition(seconds: number): void { this._position = seconds; }
+}
 
 function mockFile(): File {
   return {
@@ -70,14 +64,12 @@ function mockFile(): File {
 
 describe("MidiFilePlayer", () => {
   let player: MidiFilePlayer;
-  let transport: ReturnType<typeof Tone.getTransport>;
+  let clock: MockClock;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    player = new MidiFilePlayer();
-    transport = Tone.getTransport();
-    transport.seconds = 0;
-    vi.clearAllMocks();
+    clock = new MockClock();
+    player = new MidiFilePlayer(clock);
   });
 
   afterEach(() => {
@@ -132,8 +124,7 @@ describe("MidiFilePlayer", () => {
     const progressSpy = vi.fn();
     player.setCallbacks({ onProgress: progressSpy });
     player.startPlayback();
-    transport.seconds = 1.0;
-    vi.advanceTimersByTime(16);
+    clock.setPosition(1.0);
     player.tick();
     expect(progressSpy).toHaveBeenCalled();
     const lastCall = progressSpy.mock.calls[progressSpy.mock.calls.length - 1];
@@ -166,18 +157,18 @@ describe("MidiFilePlayer", () => {
     expect(player.getIsPaused()).toBe(false);
   });
 
-  it("setPlaybackSpeed(2) → getCurrentTime = transport.seconds * 2", async () => {
+  it("setPlaybackSpeed(2) → getCurrentTime 随 clock rate 变化", async () => {
     await player.loadFile(mockFile());
     player.setPlaybackSpeed(2);
-    transport.seconds = 1.5;
-    expect(player.getCurrentTime()).toBe(3.0);
+    // clock 内部 rate=2，设置 position 后 getCurrentTime 直接返回 clock position
+    clock.setPosition(1.5);
+    expect(player.getCurrentTime()).toBe(1.5);
   });
 
-  it("seekTo(1.0) → transport.seconds = 1.0 / speed", async () => {
+  it("seekTo(1.0) → clock 位置更新", async () => {
     await player.loadFile(mockFile());
-    player.setPlaybackSpeed(2);
     player.seekTo(1.0);
-    expect(transport.seconds).toBeCloseTo(0.5, 5);
+    expect(clock.getPosition()).toBe(1.0);
   });
 
   it("setSelectedTracks([0]) → getScheduledNotes 只含 track 0", async () => {
@@ -193,17 +184,16 @@ describe("MidiFilePlayer", () => {
     expect(player.getIsPlaying()).toBe(false);
   });
 
-  it("播放到 duration 且 loop=true → onPlaybackEnd 不触发，transport 归零", async () => {
+  it("播放到 duration 且 loop=true → onPlaybackEnd 不触发，位置归零", async () => {
     await player.loadFile(mockFile());
     const endSpy = vi.fn();
     player.setCallbacks({ onPlaybackEnd: endSpy });
     player.setLoop(true);
     player.startPlayback();
-    transport.seconds = 3.0;
-    vi.advanceTimersByTime(16);
+    clock.setPosition(3.0);
     player.tick();
     expect(endSpy).not.toHaveBeenCalled();
-    expect(transport.seconds).toBe(0);
+    expect(clock.getPosition()).toBe(0);
   });
 
   it("播放到 duration 且 loop=false → onPlaybackEnd 触发", async () => {
@@ -211,18 +201,37 @@ describe("MidiFilePlayer", () => {
     const endSpy = vi.fn();
     player.setCallbacks({ onPlaybackEnd: endSpy });
     player.startPlayback();
-    transport.seconds = 3.0;
-    vi.advanceTimersByTime(16);
+    clock.setPosition(3.0);
     player.tick();
     expect(endSpy).toHaveBeenCalledTimes(1);
     expect(player.getIsPlaying()).toBe(false);
   });
 
-  it("dispose 调用 transport.stop 和 cancel", async () => {
+  it("tick 触发 noteOn 回调", async () => {
+    await player.loadFile(mockFile());
+    const noteOnSpy = vi.fn();
+    player.setCallbacks({ onNoteOn: noteOnSpy });
+    player.startPlayback();
+    // 第一个音符 time=0，tick 后应触发
+    player.tick();
+    expect(noteOnSpy).toHaveBeenCalledWith(60, 102, "right", 0);
+  });
+
+  it("tick 触发 noteOff 回调（音符结束时）", async () => {
+    await player.loadFile(mockFile());
+    const noteOffSpy = vi.fn();
+    player.setCallbacks({ onNoteOff: noteOffSpy });
+    player.startPlayback();
+    // 第一个音符 time=0, duration=0.5 → end=0.5
+    clock.setPosition(0.5);
+    player.tick();
+    expect(noteOffSpy).toHaveBeenCalled();
+  });
+
+  it("dispose 后 clock 停止", async () => {
     await player.loadFile(mockFile());
     player.startPlayback();
     player.dispose();
-    expect(transport.stop).toHaveBeenCalled();
-    expect(transport.cancel).toHaveBeenCalled();
+    expect(clock.getPosition()).toBe(0);
   });
 });

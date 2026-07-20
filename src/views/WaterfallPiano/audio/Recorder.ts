@@ -5,6 +5,7 @@ import {
 } from "@/helpers/storage";
 import { RECORDING_STORAGE_KEY } from "../constants";
 import type { RecordedNote, ScheduledNote } from "../types";
+import { EventScheduler } from "./EventScheduler";
 
 export interface RecorderCallbacks {
   onNoteOn?: (
@@ -22,6 +23,7 @@ export interface RecorderCallbacks {
  * MIDI 录音与回放控制器，
  * 负责录制弹奏的音符序列、回放已录制的音符，
  * 并通过 tick() 方法驱动瀑布流视图的进度更新。
+ * 使用 EventScheduler 游标调度替代全量扫描。
  */
 export class Recorder {
   private notes: RecordedNote[] = [];
@@ -35,9 +37,20 @@ export class Recorder {
   private isPaused = false;
   private playStartTime = 0;
   private pausedAt = 0;
-  private triggeredIndices = new Set<number>();
-  private endedIndices = new Set<number>();
   callbacks: RecorderCallbacks = {};
+
+  private readonly scheduler: EventScheduler<ScheduledNote>;
+
+  constructor() {
+    this.scheduler = new EventScheduler<ScheduledNote>({
+      onTrigger: (note) => {
+        this.callbacks.onNoteOn?.(note.midi, note.velocity, note.hand);
+      },
+      onRelease: (note) => {
+        this.callbacks.onNoteOff?.(note.midi);
+      },
+    });
+  }
 
   startRecording(): void {
     this.notes = [];
@@ -99,12 +112,14 @@ export class Recorder {
    */
   loadNotes(notes: RecordedNote[]): void {
     this.notes = [...notes];
-    this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
+    const scheduled = this.getScheduledNotes();
+    this.scheduler.setNotes(scheduled);
+    this.callbacks.onScheduledNotesReady?.(scheduled);
   }
 
   startPlayback(): void {
     if (this.notes.length === 0) return;
-    this.resetPlaybackState();
+    this.scheduler.reset();
     this.pausedAt = 0;
     this.playStartTime = performance.now();
     this.isPlaying = true;
@@ -130,18 +145,18 @@ export class Recorder {
     this.isPlaying = false;
     this.isPaused = false;
     this.pausedAt = 0;
-    this.resetPlaybackState();
+    this.scheduler.reset();
   }
 
   /**
-   * 跳转到指定时间点播放，会重新计算已触发/已结束音符的状态
+   * 跳转到指定时间点播放，会重新定位调度器游标
    * @param seconds - 目标时间位置（秒）
    */
   seekTo(seconds: number): void {
     const clamped = Math.max(0, Math.min(seconds, this.getDuration()));
     this.pausedAt = clamped;
     this.playStartTime = performance.now() - clamped * 1000;
-    this.recomputeTriggeredState(clamped);
+    this.scheduler.seek(clamped);
   }
 
   getDuration(): number {
@@ -209,56 +224,18 @@ export class Recorder {
     this.isPlaying = false;
     this.isPaused = false;
     this.pending.clear();
-    this.resetPlaybackState();
-  }
-
-  /**
-   * 重置回放状态，清空已触发和已结束音符的索引记录
-   */
-  private resetPlaybackState(): void {
-    this.triggeredIndices.clear();
-    this.endedIndices.clear();
-  }
-
-  /**
-   * 根据当前播放时间重新计算哪些音符已被触发、已结束，
-   * 用于 seekTo 跳转后恢复正确的回放状态
-   * @param current - 当前播放时间（秒）
-   */
-  private recomputeTriggeredState(current: number): void {
-    this.triggeredIndices.clear();
-    this.endedIndices.clear();
-    for (let i = 0; i < this.notes.length; i++) {
-      const n = this.notes[i];
-      if (n.time <= current) this.triggeredIndices.add(i);
-      if (n.time + n.duration <= current) this.endedIndices.add(i);
-    }
+    this.scheduler.reset();
   }
 
   /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
   tick(): void {
     const current = this.getCurrentTime();
-    for (let i = 0; i < this.notes.length; i++) {
-      if (this.triggeredIndices.has(i)) continue;
-      const n = this.notes[i];
-      if (n.time <= current) {
-        this.triggeredIndices.add(i);
-        this.callbacks.onNoteOn?.(n.midi, n.velocity, n.hand ?? "unknown");
-      }
-    }
-    for (let i = 0; i < this.notes.length; i++) {
-      if (this.endedIndices.has(i)) continue;
-      const n = this.notes[i];
-      if (n.time + n.duration <= current) {
-        this.endedIndices.add(i);
-        this.callbacks.onNoteOff?.(n.midi);
-      }
-    }
+    this.scheduler.tick(current);
     this.callbacks.onProgress?.(current, this.getDuration());
     if (current >= this.getDuration() && this.getDuration() > 0) {
       this.isPlaying = false;
       this.isPaused = false;
-      this.resetPlaybackState();
+      this.scheduler.reset();
       this.callbacks.onPlaybackEnd?.();
     }
   }

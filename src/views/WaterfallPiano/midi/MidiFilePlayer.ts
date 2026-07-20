@@ -1,7 +1,9 @@
 import { Midi } from "@tonejs/midi";
-import * as Tone from "tone";
 import type { ScheduledNote, MidiTrackInfo } from "../types";
 import { createLogger } from "@/utils/logger";
+import { EventScheduler } from "../audio/EventScheduler";
+import type { Clock } from "../audio/PerfClock";
+import { PerfClock } from "../audio/PerfClock";
 
 const logger = createLogger("MidiFilePlayer");
 
@@ -24,7 +26,7 @@ export interface MidiPlayerCallbacks {
 
 /**
  * MIDI 文件播放器，负责解析 MIDI 文件、管理播放状态、按帧推进音符触发/结束回调。
- * 基于 Tone.js Transport 实现时间轴控制。
+ * 基于 PerfClock 时钟 + EventScheduler 游标调度实现时间轴控制。
  */
 export class MidiFilePlayer {
   private midi: Midi | null = null;
@@ -36,12 +38,27 @@ export class MidiFilePlayer {
   private isPlaying = false;
   /** @see isPlaying */
   private isPaused = false;
-  private playbackSpeed = 1;
-  private selectedTracks: number[] = [];
   private loop = false;
-  private triggeredIndices = new Set<number>();
-  private endedIndices = new Set<number>();
+  private readonly clock: Clock;
+  private readonly scheduler: EventScheduler<ScheduledNote>;
   callbacks: MidiPlayerCallbacks = {};
+
+  constructor(clock?: Clock) {
+    this.clock = clock ?? new PerfClock();
+    this.scheduler = new EventScheduler<ScheduledNote>({
+      onTrigger: (note) => {
+        this.callbacks.onNoteOn?.(
+          note.midi,
+          note.velocity,
+          note.hand,
+          note.trackIndex,
+        );
+      },
+      onRelease: (note) => {
+        this.callbacks.onNoteOff?.(note.midi);
+      },
+    });
+  }
 
   /**
    * 加载并解析 MIDI 文件，提取轨道信息与调度音符，通过回调通知外部组件
@@ -54,6 +71,7 @@ export class MidiFilePlayer {
     this.tracks = this.extractTrackInfo();
     this.duration = this.midi.duration;
     this.notes = this.collectNotes();
+    this.scheduler.setNotes(this.notes);
     this.callbacks.onTracksReady?.(this.tracks);
     this.callbacks.onScheduledNotesReady?.(this.notes);
     return this.tracks;
@@ -117,9 +135,10 @@ export class MidiFilePlayer {
 
   startPlayback(): void {
     if (this.notes.length === 0) return;
-    this.resetPlaybackState();
-    Tone.getTransport().seconds = 0;
-    Tone.getTransport().start();
+    this.clock.stop();
+    this.clock.seek(0);
+    this.clock.start();
+    this.scheduler.reset();
     this.isPlaying = true;
     this.isPaused = false;
     // 重新通知 NoteBlockSystem，确保方块系统状态完全重置
@@ -128,14 +147,14 @@ export class MidiFilePlayer {
 
   pausePlayback(): void {
     if (!this.isPlaying) return;
-    Tone.getTransport().pause();
+    this.clock.pause();
     this.isPlaying = false;
     this.isPaused = true;
   }
 
   resumePlayback(): void {
     if (!this.isPaused) return;
-    Tone.getTransport().start();
+    this.clock.start();
     this.isPlaying = true;
     this.isPaused = false;
     // 恢复后同步时间到 NoteBlockSystem，确保方块显示与播放进度一致
@@ -145,20 +164,19 @@ export class MidiFilePlayer {
   }
 
   stopPlayback(): void {
-    Tone.getTransport().stop();
-    Tone.getTransport().seconds = 0;
+    this.clock.stop();
     this.isPlaying = false;
     this.isPaused = false;
-    this.resetPlaybackState();
+    this.scheduler.reset();
   }
 
   /**
-   * 跳转到指定时间位置，并根据播放速度换算为 Transport 实际秒数
+   * 跳转到指定时间位置
    * @param seconds - 目标位置（原始时间，不受播放速度影响）
    */
   seekTo(seconds: number): void {
-    Tone.getTransport().seconds = seconds / this.playbackSpeed;
-    this.recomputeTriggeredState();
+    this.clock.seek(seconds);
+    this.scheduler.seek(seconds);
   }
 
   getDuration(): number {
@@ -174,19 +192,19 @@ export class MidiFilePlayer {
   }
 
   getCurrentTime(): number {
-    return Tone.getTransport().seconds * this.playbackSpeed;
+    return this.clock.getPosition();
   }
 
   /**
-   * 设置播放速度倍率，同步调整 Transport BPM 并重新计算已触发音符状态
+   * 设置播放速度倍率
    * @param speed - 播放速度倍率，必须大于 0（1 为原始速度）
    */
   setPlaybackSpeed(speed: number): void {
-    if (speed <= 0) return;
-    this.playbackSpeed = speed;
-    Tone.getTransport().bpm.value = 120 * speed;
-    this.recomputeTriggeredState();
+    this.clock.setRate(speed);
+    this.scheduler.seek(this.getCurrentTime());
   }
+
+  private selectedTracks: number[] = [];
 
   /**
    * 设置参与播放的轨道索引，会重新收集调度音符并通过回调通知外部
@@ -196,6 +214,7 @@ export class MidiFilePlayer {
     this.selectedTracks = indices;
     if (this.midi) {
       this.notes = this.collectNotes();
+      this.scheduler.setNotes(this.notes);
       this.callbacks.onScheduledNotesReady?.(this.notes);
     }
   }
@@ -208,74 +227,30 @@ export class MidiFilePlayer {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
-  private resetPlaybackState(): void {
-    this.triggeredIndices.clear();
-    this.endedIndices.clear();
-  }
-
-  /** 根据当前播放时间重新计算已触发和已结束音符的索引集合，用于 seek 或变速后恢复正确状态 */
-  private recomputeTriggeredState(): void {
-    const currentOriginal = this.getCurrentTime();
-    this.triggeredIndices.clear();
-    this.endedIndices.clear();
-    for (let i = 0; i < this.notes.length; i++) {
-      const note = this.notes[i];
-      if (note.time <= currentOriginal) {
-        this.triggeredIndices.add(i);
-      }
-      if (note.time + note.duration <= currentOriginal) {
-        this.endedIndices.add(i);
-      }
-    }
-  }
-
   /** 每帧由 WaterfallEngine 主循环调用，推进播放进度并触发回调 */
   tick(): void {
     const current = this.getCurrentTime();
-
-    for (let i = 0; i < this.notes.length; i++) {
-      if (this.triggeredIndices.has(i)) continue;
-      const note = this.notes[i];
-      if (note.time <= current) {
-        this.triggeredIndices.add(i);
-        this.callbacks.onNoteOn?.(
-          note.midi,
-          note.velocity,
-          note.hand,
-          note.trackIndex,
-        );
-      }
-    }
-    for (let i = 0; i < this.notes.length; i++) {
-      if (this.endedIndices.has(i)) continue;
-      const note = this.notes[i];
-      if (note.time + note.duration <= current) {
-        this.endedIndices.add(i);
-        this.callbacks.onNoteOff?.(note.midi);
-      }
-    }
+    this.scheduler.tick(current);
     this.callbacks.onProgress?.(current, this.duration);
     if (current >= this.duration) {
       if (this.loop) {
-        Tone.getTransport().seconds = 0;
-        this.resetPlaybackState();
+        this.clock.seek(0);
+        this.scheduler.reset();
       } else {
         this.isPlaying = false;
         this.isPaused = false;
-        Tone.getTransport().stop();
-        Tone.getTransport().seconds = 0;
-        this.resetPlaybackState();
+        this.clock.stop();
+        this.scheduler.reset();
         this.callbacks.onPlaybackEnd?.();
       }
     }
   }
 
   dispose(): void {
-    Tone.getTransport().stop();
-    Tone.getTransport().cancel();
+    this.clock.stop();
     this.midi = null;
     this.notes = [];
     this.tracks = [];
-    this.resetPlaybackState();
+    this.scheduler.reset();
   }
 }
