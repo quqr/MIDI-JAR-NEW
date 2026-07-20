@@ -9,6 +9,8 @@ import { createLogger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";
 import tauriAPI from "@/utils/tauri";
 import { initRustLogListener } from "@/composables/useDebuggerLogs";
+import { createMidiBackend } from "@/midi/backend";
+import { useBrowserSupport } from "@/composables/useBrowserSupport";
 
 const logger = createLogger("Main");
 
@@ -20,6 +22,19 @@ app.use(pinia).use(router).use(i18n);
 async function initializeMidi() {
   try {
     logger.info("应用初始化开始...");
+
+    // 浏览器兼容性检查
+    if (!isTauri()) {
+      const { isMidiSupported } = useBrowserSupport();
+      if (!isMidiSupported.value) {
+        logger.warn("当前浏览器不支持 Web MIDI API，部分功能将不可用");
+      }
+    }
+
+    // 初始化 MIDI 后端
+    const backend = createMidiBackend();
+    await backend.initialize();
+
     const routingStore = useMidiRoutingStore(pinia);
     await routingStore.initialize();
     logger.info("应用初始化完成");

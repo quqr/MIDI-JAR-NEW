@@ -16,6 +16,7 @@
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix",
     "build": "npm run build:pre",
+    "build:web": "cross-env VITE_WEB=true NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "build:pre": "npm run format:fix && cross-env NODE_OPTIONS=--max-old-space-size=8192 vue-tsc --noEmit && vite build",
     "dev": "vite",
     "format": "oxfmt",

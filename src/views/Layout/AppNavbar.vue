@@ -6,7 +6,7 @@
       <AppBreadcrumb />
     </div>
 
-    <div class="app-navbar__drag-region">
+    <div v-if="inTauri" class="app-navbar__drag-region">
       <div
         class="app-navbar__drag-area"
         data-tauri-drag-region
@@ -37,7 +37,7 @@
 
       <ThemeSwitcher />
 
-      <div v-if="!isMac" class="app-navbar__window-controls">
+      <div v-if="!isMac && inTauri" class="app-navbar__window-controls">
         <button
           class="win-ctrl-btn"
           @click="handleMinimize"
@@ -167,8 +167,10 @@ import Icon from "@/components/Icon/Icon.vue";
 import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
+import { isTauri } from "@/utils/tauri";
 
 const logger = createLogger("AppNavbar");
+const inTauri = isTauri();
 
 const { t } = useI18n();
 const route = useRoute();

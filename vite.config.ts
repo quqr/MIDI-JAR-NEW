@@ -6,6 +6,7 @@ import Vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
 const isDevEnv = process.env.NODE_ENV === "development";
+const isWebBuild = !!process.env.VITE_WEB;
 
 export default defineConfig(() => {
   return {
@@ -15,7 +16,7 @@ export default defineConfig(() => {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
-    base: "./",
+    base: isWebBuild ? "/MIDI-JAR-NEW/" : "./",
     clearScreen: false,
     server: {
       port: 5173,

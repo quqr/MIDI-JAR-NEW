@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import AppLayout from "@/views/Layout/AppLayout.vue";
 import SettingsLayout from "@/views/Settings/Layout/SettingsLayout.vue";
 import i18n from "@/locales/i18n";
@@ -142,7 +142,7 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 });
 
