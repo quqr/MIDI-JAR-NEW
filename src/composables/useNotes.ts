@@ -17,7 +17,6 @@ export function useNotes({
   accidentals = "flat",
   key = "C",
   midiChannel = 0,
-  allowOmissions = false,
   useSustain = true,
   detectOnRelease = true,
   disabledChords = undefined,
@@ -28,7 +27,6 @@ export function useNotes({
     accidentals,
     key,
     midiChannel,
-    allowOmissions,
     useSustain,
     detectOnRelease,
     disabledChords,
@@ -50,7 +48,6 @@ export function useNotes({
     return getChords(
       currentNotes,
       keySignatureNotes(),
-      resolveOption(allowOmissions, false),
       resolveOption(disabledChords, []),
     );
   }
@@ -155,10 +152,6 @@ export function useNotes({
     state.notes.value = newNotes;
     state.pitchClasses.value = newPitchClasses;
     state.chords.value = newChords;
-  });
-
-  watch(config.allowOmissionsGetter, () => {
-    state.chords.value = recomputeChords(state.notes.value);
   });
 
   watch(config.disabledChordsGetter, () => {

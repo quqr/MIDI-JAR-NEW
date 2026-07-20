@@ -380,8 +380,6 @@
       "chordNotationHint": "Choose the notation chords are displayed in",
       "highlightAlterations": "Highlight Chord Alterations",
       "highlightAlterationsHint": "Displays chord parts more clearly to ease reading",
-      "allowOmissions": "Allow omissions",
-      "allowOmissionsHint": "Detects chords with omitted intervals",
       "useSustainPedal": "Use sustain pedal",
       "useSustainPedalHint": "Detects chords including sustained notes",
       "detectOnRelease": "Detect on release",

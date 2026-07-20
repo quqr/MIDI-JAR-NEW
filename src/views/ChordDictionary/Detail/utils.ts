@@ -60,7 +60,6 @@ export function getAlternativeChords(
   if (!chord) return [];
 
   const chords = detect(chord.notes, {
-    allowOmissions: true,
     disabledChords: hideDisabled ? disabled : [],
   })
     .map((c) => getChordInfo(c, keySignature?.notes))

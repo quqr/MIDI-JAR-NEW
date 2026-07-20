@@ -27,7 +27,6 @@ export type KeyboardSettings = {
 export type ChordDisplaySettings = {
   id: string;
   chordNotation: "long" | "short" | "symbol" | "preferred";
-  allowOmissions: boolean;
   useSustain: boolean;
   detectOnRelease: boolean;
   highlightAlterations: boolean;

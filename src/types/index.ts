@@ -115,7 +115,6 @@ export type KeyboardSettings = {
 export type ChordDisplaySettings = {
   id: string;
   chordNotation: "long" | "short" | "symbol" | "preferred";
-  allowOmissions: boolean;
   useSustain: boolean;
   detectOnRelease: boolean;
   highlightAlterations: boolean;
@@ -208,7 +207,6 @@ export const defaultKeyboardSettings: KeyboardSettings = {
 export const defaultChordDisplaySettings: ChordDisplaySettings = {
   id: "default",
   chordNotation: "preferred",
-  allowOmissions: true,
   useSustain: true,
   detectOnRelease: true,
   highlightAlterations: false,

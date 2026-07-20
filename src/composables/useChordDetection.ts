@@ -39,17 +39,15 @@ function getChordInfo(
  *
  * @param notes - 当前活跃的音名列表
  * @param keySignatureNotes - 当前调号的音名列表，用于升降号映射
- * @param allowOmissions - 是否允许省略音的和弦匹配
  * @param disabledChords - 需要排除的和弦名称列表
  * @returns 检测到的和弦信息数组（可能包含 null 项）
  */
 export function getChords(
   notes: string[],
   keySignatureNotes: readonly string[],
-  allowOmissions: boolean,
   disabledChords: string[] = [],
 ) {
-  return detect(notes, { allowOmissions, disabledChords }).map((n) =>
+  return detect(notes, { disabledChords }).map((n) =>
     getChordInfo(n, keySignatureNotes),
   );
 }

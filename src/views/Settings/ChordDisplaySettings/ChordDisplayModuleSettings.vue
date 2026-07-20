@@ -40,12 +40,6 @@
           @update:model-value="updateSetting('highlightAlterations', $event)"
         />
         <SettingsToggle
-          :model-value="moduleSettings.allowOmissions"
-          :label="t('settings.chordDisplaySettings.allowOmissions')"
-          :description="t('settings.chordDisplaySettings.allowOmissionsHint')"
-          @update:model-value="updateSetting('allowOmissions', $event)"
-        />
-        <SettingsToggle
           :model-value="moduleSettings.useSustain"
           :label="t('settings.chordDisplaySettings.useSustainPedal')"
           :description="t('settings.chordDisplaySettings.useSustainPedalHint')"

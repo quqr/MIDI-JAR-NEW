@@ -3,7 +3,6 @@ import * as ChordType from "@tonaljs/chord-type";
 import { Chord as TChord } from "@tonaljs/chord";
 import { isSubsetOf } from "@tonaljs/pcset";
 
-import chordsData from "./chords-data";
 import { stringRotate } from "./string";
 import { KeySignatureConfig } from "./note";
 
@@ -102,7 +101,7 @@ export function getChordDegrees(
     );
     if (i < 0) return "";
 
-    return chord.intervals[i].replace("*", "");
+    return chord.intervals[i];
   });
 }
 
@@ -153,22 +152,6 @@ export function isSameChord(a: TChord, b: TChord) {
   return a.symbol === b.symbol;
 }
 
-export function removeIntervalWildcards(intervals: string[]) {
-  return intervals.map((interval) => interval.replace("*", ""));
-}
-
-/**
- * 用自定义和弦数据覆盖 @tonaljs 内置的和弦类型字典，使和弦检测使用项目自定义的别名和音程定义
- */
-export function overrideDictionary() {
-  ChordType.removeAll();
-  chordsData.forEach(([intervals, fullName, aliases]: string[]) =>
-    ChordType.add(intervals.split(" "), aliases.split(" "), fullName),
-  );
-}
-
 export function getChordTypes() {
   return ChordType.all();
 }
-
-overrideDictionary();

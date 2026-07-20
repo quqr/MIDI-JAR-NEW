@@ -380,8 +380,6 @@
       "chordNotationHint": "选择和弦的显示记法",
       "highlightAlterations": "高亮和弦变化音",
       "highlightAlterationsHint": "更清晰地显示和弦组成部分以便阅读",
-      "allowOmissions": "允许省略音",
-      "allowOmissionsHint": "检测省略了部分音程的和弦",
       "useSustainPedal": "使用延音踏板",
       "useSustainPedalHint": "检测包含延音的和弦",
       "detectOnRelease": "释放时检测",

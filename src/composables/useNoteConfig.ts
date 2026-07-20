@@ -10,7 +10,6 @@ export interface UseNotesOptions {
   accidentals?: "flat" | "sharp" | (() => "flat" | "sharp");
   key?: string | (() => string);
   midiChannel?: number;
-  allowOmissions?: boolean | (() => boolean);
   useSustain?: boolean | (() => boolean);
   detectOnRelease?: boolean | (() => boolean);
   disabledChords?: string[] | (() => string[]);
@@ -55,7 +54,6 @@ export function toGetter<T>(
 export function useNoteConfig(options: UseNotesOptions = {}) {
   const accidentalsGetter = toGetter(options.accidentals, "flat" as const);
   const keyGetter = toGetter(options.key, "C");
-  const allowOmissionsGetter = toGetter(options.allowOmissions, false);
   const useSustainGetter = toGetter(options.useSustain, true);
   const detectOnReleaseGetter = toGetter(options.detectOnRelease, true);
   const disabledChordsGetter = toGetter(options.disabledChords, [] as string[]);
@@ -73,7 +71,6 @@ export function useNoteConfig(options: UseNotesOptions = {}) {
     keySignature,
     accidentalsGetter,
     keyGetter,
-    allowOmissionsGetter,
     useSustainGetter,
     detectOnReleaseGetter,
     disabledChordsGetter,

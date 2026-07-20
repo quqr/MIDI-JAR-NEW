@@ -166,7 +166,6 @@ const {
   accidentals: () => settingsStore.settings.notation.accidentals,
   key: () => settingsStore.settings.notation.key,
   midiChannel: 0,
-  allowOmissions: moduleSettings.value?.allowOmissions ?? false,
   useSustain: moduleSettings.value?.useSustain ?? true,
   detectOnRelease: moduleSettings.value?.detectOnRelease ?? true,
   disabledChords: settingsStore.settings.chordDictionary.disabled,
