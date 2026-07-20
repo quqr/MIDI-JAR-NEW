@@ -4,11 +4,6 @@ import { useRipplerXStore, type RipplerXState } from "../stores/ripplerx";
 
 const logger = createLogger("useModalSynth");
 
-/** MIDI note number → frequency (Hz), A4 = 69 → 440 Hz */
-function midiToFreq(midi: number): number {
-  return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
 export interface ModalSynthState {
   isInitialized: boolean;
   activeVoices: number;
@@ -141,20 +136,11 @@ export function useModalSynth() {
 
     activeNotes.set(note, velocity);
 
-    const freq = midiToFreq(note);
-    const s = store.state;
-
+    // Send note-on to AudioWorklet (it handles frequency calculation internally)
     workletNode.port.postMessage({
-      type: "trigger",
-      frequency: freq,
-      decay: s.resonatorA.decay,
-      damp: s.resonatorA.damp,
-      tone: s.resonatorA.tone,
-      hit: s.resonatorA.hit,
-      rel: s.resonatorA.release,
-      inharm: s.resonatorA.inharmonicity,
-      partials: [4, 8, 16, 32, 64][s.resonatorA.partials] ?? 32,
-      velocity: velocity / 127,
+      type: "noteOn",
+      note,
+      velocity,
     });
 
     // Set gain parameter in real-time
@@ -176,6 +162,14 @@ export function useModalSynth() {
       return;
     }
     activeNotes.delete(note);
+
+    if (workletNode && isInitialized.value) {
+      workletNode.port.postMessage({
+        type: "noteOff",
+        note,
+      });
+    }
+
     activeVoices.value = Math.max(0, activeVoices.value - 1);
   }
 
@@ -202,24 +196,81 @@ export function useModalSynth() {
 
   /**
    * Push all current store parameters to the worklet.
+   * Converts the store's structured params to the flat key-value format
+   * expected by the AudioWorklet processor, and uses JSON round-trip to
+   * strip Vue Proxy wrappers that cause DataCloneError.
    */
   function syncAllParams(): void {
     if (!workletNode) return;
     const s = store.state;
 
-    // Send all params as a bulk update
+    // Build flat parameter map matching AudioWorklet's expected keys
+    const params: Record<string, number> = {
+      // Mallet
+      mallet_type: s.mallet.type,
+      mallet_pitch: s.mallet.pitch,
+      mallet_filter: s.mallet.filter,
+      mallet_mix: s.mallet.mix,
+      mallet_res: s.mallet.resonance,
+      mallet_stiff: s.mallet.stiffness,
+      mallet_ktrack: s.mallet.keyTracking,
+      // Resonator A
+      a_on: s.resonatorA.on ? 1 : 0,
+      a_model: s.resonatorA.model,
+      a_partials: s.resonatorA.partials,
+      a_decay: s.resonatorA.decay,
+      a_damp: s.resonatorA.damp,
+      a_tone: s.resonatorA.tone,
+      a_hit: s.resonatorA.hit,
+      a_rel: s.resonatorA.release,
+      a_inharm: s.resonatorA.inharmonicity,
+      a_ratio: s.resonatorA.ratio,
+      a_cut: s.resonatorA.cut,
+      a_radius: s.resonatorA.radius,
+      // Resonator B
+      b_on: s.resonatorB.on ? 1 : 0,
+      b_model: s.resonatorB.model,
+      b_partials: s.resonatorB.partials,
+      b_decay: s.resonatorB.decay,
+      b_damp: s.resonatorB.damp,
+      b_tone: s.resonatorB.tone,
+      b_hit: s.resonatorB.hit,
+      b_rel: s.resonatorB.release,
+      b_inharm: s.resonatorB.inharmonicity,
+      b_ratio: s.resonatorB.ratio,
+      b_cut: s.resonatorB.cut,
+      b_radius: s.resonatorB.radius,
+      // Noise
+      noise_mix: s.noise.mix,
+      noise_res: s.noise.resonance,
+      noise_filter_freq: s.noise.frequency,
+      noise_filter_q: s.noise.q,
+      noise_filter_mode: s.noise.filterType,
+      noise_att: s.noise.attack,
+      noise_dec: s.noise.decay,
+      noise_sus: s.noise.sustain,
+      noise_rel: s.noise.release,
+      noise_att_ten: s.noise.attackTension,
+      noise_dec_ten: s.noise.decayTension,
+      noise_rel_ten: s.noise.releaseTension,
+      // Coupling
+      couple: s.coupling.mode,
+      ab_mix: s.coupling.mix,
+      ab_split: s.coupling.split,
+      // Pitch (resonator coarse/fine + pitch section combined)
+      a_coarse: s.resonatorA.coarse + s.pitch.coarseA,
+      a_fine: s.resonatorA.fine + s.pitch.fineA,
+      b_coarse: s.resonatorB.coarse + s.pitch.coarseB,
+      b_fine: s.resonatorB.fine + s.pitch.fineB,
+      bend_range: s.pitch.bendRange,
+      // Gain
+      gain: s.gain.gain,
+    };
+
+    // JSON round-trip strips Vue Proxy wrappers
     workletNode.port.postMessage({
       type: "setParams",
-      params: {
-        noise: s.noise,
-        mallet: s.mallet,
-        resonatorA: s.resonatorA,
-        resonatorB: s.resonatorB,
-        coupling: s.coupling,
-        pitch: s.pitch,
-        gain: s.gain.gain,
-        polyphony: s.polyphony,
-      },
+      params: JSON.parse(JSON.stringify(params)),
     });
 
     // Set AudioParam-based values immediately

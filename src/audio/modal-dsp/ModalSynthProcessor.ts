@@ -677,4 +677,4 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 }
 
 // Register the processor
-registerProcessor('modal-synth-processor', ModalSynthProcessor);
+registerProcessor('modal-synth', ModalSynthProcessor);

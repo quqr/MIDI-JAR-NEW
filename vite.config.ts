@@ -17,8 +17,44 @@ const isWebBuild = !!process.env.VITE_WEB;
 function audioWorkletBuild(): Plugin {
   const workletEntry = resolve(__dirname, "src/audio/modal-dsp/ModalSynthProcessor.ts");
   const workletOutFile = "modal-synth-processor.js";
+  const publicWorkletPath = resolve(__dirname, "public", workletOutFile);
 
   let config: import("vite").ResolvedConfig;
+
+  /** Compile the AudioWorklet processor to a standalone JS string */
+  async function compileWorklet(minify = false): Promise<string> {
+    const fs = await import("fs");
+    const tmpDir = resolve(__dirname, "node_modules/.tmp-worklet");
+    // Clean and rebuild to temp dir
+    if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true });
+
+    const { build } = await import("vite");
+    await build({
+      configFile: false,
+      logLevel: "warn",
+      build: {
+        emptyOutDir: true,
+        outDir: tmpDir,
+        lib: {
+          entry: workletEntry,
+          formats: ["iife"],
+          name: "ModalSynthProcessor",
+          fileName: () => workletOutFile,
+        },
+        rollupOptions: {
+          output: { inlineDynamicImports: true },
+        },
+        minify,
+        sourcemap: false,
+      },
+    });
+
+    const outPath = resolve(tmpDir, workletOutFile);
+    if (!fs.existsSync(outPath)) {
+      throw new Error(`AudioWorklet build output not found at ${outPath}`);
+    }
+    return fs.readFileSync(outPath, "utf-8");
+  }
 
   return {
     name: "audio-worklet-build",
@@ -28,8 +64,40 @@ function audioWorkletBuild(): Plugin {
       config = resolvedConfig;
     },
 
+    /**
+     * Dev mode: compile the worklet to public/ on startup so Vite's static
+     * file serving can serve it. We also watch source files and recompile
+     * on change.
+     */
+    async buildStart() {
+      if (config.command === "serve") {
+        const fs = await import("fs");
+        try {
+          const code = await compileWorklet(false);
+          fs.writeFileSync(publicWorkletPath, code, "utf-8");
+          console.log("[audio-worklet-build] Compiled worklet to public/");
+        } catch (err) {
+          console.error("[audio-worklet-build] Dev compilation failed:", err);
+        }
+      }
+    },
+
+    /** Watch modal-dsp source files for changes in dev mode */
+    handleHotUpdate({ file, server }) {
+      if (file.includes("modal-dsp")) {
+        compileWorklet(false).then((code) => {
+          import("fs").then((fs) => {
+            fs.writeFileSync(publicWorkletPath, code, "utf-8");
+            console.log("[audio-worklet-build] Recompiled worklet (HMR)");
+          });
+        }).catch((err) => {
+          console.error("[audio-worklet-build] HMR recompilation failed:", err);
+        });
+      }
+    },
+
+    /** Production build: compile worklet alongside the main build */
     async writeBundle() {
-      // Use Vite's internal build to compile the worklet as a separate entry
       const { build } = await import("vite");
       await build({
         configFile: false,
