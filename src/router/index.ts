@@ -50,6 +50,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.WaterfallPiano", icon: "piano" },
       },
       {
+        path: "ripplerx",
+        name: "ripplerx",
+        component: () => import("@/views/RipplerX/RipplerX.vue"),
+        meta: { title: "nav.RipplerX", icon: "piano" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },

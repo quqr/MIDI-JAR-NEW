@@ -29,6 +29,12 @@
             icon="mdi-piano"
           />
           <ModuleCard
+            to="/ripplerx"
+            :title="$t('nav.RipplerX')"
+            :description="$t('home.moduleDescriptions.RipplerX')"
+            icon="mdi-piano"
+          />
+          <ModuleCard
             to="/settings/routing"
             settings-to="/settings/routing"
             :title="$t('nav.routing')"

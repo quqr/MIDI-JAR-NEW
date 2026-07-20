@@ -33,7 +33,8 @@
     "routing": "Routing",
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
-    "WaterfallPiano": "Waterfall Piano"
+    "WaterfallPiano": "Waterfall Piano",
+    "RipplerX": "RipplerX"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -49,7 +50,8 @@
       "chordDictionary": "Look up chord structures and voicings",
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
-      "WaterfallPiano": "Waterfall-style piano performance and visualization"
+      "WaterfallPiano": "Waterfall-style piano performance and visualization",
+      "RipplerX": "Modal synthesis synthesizer with dual resonators"
     }
   },
   "layout": {

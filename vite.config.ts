@@ -1,12 +1,61 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from "node:url";
-import { resolve } from "path";
-import { defineConfig } from "vite";
+import { resolve, basename } from "path";
+import { defineConfig, type Plugin } from "vite";
 import Vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
 const isDevEnv = process.env.NODE_ENV === "development";
 const isWebBuild = !!process.env.VITE_WEB;
+
+/**
+ * Vite plugin that builds the AudioWorklet processor as a separate standalone JS bundle.
+ * AudioWorklet requires a separate file loaded via audioWorklet.addModule().
+ * This plugin compiles src/audio/modal-dsp/ModalSynthProcessor.ts (and all its
+ * DSP dependencies) into a single self-contained JS file in public/.
+ */
+function audioWorkletBuild(): Plugin {
+  const workletEntry = resolve(__dirname, "src/audio/modal-dsp/ModalSynthProcessor.ts");
+  const workletOutFile = "modal-synth-processor.js";
+
+  let config: import("vite").ResolvedConfig;
+
+  return {
+    name: "audio-worklet-build",
+    enforce: "post",
+
+    configResolved(resolvedConfig) {
+      config = resolvedConfig;
+    },
+
+    async writeBundle() {
+      // Use Vite's internal build to compile the worklet as a separate entry
+      const { build } = await import("vite");
+      await build({
+        configFile: false,
+        logLevel: "warn",
+        build: {
+          emptyOutDir: false,
+          outDir: resolve(config.build.outDir),
+          lib: {
+            entry: workletEntry,
+            formats: ["iife"],
+            name: "ModalSynthProcessor",
+            fileName: () => workletOutFile,
+          },
+          rollupOptions: {
+            output: {
+              // No code splitting – everything in one file
+              inlineDynamicImports: true,
+            },
+          },
+          minify: config.build.minify,
+          sourcemap: config.build.sourcemap,
+        },
+      });
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
@@ -48,7 +97,7 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [Vue(), tailwindcss()],
+    plugins: [Vue(), tailwindcss(), audioWorkletBuild()],
     test: {
       environment: "jsdom",
       globals: true,
