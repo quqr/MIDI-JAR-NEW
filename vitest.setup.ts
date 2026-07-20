@@ -16,6 +16,9 @@ beforeEach(() => {
   mockTransport.loop = false;
   mockTransport.loopStart = 0;
   mockTransport.loopEnd = 0;
+  // 清理 rAF Map 避免溢出
+  rafCallbacks.clear();
+  rafId = 0;
 });
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -85,12 +88,17 @@ HTMLCanvasElement.prototype.getContext = vi.fn(function (
 // Mock requestAnimationFrame for animation loop tests
 let rafId = 0;
 const rafCallbacks = new Map<number, FrameRequestCallback>();
+const MAX_RAF_CALLBACKS = 1000; // 防止 Map 溢出
 
 globalThis.requestAnimationFrame = vi.fn((cb: FrameRequestCallback): number => {
   const id = ++rafId;
+  // 防止 Map 溢出：超过限制时清理旧的回调
+  if (rafCallbacks.size >= MAX_RAF_CALLBACKS) {
+    rafCallbacks.clear();
+  }
   rafCallbacks.set(id, cb);
-  // 立即调用一次以模拟帧
-  Promise.resolve().then(() => cb(performance.now()));
+  // 不立即调用回调，避免无限微任务循环
+  // 测试应使用 vi.advanceTimersByTime() 来推进帧
   return id;
 });
 

@@ -26,7 +26,7 @@ vi.mock("@/engine/fluid", () => ({
       fluidMock.instances.push(this);
     }
   },
-  resolveConfig: () => ({}),
+  resolveConfig: () => ({ SIM_RESOLUTION: 128 }),
 }));
 
 import { WaterfallEngine } from "../engine/WaterfallEngine";
