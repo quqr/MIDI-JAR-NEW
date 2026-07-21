@@ -1,6 +1,7 @@
 import { midiToNoteName } from "../constants";
 import { defaultWaterfallSettings } from "../constants";
 import type { SoundEngineUserConfig, SynthEnvelopeConfig } from "../types";
+import type { ISoundEngine } from "./ISoundEngine";
 
 // 默认配置唯一来源：从 constants.ts 读取
 const D = defaultWaterfallSettings.sound;
@@ -34,7 +35,7 @@ export interface SoundEngineOptions {
  * 支持 MIDI 音符触发、延音踏板、力度灵敏度及混响效果。
  * 内部通过引用计数机制处理同一音高被多个音符同时按住的情况。
  */
-export class SoundEngine {
+export class SoundEngine implements ISoundEngine {
   private Tone: typeof import("tone") | null = null;
   private synth: import("tone").PolySynth | null = null;
   private reverb: import("tone").Reverb | null = null;
@@ -125,7 +126,9 @@ export class SoundEngine {
       this.reverb.wet.value = config.reverbAmount;
       // reverbDecay 需要重新 generate，仅在差异较大时执行（防抖）
       const currentDecay = this.reverb.decay as number;
-      if (Math.abs(currentDecay - config.reverbDecay) > REVERB_REGEN_THRESHOLD) {
+      if (
+        Math.abs(currentDecay - config.reverbDecay) > REVERB_REGEN_THRESHOLD
+      ) {
         this.scheduleReverbGenerate(config.reverbDecay);
       }
     }

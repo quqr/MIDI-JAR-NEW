@@ -22,7 +22,8 @@ function dismissMidiWarning() {
     class="flex items-center gap-2 px-4 py-2 bg-warning/20 text-warning-content text-sm"
   >
     <span class="flex-1"
-      >当前浏览器不支持 Web MIDI API，请使用 Chrome 或 Edge 以获得完整 MIDI 体验</span
+      >当前浏览器不支持 Web MIDI API，请使用 Chrome 或 Edge 以获得完整 MIDI
+      体验</span
     >
     <button
       class="btn btn-ghost btn-xs"

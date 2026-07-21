@@ -1,10 +1,21 @@
-import { ref, computed, watch, nextTick, provide, inject, type Ref, type ComputedRef } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  nextTick,
+  provide,
+  inject,
+  type Ref,
+  type ComputedRef,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Chord, Note } from "tonal";
 import type { Chord as TChord } from "@tonaljs/chord";
 
 import { useSettingsStore } from "@/stores/settings";
+import { useSamplerStore } from "@/stores/sampler";
+import { useSamplerService } from "@/composables/useSamplerService";
 import { useChordDictionaryStore } from "@/stores/chordDictionary";
 import { useChordDictionaryModule } from "../../ChordDictionaryModuleProvider";
 import {
@@ -51,6 +62,8 @@ const KEYBOARD_SETTINGS = {
 
 const NOTATION_LABELS = ["long", "short", "symbol"];
 
+export type ChordPlayMode = "block" | "arpeggiated";
+
 export interface ChordDetailContext {
   chordName: ComputedRef<string | undefined>;
   chord: ComputedRef<TChord | null>;
@@ -83,6 +96,12 @@ export interface ChordDetailContext {
   getInversionMidi: (index: number) => number[];
   getAltChord: (index: number) => TChord | undefined;
   getAltChordName: (index: number) => string;
+  // 和弦播放
+  chordPlayMode: Ref<ChordPlayMode>;
+  isPlayingChord: Ref<boolean>;
+  playChord: () => void;
+  stopChord: () => void;
+  soundEnabled: Ref<boolean>;
 }
 
 const INJECTION_KEY = Symbol("chordDetailContext");
@@ -105,7 +124,9 @@ export function useChordDetail() {
 
   const detailRef = ref<HTMLElement | null>(null);
 
-  const chordName = computed(() => route.params.chordName as string | undefined);
+  const chordName = computed(
+    () => route.params.chordName as string | undefined,
+  );
 
   const chord = computed(() =>
     chordName.value ? Chord.get(chordName.value) : null,
@@ -125,7 +146,9 @@ export function useChordDetail() {
   const staffTranspose = computed(
     () => settingsStore.settings.notation.staffTranspose,
   );
-  const notationDisplay = computed(() => settingsStore.settings.notation.display);
+  const notationDisplay = computed(
+    () => settingsStore.settings.notation.display,
+  );
 
   const midi = computed(() => getChordInversion(chord.value!, 0));
 
@@ -163,6 +186,84 @@ export function useChordDetail() {
   const keyboardSettings = computed(() => KEYBOARD_SETTINGS);
 
   const notationLabels = computed(() => NOTATION_LABELS);
+
+  // ─── 和弦播放功能 ───
+  const samplerStore = useSamplerStore();
+  const samplerService = useSamplerService();
+  const chordPlayMode = ref<ChordPlayMode>("block");
+  const isPlayingChord = ref(false);
+  const soundEnabled = computed({
+    get: () => samplerStore.soundEnabled,
+    set: (v: boolean) => {
+      samplerStore.soundEnabled = v;
+    },
+  });
+
+  /** 播放中的超时 ID 列表，用于 stopChord 时清除 */
+  let playTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+  function playChord(): void {
+    if (!chord.value || !samplerStore.isReady || !samplerStore.soundEnabled)
+      return;
+    stopChord(); // 先停止之前的播放
+
+    isPlayingChord.value = true;
+    const midiNotes = getChordInversion(chord.value, 0);
+
+    if (chordPlayMode.value === "block") {
+      // 柱式和弦：所有音同时触发，500ms 后全部释放
+      for (const midi of midiNotes) {
+        samplerService.noteOn(midi, 100);
+      }
+      const t = setTimeout(() => {
+        for (const midi of midiNotes) {
+          samplerService.noteOff(midi);
+        }
+        isPlayingChord.value = false;
+      }, 500);
+      playTimeouts.push(t);
+    } else {
+      // 分解和弦：从低到高间隔 80ms 逐个触发
+      const ARP_INTERVAL = 80;
+      const SUSTAIN_TIME = 500;
+      midiNotes.forEach((midi, index) => {
+        const t1 = setTimeout(() => {
+          samplerService.noteOn(midi, 100);
+        }, index * ARP_INTERVAL);
+        playTimeouts.push(t1);
+
+        // 最后一个音触发后 SUSTAIN_TIME ms 逐个释放
+        const t2 = setTimeout(
+          () => {
+            samplerService.noteOff(midi);
+          },
+          midiNotes.length * ARP_INTERVAL + SUSTAIN_TIME + index * ARP_INTERVAL,
+        );
+        playTimeouts.push(t2);
+      });
+
+      const t3 = setTimeout(
+        () => {
+          isPlayingChord.value = false;
+        },
+        midiNotes.length * ARP_INTERVAL +
+          SUSTAIN_TIME +
+          midiNotes.length * ARP_INTERVAL,
+      );
+      playTimeouts.push(t3);
+    }
+  }
+
+  function stopChord(): void {
+    for (const t of playTimeouts) {
+      clearTimeout(t);
+    }
+    playTimeouts = [];
+    if (isPlayingChord.value) {
+      samplerService.stopAllNotes();
+      isPlayingChord.value = false;
+    }
+  }
 
   watch(chordName, async () => {
     await nextTick();
@@ -275,6 +376,12 @@ export function useChordDetail() {
     getInversionMidi,
     getAltChord,
     getAltChordName,
+    // 和弦播放
+    chordPlayMode,
+    isPlayingChord,
+    playChord,
+    stopChord,
+    soundEnabled,
   };
 
   provide(INJECTION_KEY, context);

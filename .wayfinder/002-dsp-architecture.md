@@ -25,6 +25,7 @@
 **决策：整个 DSP 封装为单个 AudioWorkletProcessor。**
 
 理由：
+
 - RipplerX 的 DSP 是一个紧密耦合的信号流（Mallet/Noise → ResonatorA/B → Comb → Limiter），拆分为多个 Processor 会引入 `process()` 调用间的调度开销
 - 多 Processor 连接需要每个 `process()` 周期额外的缓冲区拷贝
 - 参数协调（如耦合模式切换影响 A→B 的信号流）在单 Processor 内更简单

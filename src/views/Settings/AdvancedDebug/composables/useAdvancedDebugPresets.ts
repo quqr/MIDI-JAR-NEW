@@ -222,7 +222,7 @@ export function useAdvancedDebugPresets(options: {
 
       const incoming: AdvancedDebugPreset[] = Array.isArray(parsed)
         ? parsed
-        : parsed.presets ?? [];
+        : (parsed.presets ?? []);
 
       if (mode === "replace") {
         presets.value = incoming;

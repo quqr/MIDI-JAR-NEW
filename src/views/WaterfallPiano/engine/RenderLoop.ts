@@ -50,10 +50,7 @@ export class RenderLoop {
   private perfMonitor: PerformanceMonitor;
   private callbacks: RenderLoopCallbacks;
 
-  constructor(
-    callbacks: RenderLoopCallbacks,
-    perfMonitor: PerformanceMonitor,
-  ) {
+  constructor(callbacks: RenderLoopCallbacks, perfMonitor: PerformanceMonitor) {
     this.callbacks = callbacks;
     this.perfMonitor = perfMonitor;
   }

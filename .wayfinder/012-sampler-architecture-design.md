@@ -31,27 +31,27 @@
 ```typescript
 interface SamplerService {
   // 音色管理
-  loadInstrument(instrumentId: string): Promise<void>
-  switchInstrument(instrumentId: string): Promise<void>
-  getCurrentInstrument(): string | null
+  loadInstrument(instrumentId: string): Promise<void>;
+  switchInstrument(instrumentId: string): Promise<void>;
+  getCurrentInstrument(): string | null;
 
   // 音符控制
-  playNote(note: number, velocity?: number, duration?: number): void
-  stopNote(note: number): void
-  stopAllNotes(): void
+  playNote(note: number, velocity?: number, duration?: number): void;
+  stopNote(note: number): void;
+  stopAllNotes(): void;
 
   // 状态查询
-  getLoadProgress(): { loaded: number; total: number }
-  isLoading(): boolean
-  isReady(): boolean
+  getLoadProgress(): { loaded: number; total: number };
+  isLoading(): boolean;
+  isReady(): boolean;
 
   // 缓存管理
-  clearCache(instrumentId?: string): Promise<void>
-  getCacheSize(): Promise<number>
+  clearCache(instrumentId?: string): Promise<void>;
+  getCacheSize(): Promise<number>;
 
   // 用户音色库
-  exportLibrary(): Promise<Blob>
-  importLibrary(file: File): Promise<void>
+  exportLibrary(): Promise<Blob>;
+  importLibrary(file: File): Promise<void>;
 }
 ```
 
@@ -60,17 +60,19 @@ interface SamplerService {
 采用**混合方案**:Pinia store 管理状态,composable 封装逻辑
 
 **Pinia Store (`useSamplerStore`)**:
+
 ```typescript
 interface SamplerState {
-  currentInstrument: string | null
-  instruments: Map<string, InstrumentInfo>
-  loadProgress: Map<string, LoadProgress>
-  cacheSize: number
-  userLibrary: UserInstrument[]
+  currentInstrument: string | null;
+  instruments: Map<string, InstrumentInfo>;
+  loadProgress: Map<string, LoadProgress>;
+  cacheSize: number;
+  userLibrary: UserInstrument[];
 }
 ```
 
 **Composable (`useSamplerService`)**:
+
 - 封装 smplr 实例的创建和管理
 - 提供响应式的 API 方法
 - 处理错误和降级逻辑
@@ -99,13 +101,13 @@ interface SamplerState {
 
 ```typescript
 try {
-  await samplerService.loadInstrument('marimba')
+  await samplerService.loadInstrument("marimba");
 } catch (error) {
   // 1. 回退到默认音色(已缓存)
   // 2. 显示错误提示
   // 3. 记录日志
-  await fallbackToCachedInstrument()
-  showErrorToast('音色加载失败')
+  await fallbackToCachedInstrument();
+  showErrorToast("音色加载失败");
 }
 ```
 
@@ -118,26 +120,28 @@ try {
 ### 8. 与现有系统集成
 
 **瀑布钢琴**:
+
 ```typescript
 // 修改 WaterfallPiano.vue
-const samplerService = useSamplerService()
+const samplerService = useSamplerService();
 const playNote = (note: number) => {
   if (settingsStore.useSampler) {
-    samplerService.playNote(note)
+    samplerService.playNote(note);
   } else {
-    toneSynth.triggerAttack(note)
+    toneSynth.triggerAttack(note);
   }
-}
+};
 ```
 
 **RipplerX**:
+
 ```typescript
 // 新增音源选项
 const audioSourceOptions = [
-  { label: 'Modal DSP', value: 'modal' },
-  { label: 'Sampler', value: 'sampler' },
-  { label: 'Tone.js', value: 'tone' }
-]
+  { label: "Modal DSP", value: "modal" },
+  { label: "Sampler", value: "sampler" },
+  { label: "Tone.js", value: "tone" },
+];
 ```
 
 ### SFZ/SF2 处理

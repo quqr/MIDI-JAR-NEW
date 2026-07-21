@@ -1,8 +1,5 @@
 <template>
-  <SettingsCollapse
-    :title="t('WaterfallPiano.midiFile')"
-    :default-open="false"
-  >
+  <SettingsCollapse :title="t('WaterfallPiano.midiFile')" :default-open="false">
     <SettingsRange
       :model-value="settings.playbackSpeed"
       :label="t('WaterfallPiano.playbackSpeed')"

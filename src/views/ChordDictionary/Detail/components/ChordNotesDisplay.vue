@@ -22,12 +22,6 @@
 import Notation from "@/components/Notation/Notation.vue";
 import { useChordDetailContext } from "../composables/useChordDetail";
 
-const {
-  t,
-  midi,
-  keySignature,
-  staffClef,
-  staffTranspose,
-  notationDisplay,
-} = useChordDetailContext();
+const { t, midi, keySignature, staffClef, staffTranspose, notationDisplay } =
+  useChordDetailContext();
 </script>

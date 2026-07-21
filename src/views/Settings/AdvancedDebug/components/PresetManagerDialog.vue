@@ -85,8 +85,15 @@
           </div>
         </div>
 
-        <div v-if="presets.length === 0" class="text-center py-8 text-base-content/40">
-          <Icon name="bookmark-outline" :size="32" class="mx-auto mb-2 opacity-50" />
+        <div
+          v-if="presets.length === 0"
+          class="text-center py-8 text-base-content/40"
+        >
+          <Icon
+            name="bookmark-outline"
+            :size="32"
+            class="mx-auto mb-2 opacity-50"
+          />
           <p class="text-sm">{{ t("advancedDebug.presets.empty") }}</p>
         </div>
 
@@ -119,7 +126,9 @@
                 </button>
               </div>
               <template v-else>
-                <div class="text-sm font-medium truncate">{{ preset.name }}</div>
+                <div class="text-sm font-medium truncate">
+                  {{ preset.name }}
+                </div>
                 <div class="text-xs text-base-content/50">
                   {{ formatDate(preset.createdAt) }}
                   <span v-if="preset.description" class="ml-2">
@@ -224,11 +233,7 @@ function cancelRename(): void {
 }
 
 function handleDelete(name: string): void {
-  if (
-    window.confirm(
-      t("advancedDebug.presets.confirmDelete", { name }),
-    )
-  ) {
+  if (window.confirm(t("advancedDebug.presets.confirmDelete", { name }))) {
     emit("delete", name);
   }
 }

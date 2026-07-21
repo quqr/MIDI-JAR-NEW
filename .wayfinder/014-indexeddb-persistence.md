@@ -27,6 +27,7 @@
 ### 核心方案
 
 **双层缓存架构**:
+
 - **IndexedDB**: 存储音色配置、元数据、用户设置(小数据,频繁访问)
 - **CacheStorage**: 存储音频采样二进制数据(大数据,smplr 自动管理)
 
@@ -34,10 +35,10 @@
 
 ```typescript
 // 4 个对象存储
-- instrumentPresets     // 音色预设配置
-- sampleCacheMetadata   // 音频缓存元数据
-- userSettings          // 用户设置
-- libraryStats          // 使用统计(LRU)
+-instrumentPresets - // 音色预设配置
+  sampleCacheMetadata - // 音频缓存元数据
+  userSettings - // 用户设置
+  libraryStats; // 使用统计(LRU)
 ```
 
 ### 关键实现

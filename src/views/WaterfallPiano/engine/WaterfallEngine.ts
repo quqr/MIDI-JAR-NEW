@@ -5,7 +5,7 @@ import { BackgroundRenderer } from "./BackgroundRenderer";
 import { PerformanceMonitor } from "./PerformanceMonitor";
 import { RenderLoop, type PhaseTimings } from "./RenderLoop";
 import { FluidSplatManager } from "./FluidSplatManager";
-import type { SoundEngine } from "../audio/SoundEngine";
+import type { ISoundEngine } from "../audio/ISoundEngine";
 import {
   FluidSimulation,
   resolveConfig,
@@ -40,7 +40,7 @@ export class WaterfallEngine {
   private backgroundRenderer = new BackgroundRenderer();
   private perfMonitor = new PerformanceMonitor();
   private fluid: FluidSimulation | null = null;
-  private soundEngine: SoundEngine | null = null;
+  private soundEngine: ISoundEngine | null = null;
   private renderLoop: RenderLoop | null = null;
   private splatManager = new FluidSplatManager({
     keyboardRenderer: this.keyboardRenderer,
@@ -144,7 +144,7 @@ export class WaterfallEngine {
     }
   }
 
-  setSoundEngine(engine: SoundEngine): void {
+  setSoundEngine(engine: ISoundEngine): void {
     this.soundEngine = engine;
   }
 
@@ -279,10 +279,7 @@ export class WaterfallEngine {
     const config = this.buildFluidConfig();
     if (this.fluid || (config.SIM_RESOLUTION ?? 0) <= 0) return;
     try {
-      this.fluid = new FluidSimulation(
-        this.canvases.fluid,
-        config,
-      );
+      this.fluid = new FluidSimulation(this.canvases.fluid, config);
       this.fluid.start();
     } catch {
       this.fluid = null;

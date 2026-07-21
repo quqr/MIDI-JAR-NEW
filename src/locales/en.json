@@ -34,7 +34,6 @@
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
     "WaterfallPiano": "Waterfall Piano",
-    "RipplerX": "RipplerX",
     "Sampler": "Sampler"
   },
   "home": {
@@ -52,7 +51,6 @@
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
-      "RipplerX": "Modal synthesis synthesizer with dual resonators",
       "Sampler": "Sampler instruments — load and play various sound libraries"
     }
   },
@@ -174,7 +172,8 @@
     "advancedDebug": "Advanced Debug",
     "cursor": "Cursor",
     "WaterfallPiano": "Waterfall Piano",
-    "resetCurrent": "Reset Section",
+    "piano": "Piano",
+    "resetCurrent": "Reset Current Section",
     "resetAll": "Reset All",
     "resetConfirmTitle": "Confirm Reset",
     "resetConfirm": "Reset",
@@ -767,5 +766,43 @@
       "modSustain": "Mod Sustain",
       "modRelease": "Mod Release"
     }
+  },
+  "sampler": {
+    "searchInstruments": "Search instruments...",
+    "allCategories": "All",
+    "noInstrumentsFound": "No instruments found",
+    "cacheSize": "Cache size",
+    "clearCache": "Clear cache",
+    "cacheCleared": "Cache cleared",
+    "soundOn": "Sound On",
+    "soundOff": "Sound Off",
+    "playChord": "Play Chord",
+    "blockChord": "Block Chord",
+    "arpeggiatedChord": "Arpeggiated Chord",
+    "chordPlayMode": "Play Mode"
+  },
+  "pianoSettings": {
+    "range": "Range",
+    "from": "From",
+    "to": "To",
+    "labels": "Labels",
+    "labelMode": "Label Mode",
+    "labelNone": "None",
+    "labelPitchClass": "Pitch Class",
+    "labelNote": "Note",
+    "labelChordNote": "Chord Note",
+    "labelInterval": "Interval",
+    "keyNameMode": "Key Name Mode",
+    "keyNameNone": "None",
+    "keyNameOctave": "Octave",
+    "keyNamePitchClass": "Pitch Class",
+    "keyNameNote": "Note",
+    "showNoteNames": "Show Note Names",
+    "colors": "Colors",
+    "whiteKeyColor": "White Key Color",
+    "blackKeyColor": "Black Key Color",
+    "pressedKeyColor": "Pressed Key Color",
+    "appearance": "Appearance",
+    "keyCornerRadius": "Corner Radius"
   }
 }

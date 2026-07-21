@@ -5,7 +5,7 @@
     :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
     :while-hover="{ y: -4 }"
     :while-press="{ scale: 0.98 }"
-    class="h-full "
+    class="h-full"
   >
     <RouterLink
       :to="to"

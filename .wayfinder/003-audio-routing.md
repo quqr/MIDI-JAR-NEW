@@ -27,12 +27,13 @@
 Tone.js 的 `connect()` 方法最终会递归展开 ToneAudioNode 到原生 AudioNode，然后调用原生 `AudioNode.connect()`。AudioWorkletNode 作为 AudioNode 子类，天然兼容。
 
 连接方式：
+
 ```typescript
 // 获取 Tone.js 使用的原生 AudioContext
 const rawCtx = Tone.getContext().rawContext;
 
 // 创建 AudioWorkletNode（必须在同一 AudioContext 中）
-const workletNode = new AudioWorkletNode(rawCtx, 'modal-synth');
+const workletNode = new AudioWorkletNode(rawCtx, "modal-synth");
 
 // 连接到 Tone.js 的 Reverb 节点
 workletNode.connect(toneReverb.input);
@@ -54,7 +55,7 @@ workletNode.connect(toneReverb.input);
 **结论：模态合成引擎可以接入 Tone.js 的 Reverb 节点。**
 
 ```typescript
-const workletNode = new AudioWorkletNode(rawCtx, 'modal-synth');
+const workletNode = new AudioWorkletNode(rawCtx, "modal-synth");
 const dryGain = rawCtx.createGain();
 const wetGain = rawCtx.createGain();
 

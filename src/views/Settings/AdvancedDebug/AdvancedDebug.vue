@@ -59,7 +59,9 @@
           @click="presetDialogOpen = true"
         >
           <Icon name="bookmark" :size="14" />
-          <span class="hidden sm:inline">{{ t("advancedDebug.toolbar.presets") }}</span>
+          <span class="hidden sm:inline">{{
+            t("advancedDebug.toolbar.presets")
+          }}</span>
           <span
             v-if="presets.presets.value.length > 0"
             class="badge badge-xs badge-secondary ml-0.5"
@@ -87,7 +89,9 @@
         role="status"
       >
         <Icon
-          :name="notification.type === 'error' ? 'alert-circle' : 'check-circle'"
+          :name="
+            notification.type === 'error' ? 'alert-circle' : 'check-circle'
+          "
           :size="14"
           class="stroke-current flex-shrink-0"
         />
@@ -105,11 +109,7 @@
     <!-- ═══ 配置区 ═══ -->
     <div class="grid grid-cols-1 gap-4 m-4">
       <!-- 搜索无结果提示 -->
-      <div
-        v-if="hasNoResults"
-        class="alert alert-info alert-sm"
-        role="status"
-      >
+      <div v-if="hasNoResults" class="alert alert-info alert-sm" role="status">
         <Icon name="search" :size="16" class="stroke-current flex-shrink-0" />
         <span class="text-sm">{{ t("advancedDebug.toolbar.noResults") }}</span>
       </div>
@@ -350,7 +350,8 @@ const fluidParams = computed<Required<FluidAdvancedParams>>(() => ({
   blockCoverage:
     waterfallSettings.value.background.fluidParams?.blockCoverage ?? false,
   fluidSplatPerturbation:
-    waterfallSettings.value.background.fluidParams?.fluidSplatPerturbation ?? {},
+    waterfallSettings.value.background.fluidParams?.fluidSplatPerturbation ??
+    {},
   hitExplosionPerturbation:
     waterfallSettings.value.background.fluidParams?.hitExplosionPerturbation ??
     {},
@@ -358,8 +359,8 @@ const fluidParams = computed<Required<FluidAdvancedParams>>(() => ({
     waterfallSettings.value.background.fluidParams?.blockCoveragePerturbation ??
     {},
   sustainedSplatPerturbation:
-    waterfallSettings.value.background.fluidParams?.sustainedSplatPerturbation ??
-    {},
+    waterfallSettings.value.background.fluidParams
+      ?.sustainedSplatPerturbation ?? {},
 }));
 
 function updateWaterfallBg(key: string, value: unknown) {
@@ -491,11 +492,7 @@ function resetAll() {
   };
   const kb = { ...defaultWaterfallSettings.keyboard };
   const midiFile = { ...defaultWaterfallSettings.midiFile };
-  waterfallStore.updateSetting(
-    "background",
-    "fluidAdvanced",
-    bg.fluidAdvanced,
-  );
+  waterfallStore.updateSetting("background", "fluidAdvanced", bg.fluidAdvanced);
   waterfallStore.updateSetting("background", "fluidParams", bg.fluidParams);
   Object.entries(kb).forEach(([k, v]) =>
     waterfallStore.updateSetting("keyboard", k as never, v),

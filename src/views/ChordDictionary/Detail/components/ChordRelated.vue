@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="subsetChords.length || supersetChords.length"
-    class="w-full mb-4"
-  >
+  <div v-if="subsetChords.length || supersetChords.length" class="w-full mb-4">
     <details class="collapse collapse-arrow bg-base-200 rounded-lg">
       <summary
         class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"

@@ -58,7 +58,10 @@ function createAndDrawStave(context: any, options: RenderStaveOptions): Stave {
 
   stave.setNoteStartX(options.noteStartX);
 
-  stave.setDefaultLedgerLineStyle({ fillStyle: options.style.staffLineColor, strokeStyle: options.style.staffLineColor });
+  stave.setDefaultLedgerLineStyle({
+    fillStyle: options.style.staffLineColor,
+    strokeStyle: options.style.staffLineColor,
+  });
 
   context.setStrokeStyle(options.style.staffLineColor);
   context.setFillStyle(options.style.staffLineColor);
@@ -78,7 +81,6 @@ type RenderNotesOptions = {
   filterClef: boolean;
   style: NotationStyleConfig;
 };
-
 
 /**
  * 将音符渲染到指定谱表上（含变音记号处理、格式化和绘制）
@@ -161,7 +163,6 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
     noteStartX: layout.noteStartX,
   });
 
-
   if (display.clef) {
     const connector = new StaveConnector(staveTreble, staveBass);
     connector.setType("single");
@@ -191,8 +192,6 @@ export function renderGrandStaff(options: GrandStaffOptions): void {
       formatter.createTickContexts(v);
       formatter.preFormat(layout.staveWidth, context, v);
     }
-
-
 
     if (voiceTreble) {
       voiceTreble.draw(context, staveTreble);

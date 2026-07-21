@@ -50,12 +50,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.WaterfallPiano", icon: "piano" },
       },
       {
-        path: "ripplerx",
-        name: "ripplerx",
-        component: () => import("@/views/RipplerX/RipplerX.vue"),
-        meta: { title: "nav.RipplerX", icon: "piano" },
-      },
-      {
         path: "sampler",
         name: "sampler",
         component: () => import("@/views/Sampler/Sampler.vue"),
@@ -142,6 +136,13 @@ const routes: RouteRecordRaw[] = [
             component: () =>
               import("@/views/WaterfallPiano/WaterfallPianoSettings.vue"),
             meta: { title: "settings.WaterfallPiano" },
+          },
+          {
+            path: "piano",
+            name: "settings-piano",
+            component: () =>
+              import("@/views/Settings/PianoSettings/PianoSettings.vue"),
+            meta: { title: "settings.piano" },
           },
         ],
       },

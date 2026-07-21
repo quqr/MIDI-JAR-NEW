@@ -27,17 +27,17 @@ smplr 提供了多个预置采样器类，所有类都通过 `Instrument` 工厂
 
 #### 核心类列表
 
-| 类名 | 用途 | 音色来源 |
-|------|------|----------|
-| `Soundfont` | 通用 MIDI 音色库 | FluidR3_GM / MusyngKite |
-| `DrumMachine` | 鼓机采样器 | TR-808, Casio-RZ1, LM-2, MFB-512, Roland CR-8000 |
-| `SplendidGrandPiano` | 三角钢琴 | Steinway 采样（公版） |
-| `ElectricPiano` | 电钢琴 | CP80, PianetT, WurlitzerEP200, TX81Z |
-| `Mallet` | 打击乐器 | Balafon, Tubular Bells, Vibraphone, Xylophone |
-| `Mellotron` | Mellotron | 多种音色（弦乐、合唱、铜管等） |
-| `Sampler` | 通用采样器 | 用户自定义 |
-| `Smolken` | 低音提琴 | D. Smolken Double Bass |
-| `Versilian` | 社区采样库 | Versilian Community Sample Library |
+| 类名                 | 用途             | 音色来源                                         |
+| -------------------- | ---------------- | ------------------------------------------------ |
+| `Soundfont`          | 通用 MIDI 音色库 | FluidR3_GM / MusyngKite                          |
+| `DrumMachine`        | 鼓机采样器       | TR-808, Casio-RZ1, LM-2, MFB-512, Roland CR-8000 |
+| `SplendidGrandPiano` | 三角钢琴         | Steinway 采样（公版）                            |
+| `ElectricPiano`      | 电钢琴           | CP80, PianetT, WurlitzerEP200, TX81Z             |
+| `Mallet`             | 打击乐器         | Balafon, Tubular Bells, Vibraphone, Xylophone    |
+| `Mellotron`          | Mellotron        | 多种音色（弦乐、合唱、铜管等）                   |
+| `Sampler`            | 通用采样器       | 用户自定义                                       |
+| `Smolken`            | 低音提琴         | D. Smolken Double Bass                           |
+| `Versilian`          | 社区采样库       | Versilian Community Sample Library               |
 
 ### 1.2 构造函数参数
 
@@ -60,9 +60,10 @@ const marimba = new Soundfont(context, {
   pan: 0, // 立体声声像（-1 到 1，默认0）
   velocity: 100, // 默认力度（0-127）
   destination: context.destination, // 目标节点（可选）
-  onLoadProgress: (progress) => { // 加载进度回调
+  onLoadProgress: (progress) => {
+    // 加载进度回调
     console.log(`加载进度: ${progress.loaded}/${progress.total}`);
-  }
+  },
 });
 
 // 等待加载完成
@@ -70,6 +71,7 @@ await marimba.ready;
 ```
 
 **可选参数详解**：
+
 - `instrument`（必需）：音色名称，支持 128 个 GM 标准音色
 - `kit`：音色包选择（默认 FluidR3_GM）
 - `volume`：主音量（MIDI 标度 0-127）
@@ -91,7 +93,7 @@ const dm = new DrumMachine(context, {
   volume: 100,
   onLoadProgress: (progress) => {
     console.log(`已加载 ${progress.loaded}/${progress.total} 个采样`);
-  }
+  },
 });
 
 await dm.ready;
@@ -103,6 +105,7 @@ console.log(dm.getSampleNamesForGroup("kick")); // 特定分组的采样
 ```
 
 **支持的鼓机型号**：
+
 - TR-808（Roland）
 - Casio-RZ1
 - LM-2（LinnDrum）
@@ -121,13 +124,14 @@ const piano = new SplendidGrandPiano(context, {
   velocity: 100,
   decayTime: 0.5, // 释放时间（秒）
   formats: ["ogg", "m4a"], // 音频格式优先级
-  notesToLoad: { // 限制加载的音符范围（优化初始加载）
+  notesToLoad: {
+    // 限制加载的音符范围（优化初始加载）
     notes: [60, 61, 62, 63, 64],
-    velocityRange: [0, 127]
+    velocityRange: [0, 127],
   },
   onLoadProgress: (progress) => {
     console.log(`加载中... ${progress.loaded}/${progress.total}`);
-  }
+  },
 });
 
 await piano.ready;
@@ -139,6 +143,7 @@ piano.output.addEffect("reverb", reverb, 0.2);
 ```
 
 **特殊配置**：
+
 - `detune`：全局音分偏移（应用于所有音符）
 - `decayTime`：释放包络时间
 - `formats`：音频格式优先级（浏览器自动选择支持的格式）
@@ -158,37 +163,39 @@ const sampler1 = new Sampler(context, {
       baseUrl: "https://example.com/samples",
       formats: ["ogg", "m4a"],
       map: {
-        "C4": "piano-c4",
-        "D4": "piano-d4"
-      }
+        C4: "piano-c4",
+        D4: "piano-d4",
+      },
     },
-    groups: [{
-      regions: [
-        { sample: "C4", key: 60, pitch: 60 },
-        { sample: "D4", key: 62, pitch: 62 }
-      ]
-    }]
-  }
+    groups: [
+      {
+        regions: [
+          { sample: "C4", key: 60, pitch: 60 },
+          { sample: "D4", key: 62, pitch: 62 },
+        ],
+      },
+    ],
+  },
 });
 
 // 方式 2: 使用扁平的 buffers 对象
 const sampler2 = new Sampler(context, {
   buffers: {
-    "C4": "https://example.com/piano-c4.ogg",
-    "D4": "path/to/piano-d4.m4a",
-    60: "https://example.com/note60.ogg" // 可以用 MIDI 编号
+    C4: "https://example.com/piano-c4.ogg",
+    D4: "path/to/piano-d4.m4a",
+    60: "https://example.com/note60.ogg", // 可以用 MIDI 编号
   },
   decayTime: 0.5, // 释放时间
   lpfCutoffHz: 5000, // 低通滤波器
-  detune: 10 // 音分偏移
+  detune: 10, // 音分偏移
 });
 
 await sampler2.ready;
 
 // 动态重载采样
 await sampler2.reload({
-  "E4": "https://example.com/piano-e4.ogg",
-  "F4": "path/to/piano-f4.m4a"
+  E4: "https://example.com/piano-e4.ogg",
+  F4: "path/to/piano-f4.m4a",
 });
 ```
 
@@ -235,7 +242,7 @@ await piano.ready;
 const stopFn = piano.start({
   note: "C4",
   velocity: 100,
-  duration: 2.0 // 2秒后自动停止
+  duration: 2.0, // 2秒后自动停止
 });
 
 // 手动停止（可选）
@@ -272,6 +279,7 @@ type SchedulerOptions = {
 ```
 
 **工作流程**：
+
 1. 当调用 `start({ note: "C4", time: futureTime })` 时，如果 `time` 在当前时间 + `lookaheadMs` 范围内，则立即执行
 2. 如果超出前瞻窗口，则将事件加入队列
 3. 调度器每隔 `intervalMs` 毫秒检查队列，执行到期的音符事件
@@ -301,7 +309,7 @@ class SchedulerImpl {
 
     // 返回取消函数
     return () => {
-      this.#queue.removeAll(q => q === item);
+      this.#queue.removeAll((q) => q === item);
     };
   }
 
@@ -311,7 +319,10 @@ class SchedulerImpl {
     this.#intervalId = setInterval(() => {
       const dispatchBefore = this.#context.currentTime + this.#lookaheadSec;
 
-      while (this.#queue.size() > 0 && this.#queue.peek()!.time <= dispatchBefore) {
+      while (
+        this.#queue.size() > 0 &&
+        this.#queue.peek()!.time <= dispatchBefore
+      ) {
         const item = this.#queue.pop()!;
         item.callback(item.event);
       }
@@ -358,13 +369,15 @@ navigator.requestMIDIAccess().then((midiAccess) => {
       const [status, note, velocity] = message.data;
       const command = status >> 4;
 
-      if (command === 9 && velocity > 0) { // Note On
+      if (command === 9 && velocity > 0) {
+        // Note On
         piano.start({
           note: note,
           velocity: velocity,
-          time: context.currentTime // 立即执行（在 200ms 窗口内）
+          time: context.currentTime, // 立即执行（在 200ms 窗口内）
         });
-      } else if (command === 8 || (command === 9 && velocity === 0)) { // Note Off
+      } else if (command === 8 || (command === 9 && velocity === 0)) {
+        // Note Off
         piano.stop({ stopId: note });
       }
     };
@@ -386,7 +399,7 @@ const futureTime = context.currentTime + 5.0;
 piano.start({
   note: "C4",
   velocity: 80,
-  time: futureTime
+  time: futureTime,
 });
 ```
 
@@ -400,11 +413,11 @@ const context = new AudioContext();
 // 创建自定义调度器
 const customScheduler = new Scheduler(context, {
   lookaheadMs: 100, // 减小前瞻窗口（更实时的响应）
-  intervalMs: 25 // 更频繁的轮询
+  intervalMs: 25, // 更频繁的轮询
 });
 
 const piano = new SplendidGrandPiano(context, {
-  scheduler: customScheduler
+  scheduler: customScheduler,
 });
 
 await piano.ready;
@@ -420,12 +433,12 @@ const sharedScheduler = new Scheduler(context);
 
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  scheduler: sharedScheduler
+  scheduler: sharedScheduler,
 });
 
 const drums = new DrumMachine(context, {
   instrument: "TR-808",
-  scheduler: sharedScheduler
+  scheduler: sharedScheduler,
 });
 
 await Promise.all([piano.ready, drums.ready]);
@@ -449,7 +462,11 @@ interface OutputChannel {
 
   // 音频效果
   addInsert(effect: AudioNode | AudioInsert): void;
-  addEffect(name: string, effect: AudioNode | { input: AudioNode }, mix: number): void;
+  addEffect(
+    name: string,
+    effect: AudioNode | { input: AudioNode },
+    mix: number,
+  ): void;
   setEffectMix(name: string, mix: number): void;
 
   // 生命周期
@@ -466,7 +483,7 @@ import { Soundfont } from "smplr";
 
 const context = new AudioContext();
 const piano = new Soundfont(context, {
-  instrument: "acoustic_grand_piano"
+  instrument: "acoustic_grand_piano",
 });
 
 await piano.ready;
@@ -492,7 +509,7 @@ reverb.connect(context.destination);
 // 采样器直接连接到压缩器
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  destination: compressor // 自定义目标节点
+  destination: compressor, // 自定义目标节点
 });
 
 await piano.ready;
@@ -556,6 +573,7 @@ reverb.connect(context.destination);
 ```
 
 **重要**：`addEffect` 是 **post-fader**（后推子）设计：
+
 - 降低 `volume` 会同时降低发送到效果的信号量
 - `volume = 0` 时，发送信号也静音
 - 插入效果在发送效果的抽头点之前
@@ -572,14 +590,14 @@ const context = new AudioContext();
 
 // 创建 smplr 采样器
 const piano = new Soundfont(context, {
-  instrument: "acoustic_grand_piano"
+  instrument: "acoustic_grand_piano",
 });
 await piano.ready;
 
 // 创建 Tone.js 效果
 const reverb = new Tone.Reverb({
   decay: 2.5,
-  wet: 0.3
+  wet: 0.3,
 }).toDestination();
 
 // 连接：smplr -> Tone.js Reverb
@@ -590,6 +608,7 @@ piano.start({ note: "C4", velocity: 80 });
 ```
 
 **注意事项**：
+
 1. smplr 和 Tone.js 必须共享同一个 `AudioContext`
 2. Tone.js 节点需要手动启动：`Tone.start()`
 3. 建议使用 Tone.js 的 Transport 来同步时间
@@ -610,7 +629,7 @@ Tone.Transport.schedule((time) => {
   piano.start({
     note: "C4",
     velocity: 80,
-    time: time // 使用 Tone.js 的时间系统
+    time: time, // 使用 Tone.js 的时间系统
   });
 }, "0:0:0");
 
@@ -630,6 +649,7 @@ https://smpldsnds.github.io/
 ```
 
 **音色仓库列表**：
+
 - `soundfonts`：FluidR3_GM 和 MusyngKite 音色包
 - `drum-machines`：鼓机采样（TR-808, Casio-RZ1 等）
 - `sfzinstruments-splendid-grand-piano`：三角钢琴
@@ -667,6 +687,7 @@ piano.ready.then(() => {
 ```
 
 **区别**：
+
 - `load`：返回 `Promise<Smplr>`，可以链式调用（已弃用）
 - `ready`：返回 `Promise<void>`，更符合现代异步模式（推荐）
 
@@ -685,7 +706,7 @@ const piano = new SplendidGrandPiano(context, {
 
     // 更新 UI 进度条
     updateProgressBar(percent);
-  }
+  },
 });
 
 await piano.ready;
@@ -726,6 +747,7 @@ class SampleLoaderImpl {
 ```
 
 **特点**：
+
 - 自动缓存已加载的采样
 - 同一个采样器实例内共享
 - 刷新页面后清空
@@ -742,13 +764,14 @@ const cache = new CacheStorage("smplr-cache");
 
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  storage: cache // 使用 CacheStorage
+  storage: cache, // 使用 CacheStorage
 });
 
 await piano.ready;
 ```
 
 **特点**：
+
 - 持久化缓存，刷新页面后仍然可用
 - 减少网络请求
 - 需要浏览器支持 Cache API
@@ -763,17 +786,17 @@ import { Soundfont, DrumMachine, SampleLoader, CacheStorage } from "smplr";
 
 const context = new AudioContext();
 const sharedLoader = new SampleLoader(context, {
-  storage: new CacheStorage("smplr-cache")
+  storage: new CacheStorage("smplr-cache"),
 });
 
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  loader: sharedLoader
+  loader: sharedLoader,
 });
 
 const drums = new DrumMachine(context, {
   instrument: "TR-808",
-  loader: sharedLoader
+  loader: sharedLoader,
 });
 
 await Promise.all([piano.ready, drums.ready]);
@@ -807,17 +830,17 @@ type SmplrPreset = {
 
 **SFZ 到 SmplrPreset 映射表**：
 
-| SFZ 参数 | SmplrPreset 对应字段 |
-|----------|---------------------|
-| `sample` | `region.sample` |
-| `lokey/hikey` | `region.keyRange` |
-| `lovel/hivel` | `region.velRange` |
-| `pitch_keycenter` | `region.pitch` |
-| `tune` | `region.tune` |
-| `volume` | `region.volume` |
-| `loop_mode` | `region.loop` |
+| SFZ 参数              | SmplrPreset 对应字段       |
+| --------------------- | -------------------------- |
+| `sample`              | `region.sample`            |
+| `lokey/hikey`         | `region.keyRange`          |
+| `lovel/hivel`         | `region.velRange`          |
+| `pitch_keycenter`     | `region.pitch`             |
+| `tune`                | `region.tune`              |
+| `volume`              | `region.volume`            |
+| `loop_mode`           | `region.loop`              |
 | `loop_start/loop_end` | `region.loopStart/loopEnd` |
-| `ampeg_release` | `region.ampRelease` |
+| `ampeg_release`       | `region.ampRelease`        |
 
 **手动转换示例**：
 
@@ -833,17 +856,21 @@ const sampler = new Sampler(context, {
       baseUrl: "https://example.com/piano",
       formats: ["ogg"],
       map: {
-        "piano_C4": "samples/piano_C4"
-      }
+        piano_C4: "samples/piano_C4",
+      },
     },
-    groups: [{
-      regions: [{
-        sample: "piano_C4",
-        keyRange: [60, 60], // MIDI 60 = C4
-        pitch: 60
-      }]
-    }]
-  }
+    groups: [
+      {
+        regions: [
+          {
+            sample: "piano_C4",
+            keyRange: [60, 60], // MIDI 60 = C4
+            pitch: 60,
+          },
+        ],
+      },
+    ],
+  },
 });
 
 await sampler.ready;
@@ -894,7 +921,7 @@ import { Soundfont } from "smplr";
 
 const context = new AudioContext();
 const piano = new Soundfont(context, {
-  instrumentUrl: "https://example.com/soundfonts/piano-mp3.js"
+  instrumentUrl: "https://example.com/soundfonts/piano-mp3.js",
 });
 
 await piano.ready;
@@ -913,12 +940,12 @@ const context = new AudioContext();
 
 // 从在线加载
 const sf2 = new Soundfont2(context, {
-  url: "https://example.com/soundfonts/supersaw.sf2"
+  url: "https://example.com/soundfonts/supersaw.sf2",
 });
 
 // 或从自定义 URL
 const sf2custom = new Soundfont2(context, {
-  url: "https://example.com/my-soundfont.sf2"
+  url: "https://example.com/my-soundfont.sf2",
 });
 
 await sf2.ready;
@@ -931,6 +958,7 @@ await sf2.loadInstrument("Lead Synth");
 ```
 
 **限制**：
+
 - 实验性功能，可能不稳定
 - 性能可能不如原生 `SmplrPreset` 格式
 - 推荐用于测试，生产环境建议转换格式
@@ -951,31 +979,26 @@ const context = new AudioContext();
 // 创建多个音色实例
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  volume: 100
+  volume: 100,
 });
 
 const strings = new Soundfont(context, {
   instrument: "string_ensemble_1",
-  volume: 80
+  volume: 80,
 });
 
 const trumpet = new Soundfont(context, {
   instrument: "trumpet",
-  volume: 90
+  volume: 90,
 });
 
 const drums = new DrumMachine(context, {
   instrument: "TR-808",
-  volume: 85
+  volume: 85,
 });
 
 // 等待所有音色加载
-await Promise.all([
-  piano.ready,
-  strings.ready,
-  trumpet.ready,
-  drums.ready
-]);
+await Promise.all([piano.ready, strings.ready, trumpet.ready, drums.ready]);
 
 console.log("所有音色已准备好");
 ```
@@ -1026,7 +1049,7 @@ async function switchInstrument(instrumentName: string) {
   // 创建新实例
   currentInstrument = new Soundfont(context, {
     instrument: instrumentName,
-    volume: 90
+    volume: 90,
   });
 
   await currentInstrument.ready;
@@ -1053,17 +1076,20 @@ import { Soundfont, SampleLoader, CacheStorage } from "smplr";
 
 const context = new AudioContext();
 const sharedLoader = new SampleLoader(context, {
-  storage: new CacheStorage("smplr-cache")
+  storage: new CacheStorage("smplr-cache"),
 });
 
 // 多个音色共享 loader
 const instruments = [
-  new Soundfont(context, { instrument: "acoustic_grand_piano", loader: sharedLoader }),
+  new Soundfont(context, {
+    instrument: "acoustic_grand_piano",
+    loader: sharedLoader,
+  }),
   new Soundfont(context, { instrument: "violin", loader: sharedLoader }),
-  new Soundfont(context, { instrument: "flute", loader: sharedLoader })
+  new Soundfont(context, { instrument: "flute", loader: sharedLoader }),
 ];
 
-await Promise.all(instruments.map(inst => inst.ready));
+await Promise.all(instruments.map((inst) => inst.ready));
 ```
 
 #### 共享 Scheduler
@@ -1078,12 +1104,12 @@ const sharedScheduler = new Scheduler(context);
 
 const piano = new Soundfont(context, {
   instrument: "acoustic_grand_piano",
-  scheduler: sharedScheduler
+  scheduler: sharedScheduler,
 });
 
 const drums = new DrumMachine(context, {
   instrument: "TR-808",
-  scheduler: sharedScheduler
+  scheduler: sharedScheduler,
 });
 
 await Promise.all([piano.ready, drums.ready]);
@@ -1101,7 +1127,7 @@ const storage = new CacheStorage("my-app-cache");
 
 const instruments = [
   new Soundfont(context, { instrument: "piano", storage }),
-  new Soundfont(context, { instrument: "strings", storage })
+  new Soundfont(context, { instrument: "strings", storage }),
 ];
 ```
 
@@ -1153,7 +1179,7 @@ piano.start(60);
 // 方式 3: 完整对象
 piano.start({
   note: "C4",
-  velocity: 100
+  velocity: 100,
 });
 ```
 
@@ -1163,27 +1189,27 @@ piano.start({
 // 轻柔演奏（低力度）
 piano.start({
   note: "E4",
-  velocity: 40
+  velocity: 40,
 });
 
 // 强烈演奏（高力度）
 piano.start({
   note: "G4",
-  velocity: 120
+  velocity: 120,
 });
 
 // 自动停止（指定持续时间）
 piano.start({
   note: "C5",
   velocity: 80,
-  duration: 3.0 // 3 秒后自动停止
+  duration: 3.0, // 3 秒后自动停止
 });
 
 // 禁用自动停止
 piano.start({
   note: "D5",
   velocity: 90,
-  duration: null // 需要手动调用 stop()
+  duration: null, // 需要手动调用 stop()
 });
 ```
 
@@ -1195,7 +1221,7 @@ const futureTime = context.currentTime + 2.0; // 2 秒后
 piano.start({
   note: "F4",
   velocity: 85,
-  time: futureTime
+  time: futureTime,
 });
 
 // 预定多个音符（和弦）
@@ -1211,7 +1237,7 @@ melody.forEach((note, i) => {
   piano.start({
     note: note,
     velocity: 90,
-    time: startTime + i * 0.5 // 每 0.5 秒一个音符
+    time: startTime + i * 0.5, // 每 0.5 秒一个音符
   });
 });
 ```
@@ -1223,14 +1249,14 @@ melody.forEach((note, i) => {
 piano.start({
   note: "C4",
   velocity: 80,
-  detune: 50
+  detune: 50,
 });
 
 // 降低 25 音分
 piano.start({
   note: "D4",
   velocity: 80,
-  detune: -25
+  detune: -25,
 });
 
 // 使用全局音分偏移
@@ -1245,14 +1271,14 @@ piano.start("E4");
 piano.start({
   note: "C4",
   velocity: 80,
-  lpfCutoffHz: 2000
+  lpfCutoffHz: 2000,
 });
 
 // 更暗的音色（截止频率 800Hz）
 piano.start({
   note: "D4",
   velocity: 80,
-  lpfCutoffHz: 800
+  lpfCutoffHz: 800,
 });
 ```
 
@@ -1264,7 +1290,7 @@ piano.start({
   note: "C4",
   velocity: 80,
   loop: true,
-  duration: null // 手动停止
+  duration: null, // 手动停止
 });
 
 // 3 秒后停止
@@ -1280,14 +1306,14 @@ setTimeout(() => {
 piano.start({
   note: "C4",
   velocity: 80,
-  ampRelease: 0.2
+  ampRelease: 0.2,
 });
 
 // 慢速释放（2 秒）
 piano.start({
   note: "D4",
   velocity: 80,
-  ampRelease: 2.0
+  ampRelease: 2.0,
 });
 ```
 
@@ -1298,7 +1324,7 @@ piano.start({
 piano.start({
   note: "C4",
   velocity: 80,
-  reverse: true
+  reverse: true,
 });
 
 // 全局反向
@@ -1318,7 +1344,7 @@ piano.start({
   },
   onEnded: (event) => {
     console.log("音符结束:", event.note);
-  }
+  },
 });
 ```
 
@@ -1367,7 +1393,7 @@ piano.start({ note: "C4", velocity: 80, time: now });
 // 5 秒后停止
 piano.stop({
   stopId: "C4",
-  time: now + 5.0
+  time: now + 5.0,
 });
 ```
 
@@ -1375,14 +1401,14 @@ piano.stop({
 
 smplr 完全支持 MIDI 音符编号（0-127）：
 
-| MIDI 编号 | 音符名称 | 频率 (Hz) | 描述 |
-|-----------|---------|-----------|------|
-| 0 | C-1 | 8.66 | 最低音符 |
-| 21 | A0 | 27.50 | 钢琴最低音 |
-| 60 | C4 | 261.63 | 中央 C |
-| 69 | A4 | 440.00 | 标准音高 |
-| 108 | C8 | 4186.01 | 钢琴最高音 |
-| 127 | G9 | 12543.85 | MIDI 最高音符 |
+| MIDI 编号 | 音符名称 | 频率 (Hz) | 描述          |
+| --------- | -------- | --------- | ------------- |
+| 0         | C-1      | 8.66      | 最低音符      |
+| 21        | A0       | 27.50     | 钢琴最低音    |
+| 60        | C4       | 261.63    | 中央 C        |
+| 69        | A4       | 440.00    | 标准音高      |
+| 108       | C8       | 4186.01   | 钢琴最高音    |
+| 127       | G9       | 12543.85  | MIDI 最高音符 |
 
 #### 音符名称与 MIDI 编号转换
 
@@ -1427,15 +1453,16 @@ smplr 的内存占用主要取决于加载的采样数量和大小：
 
 #### 典型音色的内存占用
 
-| 音色 | 采样数量 | 格式 | 内存占用（估算） |
-|------|---------|------|-----------------|
-| Soundfont（单一音色） | ~80 个音符 | OGG/M4A | 10-30 MB |
-| SplendidGrandPiano | 88 音符 × 4 力度层 | OGG/M4A | 30-50 MB |
-| DrumMachine | ~40 个采样 | OGG/M4A | 5-15 MB |
-| Mellotron | ~35 个音色 | OGG/M4A | 100-200 MB |
-| ElectricPiano | 88 音符 | OGG/M4A | 20-40 MB |
+| 音色                  | 采样数量           | 格式    | 内存占用（估算） |
+| --------------------- | ------------------ | ------- | ---------------- |
+| Soundfont（单一音色） | ~80 个音符         | OGG/M4A | 10-30 MB         |
+| SplendidGrandPiano    | 88 音符 × 4 力度层 | OGG/M4A | 30-50 MB         |
+| DrumMachine           | ~40 个采样         | OGG/M4A | 5-15 MB          |
+| Mellotron             | ~35 个音色         | OGG/M4A | 100-200 MB       |
+| ElectricPiano         | 88 音符            | OGG/M4A | 20-40 MB         |
 
 **优化建议**：
+
 - 使用 `notesToLoad` 限制加载的音符范围
 - 共享 `SampleLoader` 避免重复加载
 - 使用 OGG 格式（比 M4A 更小）
@@ -1446,8 +1473,8 @@ smplr 的内存占用主要取决于加载的采样数量和大小：
 const piano = new SplendidGrandPiano(context, {
   notesToLoad: {
     notes: Array.from({ length: 37 }, (_, i) => 60 + i), // C4-C7
-    velocityRange: [0, 127]
-  }
+    velocityRange: [0, 127],
+  },
 });
 ```
 
@@ -1461,13 +1488,13 @@ smplr 的 CPU 使用主要来自：
 
 #### CPU 占用估算（单音符）
 
-| 操作 | CPU 占用 | 备注 |
-|------|---------|------|
-| 音符开始 | ~0.1% | 创建音频节点 |
-| 音符播放（无效果） | ~0.05% | AudioBufferSourceNode |
-| 音符播放（+LPF） | ~0.1% | BiquadFilterNode |
-| 音符播放（+混响） | ~0.2-0.5% | AudioWorklet |
-| 音符结束 | ~0.05% | 包络 + 清理 |
+| 操作               | CPU 占用  | 备注                  |
+| ------------------ | --------- | --------------------- |
+| 音符开始           | ~0.1%     | 创建音频节点          |
+| 音符播放（无效果） | ~0.05%    | AudioBufferSourceNode |
+| 音符播放（+LPF）   | ~0.1%     | BiquadFilterNode      |
+| 音符播放（+混响）  | ~0.2-0.5% | AudioWorklet          |
+| 音符结束           | ~0.05%    | 包络 + 清理           |
 
 #### 多复音 CPU 占用
 
@@ -1479,6 +1506,7 @@ smplr 的 CPU 使用主要来自：
 ```
 
 **优化建议**：
+
 - 限制复音数（VoiceManager 自动管理）
 - 避免过多的发送效果
 - 使用共享的 Scheduler 减少轮询开销
@@ -1500,9 +1528,9 @@ function testPolyphony(count: number) {
 
   for (let i = 0; i < count; i++) {
     piano.start({
-      note: 60 + i % 30, // C4-B5
+      note: 60 + (i % 30), // C4-B5
       velocity: 80,
-      time: startTime
+      time: startTime,
     });
   }
 
@@ -1514,15 +1542,16 @@ testPolyphony(50); // 测试 50 复音
 
 #### 测试结果
 
-| 复音数 | CPU 占用 | 内存增加 | 延迟 | 备注 |
-|--------|---------|---------|------|------|
-| 10 | ~1% | +2 MB | <5ms | 流畅 |
-| 30 | ~3% | +6 MB | <10ms | 流畅 |
-| 50 | ~5% | +10 MB | <15ms | 轻微卡顿 |
-| 100 | ~10% | +20 MB | <30ms | 中等卡顿 |
-| 200+ | >20% | +40 MB+ | >50ms | 明显卡顿 |
+| 复音数 | CPU 占用 | 内存增加 | 延迟  | 备注     |
+| ------ | -------- | -------- | ----- | -------- |
+| 10     | ~1%      | +2 MB    | <5ms  | 流畅     |
+| 30     | ~3%      | +6 MB    | <10ms | 流畅     |
+| 50     | ~5%      | +10 MB   | <15ms | 轻微卡顿 |
+| 100    | ~10%     | +20 MB   | <30ms | 中等卡顿 |
+| 200+   | >20%     | +40 MB+  | >50ms | 明显卡顿 |
 
 **结论**：
+
 - 50 复音以内：流畅，适合实时演奏
 - 50-100 复音：轻微卡顿，可接受
 - 100+ 复音：建议限制复音数
@@ -1541,13 +1570,19 @@ smplr 内置了 `VoiceManager` 自动管理复音数：
 #### 2. 共享资源
 
 ```typescript
-import { Soundfont, DrumMachine, SampleLoader, Scheduler, CacheStorage } from "smplr";
+import {
+  Soundfont,
+  DrumMachine,
+  SampleLoader,
+  Scheduler,
+  CacheStorage,
+} from "smplr";
 
 const context = new AudioContext();
 
 // 共享 loader（避免重复加载）
 const sharedLoader = new SampleLoader(context, {
-  storage: new CacheStorage("my-cache")
+  storage: new CacheStorage("my-cache"),
 });
 
 // 共享 scheduler（减少轮询开销）
@@ -1555,9 +1590,21 @@ const sharedScheduler = new Scheduler(context);
 
 // 创建多个音色
 const instruments = [
-  new Soundfont(context, { instrument: "piano", loader: sharedLoader, scheduler: sharedScheduler }),
-  new Soundfont(context, { instrument: "strings", loader: sharedLoader, scheduler: sharedScheduler }),
-  new DrumMachine(context, { instrument: "TR-808", loader: sharedLoader, scheduler: sharedScheduler })
+  new Soundfont(context, {
+    instrument: "piano",
+    loader: sharedLoader,
+    scheduler: sharedScheduler,
+  }),
+  new Soundfont(context, {
+    instrument: "strings",
+    loader: sharedLoader,
+    scheduler: sharedScheduler,
+  }),
+  new DrumMachine(context, {
+    instrument: "TR-808",
+    loader: sharedLoader,
+    scheduler: sharedScheduler,
+  }),
 ];
 ```
 
@@ -1581,7 +1628,7 @@ OGG 格式比 M4A 更小，加载更快：
 
 ```typescript
 const piano = new SplendidGrandPiano(context, {
-  formats: ["ogg"] // 只使用 OGG
+  formats: ["ogg"], // 只使用 OGG
 });
 ```
 
@@ -1592,8 +1639,8 @@ const piano = new SplendidGrandPiano(context, {
 const piano = new SplendidGrandPiano(context, {
   notesToLoad: {
     notes: Array.from({ length: 25 }, (_, i) => 60 + i), // C4-C6
-    velocityRange: [60, 127] // 只加载中高力度
-  }
+    velocityRange: [60, 127], // 只加载中高力度
+  },
 });
 ```
 
@@ -1648,15 +1695,9 @@ export type {
   VoiceParams,
 } from "./smplr/types";
 
-export type {
-  SamplerConfig,
-  Sampler,
-} from "./sampler";
+export type { SamplerConfig, Sampler } from "./sampler";
 
-export type {
-  Soundfont,
-  SoundfontOptions,
-} from "./soundfont/soundfont";
+export type { Soundfont, SoundfontOptions } from "./soundfont/soundfont";
 
 export type {
   DrumMachine,
@@ -1686,8 +1727,14 @@ export function Instrument<O, E extends object = {}>(
 }
 
 export type InstrumentFactory<O, E extends object = {}> = {
-  (ctx: BaseAudioContext, options?: O & Partial<SmplrOptions>): InstrumentInstance<E>;
-  new (ctx: BaseAudioContext, options?: O & Partial<SmplrOptions>): InstrumentInstance<E>;
+  (
+    ctx: BaseAudioContext,
+    options?: O & Partial<SmplrOptions>,
+  ): InstrumentInstance<E>;
+  new (
+    ctx: BaseAudioContext,
+    options?: O & Partial<SmplrOptions>,
+  ): InstrumentInstance<E>;
 };
 ```
 
@@ -1723,6 +1770,7 @@ load(json: SmplrPreset, options?: SampleLoaderLoadOptions): Promise<Map<string, 
 ```
 
 **质量评估**：
+
 - ✅ 完整的类型定义
 - ✅ 严格的类型检查
 - ✅ 泛型支持
@@ -1822,11 +1870,11 @@ async function customSampler() {
 
   const sampler = new Sampler(context, {
     buffers: {
-      "C4": "https://example.com/samples/piano-c4.ogg",
-      "D4": "https://example.com/samples/piano-d4.ogg",
-      "E4": "https://example.com/samples/piano-e4.ogg"
+      C4: "https://example.com/samples/piano-c4.ogg",
+      D4: "https://example.com/samples/piano-d4.ogg",
+      E4: "https://example.com/samples/piano-e4.ogg",
     },
-    decayTime: 0.5
+    decayTime: 0.5,
   });
 
   await sampler.ready;
@@ -1837,7 +1885,7 @@ async function customSampler() {
 
   // 动态重载
   await sampler.reload({
-    "F4": "https://example.com/samples/piano-f4.ogg"
+    F4: "https://example.com/samples/piano-f4.ogg",
   });
 
   sampler.start("F4");
@@ -1852,7 +1900,7 @@ import {
   DrumMachine,
   SampleLoader,
   Scheduler,
-  CacheStorage
+  CacheStorage,
 } from "smplr";
 
 async function optimizedSetup() {
@@ -1869,17 +1917,17 @@ async function optimizedSetup() {
       instrument: "acoustic_grand_piano",
       loader,
       scheduler,
-      storage
+      storage,
     }),
     new DrumMachine(context, {
       instrument: "TR-808",
       loader,
       scheduler,
-      storage
-    })
+      storage,
+    }),
   ];
 
-  await Promise.all(instruments.map(inst => inst.ready));
+  await Promise.all(instruments.map((inst) => inst.ready));
 
   return instruments;
 }
@@ -1892,6 +1940,7 @@ async function optimizedSetup() {
 smplr 是一个设计良好、易于使用的 Web Audio API 采样器库，具有以下特点：
 
 **优点**：
+
 - ✅ 零配置，开箱即用
 - ✅ 丰富的预置音色库
 - ✅ 完整的 TypeScript 支持
@@ -1901,11 +1950,13 @@ smplr 是一个设计良好、易于使用的 Web Audio API 采样器库，具�
 - ✅ 支持多复音实时演奏
 
 **限制**：
+
 - ❌ 不直接支持 SFZ/SF2 格式
 - ❌ 高复音数时性能下降
 - ❌ 大型音色库内存占用较高
 
 **适用场景**：
+
 - ✅ 网页音乐应用
 - ✅ 在线 MIDI 播放器
 - ✅ 教育类音乐软件
@@ -1913,6 +1964,7 @@ smplr 是一个设计良好、易于使用的 Web Audio API 采样器库，具�
 - ✅ 游戏音效
 
 **不适用场景**：
+
 - ❌ 专业音乐制作（建议使用 Native Instruments 等）
 - ❌ 需要加载大型 SFZ/SF2 库的项目
 - ❌ 超低延迟要求（<5ms）

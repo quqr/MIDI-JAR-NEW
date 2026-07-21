@@ -10,12 +10,14 @@
 ## Question
 
 RipplerX 的 Models 类定义了 9 种共鸣器模型的泛音频率比和增益：
+
 - String, Beam, Squared, Membrane, Drumhead, Plate, Marimba, OpenTube, ClosedTube
 - 加上 Marimba2, Bell, Djembe（共 12 种模型）
 
 其中 String/Marimba/Marimba2 是谐波系列（整数倍频），其他模型有非谐波泛音。OpenTube 和 ClosedTube 使用 Waveguide（延迟线）而非 Partial。
 
 需要验证：
+
 1. **Models.cpp 的模型数据**：每个模型的 64 个泛音频率比是否可以直接硬编码到 TypeScript？还是需要动态计算（如 Membrane/Plate 受 Ratio 参数影响）？
 2. **Waveguide 模型**：延迟线算法（环形缓冲区 + 线性插值读取）在 TypeScript 中的实现是否与 C++ 行为一致？
 3. **模型切换实时性**：在演奏中切换模型时，是否需要平滑过渡？C++ 版如何处理？

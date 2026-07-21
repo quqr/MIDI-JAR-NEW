@@ -14,10 +14,7 @@
       <div class="text-xs text-base-content/60 mb-2">
         {{ t("advancedDebug.waterfall.midiFile.selectedTracksHint") }}
       </div>
-      <div
-        v-if="midiFile.selectedTracks.length"
-        class="flex flex-wrap gap-1"
-      >
+      <div v-if="midiFile.selectedTracks.length" class="flex flex-wrap gap-1">
         <span
           v-for="track in midiFile.selectedTracks"
           :key="track"
@@ -71,7 +68,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { SettingsCollapse, SettingsColorPicker, SettingsRange } from "@/components/Settings";
+import {
+  SettingsCollapse,
+  SettingsColorPicker,
+  SettingsRange,
+} from "@/components/Settings";
 
 interface MidiFileSettings {
   selectedTracks: number[];

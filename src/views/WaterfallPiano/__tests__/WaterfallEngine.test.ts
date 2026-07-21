@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { defaultWaterfallSettings } from "../constants";
 import type { WaterfallPianoSettings } from "../types";
-import type { SoundEngine } from "../audio/SoundEngine";
+import type { ISoundEngine } from "../audio/ISoundEngine";
 
 const fluidMock = vi.hoisted(() => ({
   instances: [] as Array<{
@@ -70,7 +70,7 @@ function mockCanvases() {
   };
 }
 
-function mockSoundEngine(): SoundEngine {
+function mockSoundEngine(): ISoundEngine {
   return {
     noteOn: vi.fn(),
     noteOff: vi.fn(),
@@ -80,7 +80,8 @@ function mockSoundEngine(): SoundEngine {
     setVelocitySensitivity: vi.fn(),
     init: vi.fn(),
     dispose: vi.fn(),
-  } as unknown as SoundEngine;
+    updateConfig: vi.fn(),
+  } as unknown as ISoundEngine;
 }
 
 function cloneSettings(): WaterfallPianoSettings {

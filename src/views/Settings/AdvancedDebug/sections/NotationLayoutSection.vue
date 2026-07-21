@@ -73,9 +73,7 @@
     />
     <SettingsRange
       :model-value="modelValue.keySignatureWidthPerAlteration"
-      :label="
-        t('advancedDebug.notation.layout.keySignatureWidthPerAlteration')
-      "
+      :label="t('advancedDebug.notation.layout.keySignatureWidthPerAlteration')"
       :description="
         t('advancedDebug.notation.layout.keySignatureWidthPerAlterationHint')
       "

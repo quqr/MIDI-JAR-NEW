@@ -10,6 +10,7 @@
 ## Question
 
 这是决定是否需要 WASM 的关键验证点。RipplerX 的最大负载场景是 16 复音同时发声，每个复音包含：
+
 - 2 个 Resonator × 64 个 Partial = 128 个二阶 IIR 滤波器
 - 1 个 Mallet（impulse 或 sample playback）
 - 1 个 Noise 生成器

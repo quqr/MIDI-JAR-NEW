@@ -57,7 +57,7 @@ const props = withDefaults(
   }>(),
   {
     depth: 0,
-  }
+  },
 );
 
 defineEmits<{
@@ -70,12 +70,12 @@ const isOpen = ref(true);
 // 根据嵌套深度计算不同的背景色
 const bgClass = computed(() => {
   const colors = [
-    "bg-base-300/90", 
-    "bg-base-300/70", 
-    "bg-base-300/50", 
-    "bg-base-300/30", 
-    "bg-base-300/10", 
-    "bg-base-300", 
+    "bg-base-300/90",
+    "bg-base-300/70",
+    "bg-base-300/50",
+    "bg-base-300/30",
+    "bg-base-300/10",
+    "bg-base-300",
   ];
   return colors[props.depth] || colors[0];
 });

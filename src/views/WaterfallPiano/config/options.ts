@@ -25,9 +25,7 @@ export function createColorSchemeOptions(
 }
 
 /** 流体风格预设选项 */
-export function createFluidStyleOptions(
-  _t: TranslateFunction,
-): OptionItem[] {
+export function createFluidStyleOptions(_t: TranslateFunction): OptionItem[] {
   return [
     { value: "gentle", label: "Gentle" },
     { value: "standard", label: "Standard" },
@@ -36,9 +34,7 @@ export function createFluidStyleOptions(
 }
 
 /** 键盘范围选项 */
-export function createKeyRangeOptions(
-  _t: TranslateFunction,
-): OptionItem[] {
+export function createKeyRangeOptions(_t: TranslateFunction): OptionItem[] {
   return [
     { value: "88", label: "88" },
     { value: "61", label: "61" },
@@ -48,9 +44,7 @@ export function createKeyRangeOptions(
 }
 
 /** 按键标签显示模式选项 */
-export function createKeyLabelOptions(
-  _t: TranslateFunction,
-): OptionItem[] {
+export function createKeyLabelOptions(_t: TranslateFunction): OptionItem[] {
   return [
     { value: "none", label: "None" },
     { value: "note", label: "Note" },
@@ -60,9 +54,7 @@ export function createKeyLabelOptions(
 }
 
 /** Aura 样式选项 */
-export function createAuraStyleOptions(
-  t: TranslateFunction,
-): OptionItem[] {
+export function createAuraStyleOptions(t: TranslateFunction): OptionItem[] {
   return [
     { value: "none", label: t("WaterfallPiano.auraStyleNone") },
     { value: "glow", label: t("WaterfallPiano.auraStyleGlow") },
@@ -73,9 +65,7 @@ export function createAuraStyleOptions(
 }
 
 /** Aura 应用场景选项 */
-export function createAuraTargetOptions(
-  t: TranslateFunction,
-): OptionItem[] {
+export function createAuraTargetOptions(t: TranslateFunction): OptionItem[] {
   return [
     { value: "triggered", label: t("WaterfallPiano.auraTargetTriggered") },
     { value: "all", label: t("WaterfallPiano.auraTargetAll") },

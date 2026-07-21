@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import type { FlatKeyboardSizes } from "./constants";
 
 interface Props {
@@ -11,12 +12,44 @@ interface Props {
   keyName: "none" | "octave" | "pitchClass" | "note";
   isBlack: boolean;
   clickable?: boolean;
+  sustainMode?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   clickable: false,
+  sustainMode: false,
 });
-const emit = defineEmits<{ click: [midi: number] }>();
+const emit = defineEmits<{
+  click: [midi: number];
+  noteOn: [midi: number];
+  noteOff: [midi: number];
+}>();
+
+const pressed = ref(false);
+
+function onPointerDown(e: MouseEvent | TouchEvent) {
+  e.preventDefault();
+  if (props.sustainMode) {
+    pressed.value = true;
+    emit("noteOn", props.midi);
+  } else {
+    emit("click", props.midi);
+  }
+}
+
+function onPointerUp() {
+  if (props.sustainMode && pressed.value) {
+    pressed.value = false;
+    emit("noteOff", props.midi);
+  }
+}
+
+function onPointerLeave() {
+  if (props.sustainMode && pressed.value) {
+    pressed.value = false;
+    emit("noteOff", props.midi);
+  }
+}
 </script>
 
 <template>
@@ -37,7 +70,12 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :height="props.sizes.HEIGHT"
       x="0"
       y="0"
-      @click="emit('click', props.midi)"
+      @mousedown="onPointerDown"
+      @mouseup="onPointerUp"
+      @mouseleave="onPointerLeave"
+      @touchstart="onPointerDown"
+      @touchend="onPointerUp"
+      @click="!props.sustainMode && emit('click', props.midi)"
     />
     <circle
       class="pianoTonic"

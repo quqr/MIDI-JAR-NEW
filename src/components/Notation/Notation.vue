@@ -111,8 +111,6 @@ function renderNotation() {
       style: style.value,
     });
   }
-
-
 }
 
 function setupResizeObserver() {
@@ -181,20 +179,20 @@ onBeforeUnmount(() => {
 let observer: MutationObserver;
 
 function oklchToRgb(oklchString: string): string {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = 1;
   canvas.height = 1;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = oklchString;
   ctx.fillRect(0, 0, 1, 1);
   const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
   return `rgb(${r},${g},${b})`;
 }
 
-function updateNoteAndStaveColor(){
+function updateNoteAndStaveColor() {
   const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-base-content')
-      .trim();
+    .getPropertyValue("--color-base-content")
+    .trim();
   const color = oklchToRgb(raw);
   style.value.staffLineColor = color;
   style.value.noteColor = color;
@@ -210,7 +208,7 @@ onMounted(() => {
   });
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['data-theme', 'class'],
+    attributeFilter: ["data-theme", "class"],
   });
 });
 

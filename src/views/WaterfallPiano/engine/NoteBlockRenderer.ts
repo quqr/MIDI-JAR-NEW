@@ -72,7 +72,11 @@ export class NoteBlockRenderer {
 
     // 单遍遍历：收集 aura 数据 + 绘制实体方块
     const auraBlocks: Array<{
-      x: number; y: number; w: number; h: number; color: string;
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      color: string;
     }> = [];
     const needAura = auraCfg.enabled;
 
@@ -82,7 +86,12 @@ export class NoteBlockRenderer {
       const x = keyboardRenderer.midiToX(b.midi) - blockWidth / 2;
       const h = b.height <= 0 ? blockWidth : b.height;
       const y = b.y - h;
-      const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
+      const baseColor = noteToColor(
+        b.midi,
+        p.colorScheme,
+        b.hand,
+        customColors,
+      );
       const isTriggered = triggeredSet.has(b.midi);
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
@@ -118,7 +127,11 @@ export class NoteBlockRenderer {
 
   private roundRect(
     ctx: CanvasRenderingContext2D,
-    x: number, y: number, w: number, h: number, r: number,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
   ): void {
     const radius = Math.min(r, w / 2, Math.abs(h) / 2);
     ctx.beginPath();
@@ -155,7 +168,13 @@ export class NoteBlockRenderer {
    */
   private renderAuraLayers(
     ctx: CanvasRenderingContext2D,
-    blocks: Array<{ x: number; y: number; w: number; h: number; color: string }>,
+    blocks: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      color: string;
+    }>,
     cornerRadius: number,
     time: number,
     settings: WaterfallPianoSettings,
@@ -177,7 +196,11 @@ export class NoteBlockRenderer {
     const glowStyle = style === "glow";
     const isCustom = style === "custom";
 
-    const buildGradient = (cx: number, cy: number, color: string): CanvasGradient | null => {
+    const buildGradient = (
+      cx: number,
+      cy: number,
+      color: string,
+    ): CanvasGradient | null => {
       if (glowStyle) {
         const extentNorm = cfg.glowExtent / 100;
         const r = Math.min(p * 2, 200) * 0.5;
@@ -221,7 +244,13 @@ export class NoteBlockRenderer {
       return g;
     };
 
-    const drawOne = (bx: number, by: number, bw: number, bh: number, color: string): void => {
+    const drawOne = (
+      bx: number,
+      by: number,
+      bw: number,
+      bh: number,
+      color: string,
+    ): void => {
       const cx = bx + bw / 2;
       const cy = by + bh / 2;
       const g = buildGradient(cx, cy, color);
@@ -242,8 +271,16 @@ export class NoteBlockRenderer {
     // Layer 1: ::after
     ctx.save();
     if (glowStyle) {
-      ctx.shadowBlur = this.glowProgress(pulseT, cfg.outerBlur, cfg.glowAfterPeakBlur);
-      ctx.globalAlpha = this.glowProgress(pulseT, outerA, cfg.glowAfterPeakOpacity / 100);
+      ctx.shadowBlur = this.glowProgress(
+        pulseT,
+        cfg.outerBlur,
+        cfg.glowAfterPeakBlur,
+      );
+      ctx.globalAlpha = this.glowProgress(
+        pulseT,
+        outerA,
+        cfg.glowAfterPeakOpacity / 100,
+      );
     } else {
       ctx.shadowBlur = cfg.outerBlur;
       ctx.globalAlpha = outerA;
@@ -257,8 +294,16 @@ export class NoteBlockRenderer {
     // Layer 2: ::before
     ctx.save();
     if (glowStyle) {
-      ctx.shadowBlur = this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur);
-      ctx.globalAlpha = this.glowProgress(pulseT, innerA, cfg.glowPeakOpacity / 100);
+      ctx.shadowBlur = this.glowProgress(
+        pulseT,
+        cfg.innerBlur,
+        cfg.glowPeakBlur,
+      );
+      ctx.globalAlpha = this.glowProgress(
+        pulseT,
+        innerA,
+        cfg.glowPeakOpacity / 100,
+      );
     } else {
       ctx.shadowBlur = cfg.innerBlur;
       ctx.globalAlpha = innerA;

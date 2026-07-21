@@ -10,6 +10,7 @@
 ## Question
 
 RipplerX 的 UI 布局包含：
+
 - 顶部栏：Logo、主题切换、复音数、力度映射、预置选择、设置
 - Noise 区域：滤波器类型、Mix、Res、Freq、Q、ADSR 包络（含 Tension）
 - Mallet 区域：Mix、Resonance、Stiffness、Pitch、Filter、Key Tracking
@@ -20,6 +21,7 @@ RipplerX 的 UI 布局包含：
 - 虚拟 MIDI 键盘
 
 在 Vue + Tailwind/DaisyUI 环境中如何设计这个布局？需要考虑：
+
 1. **响应式设计**：RipplerX 原版是固定宽度桌面插件，Web 需要响应式
 2. **旋钮组件**：DaisyUI 没有旋钮组件，是否需要自定义？还是用 range slider 替代？
 3. **Tension 控制**：RipplerX 有自定义的 TensionCtrl（控制 ADSR 包络曲线形状），Web 版如何实现？

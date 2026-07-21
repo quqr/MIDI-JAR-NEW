@@ -3,9 +3,7 @@
     <div class="grid grid-cols-1 gap-4 m-4">
       <ParticlesSection
         :settings="settings.particles"
-        @update="
-          (key, value) => store.updateSetting('particles', key, value)
-        "
+        @update="(key, value) => store.updateSetting('particles', key, value)"
       />
       <AuraSection
         :settings="settings.aura"
@@ -13,9 +11,7 @@
       />
       <BackgroundSection
         :settings="settings.background"
-        @update="
-          (key, value) => store.updateSetting('background', key, value)
-        "
+        @update="(key, value) => store.updateSetting('background', key, value)"
       />
       <FluidAdvancedSection
         :fluid-params="settings.background.fluidParams"
@@ -29,15 +25,11 @@
       />
       <KeyboardSection
         :settings="settings.keyboard"
-        @update="
-          (key, value) => store.updateSetting('keyboard', key, value)
-        "
+        @update="(key, value) => store.updateSetting('keyboard', key, value)"
       />
       <MidiFileSection
         :settings="settings.midiFile"
-        @update="
-          (key, value) => store.updateSetting('midiFile', key, value)
-        "
+        @update="(key, value) => store.updateSetting('midiFile', key, value)"
       />
     </div>
   </SettingsSection>

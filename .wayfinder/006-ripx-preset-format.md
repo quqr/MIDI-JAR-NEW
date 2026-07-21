@@ -24,6 +24,7 @@ RipplerX 使用 .ripx 作为预置文件格式。需要研究：
 ### 1. .ripx 二进制格式已完全逆向
 
 **格式布局：**
+
 ```
 Offset  Size  Description
 0x00    4     Magic Number: 0x21324356 (LE), 文件中为 56 43 32 21
@@ -42,21 +43,21 @@ function parseRipx(buffer: ArrayBuffer): Record<string, number> {
   const view = new DataView(buffer);
   // 验证 magic number
   const magic = view.getUint32(0, true); // little-endian
-  if (magic !== 0x21324356) throw new Error('Invalid .ripx file');
+  if (magic !== 0x21324356) throw new Error("Invalid .ripx file");
   // 读取 XML 长度
   const xmlLength = view.getUint32(4, true);
   // 提取 XML 字符串
   const xmlBytes = new Uint8Array(buffer, 8, xmlLength);
-  const xmlString = new TextDecoder('utf-8').decode(xmlBytes);
+  const xmlString = new TextDecoder("utf-8").decode(xmlBytes);
   // 解析 XML
   const parser = new DOMParser();
-  const doc = parser.parseFromString(xmlString, 'text/xml');
+  const doc = parser.parseFromString(xmlString, "text/xml");
   // 提取参数
   const params: Record<string, number> = {};
-  const paramNodes = doc.querySelectorAll('PARAM');
-  paramNodes.forEach(node => {
-    const id = node.getAttribute('id');
-    const value = parseFloat(node.getAttribute('value') || '0');
+  const paramNodes = doc.querySelectorAll("PARAM");
+  paramNodes.forEach((node) => {
+    const id = node.getAttribute("id");
+    const value = parseFloat(node.getAttribute("value") || "0");
     if (id) params[id] = value;
   });
   return params;
@@ -70,6 +71,7 @@ JUCE AudioProcessorValueTreeState 存储的是 0-1 归一化值。需要根据�
 ### 4. 内置预设提取策略
 
 28 个内置预设编译在 JUCE BinaryData 中（XML 格式）。移植方案：
+
 - 从 RipplerX 仓库提取预设 XML 文件（在 `resources/` 目录或 CMake 的 BinaryData 配置中）
 - 转换为 JSON 格式作为 Web 应用的静态资源
 - 或直接保留 .ripx 格式，运行时用上述解析器加载
@@ -77,5 +79,6 @@ JUCE AudioProcessorValueTreeState 存储的是 0-1 归一化值。需要根据�
 ### 5. 用户采样数据处理
 
 预设中可包含 Base64 编码的采样数据：
+
 - 解码 Base64 → ArrayBuffer → Float64Array（每个 double 是一个采样点）
 - 通过 MessagePort 传输到 AudioWorklet

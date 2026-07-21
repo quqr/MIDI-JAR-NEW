@@ -64,6 +64,12 @@ export const navItems: GroupedNavItem[] = [
     group: "display",
   },
   {
+    icon: "piano",
+    to: "/settings/piano",
+    labelKey: "settings.piano",
+    group: "display",
+  },
+  {
     icon: "bug",
     to: "/settings/debug",
     labelKey: "settings.debugger",

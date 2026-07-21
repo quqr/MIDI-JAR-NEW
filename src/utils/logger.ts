@@ -67,7 +67,9 @@ export function createLogger(tag: string) {
   // 在 Pino 日志方法上挂载调试器转发
   const logMethods = ["debug", "trace", "info", "warn", "error", "fatal"];
   for (const method of logMethods) {
-    const original = child[method as keyof typeof child] as (...args: unknown[]) => void;
+    const original = child[method as keyof typeof child] as (
+      ...args: unknown[]
+    ) => void;
     if (typeof original !== "function") continue;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

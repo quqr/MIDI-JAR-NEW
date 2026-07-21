@@ -116,7 +116,7 @@ interface InstrumentPreset {
 
 ```typescript
 // 主键索引
-keyPath: "id"
+keyPath: "id";
 
 // 辅助索引
 indices: [
@@ -126,7 +126,7 @@ indices: [
   { name: "by-usage", keyPath: "metadata.usageCount", unique: false },
   { name: "by-favorite", keyPath: "metadata.isFavorite", unique: false },
   { name: "by-source", keyPath: "metadata.source", unique: false },
-]
+];
 ```
 
 ##### Store 2: `sampleCacheMetadata` - 采样缓存元数据
@@ -161,13 +161,13 @@ interface SampleCacheMetadata {
 **索引设计**：
 
 ```typescript
-keyPath: "id"
+keyPath: "id";
 
 indices: [
   { name: "by-lastAccessed", keyPath: "lastAccessedAt", unique: false },
   { name: "by-cacheName", keyPath: "cacheName", unique: false },
   { name: "by-size", keyPath: "sizeBytes", unique: false },
-]
+];
 ```
 
 ##### Store 3: `userSettings` - 用户偏好设置
@@ -409,14 +409,12 @@ export async function initSamplerDatabase(): Promise<IDBPDatabase> {
     },
 
     blocked() {
-      console.warn(
-        "数据库升级被阻塞，请关闭其他标签页中的旧版本应用"
-      );
+      console.warn("数据库升级被阻塞，请关闭其他标签页中的旧版本应用");
     },
 
     blocking() {
       console.warn(
-        "数据库正在被其他标签页使用，当前标签页的数据库连接可能被阻塞"
+        "数据库正在被其他标签页使用，当前标签页的数据库连接可能被阻塞",
       );
     },
   });
@@ -459,7 +457,9 @@ async function initializeDefaultSettings(db: IDBPDatabase): Promise<void> {
   }
 
   // 初始化统计信息（如果不存在）
-  const statsStore = db.transaction("libraryStats", "readwrite").objectStore("libraryStats");
+  const statsStore = db
+    .transaction("libraryStats", "readwrite")
+    .objectStore("libraryStats");
   const existingStats = await statsStore.get("library-stats");
 
   if (!existingStats) {
@@ -641,7 +641,7 @@ export class SamplerCacheCoordinator {
     if (settings) {
       // 移除重复项
       const recent = settings.libraryConfig.recentPresets.filter(
-        (id) => id !== presetId
+        (id) => id !== presetId,
       );
 
       // 添加到最前面
@@ -670,7 +670,7 @@ export class SamplerCacheCoordinator {
 export async function validatePresetCacheConsistency(
   db: IDBPDatabase,
   cache: Cache,
-  presetId: string
+  presetId: string,
 ): Promise<{
   isValid: boolean;
   missingSamples: string[];
@@ -715,12 +715,12 @@ export async function validatePresetCacheConsistency(
 
 ### 2.3 同步时机
 
-| 时机 | IndexedDB 操作 | CacheStorage 操作 | 同步动作 |
-|------|----------------|-------------------|----------|
-| 加载预设 | 读取配置、更新使用统计 | 检查缓存命中 | 更新缓存元数据 |
-| 缓存采样 | 更新元数据（cachedAt, sizeBytes） | 存储 Response | 建立关联 |
-| 清理缓存 | 更新元数据（删除记录） | 删除 Response | 同步删除 |
-| 启动应用 | 读取统计信息 | 检查缓存状态 | 验证一致性 |
+| 时机     | IndexedDB 操作                    | CacheStorage 操作 | 同步动作       |
+| -------- | --------------------------------- | ----------------- | -------------- |
+| 加载预设 | 读取配置、更新使用统计            | 检查缓存命中      | 更新缓存元数据 |
+| 缓存采样 | 更新元数据（cachedAt, sizeBytes） | 存储 Response     | 建立关联       |
+| 清理缓存 | 更新元数据（删除记录）            | 删除 Response     | 同步删除       |
+| 启动应用 | 读取统计信息                      | 检查缓存状态      | 验证一致性     |
 
 ---
 
@@ -762,7 +762,7 @@ const policy: CachePolicy = {
   policies: {
     "splendid-grand-piano": { ttl: 0, priority: "high" }, // 永不过期，高优先级
     "drum-machine": { ttl: 7 * 24 * 3600, priority: "medium" }, // 1周
-    "soundfont": { ttl: 30 * 24 * 3600, priority: "low" }, // 1个月
+    soundfont: { ttl: 30 * 24 * 3600, priority: "low" }, // 1个月
   },
 };
 ```
@@ -920,7 +920,7 @@ export async function getStorageEstimate(): Promise<{
  * 检查是否接近配额限制
  */
 export async function isStorageNearLimit(
-  thresholdPercent: number = 0.9
+  thresholdPercent: number = 0.9,
 ): Promise<boolean> {
   const { quota, usage } = await getStorageEstimate();
 
@@ -1088,9 +1088,7 @@ if (oldVersion < 3) {
 /**
  * 导出所有数据到 JSON（备份）
  */
-export async function exportDatabaseToJson(
-  db: IDBPDatabase
-): Promise<string> {
+export async function exportDatabaseToJson(db: IDBPDatabase): Promise<string> {
   const exportData: any = {
     version: DB_VERSION,
     exportedAt: new Date().toISOString(),
@@ -1117,7 +1115,7 @@ export async function exportDatabaseToJson(
  */
 export async function importDatabaseFromJson(
   db: IDBPDatabase,
-  jsonString: string
+  jsonString: string,
 ): Promise<void> {
   const importData = JSON.parse(jsonString);
 
@@ -1158,7 +1156,7 @@ export async function importDatabaseFromJson(
  */
 export async function batchAddPresets(
   db: IDBPDatabase,
-  presets: InstrumentPreset[]
+  presets: InstrumentPreset[],
 ): Promise<void> {
   // 单个事务批量写入
   const tx = db.transaction("instrumentPresets", "readwrite");
@@ -1220,12 +1218,9 @@ class AccessTimeUpdater {
  */
 export async function updatePresetAndStats(
   db: IDBPDatabase,
-  preset: InstrumentPreset
+  preset: InstrumentPreset,
 ): Promise<void> {
-  const tx = db.transaction(
-    ["instrumentPresets", "libraryStats"],
-    "readwrite"
-  );
+  const tx = db.transaction(["instrumentPresets", "libraryStats"], "readwrite");
 
   const presetStore = tx.objectStore("instrumentPresets");
   const statsStore = tx.objectStore("libraryStats");
@@ -1300,7 +1295,7 @@ export async function queryPresetsPaginated(
     limit: number;
     offset: number;
     sortBy?: "name" | "lastUsed" | "usageCount";
-  }
+  },
 ): Promise<InstrumentPreset[]> {
   const tx = db.transaction("instrumentPresets", "readonly");
   const store = tx.objectStore("instrumentPresets");
@@ -1310,8 +1305,8 @@ export async function queryPresetsPaginated(
     options.sortBy === "lastUsed"
       ? "by-lastUsed"
       : options.sortBy === "usageCount"
-      ? "by-usage"
-      : undefined;
+        ? "by-usage"
+        : undefined;
 
   const source = indexName ? store.index(indexName) : store;
 
@@ -1483,7 +1478,7 @@ export async function createStorageAdapter(): Promise<StorageAdapter> {
 export async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
-  delayMs: number = 100
+  delayMs: number = 100,
 ): Promise<T> {
   let lastError: Error | null = null;
 
@@ -1496,7 +1491,7 @@ export async function withRetry<T>(
       if (attempt < maxRetries - 1) {
         console.warn(
           `操作失败，${delayMs}ms 后重试 (第 ${attempt + 1}/${maxRetries} 次)`,
-          error
+          error,
         );
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         delayMs *= 2; // 指数退避
@@ -1512,7 +1507,7 @@ export async function withRetry<T>(
  */
 export async function safeGetPreset(
   db: IDBPDatabase,
-  presetId: string
+  presetId: string,
 ): Promise<InstrumentPreset | null> {
   return withRetry(async () => {
     const tx = db.transaction("instrumentPresets", "readonly");
@@ -1574,7 +1569,7 @@ export class CrossTabSyncManager {
   broadcastChange(
     storeName: string,
     action: "add" | "update" | "delete",
-    data: any
+    data: any,
   ): void {
     this.channel.postMessage({
       type: "data-change",
@@ -1638,7 +1633,7 @@ export class CloudSyncClient {
     supabaseUrl: string,
     supabaseKey: string,
     userId: string,
-    db: IDBPDatabase
+    db: IDBPDatabase,
   ) {
     this.supabase = createClient(supabaseUrl, supabaseKey);
     this.userId = userId;
@@ -1649,16 +1644,14 @@ export class CloudSyncClient {
    * 上传预设到云端
    */
   async uploadPreset(preset: InstrumentPreset): Promise<void> {
-    const { error } = await this.supabase
-      .from("instrument_presets")
-      .upsert({
-        id: preset.id,
-        user_id: this.userId,
-        name: preset.name,
-        config: preset.config,
-        metadata: preset.metadata,
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await this.supabase.from("instrument_presets").upsert({
+      id: preset.id,
+      user_id: this.userId,
+      name: preset.name,
+      config: preset.config,
+      metadata: preset.metadata,
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) throw error;
   }
@@ -1728,12 +1721,12 @@ export class CloudSyncClient {
 
 ### 8.1 数据分类
 
-| 数据类型 | 敏感级别 | 是否加密 | 存储位置 |
-|----------|----------|----------|----------|
-| 音色配置 | 低 | 否 | IndexedDB |
-| 用户设置 | 低 | 否 | IndexedDB |
-| 用户元数据（如收藏） | 中 | 可选 | IndexedDB |
-| 云端认证令牌 | 高 | **必须** | 不存储在 IndexedDB，使用安全的 Cookie |
+| 数据类型             | 敏感级别 | 是否加密 | 存储位置                              |
+| -------------------- | -------- | -------- | ------------------------------------- |
+| 音色配置             | 低       | 否       | IndexedDB                             |
+| 用户设置             | 低       | 否       | IndexedDB                             |
+| 用户元数据（如收藏） | 中       | 可选     | IndexedDB                             |
+| 云端认证令牌         | 高       | **必须** | 不存储在 IndexedDB，使用安全的 Cookie |
 
 ### 8.2 敏感数据加密
 
@@ -1757,7 +1750,7 @@ export class DataEncryptor {
       encoder.encode(password),
       { name: "PBKDF2" },
       false,
-      ["deriveKey"]
+      ["deriveKey"],
     );
 
     this.key = await crypto.subtle.deriveKey(
@@ -1770,14 +1763,16 @@ export class DataEncryptor {
       keyMaterial,
       { name: "AES-GCM", length: 256 },
       false,
-      ["encrypt", "decrypt"]
+      ["encrypt", "decrypt"],
     );
   }
 
   /**
    * 加密数据
    */
-  async encrypt(data: any): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
+  async encrypt(
+    data: any,
+  ): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
     if (!this.key) throw new Error("密钥未初始化");
 
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -1787,7 +1782,7 @@ export class DataEncryptor {
     const ciphertext = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
       this.key,
-      plaintext
+      plaintext,
     );
 
     return { iv, ciphertext };
@@ -1796,16 +1791,13 @@ export class DataEncryptor {
   /**
    * 解密数据
    */
-  async decrypt<T>(
-    iv: Uint8Array,
-    ciphertext: ArrayBuffer
-  ): Promise<T> {
+  async decrypt<T>(iv: Uint8Array, ciphertext: ArrayBuffer): Promise<T> {
     if (!this.key) throw new Error("密钥未初始化");
 
     const plaintext = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       this.key,
-      ciphertext
+      ciphertext,
     );
 
     const decoder = new TextDecoder();
@@ -1887,10 +1879,7 @@ export class SamplerPersistenceManager {
   private cleanupScheduler: CacheCleanupScheduler;
   private crossTabSync: CrossTabSyncManager;
 
-  private constructor(
-    db: IDBPDatabase,
-    cache: Cache
-  ) {
+  private constructor(db: IDBPDatabase, cache: Cache) {
     this.db = db;
     this.cache = cache;
     this.coordinator = new SamplerCacheCoordinator(db, cache);
@@ -1926,11 +1915,7 @@ export class SamplerPersistenceManager {
     await store.put(preset);
 
     // 广播到其他标签页
-    this.crossTabSync.broadcastChange(
-      "instrumentPresets",
-      "update",
-      preset
-    );
+    this.crossTabSync.broadcastChange("instrumentPresets", "update", preset);
 
     // 更新统计
     await this.updateStats("totalPresets", 1);
@@ -1953,11 +1938,9 @@ export class SamplerPersistenceManager {
     await store.delete(presetId);
 
     // 广播删除
-    this.crossTabSync.broadcastChange(
-      "instrumentPresets",
-      "delete",
-      { id: presetId }
-    );
+    this.crossTabSync.broadcastChange("instrumentPresets", "delete", {
+      id: presetId,
+    });
 
     // 更新统计
     await this.updateStats("totalPresets", -1);
@@ -2021,16 +2004,18 @@ export class SamplerPersistenceManager {
     const tx = this.db.transaction("libraryStats", "readonly");
     const stats = await tx.objectStore("libraryStats").get("library-stats");
 
-    return stats || {
-      id: "library-stats",
-      totalPresets: 0,
-      totalCachedSamples: 0,
-      totalCacheSizeBytes: 0,
-      cacheHitRate: 0,
-      totalRequests: 0,
-      cacheHits: 0,
-      lastUpdated: Date.now(),
-    };
+    return (
+      stats || {
+        id: "library-stats",
+        totalPresets: 0,
+        totalCachedSamples: 0,
+        totalCacheSizeBytes: 0,
+        cacheHitRate: 0,
+        totalRequests: 0,
+        cacheHits: 0,
+        lastUpdated: Date.now(),
+      }
+    );
   }
 
   /**
@@ -2038,7 +2023,7 @@ export class SamplerPersistenceManager {
    */
   private async updateStats(
     field: keyof LibraryStats,
-    delta: number
+    delta: number,
   ): Promise<void> {
     const tx = this.db.transaction("libraryStats", "readwrite");
     const store = tx.objectStore("libraryStats");

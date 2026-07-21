@@ -12,12 +12,18 @@ interface Props {
   sizes: ClassicKeyboardSizes;
   keyboard: KeyboardSettings;
   clickable?: boolean;
+  sustainMode?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   clickable: false,
+  sustainMode: false,
 });
-const emit = defineEmits<{ click: [midi: number] }>();
+const emit = defineEmits<{
+  click: [midi: number];
+  noteOn: [midi: number];
+  noteOff: [midi: number];
+}>();
 </script>
 
 <template>
@@ -38,7 +44,10 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :sizes="props.sizes"
       class="note"
       :clickable="props.clickable"
+      :sustain-mode="props.sustainMode"
       @click="emit('click', $event)"
+      @note-on="emit('noteOn', $event)"
+      @note-off="emit('noteOff', $event)"
     />
     <BlackNote
       v-for="noteDef in props.keys.blacks"
@@ -51,7 +60,10 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :key-name="props.keyboard.keyName"
       :sizes="props.sizes"
       :clickable="props.clickable"
+      :sustain-mode="props.sustainMode"
       @click="emit('click', $event)"
+      @note-on="emit('noteOn', $event)"
+      @note-off="emit('noteOff', $event)"
       class="note"
     />
   </g>
