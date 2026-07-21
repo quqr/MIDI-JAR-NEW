@@ -250,7 +250,77 @@ export const useRipplerXStore = defineStore("RipplerX", () => {
 
   function loadPreset(name: string) {
     state.value.currentPreset = name;
-    // Presets will be loaded via useModalSynth which sets all params
+  }
+
+  /**
+   * Apply worklet-style flat params (from BUILT_IN_PRESETS or .ripx) to
+   * the structured store state. This is the reverse of syncAllParams().
+   */
+  function applyWorkletParams(params: Record<string, number>) {
+    const s = state.value;
+    const p = params;
+
+    // Mallet
+    if (p.mallet_type !== undefined) s.mallet.type = p.mallet_type;
+    if (p.mallet_pitch !== undefined) s.mallet.pitch = p.mallet_pitch;
+    if (p.mallet_filter !== undefined) s.mallet.filter = p.mallet_filter;
+    if (p.mallet_mix !== undefined) s.mallet.mix = p.mallet_mix;
+    if (p.mallet_res !== undefined) s.mallet.resonance = p.mallet_res;
+    if (p.mallet_stiff !== undefined) s.mallet.stiffness = p.mallet_stiff;
+    if (p.mallet_ktrack !== undefined) s.mallet.keyTracking = p.mallet_ktrack;
+
+    // Resonator A
+    if (p.a_on !== undefined) s.resonatorA.on = p.a_on >= 0.5;
+    if (p.a_model !== undefined) s.resonatorA.model = p.a_model;
+    if (p.a_partials !== undefined) s.resonatorA.partials = p.a_partials;
+    if (p.a_decay !== undefined) s.resonatorA.decay = p.a_decay;
+    if (p.a_damp !== undefined) s.resonatorA.damp = p.a_damp;
+    if (p.a_tone !== undefined) s.resonatorA.tone = p.a_tone;
+    if (p.a_hit !== undefined) s.resonatorA.hit = p.a_hit;
+    if (p.a_rel !== undefined) s.resonatorA.release = p.a_rel;
+    if (p.a_inharm !== undefined) s.resonatorA.inharmonicity = p.a_inharm;
+    if (p.a_ratio !== undefined) s.resonatorA.ratio = p.a_ratio;
+    if (p.a_cut !== undefined) s.resonatorA.cut = p.a_cut;
+    if (p.a_radius !== undefined) s.resonatorA.radius = p.a_radius;
+
+    // Resonator B
+    if (p.b_on !== undefined) s.resonatorB.on = p.b_on >= 0.5;
+    if (p.b_model !== undefined) s.resonatorB.model = p.b_model;
+    if (p.b_partials !== undefined) s.resonatorB.partials = p.b_partials;
+    if (p.b_decay !== undefined) s.resonatorB.decay = p.b_decay;
+    if (p.b_damp !== undefined) s.resonatorB.damp = p.b_damp;
+    if (p.b_tone !== undefined) s.resonatorB.tone = p.b_tone;
+    if (p.b_hit !== undefined) s.resonatorB.hit = p.b_hit;
+    if (p.b_rel !== undefined) s.resonatorB.release = p.b_rel;
+    if (p.b_inharm !== undefined) s.resonatorB.inharmonicity = p.b_inharm;
+    if (p.b_ratio !== undefined) s.resonatorB.ratio = p.b_ratio;
+    if (p.b_cut !== undefined) s.resonatorB.cut = p.b_cut;
+    if (p.b_radius !== undefined) s.resonatorB.radius = p.b_radius;
+
+    // Noise
+    if (p.noise_mix !== undefined) s.noise.mix = p.noise_mix;
+    if (p.noise_res !== undefined) s.noise.resonance = p.noise_res;
+    if (p.noise_filter_freq !== undefined) s.noise.frequency = p.noise_filter_freq;
+    if (p.noise_filter_q !== undefined) s.noise.q = p.noise_filter_q;
+    if (p.noise_filter_mode !== undefined) s.noise.filterType = p.noise_filter_mode;
+    if (p.noise_att !== undefined) s.noise.attack = p.noise_att;
+    if (p.noise_dec !== undefined) s.noise.decay = p.noise_dec;
+    if (p.noise_sus !== undefined) s.noise.sustain = p.noise_sus;
+    if (p.noise_rel !== undefined) s.noise.release = p.noise_rel;
+    if (p.noise_att_ten !== undefined) s.noise.attackTension = p.noise_att_ten;
+    if (p.noise_dec_ten !== undefined) s.noise.decayTension = p.noise_dec_ten;
+    if (p.noise_rel_ten !== undefined) s.noise.releaseTension = p.noise_rel_ten;
+
+    // Coupling
+    if (p.couple !== undefined) s.coupling.mode = p.couple;
+    if (p.ab_mix !== undefined) s.coupling.mix = p.ab_mix;
+    if (p.ab_split !== undefined) s.coupling.split = p.ab_split;
+
+    // Pitch
+    if (p.bend_range !== undefined) s.pitch.bendRange = p.bend_range;
+
+    // Gain
+    if (p.gain !== undefined) s.gain.gain = p.gain;
   }
 
   function resetToDefaults() {
@@ -267,6 +337,7 @@ export const useRipplerXStore = defineStore("RipplerX", () => {
     state,
     setParam,
     loadPreset,
+    applyWorkletParams,
     resetToDefaults,
   };
 });

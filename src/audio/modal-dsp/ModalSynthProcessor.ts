@@ -103,6 +103,10 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
       case 'setParams':
         this.setParams(msg.params);
         break;
+      case 'setParam':
+        this.params[msg.id] = msg.value;
+        this.onSlider(sampleRate);
+        break;
       case 'loadPreset':
         this.loadPreset(msg.preset);
         break;

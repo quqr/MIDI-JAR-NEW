@@ -1,6 +1,7 @@
 import { ref, readonly, onUnmounted } from "vue";
 import { createLogger } from "@/utils/logger";
-import { useRipplerXStore, type RipplerXState } from "../stores/ripplerx";
+import { useRipplerXStore } from "../stores/ripplerx";
+import { BUILT_IN_PRESETS } from "@/audio/modal-dsp/presets";
 
 const logger = createLogger("useModalSynth");
 
@@ -284,12 +285,34 @@ export function useModalSynth() {
 
   /**
    * Load a built-in preset by name.
+   * Sends the preset data directly to the worklet AND updates the store
+   * state so UI sliders reflect the new values.
    */
   function loadPreset(name: string): void {
+    const preset = BUILT_IN_PRESETS[name];
+    if (!preset) {
+      logger.warn("Unknown preset: %s", name);
+      return;
+    }
+
     store.loadPreset(name);
-    // TODO: Once preset data (parameter maps) is available, apply all params
-    // For now, sync what we have
-    syncAllParams();
+    store.applyWorkletParams(preset);
+
+    if (workletNode && isInitialized.value) {
+      // Send preset directly to worklet — it handles bulk apply + voice reset
+      workletNode.port.postMessage({
+        type: "loadPreset",
+        preset: JSON.parse(JSON.stringify(preset)),
+      });
+    }
+
+    // Also sync AudioParam-based gain
+    if (workletNode?.parameters) {
+      const gainParam = workletNode.parameters.get("gain");
+      if (gainParam) {
+        gainParam.setValueAtTime(store.state.gain.gain, audioContext?.currentTime ?? 0);
+      }
+    }
   }
 
   /**
@@ -325,72 +348,22 @@ export function useModalSynth() {
 
     logger.info("Loaded .ripx preset: %s with %d params", file.name, Object.keys(params).length);
 
-    // Apply parsed params to the store (mapping from JUCE param IDs to store fields)
-    applyRipxParams(params);
-    syncAllParams();
-  }
+    // Apply to store using the same worklet-format param IDs
+    store.applyWorkletParams(params);
 
-  /**
-   * Map JUCE parameter IDs from .ripx to store state fields.
-   * This is a best-effort mapping based on the known parameter list from the
-   * PluginProcessor constructor.
-   */
-  function applyRipxParams(params: Record<string, number>): void {
-    // Direct ID → {section, key} mapping
-    const paramMap: Record<string, { section: keyof RipplerXState; key: string }> = {
-      // Noise
-      noise_mix: { section: "noise", key: "mix" },
-      noise_resonance: { section: "noise", key: "resonance" },
-      noise_frequency: { section: "noise", key: "frequency" },
-      noise_q: { section: "noise", key: "q" },
-      noise_attack: { section: "noise", key: "attack" },
-      noise_decay: { section: "noise", key: "decay" },
-      noise_sustain: { section: "noise", key: "sustain" },
-      noise_release: { section: "noise", key: "release" },
-      // Mallet
-      mallet_mix: { section: "mallet", key: "mix" },
-      mallet_resonance: { section: "mallet", key: "resonance" },
-      mallet_stiffness: { section: "mallet", key: "stiffness" },
-      mallet_pitch: { section: "mallet", key: "pitch" },
-      mallet_filter: { section: "mallet", key: "filter" },
-      mallet_key_tracking: { section: "mallet", key: "keyTracking" },
-      // Resonator A
-      resonator_a_on: { section: "resonatorA", key: "on" },
-      resonator_a_decay: { section: "resonatorA", key: "decay" },
-      resonator_a_damp: { section: "resonatorA", key: "damp" },
-      resonator_a_tone: { section: "resonatorA", key: "tone" },
-      resonator_a_hit: { section: "resonatorA", key: "hit" },
-      resonator_a_release: { section: "resonatorA", key: "release" },
-      resonator_a_inharm: { section: "resonatorA", key: "inharmonicity" },
-      resonator_a_ratio: { section: "resonatorA", key: "ratio" },
-      resonator_a_cut: { section: "resonatorA", key: "cut" },
-      resonator_a_radius: { section: "resonatorA", key: "radius" },
-      // Resonator B
-      resonator_b_on: { section: "resonatorB", key: "on" },
-      resonator_b_decay: { section: "resonatorB", key: "decay" },
-      resonator_b_damp: { section: "resonatorB", key: "damp" },
-      resonator_b_tone: { section: "resonatorB", key: "tone" },
-      resonator_b_hit: { section: "resonatorB", key: "hit" },
-      resonator_b_release: { section: "resonatorB", key: "release" },
-      resonator_b_inharm: { section: "resonatorB", key: "inharmonicity" },
-      resonator_b_ratio: { section: "resonatorB", key: "ratio" },
-      resonator_b_cut: { section: "resonatorB", key: "cut" },
-      resonator_b_radius: { section: "resonatorB", key: "radius" },
-      // Coupling
-      coupling_mix: { section: "coupling", key: "mix" },
-      coupling_split: { section: "coupling", key: "split" },
-      // Pitch
-      pitch_coarse_a: { section: "pitch", key: "coarseA" },
-      pitch_fine_a: { section: "pitch", key: "fineA" },
-      pitch_coarse_b: { section: "pitch", key: "coarseB" },
-      pitch_fine_b: { section: "pitch", key: "fineB" },
-      // Gain
-      gain: { section: "gain", key: "gain" },
-    };
+    // Send directly to worklet for immediate effect
+    if (workletNode && isInitialized.value) {
+      workletNode.port.postMessage({
+        type: "loadPreset",
+        preset: JSON.parse(JSON.stringify(params)),
+      });
+    }
 
-    for (const [id, mapping] of Object.entries(paramMap)) {
-      if (params[id] !== undefined) {
-        store.setParam(mapping.section, mapping.key as never, params[id]);
+    // Sync AudioParam-based gain
+    if (workletNode?.parameters) {
+      const gainParam = workletNode.parameters.get("gain");
+      if (gainParam) {
+        gainParam.setValueAtTime(store.state.gain.gain, audioContext?.currentTime ?? 0);
       }
     }
   }

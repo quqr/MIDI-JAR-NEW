@@ -431,11 +431,9 @@ function updateParam<K extends keyof RipplerXState>(
   value: unknown,
 ) {
   store.setParam(section, key, value);
-  // Push numeric params to AudioWorklet in real-time
-  if (typeof value === "number") {
-    const paramId = `${String(section)}_${String(key)}`;
-    modalSynth.setParam(paramId, value);
-  }
+  // Sync all params to worklet — reuses the correct flat param mapping
+  // in syncAllParams() rather than trying to map individual IDs.
+  modalSynth.syncAllParams();
 }
 
 // ── Preset change ──
