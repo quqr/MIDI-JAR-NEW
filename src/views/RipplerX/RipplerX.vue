@@ -323,7 +323,7 @@
           </div>
         </div>
 
-        <!-- Gain -->
+        <!-- Gain (dB) -->
         <div class="card card-compact bg-base-200 shadow-sm">
           <div class="card-body">
             <h3 class="card-title text-sm">Gain</h3>
@@ -331,17 +331,17 @@
               <div class="flex-1">
                 <input
                   type="range"
-                  :min="0"
-                  :max="1"
-                  :step="0.01"
+                  :min="-24"
+                  :max="24"
+                  :step="0.1"
                   :value="store.state.gain.gain"
                   class="range range-sm range-primary w-full"
                   @input="updateParam('gain', 'gain', ($event.target as HTMLInputElement).valueAsNumber)"
                 />
                 <div class="flex justify-between text-xs text-base-content/50 mt-1">
-                  <span>0</span>
-                  <span>{{ (store.state.gain.gain * 100).toFixed(0) }}%</span>
-                  <span>1</span>
+                  <span>-24 dB</span>
+                  <span>{{ store.state.gain.gain.toFixed(1) }} dB</span>
+                  <span>+24 dB</span>
                 </div>
               </div>
               <!-- VU Meter -->
@@ -424,38 +424,46 @@ onMounted(async () => {
   }
 });
 
-// ── Parameter update: write to store + push to AudioWorklet ──
+/**
+ * 单参数变更：写回 store + 通过 `syncParam` 仅推送变更参数到 AudioWorklet。
+ * 比每次拖动都 `syncAllParams` 轻量——无 JSON 序列化、消息只含一个字段。
+ * @param section - store 顶层键（如 'mallet' / 'resonatorA' / 'gain'）
+ * @param key - section 下的字段名
+ * @param value - 新值（number 或 boolean）
+ */
 function updateParam<K extends keyof RipplerXState>(
   section: K,
   key: keyof RipplerXState[K],
   value: unknown,
 ) {
   store.setParam(section, key, value);
-  // Sync all params to worklet — reuses the correct flat param mapping
-  // in syncAllParams() rather than trying to map individual IDs.
-  modalSynth.syncAllParams();
+  modalSynth.syncParam(section, key as string);
 }
 
-// ── Preset change ──
+/** 切换内置预置：store 更新 currentPreset 名 + 应用预置数据 + worklet 立即生效。 */
 function onPresetChange() {
   modalSynth.loadPreset(store.state.currentPreset);
 }
 
-// ── Reset defaults ──
+/** 重置为默认参数并全量同步到 worklet。 */
 function onResetDefaults() {
   store.resetToDefaults();
   modalSynth.syncAllParams();
 }
 
-// ── Piano keyboard click ──
+/**
+ * 虚拟钢琴键盘点击：触发 noteOn，300ms 后自动 noteOff（模拟点击交互）。
+ * @param midi - MIDI 音符号
+ */
 function onPianoKeyClick(midi: number) {
-  // Ensure audio context is running
   modalSynth.noteOn(midi, 100);
-  // Auto note-off after a short duration for click interaction
   setTimeout(() => modalSynth.noteOff(midi), 300);
 }
 
-// ── .ripx file load ──
+/**
+ * .ripx 预置文件输入 change 事件：解析并应用到 store + worklet。
+ * 失败时仅 console.error，不阻塞 UI。处理完毕重置 input.value 以便重选同一文件。
+ */
 async function onRipxFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0];

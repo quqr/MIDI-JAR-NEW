@@ -2,6 +2,12 @@ import { ref, readonly, onUnmounted } from "vue";
 import { createLogger } from "@/utils/logger";
 import { useRipplerXStore } from "../stores/ripplerx";
 import { BUILT_IN_PRESETS } from "@/audio/modal-dsp/presets";
+import { parseRipx } from "@/audio/modal-dsp/RipxParser";
+import {
+  stateToWorkletParams,
+  workletIdsAffectedBy,
+} from "@/audio/modal-dsp/paramMapping";
+import type { RipplerXState } from "../stores/ripplerx";
 
 const logger = createLogger("useModalSynth");
 
@@ -14,6 +20,9 @@ export interface ModalSynthState {
 }
 
 const WORKLET_URL = "/modal-synth-processor.js";
+// RMS metering 刷新间隔。UI 反馈用途，与音频线程无关，因此用 setInterval 而非 rAF，
+// 避免被项目"单一主 rAF 循环"约束误判（MidiFilePlayer/Recorder 那条线才是音频同步）。
+const RMS_METER_INTERVAL_MS = 50;
 
 export function useModalSynth() {
   const store = useRipplerXStore();
@@ -28,17 +37,21 @@ export function useModalSynth() {
   let analyserNode: AnalyserNode | null = null;
   let gainNode: GainNode | null = null;
 
-  // Active voices tracking (for note-on/note-off without worklet voice mgmt)
-  const activeNotes = new Map<number, number>(); // midi → velocity
+  // 当前发声的音符（MIDI → velocity），用于 note-on/note-off 跟踪
+  const activeNotes = new Map<number, number>();
 
-  // Sustain pedal
+  // 持音踏板
   let sustainActive = false;
   const sustainedNotes = new Set<number>();
 
-  // RMS metering
-  let rmsAnimFrame: number | null = null;
+  // RMS 表头采样
+  let rmsTimer: ReturnType<typeof setInterval> | null = null;
   const rmsBuffer = new Uint8Array(256);
 
+  /**
+   * 启动 RMS 表头轮询。用 setInterval（非 rAF）以明确此为 UI 反馈用途，
+   * 不参与音频同步，因此不受"单一主 rAF 循环"约束限制。
+   */
   function startRmsMetering() {
     if (!analyserNode) return;
     const analyser = analyserNode;
@@ -51,21 +64,20 @@ export function useModalSynth() {
         sum += v * v;
       }
       rmsLevel.value = Math.sqrt(sum / rmsBuffer.length);
-      rmsAnimFrame = requestAnimationFrame(tick);
     };
-    tick();
+    rmsTimer = setInterval(tick, RMS_METER_INTERVAL_MS);
   }
 
   function stopRmsMetering() {
-    if (rmsAnimFrame !== null) {
-      cancelAnimationFrame(rmsAnimFrame);
-      rmsAnimFrame = null;
+    if (rmsTimer !== null) {
+      clearInterval(rmsTimer);
+      rmsTimer = null;
     }
   }
 
   /**
-   * Initialise the AudioContext, load the AudioWorklet module, create the node
-   * and set up message handlers.
+   * 初始化 AudioContext，加载 AudioWorklet 模块，创建节点并绑定消息处理。
+   * 浏览器 autoplay policy 下 AudioContext 起始可能 suspended，首次 noteOn 时再 resume。
    */
   async function init(): Promise<void> {
     if (isInitialized.value) return;
@@ -81,38 +93,42 @@ export function useModalSynth() {
         outputChannelCount: [2],
       });
 
-      // Gain node for volume control
+      // Gain 节点用于最终音量；store 的 gain 是 dB，需要转 linear 才能给 GainNode。
       gainNode = audioContext.createGain();
-      gainNode.gain.value = store.state.gain.gain;
+      gainNode.gain.value = dbToLinear(store.state.gain.gain);
 
-      // Analyser node for VU meter
+      // Analyser 节点用于 VU 表头
       analyserNode = audioContext.createAnalyser();
       analyserNode.fftSize = 256;
 
-      // Connect: Worklet → Gain → Analyser → Destination
+      // 信号链：Worklet → Gain → Analyser → Destination
       workletNode.connect(gainNode);
       gainNode.connect(analyserNode);
       analyserNode.connect(audioContext.destination);
 
-      // Handle messages from the worklet
+      // 处理 worklet → main 线程消息
       workletNode.port.onmessage = (e: MessageEvent) => {
         const msg = e.data;
         if (msg.type === "initialized") {
           logger.info("AudioWorklet initialized", msg.sampleRate);
         } else if (msg.type === "status") {
-          cpuUsage.value = parseFloat(msg.utilization);
+          // worklet 发送的字段名是 `cpuUsage`（不是 `utilization`）
+          cpuUsage.value = typeof msg.cpuUsage === "number" ? msg.cpuUsage : 0;
+          if (typeof msg.activeVoices === "number") {
+            activeVoices.value = msg.activeVoices;
+          }
         } else if (msg.type === "triggered") {
           activeVoices.value++;
         }
       };
 
-      // Initialise the worklet processor
+      // 触发 worklet 端初始化
       workletNode.port.postMessage({
         type: "init",
         sampleRate: audioContext.sampleRate,
       });
 
-      // Apply current store params
+      // 推送当前 store 参数到 worklet
       syncAllParams();
 
       startRmsMetering();
@@ -124,38 +140,39 @@ export function useModalSynth() {
     }
   }
 
-  /**
-   * Send a note-on to the worklet
-   */
+  /** dB → linear gain，用于 GainNode.gain.value 赋值。 */
+  function dbToLinear(db: number): number {
+    return Math.pow(10, db / 20);
+  }
+
+  /** 触发 note-on。velocity 为 0-127 MIDI 标准范围。 */
   function noteOn(note: number, velocity: number): void {
     if (!workletNode || !isInitialized.value) return;
 
-    // Resume AudioContext if suspended (browser autoplay policy)
     if (audioContext?.state === "suspended") {
       audioContext.resume();
     }
 
     activeNotes.set(note, velocity);
 
-    // Send note-on to AudioWorklet (it handles frequency calculation internally)
     workletNode.port.postMessage({
       type: "noteOn",
       note,
       velocity,
     });
 
-    // Set gain parameter in real-time
-    if (workletNode.parameters) {
-      const gainParam = workletNode.parameters.get("gain");
-      if (gainParam) {
-        gainParam.setValueAtTime(store.state.gain.gain, audioContext?.currentTime ?? 0);
-      }
+    // GainNode 实时跟随 store 中的 gain（dB）
+    if (gainNode) {
+      gainNode.gain.setValueAtTime(
+        dbToLinear(store.state.gain.gain),
+        audioContext?.currentTime ?? 0,
+      );
     }
   }
 
   /**
-   * Send a note-off. With the current prototype worklet this is mostly
-   * for tracking; the resonator naturally decays.
+   * 触发 note-off。当前 prototype worklet 让 resonator 自然衰减，
+   * 此处主要做 voice tracking；如持音踏板按下则缓存到 release。
    */
   function noteOff(note: number): void {
     if (sustainActive) {
@@ -175,118 +192,49 @@ export function useModalSynth() {
   }
 
   /**
-   * Update a single parameter on the AudioWorklet in real-time.
+   * 单参数实时同步：根据 store 路径 (section, key) 查表得到受影响的 worklet 参数 ID，
+   * 直接发送 `setParam`（singular）消息。比 `syncAllParams` 轻——无 JSON 序列化、
+   * 只发一个参数。被 `updateParam` 在滑块拖动时调用。
    */
-  function setParam(id: string, value: number): void {
+  function syncParam(section: keyof RipplerXState, key: string): void {
     if (!workletNode || !isInitialized.value) return;
-
-    // Continuous params via AudioParam
-    if (workletNode.parameters?.has(id)) {
-      const param = workletNode.parameters.get(id)!;
-      param.setValueAtTime(value, audioContext?.currentTime ?? 0);
-      return;
+    const affected = workletIdsAffectedBy(section, key, store.state);
+    for (const { id, value } of affected) {
+      workletNode.port.postMessage({ type: "setParam", id, value });
     }
-
-    // Discrete params via MessagePort
-    workletNode.port.postMessage({
-      type: "setParam",
-      id,
-      value,
-    });
+    // Gain 还要同步到 GainNode（dB → linear）
+    if (section === "gain" && key === "gain" && gainNode) {
+      gainNode.gain.setValueAtTime(
+        dbToLinear(store.state.gain.gain),
+        audioContext?.currentTime ?? 0,
+      );
+    }
   }
 
   /**
-   * Push all current store parameters to the worklet.
-   * Converts the store's structured params to the flat key-value format
-   * expected by the AudioWorklet processor, and uses JSON round-trip to
-   * strip Vue Proxy wrappers that cause DataCloneError.
+   * 全量参数同步：把 store 所有参数一次性推送到 worklet。
+   * 用于 init 完成后、loadPreset 后、reset 后等批量场景。
+   * 滑块拖动这种单参数变更请用 `syncParam`。
    */
   function syncAllParams(): void {
     if (!workletNode) return;
-    const s = store.state;
-
-    // Build flat parameter map matching AudioWorklet's expected keys
-    const params: Record<string, number> = {
-      // Mallet
-      mallet_type: s.mallet.type,
-      mallet_pitch: s.mallet.pitch,
-      mallet_filter: s.mallet.filter,
-      mallet_mix: s.mallet.mix,
-      mallet_res: s.mallet.resonance,
-      mallet_stiff: s.mallet.stiffness,
-      mallet_ktrack: s.mallet.keyTracking,
-      // Resonator A
-      a_on: s.resonatorA.on ? 1 : 0,
-      a_model: s.resonatorA.model,
-      a_partials: s.resonatorA.partials,
-      a_decay: s.resonatorA.decay,
-      a_damp: s.resonatorA.damp,
-      a_tone: s.resonatorA.tone,
-      a_hit: s.resonatorA.hit,
-      a_rel: s.resonatorA.release,
-      a_inharm: s.resonatorA.inharmonicity,
-      a_ratio: s.resonatorA.ratio,
-      a_cut: s.resonatorA.cut,
-      a_radius: s.resonatorA.radius,
-      // Resonator B
-      b_on: s.resonatorB.on ? 1 : 0,
-      b_model: s.resonatorB.model,
-      b_partials: s.resonatorB.partials,
-      b_decay: s.resonatorB.decay,
-      b_damp: s.resonatorB.damp,
-      b_tone: s.resonatorB.tone,
-      b_hit: s.resonatorB.hit,
-      b_rel: s.resonatorB.release,
-      b_inharm: s.resonatorB.inharmonicity,
-      b_ratio: s.resonatorB.ratio,
-      b_cut: s.resonatorB.cut,
-      b_radius: s.resonatorB.radius,
-      // Noise
-      noise_mix: s.noise.mix,
-      noise_res: s.noise.resonance,
-      noise_filter_freq: s.noise.frequency,
-      noise_filter_q: s.noise.q,
-      noise_filter_mode: s.noise.filterType,
-      noise_att: s.noise.attack,
-      noise_dec: s.noise.decay,
-      noise_sus: s.noise.sustain,
-      noise_rel: s.noise.release,
-      noise_att_ten: s.noise.attackTension,
-      noise_dec_ten: s.noise.decayTension,
-      noise_rel_ten: s.noise.releaseTension,
-      // Coupling
-      couple: s.coupling.mode,
-      ab_mix: s.coupling.mix,
-      ab_split: s.coupling.split,
-      // Pitch (resonator coarse/fine + pitch section combined)
-      a_coarse: s.resonatorA.coarse + s.pitch.coarseA,
-      a_fine: s.resonatorA.fine + s.pitch.fineA,
-      b_coarse: s.resonatorB.coarse + s.pitch.coarseB,
-      b_fine: s.resonatorB.fine + s.pitch.fineB,
-      bend_range: s.pitch.bendRange,
-      // Gain
-      gain: s.gain.gain,
-    };
-
-    // JSON round-trip strips Vue Proxy wrappers
+    const params = stateToWorkletParams(store.state);
+    // JSON round-trip 去掉 Vue Proxy 包装，避免 postMessage DataCloneError
     workletNode.port.postMessage({
       type: "setParams",
       params: JSON.parse(JSON.stringify(params)),
     });
 
-    // Set AudioParam-based values immediately
-    if (workletNode.parameters) {
-      const gainParam = workletNode.parameters.get("gain");
-      if (gainParam) {
-        gainParam.setValueAtTime(s.gain.gain, audioContext?.currentTime ?? 0);
-      }
+    if (gainNode) {
+      gainNode.gain.setValueAtTime(
+        dbToLinear(store.state.gain.gain),
+        audioContext?.currentTime ?? 0,
+      );
     }
   }
 
   /**
-   * Load a built-in preset by name.
-   * Sends the preset data directly to the worklet AND updates the store
-   * state so UI sliders reflect the new values.
+   * 加载内置预置。同时把预置数据写入 store（更新 UI 滑块）和 worklet（立即生效）。
    */
   function loadPreset(name: string): void {
     const preset = BUILT_IN_PRESETS[name];
@@ -299,59 +247,37 @@ export function useModalSynth() {
     store.applyWorkletParams(preset);
 
     if (workletNode && isInitialized.value) {
-      // Send preset directly to worklet — it handles bulk apply + voice reset
       workletNode.port.postMessage({
         type: "loadPreset",
         preset: JSON.parse(JSON.stringify(preset)),
       });
     }
 
-    // Also sync AudioParam-based gain
-    if (workletNode?.parameters) {
-      const gainParam = workletNode.parameters.get("gain");
-      if (gainParam) {
-        gainParam.setValueAtTime(store.state.gain.gain, audioContext?.currentTime ?? 0);
-      }
+    if (gainNode) {
+      gainNode.gain.setValueAtTime(
+        dbToLinear(store.state.gain.gain),
+        audioContext?.currentTime ?? 0,
+      );
     }
   }
 
   /**
-   * Parse and load a .ripx file.
-   * Format: 4-byte magic (0x21324356 LE) + 4-byte XML length (LE) + XML + null byte
+   * 解析并加载 .ripx 预置文件。
+   * 委托给 `parseRipx`（RipxParser.ts），不再内联 magic-number + DOMParser 逻辑。
+   * 格式：4 字节 magic (0x21324356 LE) + 4 字节 XML 长度 (LE) + UTF-8 XML + null。
    */
   async function loadRipxFile(file: File): Promise<void> {
     const buffer = await file.arrayBuffer();
-    const view = new DataView(buffer);
+    const params = parseRipx(buffer);
 
-    // Verify magic number
-    const magic = view.getUint32(0, true);
-    if (magic !== 0x21324356) {
-      throw new Error("Invalid .ripx file: bad magic number");
-    }
+    logger.info(
+      "Loaded .ripx preset: %s with %d params",
+      file.name,
+      Object.keys(params).length,
+    );
 
-    // Read XML length
-    const xmlLength = view.getUint32(4, true);
-
-    // Extract XML string
-    const xmlBytes = new Uint8Array(buffer, 8, xmlLength);
-    const xmlString = new TextDecoder("utf-8").decode(xmlBytes);
-
-    // Parse XML and extract PARAM values
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlString, "text/xml");
-    const params: Record<string, number> = {};
-    doc.querySelectorAll("PARAM").forEach((node) => {
-      const id = node.getAttribute("id");
-      const value = parseFloat(node.getAttribute("value") || "0");
-      if (id) params[id] = value;
-    });
-
-    logger.info("Loaded .ripx preset: %s with %d params", file.name, Object.keys(params).length);
-
-    // Apply to store using the same worklet-format param IDs
     store.applyWorkletParams(params);
 
-    // Send directly to worklet for immediate effect
     if (workletNode && isInitialized.value) {
       workletNode.port.postMessage({
         type: "loadPreset",
@@ -359,36 +285,31 @@ export function useModalSynth() {
       });
     }
 
-    // Sync AudioParam-based gain
-    if (workletNode?.parameters) {
-      const gainParam = workletNode.parameters.get("gain");
-      if (gainParam) {
-        gainParam.setValueAtTime(store.state.gain.gain, audioContext?.currentTime ?? 0);
-      }
+    if (gainNode) {
+      gainNode.gain.setValueAtTime(
+        dbToLinear(store.state.gain.gain),
+        audioContext?.currentTime ?? 0,
+      );
     }
   }
 
-  /**
-   * Connect to the internal analyser node (for waveform display)
-   */
+  /** 暴露内部 AnalyserNode（用于波形显示等）。当前未被消费，预留给 WaterfallPiano 互连。 */
   function connectToAnalyser(): AnalyserNode | null {
     return analyserNode;
   }
 
   /**
-   * Get the AudioWorkletNode (for connecting to Tone.js or other nodes)
+   * 暴露内部 AudioWorkletNode，用于与 Tone.js / WaterfallPiano 互连（spec 003-audio-routing.md
+   * 要求的"模态合成引擎作为瀑布钢琴替代音源"）。当前未被消费，预留接口。
    */
   function getAudioWorkletNode(): AudioWorkletNode | null {
     return workletNode;
   }
 
-  /**
-   * Sustain pedal handling
-   */
+  /** 持音踏板。激活时 note-off 缓存到 sustainedNotes；释放时统一 off。 */
   function setSustain(active: boolean): void {
     sustainActive = active;
     if (!active) {
-      // Release all sustained notes
       for (const note of sustainedNotes) {
         activeNotes.delete(note);
         activeVoices.value = Math.max(0, activeVoices.value - 1);
@@ -397,9 +318,7 @@ export function useModalSynth() {
     }
   }
 
-  /**
-   * Clean up all audio resources
-   */
+  /** 释放所有音频资源。组件 unmount 时自动调用。 */
   function destroy(): void {
     stopRmsMetering();
 
@@ -428,7 +347,6 @@ export function useModalSynth() {
     cpuUsage.value = 0;
   }
 
-  // Auto-cleanup when the composable consumer unmounts
   onUnmounted(() => {
     destroy();
   });
@@ -444,7 +362,7 @@ export function useModalSynth() {
     init,
     noteOn,
     noteOff,
-    setParam,
+    syncParam,
     syncAllParams,
     loadPreset,
     loadRipxFile,

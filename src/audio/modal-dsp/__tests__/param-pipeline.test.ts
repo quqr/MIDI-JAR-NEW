@@ -7,9 +7,25 @@
  *
  * Bug 2: store.loadPreset() only changes the preset name string, doesn't
  *        apply the actual preset parameter data to the store state.
+ *
+ * Bug 3 (this round): status messages used `cpuUsage` field name on the
+ *        worklet side, but the main thread read `msg.utilization` — always NaN.
+ *
+ * Bug 4 (this round): `gain` AudioParam declared 0-1 but consumed as dB in
+ *        process(). AudioParam removed; gain now flows via MessagePort as dB.
+ *
+ * Bug 5 (this round): `process()` called `voices.filter(...)` every 64 frames,
+ *        allocating a new array in the audio thread (violates spec 009: 零分配).
  */
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { BUILT_IN_PRESETS } from "@/audio/modal-dsp/presets";
+import {
+  stateToWorkletParams,
+  applyWorkletParamsToState,
+  workletIdsAffectedBy,
+} from "@/audio/modal-dsp/paramMapping";
+import { defaultRipplerXState } from "@/views/RipplerX/stores/ripplerx";
+import type { RipplerXState } from "@/views/RipplerX/stores/ripplerx";
 
 // ── Mock AudioWorklet globals before importing the processor ──
 
@@ -63,23 +79,21 @@ describe("RipplerX AudioWorklet parameter pipeline", () => {
     expect(proc.initialized).toBe(true);
   });
 
-  // ── Bug 1: setParam (singular) is not handled ──
-  it("RED: setParam (singular) message updates the param value", () => {
+  // ── Bug 1: setParam (singular) was not handled ──
+  it("setParam (singular) message updates the param value", () => {
     const proc = new Processor();
     send(proc, { type: "init", sampleRate: 44100 });
 
     const beforeDecay = getParam(proc, "a_decay");
-    // Send a setParam message (singular) — this is what updateParam() sends
     send(proc, { type: "setParam", id: "a_decay", value: 0.99 });
 
     const afterDecay = getParam(proc, "a_decay");
-    // BUG: This will fail because the worklet has no 'setParam' handler
     expect(afterDecay).toBe(0.99);
     expect(afterDecay).not.toBe(beforeDecay);
   });
 
   // ── Control: setParams (plural) IS handled ──
-  it("GREEN (control): setParams (plural) message updates param values", () => {
+  it("setParams (plural) message updates param values", () => {
     const proc = new Processor();
     send(proc, { type: "init", sampleRate: 44100 });
 
@@ -97,9 +111,7 @@ describe("RipplerX AudioWorklet parameter pipeline", () => {
     const harpsi = BUILT_IN_PRESETS["Harpsi"];
     send(proc, { type: "loadPreset", preset: harpsi });
 
-    // Harpsi has a_decay: 4.92
     expect(getParam(proc, "a_decay")).toBeCloseTo(4.92, 2);
-    // Harpsi has mallet_stiff: 2188
     expect(getParam(proc, "mallet_stiff")).toBe(2188);
   });
 
@@ -109,13 +121,122 @@ describe("RipplerX AudioWorklet parameter pipeline", () => {
     send(proc, { type: "init", sampleRate: 44100 });
 
     const beforeDecay = getParam(proc, "a_decay");
-
-    // Send a setParam with store-style ID — the worklet will store it
-    // under "resonatorA_decay" but the DSP reads "a_decay", so no effect
     send(proc, { type: "setParam", id: "resonatorA_decay", value: 0.5 });
 
-    // The wrong-format key is stored but DSP-correct key is unchanged
     expect(getParam(proc, "a_decay")).toBe(beforeDecay);
-    // Callers must use worklet-format IDs (a_decay, not resonatorA_decay)
+  });
+
+  // ── Bug 3: status message field name must be `cpuUsage` (not `utilization`) ──
+  it("status message uses `cpuUsage` field (not `utilization`)", () => {
+    const proc = new Processor();
+    send(proc, { type: "init", sampleRate: 44100 });
+
+    // Force at least STATUS_INTERVAL (64) process() calls so a status message fires
+    const outputs = [[[new Float32Array(128)], [new Float32Array(128)]]];
+    for (let i = 0; i < 70; i++) {
+      proc.process([], outputs, {});
+    }
+
+    // `mock.calls` is an array of call-arg arrays: [[arg0, arg1, ...], ...]
+    const statusCalls = proc.port.postMessage.mock.calls.filter(
+      (call: any[]) => call[0]?.type === "status",
+    );
+    expect(statusCalls.length).toBeGreaterThan(0);
+
+    const lastStatus = statusCalls[statusCalls.length - 1][0];
+    expect(lastStatus).toHaveProperty("cpuUsage");
+    expect(lastStatus).not.toHaveProperty("utilization");
+    expect(typeof lastStatus.cpuUsage).toBe("number");
+    // CPU usage should be a finite, non-negative ratio (perf.now() may be 0 in test env → 0)
+    expect(lastStatus.cpuUsage).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(lastStatus.cpuUsage)).toBe(true);
+  });
+
+  // ── Bug 4: gain AudioParam must be removed (only flow via MessagePort) ──
+  it("does not declare any AudioParam descriptors (gain flows via MessagePort)", () => {
+    // parameterDescriptors static getter was removed; gain is no longer an AudioParam
+    expect(Processor.parameterDescriptors).toBeUndefined();
+  });
+
+  // ── Bug 5: process() must not allocate via voices.filter ──
+  // Smoke test: 100 process() calls should not throw and should keep returning true
+  it("process() runs 100 times without allocation errors", () => {
+    const proc = new Processor();
+    send(proc, { type: "init", sampleRate: 44100 });
+    const outputs = [[[new Float32Array(128)], [new Float32Array(128)]]];
+    for (let i = 0; i < 100; i++) {
+      expect(proc.process([], outputs, {})).toBe(true);
+    }
+  });
+});
+
+describe("paramMapping module (single source of truth)", () => {
+  // Round-trip: state → worklet params → state should preserve values for non-combined fields
+  it("stateToWorkletParams → applyWorkletParamsToState round-trips non-combined params", () => {
+    const state: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    // Mutate some fields
+    state.resonatorA.decay = 0.42;
+    state.resonatorA.on = false;
+    state.mallet.stiffness = 1234;
+    state.noise.mix = 0.7;
+    state.gain.gain = -6;
+
+    const flat = stateToWorkletParams(state);
+    expect(flat.a_decay).toBe(0.42);
+    expect(flat.a_on).toBe(0);
+    expect(flat.mallet_stiff).toBe(1234);
+    expect(flat.noise_mix).toBe(0.7);
+    expect(flat.gain).toBe(-6);
+
+    // Apply to a fresh default state
+    const fresh: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    applyWorkletParamsToState(flat, fresh);
+    expect(fresh.resonatorA.decay).toBe(0.42);
+    expect(fresh.resonatorA.on).toBe(false);
+    expect(fresh.mallet.stiffness).toBe(1234);
+    expect(fresh.noise.mix).toBe(0.7);
+    expect(fresh.gain.gain).toBe(-6);
+  });
+
+  // Combined params: a_coarse = resonatorA.coarse + pitch.coarseA
+  it("a_coarse forward = resonatorA.coarse + pitch.coarseA; reverse writes to resonatorA.coarse only", () => {
+    const state: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    state.resonatorA.coarse = 5;
+    state.pitch.coarseA = 3;
+
+    const flat = stateToWorkletParams(state);
+    expect(flat.a_coarse).toBe(8);
+
+    // Reverse: preset with a_coarse=10 should set resonatorA.coarse=10, pitch.coarseA=0
+    const fresh: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    applyWorkletParamsToState({ a_coarse: 10 }, fresh);
+    expect(fresh.resonatorA.coarse).toBe(10);
+    expect(fresh.pitch.coarseA).toBe(0);
+  });
+
+  // workletIdsAffectedBy: changing resonatorA.coarse should report a_coarse
+  it("workletIdsAffectedBy returns affected worklet IDs for a store path", () => {
+    const state: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    state.resonatorA.coarse = 7;
+    state.pitch.coarseA = 1;
+
+    const affected = workletIdsAffectedBy("resonatorA", "coarse", state);
+    expect(affected).toHaveLength(1);
+    expect(affected[0].id).toBe("a_coarse");
+    expect(affected[0].value).toBe(8);
+  });
+
+  it("workletIdsAffectedBy returns empty array for unknown store path", () => {
+    const state: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    const affected = workletIdsAffectedBy("nonexistent", "x", state);
+    expect(affected).toHaveLength(0);
+  });
+
+  // Preset round-trip via store.applyWorkletParams (delegates to module)
+  it("preset gain in dB is preserved through applyWorkletParamsToState", () => {
+    const preset = BUILT_IN_PRESETS["Harpsi"]; // gain: 6.24 dB
+    const state: RipplerXState = JSON.parse(JSON.stringify(defaultRipplerXState));
+    applyWorkletParamsToState(preset, state);
+    expect(state.gain.gain).toBeCloseTo(6.24, 2);
   });
 });

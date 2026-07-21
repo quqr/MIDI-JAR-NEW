@@ -1,20 +1,22 @@
 // AudioWorklet processor for the RipplerX modal synth port
 // Wraps all DSP: voices, resonators, mallet, noise, comb stereo, limiter
 //
-// Message types from main thread:
+// 消息协议（main thread → worklet）：
 //   { type: 'init', sampleRate: number }
 //   { type: 'noteOn', note: number, velocity: number }
 //   { type: 'noteOff', note: number }
 //   { type: 'noteOffAll' }
 //   { type: 'pitchBend', value: number }  // -1 to 1
 //   { type: 'sustain', value: boolean }
-//   { type: 'setParams', params: Record<string, number> }
+//   { type: 'setParam', id: string, value: number }     // 单参数（滑块拖动）
+//   { type: 'setParams', params: Record<string, number> } // 批量（init/preset）
 //   { type: 'loadPreset', preset: Record<string, number> }
 //   { type: 'loadSample', data: Float32Array, sampleRate: number }
 //
-// Messages to main thread:
+// 消息协议（worklet → main thread）：
 //   { type: 'initialized', sampleRate: number }
 //   { type: 'status', rms: number, cpuUsage: number, activeVoices: number }
+//   cpuUsage ∈ [0, 1]：process() 实际耗时 / buffer 时长。
 
 import { Models } from './Models';
 import { Partial as ModalPartial } from './Partial';
@@ -67,6 +69,10 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
   private rmsAccum = 0;
   private rmsCount = 0;
 
+  // CPU 使用率跟踪：累加 process() 耗时与 buffer 时长，周期性上报比值。
+  private cpuTimeAccum = 0;
+  private cpuBufferDurationAccum = 0;
+
   // Status reporting
   private processCount = 0;
 
@@ -78,6 +84,10 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     this.port.onmessage = this.handleMessage.bind(this);
   }
 
+  /**
+   * 处理 main thread → worklet 消息。按 `msg.type` 分派到对应处理函数。
+   * @param event - MessagePort 消息事件，data 为上述协议中的对象。
+   */
   private handleMessage(event: MessageEvent): void {
     const msg = event.data;
 
@@ -105,7 +115,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
         break;
       case 'setParam':
         this.params[msg.id] = msg.value;
-        this.onSlider(sampleRate);
+        this.applyParamsToVoices(sampleRate);
         break;
       case 'loadPreset':
         this.loadPreset(msg.preset);
@@ -116,6 +126,13 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     }
   }
 
+  /**
+   * 初始化 DSP 模块（查找表、voices、comb、limiter）并应用默认参数。
+   * 由 `init` 消息触发；在此之前 `process()` 早退不发声。
+   * 注：spec 002-dsp-architecture.md 期望构造器内预分配，但 AudioWorklet
+   * 全局 `sampleRate` 在构造时可能未就绪，因此延后到首个消息。
+   * @param srate - 采样率（Hz）
+   */
   private initProcessor(srate: number): void {
     // Initialize lookup tables
     ModalPartial.initA1LUT(srate);
@@ -137,7 +154,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
     // Initialize default parameters
     this.initDefaultParams();
-    this.onSlider(srate);
+    this.applyParamsToVoices(srate);
 
     this.totalSamplesBend = Math.floor(BEND_GLIDE_MS * 0.001 * srate);
     this.initialized = true;
@@ -242,6 +259,12 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
   // ── Voice management ──
 
+  /**
+   * 选择用于触发新音符的 voice 槽位。
+   * 优先级（reuse_voices 开启时）：① 已在演奏同音的 voice →
+   * ② 已 release 的 voice 中最早 release 的 → ③ 仍在 press 的 voice 中最早 press 的。
+   * @returns voice 在 this.voices 中的索引
+   */
   private pickVoice(note: number): number {
     const reuseVoices = this.getBool('reuse_voices');
     const polyphony = MAX_POLYPHONY;
@@ -277,6 +300,11 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     return pick;
   }
 
+  /**
+   * 触发 note-on：选 voice、计算 mallet 频率（含 velocity 调制）、调用 voice.trigger。
+   * @param note - MIDI 音符号
+   * @param velocity - 0-127
+   */
   private onNote(note: number, velocity: number): void {
     if (!this.initialized) return;
     const srate = sampleRate;
@@ -300,10 +328,13 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
     voice.trigger(++this.notePressCount, srate, note, vel, malletType, malletFreq, malletKtrack, skipFadeout);
 
-    // Remove from sustain pedal notes
+    // 从持音缓存中移除（重新按下覆盖之前的 release 缓存）
     this.sustainPedalNotes = this.sustainPedalNotes.filter(n => n.note !== note);
   }
 
+  /**
+   * 触发 note-off：如持音踏板按下则缓存；否则对所有演奏该音的 voice 调用 release。
+   */
   private offNote(note: number): void {
     // If sustain pedal is held, defer note-off
     if (this.sustainPedal) {
@@ -318,6 +349,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     }
   }
 
+  /** 设置持音踏板状态；释放时统一对所有缓存音符调用 offNote。 */
   private handleSustain(value: boolean): void {
     this.sustainPedal = value;
     if (!value) {
@@ -328,6 +360,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     }
   }
 
+  /** 清空所有 voice（用于 model/preset 切换时强制重置）。 */
   private clearVoices(): void {
     for (let i = 0; i < MAX_POLYPHONY; i++) {
       this.voices[i].clear();
@@ -336,6 +369,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
   // ── Pitch bend ──
 
+  /** 设置弯音目标（normalized ∈ [-1, 1] → 频率倍率 2^(±bendRange/12)）。 */
   private setBendTarget(normalized: number): void {
     const bendRange = this.getP('bend_range');
     this.startBend = this.curBend;
@@ -344,6 +378,7 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     this.bendStep = (this.targetBend - this.startBend) / this.totalSamplesBend;
   }
 
+  /** 每 sample 推进一步弯音 glide，达到目标后停止。 */
   private interpolatePitchBend(): void {
     if (this.remainingSamplesBend > 0) {
       this.curBend += this.bendStep;
@@ -356,22 +391,28 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
   // ── Parameter updates ──
 
+  /** 批量写入参数并立即应用到 voices。用于 init / setParams / loadPreset。 */
   private setParams(params: Record<string, number>): void {
     for (const [id, value] of Object.entries(params)) {
       this.params[id] = value;
     }
-    this.onSlider(sampleRate);
+    this.applyParamsToVoices(sampleRate);
   }
 
+  /**
+   * 加载预置：批量写入参数、清空 voice（避免参数切换产生爆音）、
+   * 重置 model 跟踪状态、应用参数到 voices。
+   */
   private loadPreset(preset: Record<string, number>): void {
     for (const [id, value] of Object.entries(preset)) {
       this.params[id] = value;
     }
     this.clearVoices();
     this.resetLastModels();
-    this.onSlider(sampleRate);
+    this.applyParamsToVoices(sampleRate);
   }
 
+  /** 把当前 a_model/a_partials/b_model/b_partials 写入 last* 跟踪字段（避免预设后立即误触发 model 重算）。 */
   private resetLastModels(): void {
     this.lastAModel = this.getInt('a_model');
     this.lastAPartials = this.getInt('a_partials');
@@ -379,7 +420,12 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
     this.lastBPartials = this.getInt('b_partials');
   }
 
-  private onSlider(srate: number): void {
+  /**
+   * 把当前 `this.params` 应用到所有 voices 的 DSP 子模块（resonator/noise/mallet/coupling）。
+   * 名称从 C++ 原版的 `onSlider` 沿用而来，但实际触发源包括 setParam / setParams /
+   * loadPreset / init——不止滑块。故重命名为 applyParamsToVoices。
+   */
+  private applyParamsToVoices(srate: number): void {
     const malletType = this.getInt('mallet_type') as MalletType;
     const malletPitch = this.getP('mallet_pitch');
     const malletFilter = this.getP('mallet_filter');
@@ -515,8 +561,17 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
 
   // ── Process loop ──
 
+  /**
+   * AudioWorklet 主处理函数。逐 sample 渲染所有 voices 并写入 stereo output。
+   * 设计要点（spec 009-performance-benchmark.md）：
+   * - `process()` 内零对象分配——active voice 计数用 in-place 循环而非 `Array.filter`。
+   * - CPU 耗时由 `performance.now()` 测量并周期性上报。
+   * @returns true 保持 processor 存活
+   */
   process(inputs: Float32Array[][], outputs: Float32Array[][], _parameters: Record<string, Float32Array>): boolean {
     if (!this.initialized) return true;
+
+    const procStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
 
     const output = outputs[0];
     if (!output || output.length === 0) return true;
@@ -646,7 +701,16 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
       this.rmsCount++;
     }
 
-    // Periodic status report
+    // 周期性状态上报：RMS、CPU 占比、活跃 voice 数。
+    // CPU 占比 = 累计 process() 耗时 / 累计 buffer 时长，反映音频线程负载。
+    // active voice 计数用 in-place 循环，避免 `Array.filter` 在音频线程分配数组（spec 009: 零分配）。
+    const procEnd = (procStart !== 0 && typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : 0;
+    if (procEnd !== 0) {
+      this.cpuTimeAccum += (procEnd - procStart);
+      this.cpuBufferDurationAccum += (numSamples / sampleRate) * 1000;
+    }
+
     this.processCount++;
     if (this.processCount >= STATUS_INTERVAL) {
       this.processCount = 0;
@@ -654,29 +718,27 @@ class ModalSynthProcessor extends AudioWorkletProcessor {
       this.rmsAccum = 0;
       this.rmsCount = 0;
 
-      const activeVoices = this.voices.filter(v => v.isPressed || (v.resA.active) || (v.resB.active)).length;
+      let activeVoices = 0;
+      for (let i = 0; i < MAX_POLYPHONY; i++) {
+        const v = this.voices[i];
+        if (v.isPressed || v.resA.active || v.resB.active) activeVoices++;
+      }
+
+      const cpuUsage = this.cpuBufferDurationAccum > 0
+        ? this.cpuTimeAccum / this.cpuBufferDurationAccum
+        : 0;
+      this.cpuTimeAccum = 0;
+      this.cpuBufferDurationAccum = 0;
 
       this.port.postMessage({
         type: 'status',
         rms,
-        cpuUsage: 0,  // CPU usage not easily measurable in AudioWorklet
+        cpuUsage,
         activeVoices,
       });
     }
 
     return true;
-  }
-
-  static get parameterDescriptors(): AudioParamDescriptor[] {
-    return [
-      {
-        name: 'gain',
-        defaultValue: 1.0,
-        minValue: 0.0,
-        maxValue: 1.0,
-        automationRate: 'a-rate' as AudioParamAutomationRate,
-      },
-    ];
   }
 }
 
