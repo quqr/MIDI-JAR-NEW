@@ -41,7 +41,9 @@ export function createMidiBackend(): IMidiBackend {
  */
 export function getMidiBackend(): IMidiBackend {
   if (!backend) {
-    throw new Error("MidiBackend not initialized. Call createMidiBackend() first.");
+    throw new Error(
+      "MidiBackend not initialized. Call createMidiBackend() first.",
+    );
   }
   return backend;
 }

@@ -81,7 +81,9 @@
         style="grid-template-columns: minmax(180px, 240px) 3fr"
       >
         <!-- Left: Chord type list -->
-        <div class="min-h-0 overflow-y-auto min-w-full border-r border-base-200">
+        <div
+          class="min-h-0 overflow-y-auto min-w-full border-r border-base-200"
+        >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"
             @select="handleChordTypeChange"

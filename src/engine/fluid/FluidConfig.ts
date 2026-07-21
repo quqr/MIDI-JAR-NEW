@@ -4,8 +4,8 @@
 /** 单个 splat 发射点的扰动参数（高斯分布，0=不扰动，1=最大扰动） */
 export interface SplatPerturbation {
   positionJitter?: number; // 0-1，位置抖动强度（归一化坐标 ±0.02）
-  forceJitter?: number;    // 0-1，力度方向抖动强度（相对原始力度的 ±100%）
-  colorJitter?: number;    // 0-1，颜色抖动强度（rgb 各通道 ±0.15）
+  forceJitter?: number; // 0-1，力度方向抖动强度（相对原始力度的 ±100%）
+  colorJitter?: number; // 0-1，颜色抖动强度（rgb 各通道 ±0.15）
 }
 
 // 流体高级覆盖参数（用户友好语义，原 WaterfallPiano/types.ts 内联至此以保持模块自包含）
@@ -20,10 +20,10 @@ export interface FluidAdvancedParams {
   hitExplosion?: boolean; // 命中爆炸发射开关
   blockCoverage?: boolean; // 块体覆盖发射开关
   // ── 每个发射点独立的扰动参数 ──
-  fluidSplatPerturbation?: SplatPerturbation;       // 音符触发 splat
-  hitExplosionPerturbation?: SplatPerturbation;     // 命中爆炸 splat
-  blockCoveragePerturbation?: SplatPerturbation;    // 方块覆盖尾焰 splat
-  sustainedSplatPerturbation?: SplatPerturbation;   // 长按持续 splat
+  fluidSplatPerturbation?: SplatPerturbation; // 音符触发 splat
+  hitExplosionPerturbation?: SplatPerturbation; // 命中爆炸 splat
+  blockCoveragePerturbation?: SplatPerturbation; // 方块覆盖尾焰 splat
+  sustainedSplatPerturbation?: SplatPerturbation; // 长按持续 splat
 }
 
 export interface FluidSimulationConfig {

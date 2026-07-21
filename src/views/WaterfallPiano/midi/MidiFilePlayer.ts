@@ -233,10 +233,7 @@ export class MidiFilePlayer {
    * 设置左右手轨道索引推断配置，会重新收集调度音符并通过回调通知外部
    * @param indices - 包含 right 和 left 轨道索引的对象
    */
-  setHandTrackIndices(indices: {
-    right: number;
-    left: number;
-  }): void {
+  setHandTrackIndices(indices: { right: number; left: number }): void {
     this.handTrackIndices = indices;
     if (this.midi) {
       this.notes = this.collectNotes();

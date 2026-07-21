@@ -7,7 +7,10 @@ function detectSupportLevel(): SupportLevel {
   const ua = navigator.userAgent;
 
   // Chrome / Edge (Chromium) — 完整支持
-  if (/Edg\//.test(ua) || (/Chrome\//.test(ua) && !/Chromium|OPR|Brave/.test(ua))) {
+  if (
+    /Edg\//.test(ua) ||
+    (/Chrome\//.test(ua) && !/Chromium|OPR|Brave/.test(ua))
+  ) {
     return "full";
   }
 

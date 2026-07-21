@@ -20,13 +20,19 @@
             :title="$t('nav.chordDictionary')"
             :description="$t('home.moduleDescriptions.chordDictionary')"
             icon="mdi-book-open-page-variant"
-          />          
+          />
           <ModuleCard
             to="/waterfall-piano"
             settings-to="/settings/waterfall-piano"
             :title="$t('nav.WaterfallPiano')"
             :description="$t('home.moduleDescriptions.WaterfallPiano')"
             icon="mdi-piano"
+          />
+          <ModuleCard
+            to="/sampler"
+            :title="$t('nav.Sampler')"
+            :description="$t('home.moduleDescriptions.Sampler')"
+            icon="mdi-music-note"
           />
           <ModuleCard
             to="/settings/routing"

@@ -43,6 +43,7 @@ export default defineConfig(() => {
               if (/node_modules\/@vue-flow\//.test(id)) return "vueflow";
               if (/node_modules\/pixi\.js\//.test(id)) return "pixi";
               if (/node_modules\/tone\//.test(id)) return "tone";
+              if (/node_modules\/smplr\//.test(id)) return "smplr";
             }
           },
         },

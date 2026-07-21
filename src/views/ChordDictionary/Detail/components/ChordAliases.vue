@@ -13,8 +13,7 @@
             :key="index"
             class="flex items-center justify-between px-3 py-1.5 hover:bg-base-300 rounded-lg text-sm"
             :class="{
-              'border-l-[3px] border-l-warning bg-base-300':
-                isPreferred(index),
+              'border-l-[3px] border-l-warning bg-base-300': isPreferred(index),
               'border-l-[3px] border-l-info bg-base-200':
                 isDefault(index) && !isPreferred(index),
             }"
@@ -61,9 +60,7 @@
                 name="star"
                 size="14"
                 :class="
-                  isPreferred(index) || isDefault(index)
-                    ? 'fill-current'
-                    : ''
+                  isPreferred(index) || isDefault(index) ? 'fill-current' : ''
                 "
               />
             </button>
@@ -79,12 +76,6 @@ import Icon from "@/components/Icon/Icon.vue";
 import ChordName from "@/components/ChordName/ChordName.vue";
 import { useChordDetailContext } from "../composables/useChordDetail";
 
-const {
-  t,
-  chord,
-  notationLabels,
-  isPreferred,
-  isDefault,
-  toggleAlias,
-} = useChordDetailContext();
+const { t, chord, notationLabels, isPreferred, isDefault, toggleAlias } =
+  useChordDetailContext();
 </script>

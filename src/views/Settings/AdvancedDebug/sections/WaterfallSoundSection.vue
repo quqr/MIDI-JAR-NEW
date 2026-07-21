@@ -99,7 +99,9 @@
       :min="0"
       :max="1"
       :step="0.05"
-      @update:model-value="emit('updateEnvelope', 'envelope', 'sustain', $event)"
+      @update:model-value="
+        emit('updateEnvelope', 'envelope', 'sustain', $event)
+      "
     />
     <SettingsRange
       :model-value="soundSettings.envelope.release"
@@ -107,7 +109,9 @@
       :min="0.01"
       :max="5"
       :step="0.01"
-      @update:model-value="emit('updateEnvelope', 'envelope', 'release', $event)"
+      @update:model-value="
+        emit('updateEnvelope', 'envelope', 'release', $event)
+      "
     />
 
     <!-- 调制包络参数 -->

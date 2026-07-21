@@ -42,7 +42,10 @@ export function useFilePicker() {
 
 // ─── Tauri 实现 ───
 
-async function openFileTauri(): Promise<{ name: string; data: ArrayBuffer } | null> {
+async function openFileTauri(): Promise<{
+  name: string;
+  data: ArrayBuffer;
+} | null> {
   try {
     const api = window.tauriAPI;
     if (!api) return null;
@@ -62,7 +65,7 @@ async function openFileTauri(): Promise<{ name: string; data: ArrayBuffer } | nu
 
     const fileName =
       typeof filePath === "string"
-        ? filePath.split(/[/\\]/).pop() ?? "unknown"
+        ? (filePath.split(/[/\\]/).pop() ?? "unknown")
         : "unknown";
 
     return { name: fileName, data: bytes.buffer };
@@ -139,7 +142,10 @@ async function saveFileBrowser(
   data: ArrayBuffer | Blob,
   mimeType?: string,
 ): Promise<void> {
-  const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType ?? "application/octet-stream" });
+  const blob =
+    data instanceof Blob
+      ? data
+      : new Blob([data], { type: mimeType ?? "application/octet-stream" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");

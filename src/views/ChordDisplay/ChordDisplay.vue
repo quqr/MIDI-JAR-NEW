@@ -60,6 +60,24 @@
           :aria-label="t('chordDisplay.openSettings')"
           @click="settingsOpen = true"
         />
+        <!-- 声音开关 -->
+        <label
+          v-if="displayKeyboard"
+          class="flex items-center gap-1.5 cursor-pointer tooltip tooltip-left"
+          :data-tip="
+            samplerStore.soundEnabled
+              ? t('sampler.soundOn')
+              : t('sampler.soundOff')
+          "
+        >
+          <input
+            type="checkbox"
+            class="toggle toggle-primary toggle-sm"
+            :checked="samplerStore.soundEnabled"
+            @change="samplerStore.soundEnabled = !samplerStore.soundEnabled"
+          />
+          <Icon name="speaker" :size="14" aria-hidden="true" />
+        </label>
         <div
           v-if="displayAltChords"
           class="flex flex-col gap-2 items-end rounded-lg p-2 backdrop-blur-sm"
@@ -82,7 +100,7 @@
       v-if="displayKeyboard"
       class="flex-shrink-0 rounded-lg p-2 group relative min-h-[150px] md:min-h-[200px]"
     >
-      <PianoKeyboard
+      <CanvasPianoKeyboard
         id="keyboard"
         class="w-full h-full"
         :sustained="sustainedMidiNotes"
@@ -92,7 +110,10 @@
         :keySignature="keySignature"
         :keyboard="keyboard"
         :clickable="true"
+        :sustain-mode="true"
         @note-click="onNoteClick"
+        @note-on="onNoteOn"
+        @note-off="onNoteOff"
       />
     </div>
 
@@ -105,14 +126,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { PianoKeyboard } from "@/components/PianoKeyboard/";
+import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
 import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";
 import { ChordIntervals } from "@/components/ChordIntervals/";
 import { SettingsButton } from "@/components/SettingsButton/";
 import { SettingsDrawer } from "@/components/SettingsDrawer/";
+import { Icon } from "@/components/Icon/";
 import { useNotes } from "@/composables/";
 import { useSettingsStore } from "@/stores";
+import { useSamplerStore } from "@/stores/sampler";
+import { useSamplerService } from "@/composables/useSamplerService";
 import {
   mergeDisplayConfig,
   mergeLayoutConfig,
@@ -123,6 +147,9 @@ import type { StaffClef } from "@/components/Notation/types";
 
 const { t } = useI18n();
 const settingsOpen = ref(false);
+
+const samplerStore = useSamplerStore();
+const samplerService = useSamplerService();
 
 const props = defineProps<{
   moduleId: string;
@@ -174,6 +201,19 @@ const {
 
 function onNoteClick(midi: number) {
   toggleNote(midi);
+}
+
+function onNoteOn(midi: number) {
+  toggleNote(midi);
+  if (samplerStore.soundEnabled && samplerStore.isReady) {
+    samplerService.noteOn(midi, 100);
+  }
+}
+
+function onNoteOff(midi: number) {
+  if (samplerStore.soundEnabled && samplerStore.isReady) {
+    samplerService.noteOff(midi);
+  }
 }
 
 const combinedPlayedMidi = computed(() => [

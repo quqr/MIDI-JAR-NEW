@@ -44,16 +44,32 @@ class MockClock implements Clock {
   private _position = 0;
   private _rate = 1;
 
-  start(): void { /* no-op for mock */ }
-  pause(): void { /* no-op for mock */ }
-  stop(): void { this._position = 0; }
-  seek(seconds: number): void { this._position = seconds; }
-  getPosition(): number { return this._position; }
-  setRate(rate: number): void { this._rate = rate; }
-  getRate(): number { return this._rate; }
+  start(): void {
+    /* no-op for mock */
+  }
+  pause(): void {
+    /* no-op for mock */
+  }
+  stop(): void {
+    this._position = 0;
+  }
+  seek(seconds: number): void {
+    this._position = seconds;
+  }
+  getPosition(): number {
+    return this._position;
+  }
+  setRate(rate: number): void {
+    this._rate = rate;
+  }
+  getRate(): number {
+    return this._rate;
+  }
 
   /** 测试辅助：手动设置当前位置 */
-  setPosition(seconds: number): void { this._position = seconds; }
+  setPosition(seconds: number): void {
+    this._position = seconds;
+  }
 }
 
 function mockFile(): File {

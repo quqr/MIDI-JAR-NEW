@@ -42,6 +42,7 @@ const INTERACTIVE_SELECTOR = [
   "input",
   "select",
   "li",
+  ".card",
   "summary",
   '[role="button"]',
   '[role="link"]',

@@ -4,10 +4,7 @@ import type { Chord } from "@tonaljs/chord";
 
 import { getContrastColor } from "@/helpers";
 
-import type {
-  KeyboardSettings,
-  KeySignatureConfig,
-} from "../types";
+import type { KeyboardSettings, KeySignatureConfig } from "../types";
 import {
   fadeAllHighlights,
   applyHighlightStrategy,

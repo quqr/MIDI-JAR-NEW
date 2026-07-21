@@ -87,9 +87,18 @@ export class FluidSplatManager {
       }
       if (p!.colorJitter && p!.colorJitter > 0) {
         rgb = {
-          r: Math.max(0, rgb.r + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
-          g: Math.max(0, rgb.g + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
-          b: Math.max(0, rgb.b + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15),
+          r: Math.max(
+            0,
+            rgb.r + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+          ),
+          g: Math.max(
+            0,
+            rgb.g + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+          ),
+          b: Math.max(
+            0,
+            rgb.b + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+          ),
         };
       }
     }
@@ -97,7 +106,11 @@ export class FluidSplatManager {
   }
 
   /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
-  hitExplosionSplat(fluid: FluidSimulation, midi: number, _velocity: number): void {
+  hitExplosionSplat(
+    fluid: FluidSimulation,
+    midi: number,
+    _velocity: number,
+  ): void {
     const settings = this.deps.getSettings();
     if (!settings) return;
     const { keyboardRenderer } = this.deps;
@@ -137,10 +150,14 @@ export class FluidSplatManager {
     }
 
     fluid.splat(x - spread, -hitLineY, -force * 0.6, force, {
-      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
+      r: rgb.r * colorMul,
+      g: rgb.g * colorMul,
+      b: rgb.b * colorMul,
     });
     fluid.splat(x + spread, -hitLineY, force * 0.6, force, {
-      r: rgb.r * colorMul, g: rgb.g * colorMul, b: rgb.b * colorMul,
+      r: rgb.r * colorMul,
+      g: rgb.g * colorMul,
+      b: rgb.b * colorMul,
     });
   }
 

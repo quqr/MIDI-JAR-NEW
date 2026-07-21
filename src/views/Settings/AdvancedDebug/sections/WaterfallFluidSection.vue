@@ -54,7 +54,9 @@
         :min="0"
         :max="1"
         :step="0.05"
-        @update:model-value="emit('updateFluidParam', 'flowPersistence', $event)"
+        @update:model-value="
+          emit('updateFluidParam', 'flowPersistence', $event)
+        "
       />
       <SettingsToggle
         :model-value="fluidParams.bloom"
@@ -112,11 +114,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: "updateBg", key: string, value: unknown): void;
-  (
-    e: "updateFluidParam",
-    key: keyof FluidAdvancedParams,
-    value: unknown,
-  ): void;
+  (e: "updateFluidParam", key: keyof FluidAdvancedParams, value: unknown): void;
   (e: "update:open", value: boolean): void;
 }>();
 

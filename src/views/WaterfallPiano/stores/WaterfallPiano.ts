@@ -58,8 +58,7 @@ function migrateFluidParams(
     "blockCoveragePerturbation",
     "sustainedSplatPerturbation",
   ] as const) {
-    if (raw[k] !== undefined)
-      (result as Record<string, unknown>)[k] = raw[k];
+    if (raw[k] !== undefined) (result as Record<string, unknown>)[k] = raw[k];
   }
 
   if (raw.SPLAT_RADIUS !== undefined && result.splatRadius === undefined) {

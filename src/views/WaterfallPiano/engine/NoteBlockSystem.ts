@@ -3,7 +3,11 @@ import type { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockPool, type NoteBlock } from "./NoteBlockPool";
 import { RealtimeModeController } from "./RealtimeModeController";
 import { SynthesiaModeController } from "./SynthesiaModeController";
-import { NoteBlockRenderer, isBlackKey, BLACK_KEY_WIDTH_RATIO } from "./NoteBlockRenderer";
+import {
+  NoteBlockRenderer,
+  isBlackKey,
+  BLACK_KEY_WIDTH_RATIO,
+} from "./NoteBlockRenderer";
 import { NoteBlockStateSync } from "./NoteBlockStateSync";
 
 /** note block 的渲染模式：realtime 为实时下落，synthesia 为跟随传输时间线滚动 */
@@ -44,8 +48,11 @@ export class NoteBlockSystem {
   callbacks: NoteBlockCallbacks = {};
   /** 预分配的 block positions 缓冲区，避免每帧 new Array + new Object */
   private _blockPosBuffer: Array<{
-    midi: number; normX: number; normY: number;
-    blockWidth: number; blockHeight: number;
+    midi: number;
+    normX: number;
+    normY: number;
+    blockWidth: number;
+    blockHeight: number;
   }> = [];
 
   constructor() {
@@ -203,8 +210,11 @@ export class NoteBlockSystem {
     keyboardRenderer: KeyboardRenderer,
     totalHeight: number,
   ): ReadonlyArray<{
-    midi: number; normX: number; normY: number;
-    blockWidth: number; blockHeight: number;
+    midi: number;
+    normX: number;
+    normY: number;
+    blockWidth: number;
+    blockHeight: number;
   }> {
     const result = this._blockPosBuffer;
     result.length = 0; // 复用数组，清空但保留容量

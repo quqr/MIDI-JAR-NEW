@@ -90,7 +90,8 @@ export function useKeyLayout(
       };
 
       if (noteDef.alt) {
-        const offsetX = getChromaNoteOffset(noteDef.chroma) * sizes.BLACK_OFFSET;
+        const offsetX =
+          getChromaNoteOffset(noteDef.chroma) * sizes.BLACK_OFFSET;
 
         const def: ClassicNoteDef = {
           ...noteDefData,

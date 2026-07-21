@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { WaterfallEngine } from "../engine/WaterfallEngine";
-import { SoundEngine } from "../audio/SoundEngine";
+import { SamplerSoundEngine } from "../audio/SamplerSoundEngine";
 import { keyboardMap } from "../constants";
 import type { WaterfallPianoSettings } from "../types";
 import type { NoteBlockMode } from "../engine/NoteBlockSystem";
@@ -34,7 +34,7 @@ const waterfallRef = ref<HTMLCanvasElement>();
 const keyboardRef = ref<HTMLCanvasElement>();
 
 let engine: WaterfallEngine | null = null;
-let soundEngine: SoundEngine | null = null;
+let soundEngine: SamplerSoundEngine | null = null;
 let resizeObserver: ResizeObserver | null = null;
 const heldKeys = new Set<string>();
 let audioInitialized = false;
@@ -71,7 +71,7 @@ function onKeyDown(e: KeyboardEvent): void {
   // Initialize audio on first user interaction (user gesture)
   if (!audioInitialized && soundEngine) {
     audioInitialized = true;
-    soundEngine.init(props.settings.sound).catch(() => {
+    soundEngine.init().catch(() => {
       audioInitialized = false;
     });
   }
@@ -116,9 +116,10 @@ onMounted(async () => {
     return;
   }
 
-  soundEngine = new SoundEngine();
-  // AudioContext initialization deferred to first user interaction (keyboard press)
-  // to comply with browser autoplay policy
+  soundEngine = new SamplerSoundEngine();
+  // 必须调用 init() 以设置 initialized 标志，否则 noteOn/noteOff 会被静默忽略
+  await soundEngine.init();
+  audioInitialized = true;
 
   engine = new WaterfallEngine();
   engine.init(
@@ -157,12 +158,6 @@ onMounted(async () => {
 watch(
   () => props.settings,
   (s) => engine?.applySettings(s),
-  { deep: true },
-);
-
-watch(
-  () => props.settings.sound,
-  (s) => soundEngine?.updateConfig(s),
   { deep: true },
 );
 

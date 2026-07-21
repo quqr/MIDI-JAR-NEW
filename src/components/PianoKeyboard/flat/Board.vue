@@ -11,12 +11,18 @@ interface Props {
   notes: FlatNoteDef[];
   sizes: FlatKeyboardSizes;
   clickable?: boolean;
+  sustainMode?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   clickable: false,
+  sustainMode: false,
 });
-const emit = defineEmits<{ click: [midi: number] }>();
+const emit = defineEmits<{
+  click: [midi: number];
+  noteOn: [midi: number];
+  noteOff: [midi: number];
+}>();
 </script>
 
 <template>
@@ -37,7 +43,10 @@ const emit = defineEmits<{ click: [midi: number] }>();
       :is-black="noteDef.isBlack"
       class="note"
       :clickable="props.clickable"
+      :sustain-mode="props.sustainMode"
       @click="emit('click', $event)"
+      @note-on="emit('noteOn', $event)"
+      @note-off="emit('noteOff', $event)"
     />
   </g>
 </template>

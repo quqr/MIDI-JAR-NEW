@@ -8,10 +8,10 @@ export function createConfigUpdater<T extends Record<string, unknown>>(
   path: string,
 ) {
   return (key: keyof T, value: T[keyof T]) => {
-    const current = { ...getSetting() } as T
-    ;(current as Record<string, unknown>)[key as string] = value
-    updateSetting(path, current)
-  }
+    const current = { ...getSetting() } as T;
+    (current as Record<string, unknown>)[key as string] = value;
+    updateSetting(path, current);
+  };
 }
 
 /**
@@ -25,8 +25,8 @@ export function createNestedUpdater<T extends Record<string, unknown>>(
   nestedKey: string,
 ) {
   return (key: keyof T, value: T[keyof T]) => {
-    const current = { ...getSetting() } as T
-    ;(current as Record<string, unknown>)[key as string] = value
-    updateSetting(section, nestedKey, current)
-  }
+    const current = { ...getSetting() } as T;
+    (current as Record<string, unknown>)[key as string] = value;
+    updateSetting(section, nestedKey, current);
+  };
 }

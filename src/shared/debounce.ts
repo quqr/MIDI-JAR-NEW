@@ -3,12 +3,12 @@
  * 统一的实现，支持前端和 Electron 主进程使用
  */
 
-export interface DebouncedFunction<T extends (...args: unknown[]) => unknown> {
+export interface DebouncedFunction<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): void;
   cancel(): void;
 }
 
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
   immediate?: boolean,

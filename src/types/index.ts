@@ -166,6 +166,18 @@ export type GeneralSettings = {
   language: "en" | "zh";
 };
 
+export type PianoSettings = {
+  from: string;
+  to: string;
+  label: "none" | "pitchClass" | "note" | "chordNote" | "interval";
+  keyName: "none" | "octave" | "pitchClass" | "note";
+  whiteKeyColor: string;
+  blackKeyColor: string;
+  pressedKeyColor: string;
+  keyCornerRadius: number;
+  showNoteNames: boolean;
+};
+
 export type Settings = {
   general: GeneralSettings;
   midiRoutes: MidiRoute[];
@@ -173,6 +185,7 @@ export type Settings = {
   chordDisplay: ChordDisplaySettings[];
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
+  piano: PianoSettings;
 };
 
 /**
@@ -258,6 +271,18 @@ export const defaultGeneralSettings: GeneralSettings = {
   language: getCurrentLocale() as "en" | "zh",
 };
 
+export const defaultPianoSettings: PianoSettings = {
+  from: "C3",
+  to: "C5",
+  label: "pitchClass",
+  keyName: "note",
+  whiteKeyColor: "#ffffff",
+  blackKeyColor: "#000000",
+  pressedKeyColor: "#315bce",
+  keyCornerRadius: 0.4,
+  showNoteNames: false,
+};
+
 export const defaultSettings: Settings = {
   general: defaultGeneralSettings,
   midiRoutes: [],
@@ -265,6 +290,7 @@ export const defaultSettings: Settings = {
   chordDisplay: [defaultChordDisplaySettings],
   chordDictionary: defaultChordDictionarySettings,
   notation: defaultNotationSettings,
+  piano: defaultPianoSettings,
 };
 
 export const defaultWindowState: WindowState = {

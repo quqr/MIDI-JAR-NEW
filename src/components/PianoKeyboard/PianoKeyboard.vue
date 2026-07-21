@@ -4,10 +4,7 @@ import type { Chord } from "@tonaljs/chord";
 
 import { getContrastColor, getKeySignature } from "@/helpers";
 
-import type {
-  KeyboardSettings,
-  KeySignatureConfig,
-} from "./types";
+import type { KeyboardSettings, KeySignatureConfig } from "./types";
 
 import ClassicBoard from "./classic/Board.vue";
 import ClassicLabels from "./classic/Labels.vue";
@@ -32,6 +29,7 @@ interface Props {
   exactTargets?: boolean;
   chord?: Chord;
   clickable?: boolean;
+  sustainMode?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -70,9 +68,14 @@ const props = withDefaults(defineProps<Props>(), {
   exactTargets: false,
   chord: undefined,
   clickable: false,
+  sustainMode: false,
 });
 
-const emit = defineEmits<{ noteClick: [midi: number] }>();
+const emit = defineEmits<{
+  noteClick: [midi: number];
+  noteOn: [midi: number];
+  noteOff: [midi: number];
+}>();
 
 const { classicKeys, flatKeys } = useKeyLayout(() => props.keyboard);
 
@@ -174,7 +177,10 @@ const { style } = useKeyRendering(props, pianoRef);
           :sizes="classicKeys.sizes"
           :keyboard="props.keyboard"
           :clickable="props.clickable"
+          :sustain-mode="props.sustainMode"
           @click="emit('noteClick', $event)"
+          @note-on="emit('noteOn', $event)"
+          @note-off="emit('noteOff', $event)"
         />
       </svg>
     </template>
@@ -200,7 +206,10 @@ const { style } = useKeyRendering(props, pianoRef);
           :sizes="flatKeys.sizes"
           :keyboard="props.keyboard"
           :clickable="props.clickable"
+          :sustain-mode="props.sustainMode"
           @click="emit('noteClick', $event)"
+          @note-on="emit('noteOn', $event)"
+          @note-off="emit('noteOff', $event)"
         />
       </svg>
     </template>

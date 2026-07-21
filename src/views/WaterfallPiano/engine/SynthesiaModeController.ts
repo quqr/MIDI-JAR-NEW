@@ -188,7 +188,9 @@ export class SynthesiaModeController {
       if (!this.triggeredNoteKeys.has(key) && timeUntilHit <= 0) {
         this.triggeredNoteKeys.add(key);
         this.realtime.addActiveMidi(note.midi);
-        logger.debug(`Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`);
+        logger.debug(
+          `Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
+        );
         callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
         frameTriggered++;
       }

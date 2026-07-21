@@ -37,9 +37,59 @@
         {{ chord.name }}
       </div>
 
+      <!-- 和弦播放控制 -->
+      <div class="flex items-center gap-3 mb-3">
+        <!-- 声音开关 -->
+        <label class="flex items-center gap-1.5 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            class="toggle toggle-primary toggle-sm"
+            v-model="soundEnabled"
+          />
+          <Icon name="speaker" :size="14" aria-hidden="true" />
+        </label>
+
+        <!-- 播放模式切换 -->
+        <div class="join">
+          <button
+            class="btn btn-xs join-item"
+            :class="chordPlayMode === 'block' ? 'btn-primary' : 'btn-outline'"
+            :aria-pressed="chordPlayMode === 'block'"
+            @click="chordPlayMode = 'block'"
+          >
+            {{ t("sampler.blockChord") }}
+          </button>
+          <button
+            class="btn btn-xs join-item"
+            :class="
+              chordPlayMode === 'arpeggiated' ? 'btn-primary' : 'btn-outline'
+            "
+            :aria-pressed="chordPlayMode === 'arpeggiated'"
+            @click="chordPlayMode = 'arpeggiated'"
+          >
+            {{ t("sampler.arpeggiatedChord") }}
+          </button>
+        </div>
+
+        <!-- 播放/停止按钮 -->
+        <button
+          class="btn btn-sm btn-circle"
+          :class="isPlayingChord ? 'btn-error' : 'btn-primary'"
+          :disabled="!soundEnabled"
+          @click="isPlayingChord ? stopChord() : playChord()"
+        >
+          <Icon
+            :name="isPlayingChord ? 'stop' : 'play'"
+            :size="14"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+
       <!-- Core: Piano keyboard -->
-      <PianoKeyboard
+      <CanvasPianoKeyboard
         class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-lg"
+        style="height: 140px"
         :targets="midi"
         :played="playedMidiNotes"
         :sustained="sustainedMidiNotes"
@@ -71,7 +121,8 @@
 
 <script setup lang="ts">
 import ChordName from "@/components/ChordName/ChordName.vue";
-import PianoKeyboard from "@/components/PianoKeyboard/PianoKeyboard.vue";
+import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import Icon from "@/components/Icon/Icon.vue";
 import EmptyChordDetail from "./EmptyChordDetail.vue";
 import ChordIntervalsTable from "./components/ChordIntervalsTable.vue";
 import ChordNotesDisplay from "./components/ChordNotesDisplay.vue";
@@ -94,6 +145,11 @@ const {
   sustainedMidiNotes,
   keyboardSettings,
   toggleDisabled,
+  chordPlayMode,
+  isPlayingChord,
+  playChord,
+  stopChord,
+  soundEnabled,
 } = useChordDetail();
 
 defineExpose({ detailRef });

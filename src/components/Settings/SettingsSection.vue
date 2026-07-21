@@ -25,5 +25,4 @@ import Icon from "@/components/Icon/Icon.vue";
 const { t } = useI18n();
 
 const showResetSuccess = ref(false);
-
 </script>

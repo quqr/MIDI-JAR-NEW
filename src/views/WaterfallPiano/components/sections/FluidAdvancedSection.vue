@@ -63,82 +63,220 @@
 
     <!-- 随机扰动：每个发射点独立控制 -->
     <div class="divider my-2" />
-    <p class="text-xs opacity-60 mb-1">{{ t('WaterfallPiano.perturbation') }}</p>
+    <p class="text-xs opacity-60 mb-1">
+      {{ t("WaterfallPiano.perturbation") }}
+    </p>
 
     <SettingsRange
       :model-value="fluidParams.fluidSplatPerturbation?.positionJitter ?? 0.5"
-      :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'fluidSplatPerturbation', { ...fluidParams.fluidSplatPerturbation, positionJitter: $event })"
+      :label="
+        t('WaterfallPiano.fluidSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.positionJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'fluidSplatPerturbation', {
+          ...fluidParams.fluidSplatPerturbation,
+          positionJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.fluidSplatPerturbation?.forceJitter ?? 0.5"
-      :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'fluidSplatPerturbation', { ...fluidParams.fluidSplatPerturbation, forceJitter: $event })"
+      :label="
+        t('WaterfallPiano.fluidSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.forceJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'fluidSplatPerturbation', {
+          ...fluidParams.fluidSplatPerturbation,
+          forceJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.fluidSplatPerturbation?.colorJitter ?? 0.5"
-      :label="t('WaterfallPiano.fluidSplatPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'fluidSplatPerturbation', { ...fluidParams.fluidSplatPerturbation, colorJitter: $event })"
+      :label="
+        t('WaterfallPiano.fluidSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.colorJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'fluidSplatPerturbation', {
+          ...fluidParams.fluidSplatPerturbation,
+          colorJitter: $event,
+        })
+      "
     />
 
     <SettingsRange
       :model-value="fluidParams.hitExplosionPerturbation?.positionJitter ?? 0.5"
-      :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'hitExplosionPerturbation', { ...fluidParams.hitExplosionPerturbation, positionJitter: $event })"
+      :label="
+        t('WaterfallPiano.hitExplosionPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.positionJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'hitExplosionPerturbation', {
+          ...fluidParams.hitExplosionPerturbation,
+          positionJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.hitExplosionPerturbation?.forceJitter ?? 0.5"
-      :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'hitExplosionPerturbation', { ...fluidParams.hitExplosionPerturbation, forceJitter: $event })"
+      :label="
+        t('WaterfallPiano.hitExplosionPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.forceJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'hitExplosionPerturbation', {
+          ...fluidParams.hitExplosionPerturbation,
+          forceJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.hitExplosionPerturbation?.colorJitter ?? 0.5"
-      :label="t('WaterfallPiano.hitExplosionPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'hitExplosionPerturbation', { ...fluidParams.hitExplosionPerturbation, colorJitter: $event })"
+      :label="
+        t('WaterfallPiano.hitExplosionPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.colorJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'hitExplosionPerturbation', {
+          ...fluidParams.hitExplosionPerturbation,
+          colorJitter: $event,
+        })
+      "
     />
 
     <SettingsRange
-      :model-value="fluidParams.blockCoveragePerturbation?.positionJitter ?? 0.5"
-      :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'blockCoveragePerturbation', { ...fluidParams.blockCoveragePerturbation, positionJitter: $event })"
+      :model-value="
+        fluidParams.blockCoveragePerturbation?.positionJitter ?? 0.5
+      "
+      :label="
+        t('WaterfallPiano.blockCoveragePerturbation') +
+        ' · ' +
+        t('WaterfallPiano.positionJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'blockCoveragePerturbation', {
+          ...fluidParams.blockCoveragePerturbation,
+          positionJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.blockCoveragePerturbation?.forceJitter ?? 0.5"
-      :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'blockCoveragePerturbation', { ...fluidParams.blockCoveragePerturbation, forceJitter: $event })"
+      :label="
+        t('WaterfallPiano.blockCoveragePerturbation') +
+        ' · ' +
+        t('WaterfallPiano.forceJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'blockCoveragePerturbation', {
+          ...fluidParams.blockCoveragePerturbation,
+          forceJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.blockCoveragePerturbation?.colorJitter ?? 0.5"
-      :label="t('WaterfallPiano.blockCoveragePerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'blockCoveragePerturbation', { ...fluidParams.blockCoveragePerturbation, colorJitter: $event })"
+      :label="
+        t('WaterfallPiano.blockCoveragePerturbation') +
+        ' · ' +
+        t('WaterfallPiano.colorJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'blockCoveragePerturbation', {
+          ...fluidParams.blockCoveragePerturbation,
+          colorJitter: $event,
+        })
+      "
     />
 
     <SettingsRange
-      :model-value="fluidParams.sustainedSplatPerturbation?.positionJitter ?? 0.5"
-      :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.positionJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'sustainedSplatPerturbation', { ...fluidParams.sustainedSplatPerturbation, positionJitter: $event })"
+      :model-value="
+        fluidParams.sustainedSplatPerturbation?.positionJitter ?? 0.5
+      "
+      :label="
+        t('WaterfallPiano.sustainedSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.positionJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'sustainedSplatPerturbation', {
+          ...fluidParams.sustainedSplatPerturbation,
+          positionJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.sustainedSplatPerturbation?.forceJitter ?? 0.5"
-      :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.forceJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'sustainedSplatPerturbation', { ...fluidParams.sustainedSplatPerturbation, forceJitter: $event })"
+      :label="
+        t('WaterfallPiano.sustainedSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.forceJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'sustainedSplatPerturbation', {
+          ...fluidParams.sustainedSplatPerturbation,
+          forceJitter: $event,
+        })
+      "
     />
     <SettingsRange
       :model-value="fluidParams.sustainedSplatPerturbation?.colorJitter ?? 0.5"
-      :label="t('WaterfallPiano.sustainedSplatPerturbation') + ' · ' + t('WaterfallPiano.colorJitter')"
-      :min="0" :max="1" :step="0.05"
-      @update:model-value="emit('update', 'sustainedSplatPerturbation', { ...fluidParams.sustainedSplatPerturbation, colorJitter: $event })"
+      :label="
+        t('WaterfallPiano.sustainedSplatPerturbation') +
+        ' · ' +
+        t('WaterfallPiano.colorJitter')
+      "
+      :min="0"
+      :max="1"
+      :step="0.05"
+      @update:model-value="
+        emit('update', 'sustainedSplatPerturbation', {
+          ...fluidParams.sustainedSplatPerturbation,
+          colorJitter: $event,
+        })
+      "
     />
   </SettingsCollapse>
 </template>
