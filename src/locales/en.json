@@ -34,7 +34,8 @@
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
     "WaterfallPiano": "Waterfall Piano",
-    "RipplerX": "RipplerX"
+    "RipplerX": "RipplerX",
+    "Sampler": "Sampler"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -51,7 +52,8 @@
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
-      "RipplerX": "Modal synthesis synthesizer with dual resonators"
+      "RipplerX": "Modal synthesis synthesizer with dual resonators",
+      "Sampler": "Sampler instruments — load and play various sound libraries"
     }
   },
   "layout": {

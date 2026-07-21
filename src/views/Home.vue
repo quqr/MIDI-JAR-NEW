@@ -35,6 +35,12 @@
             icon="mdi-piano"
           />
           <ModuleCard
+            to="/sampler"
+            :title="$t('nav.Sampler')"
+            :description="$t('home.moduleDescriptions.Sampler')"
+            icon="mdi-music-note"
+          />
+          <ModuleCard
             to="/settings/routing"
             settings-to="/settings/routing"
             :title="$t('nav.routing')"

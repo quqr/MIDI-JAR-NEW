@@ -11,3 +11,4 @@ export { getChords } from "./useChordDetection";
 export { createMidiHandler } from "./useMidiHandler";
 export type { MidiMessageHandlers } from "./useMidiHandler";
 export type { MidiMessagesBuffer } from "./useMidiMessages";
+export { useSamplerService } from "./useSamplerService";

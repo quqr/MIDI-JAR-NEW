@@ -34,7 +34,8 @@
     "debugger": "调试器",
     "advancedDebug": "高级调试",
     "WaterfallPiano": "瀑布流钢琴",
-    "RipplerX": "RipplerX"
+    "RipplerX": "RipplerX",
+    "Sampler": "采样器"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -51,7 +52,8 @@
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息",
       "WaterfallPiano": "瀑布流式钢琴演奏与可视化",
-      "RipplerX": "双共鸣器模态合成器"
+      "RipplerX": "双共鸣器模态合成器",
+      "Sampler": "采样器音源 — 加载和演奏各种音色"
     }
   },
   "layout": {

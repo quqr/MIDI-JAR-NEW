@@ -3,5 +3,6 @@ dist/
 .DS_Store
 public/modal-synth-processor.js
 src-tauri/target/
+src-tauri/target-check/
 .trae/
 .workbuddy/
