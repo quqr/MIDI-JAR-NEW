@@ -9,6 +9,72 @@ import {
 } from "@/helpers";
 
 import type { KeyboardSettings } from "./types";
+import type { PianoSettings } from "@/types";
+
+/**
+ * 将 PianoSettings 映射为 KeyboardSettings 的颜色配置
+ * @param piano - PianoSettings 对象
+ * @returns KeyboardSettings 的 colors 对象
+ */
+export function mapPianoSettingsToKeyboardColors(
+  piano: PianoSettings,
+): KeyboardSettings["colors"] {
+  return {
+    white: piano.whiteKeyColor ?? null,
+    black: piano.blackKeyColor ?? null,
+    played: piano.pressedKeyColor ?? null,
+    wrapped: null,
+    sustained: null,
+  };
+}
+
+/**
+ * 从 PianoSettings 创建完整的 KeyboardSettings
+ * @param piano - PianoSettings 对象
+ * @param overrides - 可选的部分 KeyboardSettings 覆盖项
+ * @returns 完整的 KeyboardSettings 对象
+ */
+export function createKeyboardSettingsFromPiano(
+  piano: PianoSettings,
+  overrides?: Partial<KeyboardSettings>,
+): KeyboardSettings {
+  return {
+    skin: "classic",
+    from: piano.from,
+    to: piano.to,
+    label:
+      piano.label === "none"
+        ? "none"
+        : piano.label === "pitchClass"
+          ? "pitchClass"
+          : piano.label === "note"
+            ? "note"
+            : piano.label === "chordNote"
+              ? "chordNote"
+              : "interval",
+    keyName:
+      piano.keyName === "none"
+        ? "none"
+        : piano.keyName === "octave"
+          ? "octave"
+          : piano.keyName === "pitchClass"
+            ? "pitchClass"
+            : "note",
+    keyInfo: "none",
+    fadeOutDuration: 0,
+    textOpacity: 1,
+    displaySustained: false,
+    wrap: false,
+    sizes: {
+      radius: piano.keyCornerRadius ?? 0,
+      height: 5,
+      ratio: 0.6,
+      bevel: true,
+    },
+    colors: mapPianoSettingsToKeyboardColors(piano),
+    ...overrides,
+  };
+}
 
 // ── Strategy interface for highlight logic ──────────────────────────
 

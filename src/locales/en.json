@@ -466,10 +466,34 @@
       "messageLog": "MIDI message log"
     },
     "notationOptions": {
-      "long": "Long (min, maj, dom, aug, dim...)",
-      "short": "Short (m, M, aug, dim...)",
-      "symbol": "Symbol (-, Δ, +, °...)",
-      "preferred": "Preferred (in dictionary)"
+      "long": "Long format (min, maj, dom, aug, dim...)",
+      "short": "Short format (m, M, aug, dim...)",
+      "symbol": "Symbols (-, Δ, +, °...)",
+      "preferred": "Preferred (set in dictionary)"
+    },
+    "pianoSettings": {
+      "range": "Range",
+      "from": "From",
+      "to": "To",
+      "labels": "Labels",
+      "labelMode": "Label Mode",
+      "labelNone": "None",
+      "labelPitchClass": "Pitch Class",
+      "labelNote": "Note",
+      "labelChordNote": "Chord Note",
+      "labelInterval": "Interval",
+      "keyNameMode": "Key Name Mode",
+      "keyNameNone": "None",
+      "keyNameOctave": "Octave",
+      "keyNamePitchClass": "Pitch Class",
+      "keyNameNote": "Note",
+      "showNoteNames": "Show Note Names",
+      "colors": "Colors",
+      "whiteKeyColor": "White Key Color",
+      "blackKeyColor": "Black Key Color",
+      "pressedKeyColor": "Pressed Key Color",
+      "appearance": "Appearance",
+      "keyCornerRadius": "Corner Radius"
     }
   },
   "overlay": {
@@ -779,30 +803,15 @@
     "playChord": "Play Chord",
     "blockChord": "Block Chord",
     "arpeggiatedChord": "Arpeggiated Chord",
-    "chordPlayMode": "Play Mode"
-  },
-  "pianoSettings": {
-    "range": "Range",
-    "from": "From",
-    "to": "To",
-    "labels": "Labels",
-    "labelMode": "Label Mode",
-    "labelNone": "None",
-    "labelPitchClass": "Pitch Class",
-    "labelNote": "Note",
-    "labelChordNote": "Chord Note",
-    "labelInterval": "Interval",
-    "keyNameMode": "Key Name Mode",
-    "keyNameNone": "None",
-    "keyNameOctave": "Octave",
-    "keyNamePitchClass": "Pitch Class",
-    "keyNameNote": "Note",
-    "showNoteNames": "Show Note Names",
-    "colors": "Colors",
-    "whiteKeyColor": "White Key Color",
-    "blackKeyColor": "Black Key Color",
-    "pressedKeyColor": "Pressed Key Color",
-    "appearance": "Appearance",
-    "keyCornerRadius": "Corner Radius"
+    "chordPlayMode": "Chord Play Mode",
+    "preview": "Preview",
+    "stop": "Stop",
+    "clearInstrumentCache": "Clear Cache",
+    "categories": "Categories",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "loaded": "Loaded",
+    "cached": "Cached",
+    "error": "Error"
   }
 }

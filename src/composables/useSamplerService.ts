@@ -213,8 +213,24 @@ async function loadInstrument(instrumentId: string): Promise<void> {
   try {
     const instance = createInstrument(ctx, info);
 
+    // 添加进度轮询机制（每 100ms 更新一次）
+    // 因为 smplr 库可能不实时触发 onLoadProgress 回调
+    const progressInterval = setInterval(() => {
+      try {
+        const progress = instance.loadProgress;
+        if (progress && progress.total > 0) {
+          store.setLoadProgress(progress);
+        }
+      } catch {
+        // 某些实例可能不支持 loadProgress 属性，忽略错误
+      }
+    }, 100);
+
     // 并发保护：在等待 ready 期间检查是否有更新的请求
     await instance.ready;
+
+    // 清除进度轮询
+    clearInterval(progressInterval);
 
     if (currentLoadId !== loadIdCounter) {
       logger.debug(

@@ -255,7 +255,7 @@ export class KeyboardRenderer {
 
     // ── 仅绘制动态高亮层（按下的键） ──
     if (this.activeNotes.size > 0) {
-      // 高亮白键
+      // 1. 高亮白键（整个高度，后续会被黑键覆盖）
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
         if (!this.activeNotes.has(midi)) continue;
@@ -269,14 +269,16 @@ export class KeyboardRenderer {
           ctx.fillRect(x, 0, w, this.height);
         }
       }
-      // 高亮黑键
+      
+      // 2. 重新绘制所有黑键（覆盖白键高亮，确保正确的显示）
       for (let m = this.from; m <= this.to; m++) {
-        if (!isBlackKey(m) || !this.activeNotes.has(m)) continue;
+        if (!isBlackKey(m)) continue;
         const x = this.midiToX(m);
         const bx = x - layout.blackKeyWidth / 2;
         const bw = layout.blackKeyWidth;
         const bh = layout.blackKeyHeight;
-        ctx.fillStyle = kb.pressedKeyColor;
+        // 根据是否被按下来决定颜色
+        ctx.fillStyle = this.activeNotes.has(m) ? kb.pressedKeyColor : kb.blackKeyColor;
         if (kb.keyCornerRadius > 0) {
           roundRect(ctx, bx, 0, bw, bh, kb.keyCornerRadius);
           ctx.fill();

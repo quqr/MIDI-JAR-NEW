@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIDI-JAR 运行时架构",
+    "subtitle": "跨平台 MIDI 键盘工具",
+    "output": "midi-jar-architecture.html",
+    "viewBox": [1080, 820]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "MIDI 键盘/鼠标", "pos": [320, 60], "size": [120, 52] },
+    { "id": "midi-device", "type": "external", "label": "MIDI 设备", "sublabel": "硬件控制器", "pos": [560, 60], "size": [120, 52] },
+
+    { "id": "tauri-app", "type": "frontend", "label": "Tauri Desktop", "sublabel": "Rust + WebView", "pos": [40, 160], "size": [120, 52] },
+    { "id": "web-browser", "type": "frontend", "label": "Web Browser", "sublabel": "Chrome/Edge", "pos": [680, 160], "size": [120, 52] },
+
+    { "id": "vue-app", "type": "frontend", "label": "Vue 3 App", "sublabel": "主应用入口", "pos": [360, 160], "size": [120, 52] },
+
+    { "id": "router", "type": "frontend", "label": "Vue Router", "sublabel": "路由管理", "pos": [160, 260], "size": [120, 52] },
+    { "id": "pinia-store", "type": "frontend", "label": "Pinia Store", "sublabel": "状态管理", "pos": [360, 260], "size": [120, 52] },
+    { "id": "i18n", "type": "frontend", "label": "Vue I18n", "sublabel": "国际化", "pos": [560, 260], "size": [120, 52] },
+
+    { "id": "midi-backend", "type": "backend", "label": "MIDI Backend", "sublabel": "抽象层 (IMidiBackend)", "pos": [360, 360], "size": [140, 52] },
+
+    { "id": "tauri-backend", "type": "backend", "label": "Tauri Backend", "sublabel": "IPC 桥接", "pos": [160, 460], "size": [120, 52] },
+    { "id": "webmidi", "type": "backend", "label": "Web MIDI API", "sublabel": "浏览器原生", "pos": [560, 460], "size": [120, 52] },
+
+    { "id": "rust-midi", "type": "backend", "label": "MidiManager", "sublabel": "Rust + midir", "pos": [160, 560], "size": [120, 52] },
+    { "id": "midi-routing", "type": "backend", "label": "MidiRouting", "sublabel": "设备路由", "pos": [360, 560], "size": [120, 52] },
+
+    { "id": "chord-display", "type": "frontend", "label": "ChordDisplay", "sublabel": "和弦显示", "pos": [40, 660], "size": [110, 48] },
+    { "id": "chord-dict", "type": "frontend", "label": "ChordDictionary", "sublabel": "和弦词典", "pos": [160, 660], "size": [110, 48] },
+    { "id": "waterfall", "type": "frontend", "label": "WaterfallPiano", "sublabel": "瀑布流钢琴", "pos": [280, 660], "size": [110, 48] },
+    { "id": "sampler", "type": "frontend", "label": "Sampler", "sublabel": "采样器", "pos": [400, 660], "size": [110, 48] },
+    { "id": "settings", "type": "frontend", "label": "Settings", "sublabel": "设置面板", "pos": [520, 660], "size": [110, 48] },
+
+    { "id": "tonal", "type": "cloud", "label": "Tonal.js", "sublabel": "音乐理论库", "pos": [40, 750], "size": [100, 48] },
+    { "id": "tone", "type": "cloud", "label": "Tone.js", "sublabel": "Web Audio 合成", "pos": [150, 750], "size": [100, 48] },
+    { "id": "fluid-engine", "type": "cloud", "label": "Fluid Engine", "sublabel": "WebGPU 流体", "pos": [260, 750], "size": [100, 48] },
+    { "id": "vexflow", "type": "cloud", "label": "VexFlow", "sublabel": "乐谱渲染", "pos": [370, 750], "size": [100, 48] },
+    { "id": "vue-flow", "type": "cloud", "label": "Vue Flow", "sublabel": "节点图编辑", "pos": [480, 750], "size": [100, 48] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Desktop Platform", "wraps": ["tauri-app", "tauri-backend", "rust-midi"] },
+    { "kind": "region", "label": "Web Platform", "wraps": ["web-browser", "webmidi"] },
+    { "kind": "security-group", "label": "Frontend Application", "wraps": ["vue-app", "router", "pinia-store", "i18n", "chord-display", "chord-dict", "waterfall", "sampler", "settings"] },
+    { "kind": "security-group", "label": "MIDI Layer", "wraps": ["midi-backend", "tauri-backend", "webmidi", "rust-midi", "midi-routing"] }
+  ],
+  "connections": [
+    { "id": "user-input", "from": "user", "to": "vue-app", "label": "交互", "variant": "emphasis" },
+    { "id": "midi-hw", "from": "midi-device", "to": "midi-backend", "label": "MIDI", "variant": "emphasis" },
+    { "id": "tauri-host", "from": "tauri-app", "to": "vue-app", "label": "WebView" },
+    { "id": "web-host", "from": "web-browser", "to": "vue-app", "label": "DOM" },
+    { "id": "vue-router", "from": "vue-app", "to": "router" },
+    { "id": "vue-pinia", "from": "vue-app", "to": "pinia-store" },
+    { "id": "vue-i18n", "from": "vue-app", "to": "i18n" },
+    { "id": "store-midi", "from": "pinia-store", "to": "midi-backend", "label": "设备/消息", "variant": "emphasis" },
+    { "id": "midi-tauri", "from": "midi-backend", "to": "tauri-backend", "label": "IPC", "variant": "security" },
+    { "id": "midi-web", "from": "midi-backend", "to": "webmidi", "label": "API", "variant": "security" },
+    { "id": "tauri-rust", "from": "tauri-backend", "to": "rust-midi", "label": "Command", "labelDy": 44 },
+    { "id": "rust-routing", "from": "rust-midi", "to": "midi-routing" },
+    { "id": "routing-wire", "from": "midi-routing", "to": "midi-device", "label": "虚拟端口", "variant": "dashed" },
+    { "id": "chord-tonal", "from": "chord-dict", "to": "tonal" },
+    { "id": "waterfall-fluid", "from": "waterfall", "to": "fluid-engine", "label": "GPU" },
+    { "id": "sampler-tone", "from": "sampler", "to": "tone" },
+    { "id": "settings-flow", "from": "settings", "to": "vue-flow" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "架构概览", "items": ["MIDI-JAR 是跨平台 MIDI 键盘工具", "支持 Tauri 桌面端和 Web 浏览器", "核心：和弦检测、瀑布流、采样器"] },
+    { "dot": "emerald", "title": "MIDI 抽象层", "items": ["IMidiBackend 统一 Tauri IPC 和 Web MIDI API", "createMidiBackend() 获取单例", "跨平台透明切换"] },
+    { "dot": "rose", "title": "功能模块", "items": ["ChordDisplay: 实时和弦可视化", "WaterfallPiano: WebGPU 流体瀑布流", "Sampler: 多音色采样器"] }
+  ]
+}
