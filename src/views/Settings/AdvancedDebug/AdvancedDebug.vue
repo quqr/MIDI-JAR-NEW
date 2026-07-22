@@ -183,6 +183,12 @@
           @update-sound="updateSound"
           @update-envelope="updateEnvelope"
         />
+
+        <!-- ═══ 分类4：缓存管理 ═══ -->
+        <CacheManagementSection
+          v-model:open="sectionOpen.cacheManagement"
+          :search-query="searchQuery"
+        />
       </template>
     </div>
 
@@ -233,6 +239,7 @@ import WaterfallFluidSection from "./sections/WaterfallFluidSection.vue";
 import WaterfallKeyboardSection from "./sections/WaterfallKeyboardSection.vue";
 import WaterfallMidiFileSection from "./sections/WaterfallMidiFileSection.vue";
 import WaterfallSoundSection from "./sections/WaterfallSoundSection.vue";
+import CacheManagementSection from "./sections/CacheManagementSection.vue";
 import PresetManagerDialog from "./components/PresetManagerDialog.vue";
 import { useAdvancedDebugPresets } from "./composables/useAdvancedDebugPresets";
 
@@ -250,6 +257,7 @@ const sectionOpen = reactive({
   waterfallKeyboard: false,
   waterfallMidiFile: false,
   waterfallSound: false,
+  cacheManagement: false,
 });
 
 // 计算属性：是否搜索无结果
@@ -269,6 +277,7 @@ function setAllOpen(open: boolean): void {
   sectionOpen.waterfallKeyboard = open;
   sectionOpen.waterfallMidiFile = open;
   sectionOpen.waterfallSound = open;
+  sectionOpen.cacheManagement = open;
 }
 
 // ─── 通知系统 ───
