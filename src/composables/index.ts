@@ -12,3 +12,6 @@ export { createMidiHandler } from "./useMidiHandler";
 export type { MidiMessageHandlers } from "./useMidiHandler";
 export type { MidiMessagesBuffer } from "./useMidiMessages";
 export { useSamplerService } from "./useSamplerService";
+export { useScalePlayer } from "./useScalePlayer";
+export type { ScalePlayerOptions } from "./useScalePlayer";
+export { useInstrumentCache } from "./useInstrumentCache";

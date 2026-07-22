@@ -1,0 +1,1163 @@
+{
+  "version": "1.0.0",
+  "description": "GM Standard MIDI Instrument List — sample sources crawled from danigb/smplr (player) and smpldsnds (sample host)",
+  "sources": {
+    "smplr": {
+      "version": "1.0.0",
+      "url": "https://github.com/danigb/smplr",
+      "factories": [
+        {
+          "id": "soundfont",
+          "name": "Soundfont",
+          "description": "General MIDI soundfonts (MusyngKite / FluidR3_GM kits)",
+          "helper": "getSoundfontNames()"
+        },
+        {
+          "id": "soundfont2",
+          "name": "Soundfont2",
+          "description": "Direct .sf2 file player — user-provided .sf2 URL (parsed via soundfont2)",
+          "helper": null
+        },
+        {
+          "id": "sampler",
+          "name": "Sampler",
+          "description": "Custom buffer / SFZ preset sampler — user-provided buffers or SmplrPreset",
+          "helper": null
+        },
+        {
+          "id": "splendid-grand-piano",
+          "name": "SplendidGrandPiano",
+          "description": "Sampled Steinway grand, 4 velocity layers",
+          "helper": null
+        },
+        {
+          "id": "electric-piano",
+          "name": "ElectricPiano",
+          "description": "CP80, PianetT, Wurlitzer, TX81Z (+ jRhodes3d)",
+          "helper": "getElectricPianoNames()"
+        },
+        {
+          "id": "drum-machine",
+          "name": "DrumMachine",
+          "description": "Classic drum machines (TR-808, TR-909, etc.)",
+          "helper": "getDrumMachineNames()"
+        },
+        {
+          "id": "drum-abuse",
+          "name": "DrumAbuse",
+          "description": "~210 machines across 5 packs (Synthabuse collection)",
+          "helper": "getDrumAbuseMachineNames()"
+        },
+        {
+          "id": "mallet",
+          "name": "Mallet",
+          "description": "VCSL mallets (marimba, vibraphone, xylophone, glockenspiel, etc.)",
+          "helper": "getMalletNames()"
+        },
+        {
+          "id": "mellotron",
+          "name": "Mellotron",
+          "description": "Mellotron archive samples",
+          "helper": "getMellotronNames()"
+        },
+        {
+          "id": "smolken",
+          "name": "Smolken",
+          "description": "Smolken double bass (Arco / Pizzicato / Switched)",
+          "helper": "getSmolkenNames()"
+        },
+        {
+          "id": "versilian",
+          "name": "Versilian",
+          "description": "VCSL multi-instrument (partial support, async load)",
+          "helper": "getVersilianInstruments()"
+        }
+      ]
+    },
+    "smpldsnds": {
+      "version": "1.0.0",
+      "url": "https://github.com/smpldsnds",
+      "description": "Open-source / public-domain sample repositories that host the raw audio loaded by smplr (served via GitHub Pages). Each repo ships files.json / instruments.json; drum-abuse-* repos additionally ship pack.json / index.json / instruments/<slug>.json / machines/<id>.json.",
+      "sampleRepos": [
+        {
+          "id": "archiveorg-mellotron",
+          "name": "archiveorg-mellotron",
+          "description": "Mellotron archive samples (CD-ROM NKI/WAV).",
+          "license": "Unknown",
+          "url": "https://github.com/smpldsnds/archiveorg-mellotron",
+          "backs": ["mellotron"]
+        },
+        {
+          "id": "drum-abuse-vol1",
+          "name": "drum-abuse-vol1",
+          "description": "Drum Abuse Vol.1 — Vintage Rhythm Machines (≤1977): organ rhythms & electromechanical boxes.",
+          "license": "Per machine, see source",
+          "url": "https://github.com/smpldsnds/drum-abuse-vol1",
+          "backs": ["drum-abuse"]
+        },
+        {
+          "id": "drum-abuse-vol2",
+          "name": "drum-abuse-vol2",
+          "description": "Drum Abuse Vol.2 — The 808 Era (1978–1981): birth of electronic rhythm, pure analog synthesis.",
+          "license": "Per machine, see source",
+          "url": "https://github.com/smpldsnds/drum-abuse-vol2",
+          "backs": ["drum-abuse"]
+        },
+        {
+          "id": "drum-abuse-vol3",
+          "name": "drum-abuse-vol3",
+          "description": "Drum Abuse Vol.3 — LinnDrum & 909 Birth (1982–1983): hip-hop and house foundations.",
+          "license": "Per machine, see source",
+          "url": "https://github.com/smpldsnds/drum-abuse-vol3",
+          "backs": ["drum-abuse"]
+        },
+        {
+          "id": "drum-abuse-vol4",
+          "name": "drum-abuse-vol4",
+          "description": "Drum Abuse Vol.4 — Digital Drums Boom (1984–1985): sampling goes mainstream (SP-12, RX-11, DDD-1).",
+          "license": "Per machine, see source",
+          "url": "https://github.com/smpldsnds/drum-abuse-vol4",
+          "backs": ["drum-abuse"]
+        },
+        {
+          "id": "drum-abuse-vol5",
+          "name": "drum-abuse-vol5",
+          "description": "Drum Abuse Vol.5 — MIDI Goes Consumer (1986): affordable MIDI rhythm boxes (TR-505, RX-21, Casio MT).",
+          "license": "Per machine, see source",
+          "url": "https://github.com/smpldsnds/drum-abuse-vol5",
+          "backs": ["drum-abuse"]
+        },
+        {
+          "id": "drum-machines",
+          "name": "drum-machines",
+          "description": "A collection of public domain samples of different drum machines.",
+          "license": "Public domain",
+          "url": "https://github.com/smpldsnds/drum-machines",
+          "backs": ["drum-machine"]
+        },
+        {
+          "id": "freepats-old-piano-fb",
+          "name": "freepats-old-piano-fb",
+          "description": "Historic piano with an honky-tonk tone (FreePats).",
+          "license": "CC0 1.0",
+          "url": "https://github.com/smpldsnds/freepats-old-piano-fb",
+          "backs": []
+        },
+        {
+          "id": "hydrogen-drum-samples",
+          "name": "hydrogen-drum-samples",
+          "description": "Drum samples from the Hydrogen drum machine project.",
+          "license": "GPLv2+",
+          "url": "https://github.com/smpldsnds/hydrogen-drum-samples",
+          "backs": ["drum-machine"]
+        },
+        {
+          "id": "sfzinstruments-dsmolken-double-bass",
+          "name": "sfzinstruments-dsmolken-double-bass",
+          "description": "1958 Otto Rubner double bass played and mapped by D. Smolken.",
+          "license": "Royalty-free (all commercial & non-commercial use)",
+          "url": "https://github.com/smpldsnds/sfzinstruments-dsmolken-double-bass",
+          "backs": ["smolken"]
+        },
+        {
+          "id": "sfzinstruments-greg-sullivan-e-pianos",
+          "name": "sfzinstruments-greg-sullivan-e-pianos",
+          "description": "Greg Sullivan's electric pianos (CP80, PianetT, Wurlitzer, TX81Z).",
+          "license": "CC 3.0 Unported",
+          "url": "https://github.com/smpldsnds/sfzinstruments-greg-sullivan-e-pianos",
+          "backs": ["electric-piano"]
+        },
+        {
+          "id": "sfzinstruments-jlearman-jrhodes3d",
+          "name": "sfzinstruments-jlearman-jrhodes3d",
+          "description": "J. Learman Rhodes: 1977 Rhodes Mark I Stage 73 electric piano.",
+          "license": "CC0 1.0",
+          "url": "https://github.com/smpldsnds/sfzinstruments-jlearman-jrhodes3d",
+          "backs": ["electric-piano"]
+        },
+        {
+          "id": "sfzinstruments-splendid-grand-piano",
+          "name": "sfzinstruments-splendid-grand-piano",
+          "description": "AKAI Steinway samples with 4 velocity layers.",
+          "license": "Public Domain",
+          "url": "https://github.com/smpldsnds/sfzinstruments-splendid-grand-piano",
+          "backs": ["splendid-grand-piano"]
+        },
+        {
+          "id": "sfzinstruments-tictokmen-retrodrums1",
+          "name": "sfzinstruments-tictokmen-retrodrums1",
+          "description": "Retro drum samples from Sonic Pi (TicTokMen RetroDrums).",
+          "license": "CC0 1.0",
+          "url": "https://github.com/smpldsnds/sfzinstruments-tictokmen-retrodrums1",
+          "backs": ["drum-machine"]
+        },
+        {
+          "id": "sgossner-vcsl",
+          "name": "sgossner-vcsl",
+          "description": "The Versilian Community Sample Library (VCSL): multi-instrument sample set.",
+          "license": "CC0 1.0",
+          "url": "https://github.com/smpldsnds/sgossner-vcsl",
+          "backs": ["mallet", "versilian"]
+        },
+        {
+          "id": "sonic-pi-samples",
+          "name": "sonic-pi-samples",
+          "description": "Sample collection bundled with Sonic Pi software.",
+          "license": "CC0 1.0",
+          "url": "https://github.com/smpldsnds/sonic-pi-samples",
+          "backs": []
+        },
+        {
+          "id": "soundfonts",
+          "name": "soundfonts",
+          "description": "A curated collection of free and creative-commons soundfonts in sf/sf2 format.",
+          "license": "Mixed, per file",
+          "url": "https://github.com/smpldsnds/soundfonts",
+          "backs": ["soundfont", "soundfont2"]
+        },
+        {
+          "id": "supersaw",
+          "name": "supersaw",
+          "description": "A collection of 60 supersaw sounds.",
+          "license": "GNU GPL v3",
+          "url": "https://github.com/smpldsnds/supersaw",
+          "backs": []
+        },
+        {
+          "id": "wavedit-online",
+          "name": "wavedit-online",
+          "description": "A growing library of free wavetable banks shared by WaveEdit.",
+          "license": "CC0 1.0 Universal",
+          "url": "https://github.com/smpldsnds/wavedit-online",
+          "backs": []
+        }
+      ]
+    }
+  },
+  "instruments": [
+    {
+      "id": "acoustic_grand_piano",
+      "name": "Acoustic Grand Piano",
+      "gmProgram": 0,
+      "category": "Piano",
+      "factory": "splendid-grand-piano"
+    },
+    {
+      "id": "bright_acoustic_piano",
+      "name": "Bright Acoustic Piano",
+      "gmProgram": 1,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_grand_piano",
+      "name": "Electric Grand Piano",
+      "gmProgram": 2,
+      "category": "Piano",
+      "factory": "electric-piano",
+      "factoryOptions": { "instrument": "CP80" }
+    },
+    {
+      "id": "honkytonk_piano",
+      "name": "Honkytonk Piano",
+      "gmProgram": 3,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_piano_1",
+      "name": "Electric Piano 1",
+      "gmProgram": 4,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_piano_2",
+      "name": "Electric Piano 2",
+      "gmProgram": 5,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "harpsichord",
+      "name": "Harpsichord",
+      "gmProgram": 6,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "clavinet",
+      "name": "Clavinet",
+      "gmProgram": 7,
+      "category": "Piano",
+      "factory": "soundfont"
+    },
+    {
+      "id": "celesta",
+      "name": "Celesta",
+      "gmProgram": 8,
+      "category": "Chromatic Percussion",
+      "factory": "soundfont"
+    },
+    {
+      "id": "glockenspiel",
+      "name": "Glockenspiel",
+      "gmProgram": 9,
+      "category": "Chromatic Percussion",
+      "factory": "soundfont"
+    },
+    {
+      "id": "music_box",
+      "name": "Music Box",
+      "gmProgram": 10,
+      "category": "Chromatic Percussion",
+      "factory": "soundfont"
+    },
+    {
+      "id": "vibraphone",
+      "name": "Vibraphone",
+      "gmProgram": 11,
+      "category": "Chromatic Percussion",
+      "factory": "mallet"
+    },
+    {
+      "id": "marimba",
+      "name": "Marimba",
+      "gmProgram": 12,
+      "category": "Chromatic Percussion",
+      "factory": "mallet"
+    },
+    {
+      "id": "xylophone",
+      "name": "Xylophone",
+      "gmProgram": 13,
+      "category": "Chromatic Percussion",
+      "factory": "mallet"
+    },
+    {
+      "id": "tubular_bells",
+      "name": "Tubular Bells",
+      "gmProgram": 14,
+      "category": "Chromatic Percussion",
+      "factory": "soundfont"
+    },
+    {
+      "id": "dulcimer",
+      "name": "Dulcimer",
+      "gmProgram": 15,
+      "category": "Chromatic Percussion",
+      "factory": "soundfont"
+    },
+    {
+      "id": "drawbar_organ",
+      "name": "Drawbar Organ",
+      "gmProgram": 16,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "percussive_organ",
+      "name": "Percussive Organ",
+      "gmProgram": 17,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "rock_organ",
+      "name": "Rock Organ",
+      "gmProgram": 18,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "church_organ",
+      "name": "Church Organ",
+      "gmProgram": 19,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "reed_organ",
+      "name": "Reed Organ",
+      "gmProgram": 20,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "accordion",
+      "name": "Accordion",
+      "gmProgram": 21,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "harmonica",
+      "name": "Harmonica",
+      "gmProgram": 22,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "tango_accordion",
+      "name": "Tango Accordion",
+      "gmProgram": 23,
+      "category": "Organ",
+      "factory": "soundfont"
+    },
+    {
+      "id": "acoustic_guitar_nylon",
+      "name": "Acoustic Guitar Nylon",
+      "gmProgram": 24,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "acoustic_guitar_steel",
+      "name": "Acoustic Guitar Steel",
+      "gmProgram": 25,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_guitar_jazz",
+      "name": "Electric Guitar Jazz",
+      "gmProgram": 26,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_guitar_clean",
+      "name": "Electric Guitar Clean",
+      "gmProgram": 27,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_guitar_muted",
+      "name": "Electric Guitar Muted",
+      "gmProgram": 28,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "overdriven_guitar",
+      "name": "Overdriven Guitar",
+      "gmProgram": 29,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "distortion_guitar",
+      "name": "Distortion Guitar",
+      "gmProgram": 30,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "guitar_harmonics",
+      "name": "Guitar Harmonics",
+      "gmProgram": 31,
+      "category": "Guitar",
+      "factory": "soundfont"
+    },
+    {
+      "id": "acoustic_bass",
+      "name": "Acoustic Bass",
+      "gmProgram": 32,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_bass_finger",
+      "name": "Electric Bass Finger",
+      "gmProgram": 33,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "electric_bass_pick",
+      "name": "Electric Bass Pick",
+      "gmProgram": 34,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fretless_bass",
+      "name": "Fretless Bass",
+      "gmProgram": 35,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "slap_bass_1",
+      "name": "Slap Bass 1",
+      "gmProgram": 36,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "slap_bass_2",
+      "name": "Slap Bass 2",
+      "gmProgram": 37,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_bass_1",
+      "name": "Synth Bass 1",
+      "gmProgram": 38,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_bass_2",
+      "name": "Synth Bass 2",
+      "gmProgram": 39,
+      "category": "Bass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "violin",
+      "name": "Violin",
+      "gmProgram": 40,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "viola",
+      "name": "Viola",
+      "gmProgram": 41,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "cello",
+      "name": "Cello",
+      "gmProgram": 42,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "contrabass",
+      "name": "Contrabass",
+      "gmProgram": 43,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "tremolo_strings",
+      "name": "Tremolo Strings",
+      "gmProgram": 44,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pizzicato_strings",
+      "name": "Pizzicato Strings",
+      "gmProgram": 45,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "orchestral_harp",
+      "name": "Orchestral Harp",
+      "gmProgram": 46,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "timpani",
+      "name": "Timpani",
+      "gmProgram": 47,
+      "category": "Strings",
+      "factory": "soundfont"
+    },
+    {
+      "id": "string_ensemble_1",
+      "name": "String Ensemble 1",
+      "gmProgram": 48,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "string_ensemble_2",
+      "name": "String Ensemble 2",
+      "gmProgram": 49,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_strings_1",
+      "name": "Synth Strings 1",
+      "gmProgram": 50,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_strings_2",
+      "name": "Synth Strings 2",
+      "gmProgram": 51,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "choir_aahs",
+      "name": "Choir Aahs",
+      "gmProgram": 52,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "voice_oohs",
+      "name": "Voice Oohs",
+      "gmProgram": 53,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_choir",
+      "name": "Synth Choir",
+      "gmProgram": 54,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "orchestra_hit",
+      "name": "Orchestra Hit",
+      "gmProgram": 55,
+      "category": "Ensemble",
+      "factory": "soundfont"
+    },
+    {
+      "id": "trumpet",
+      "name": "Trumpet",
+      "gmProgram": 56,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "trombone",
+      "name": "Trombone",
+      "gmProgram": 57,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "tuba",
+      "name": "Tuba",
+      "gmProgram": 58,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "muted_trumpet",
+      "name": "Muted Trumpet",
+      "gmProgram": 59,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "french_horn",
+      "name": "French Horn",
+      "gmProgram": 60,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "brass_section",
+      "name": "Brass Section",
+      "gmProgram": 61,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_brass_1",
+      "name": "Synth Brass 1",
+      "gmProgram": 62,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_brass_2",
+      "name": "Synth Brass 2",
+      "gmProgram": 63,
+      "category": "Brass",
+      "factory": "soundfont"
+    },
+    {
+      "id": "soprano_sax",
+      "name": "Soprano Sax",
+      "gmProgram": 64,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "alto_sax",
+      "name": "Alto Sax",
+      "gmProgram": 65,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "tenor_sax",
+      "name": "Tenor Sax",
+      "gmProgram": 66,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "baritone_sax",
+      "name": "Baritone Sax",
+      "gmProgram": 67,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "oboe",
+      "name": "Oboe",
+      "gmProgram": 68,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "english_horn",
+      "name": "English Horn",
+      "gmProgram": 69,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "bassoon",
+      "name": "Bassoon",
+      "gmProgram": 70,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "clarinet",
+      "name": "Clarinet",
+      "gmProgram": 71,
+      "category": "Reed",
+      "factory": "soundfont"
+    },
+    {
+      "id": "piccolo",
+      "name": "Piccolo",
+      "gmProgram": 72,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "flute",
+      "name": "Flute",
+      "gmProgram": 73,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "recorder",
+      "name": "Recorder",
+      "gmProgram": 74,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pan_flute",
+      "name": "Pan Flute",
+      "gmProgram": 75,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "blown_bottle",
+      "name": "Blown Bottle",
+      "gmProgram": 76,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "shakuhachi",
+      "name": "Shakuhachi",
+      "gmProgram": 77,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "whistle",
+      "name": "Whistle",
+      "gmProgram": 78,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "ocarina",
+      "name": "Ocarina",
+      "gmProgram": 79,
+      "category": "Pipe",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_1_square",
+      "name": "Lead 1 (Square)",
+      "gmProgram": 80,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_2_sawtooth",
+      "name": "Lead 2 (Sawtooth)",
+      "gmProgram": 81,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_3_calliope",
+      "name": "Lead 3 (Calliope)",
+      "gmProgram": 82,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_4_chiff",
+      "name": "Lead 4 (Chiff)",
+      "gmProgram": 83,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_5_charang",
+      "name": "Lead 5 (Charang)",
+      "gmProgram": 84,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_6_voice",
+      "name": "Lead 6 (Voice)",
+      "gmProgram": 85,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_7_fifths",
+      "name": "Lead 7 (Fifths)",
+      "gmProgram": 86,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "lead_8_bass_lead",
+      "name": "Lead 8 (Bass + Lead)",
+      "gmProgram": 87,
+      "category": "Synth Lead",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_1_new_age",
+      "name": "Pad 1 (New Age)",
+      "gmProgram": 88,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_2_warm",
+      "name": "Pad 2 (Warm)",
+      "gmProgram": 89,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_3_polysynth",
+      "name": "Pad 3 (Polysynth)",
+      "gmProgram": 90,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_4_choir",
+      "name": "Pad 4 (Choir)",
+      "gmProgram": 91,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_5_bowed",
+      "name": "Pad 5 (Bowed)",
+      "gmProgram": 92,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_6_metallic",
+      "name": "Pad 6 (Metallic)",
+      "gmProgram": 93,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_7_halo",
+      "name": "Pad 7 (Halo)",
+      "gmProgram": 94,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "pad_8_sweep",
+      "name": "Pad 8 (Sweep)",
+      "gmProgram": 95,
+      "category": "Synth Pad",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_1_rain",
+      "name": "FX 1 (Rain)",
+      "gmProgram": 96,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_2_soundtrack",
+      "name": "FX 2 (Soundtrack)",
+      "gmProgram": 97,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_3_crystal",
+      "name": "FX 3 (Crystal)",
+      "gmProgram": 98,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_4_atmosphere",
+      "name": "FX 4 (Atmosphere)",
+      "gmProgram": 99,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_5_brightness",
+      "name": "FX 5 (Brightness)",
+      "gmProgram": 100,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_6_goblins",
+      "name": "FX 6 (Goblins)",
+      "gmProgram": 101,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_7_echoes",
+      "name": "FX 7 (Echoes)",
+      "gmProgram": 102,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fx_8_sci-fi",
+      "name": "FX 8 (Sci-fi)",
+      "gmProgram": 103,
+      "category": "Synth Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "sitar",
+      "name": "Sitar",
+      "gmProgram": 104,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "banjo",
+      "name": "Banjo",
+      "gmProgram": 105,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "shamisen",
+      "name": "Shamisen",
+      "gmProgram": 106,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "koto",
+      "name": "Koto",
+      "gmProgram": 107,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "kalimba",
+      "name": "Kalimba",
+      "gmProgram": 108,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "bagpipe",
+      "name": "Bagpipe",
+      "gmProgram": 109,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "fiddle",
+      "name": "Fiddle",
+      "gmProgram": 110,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "shanai",
+      "name": "Shanai",
+      "gmProgram": 111,
+      "category": "Ethnic",
+      "factory": "soundfont"
+    },
+    {
+      "id": "tinkle_bell",
+      "name": "Tinkle Bell",
+      "gmProgram": 112,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "agogo",
+      "name": "Agogo",
+      "gmProgram": 113,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "steel_drums",
+      "name": "Steel Drums",
+      "gmProgram": 114,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "woodblock",
+      "name": "Woodblock",
+      "gmProgram": 115,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "taiko_drum",
+      "name": "Taiko Drum",
+      "gmProgram": 116,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "melodic_tom",
+      "name": "Melodic Tom",
+      "gmProgram": 117,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "synth_drum",
+      "name": "Synth Drum",
+      "gmProgram": 118,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "reverse_cymbal",
+      "name": "Reverse Cymbal",
+      "gmProgram": 119,
+      "category": "Percussive",
+      "factory": "soundfont"
+    },
+    {
+      "id": "guitar_fret_noise",
+      "name": "Guitar Fret Noise",
+      "gmProgram": 120,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "breath_noise",
+      "name": "Breath Noise",
+      "gmProgram": 121,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "seashore",
+      "name": "Seashore",
+      "gmProgram": 122,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "bird_tweet",
+      "name": "Bird Tweet",
+      "gmProgram": 123,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "telephone_ring",
+      "name": "Telephone Ring",
+      "gmProgram": 124,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "helicopter",
+      "name": "Helicopter",
+      "gmProgram": 125,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "applause",
+      "name": "Applause",
+      "gmProgram": 126,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "gunshot",
+      "name": "Gunshot",
+      "gmProgram": 127,
+      "category": "Sound Effects",
+      "factory": "soundfont"
+    },
+    {
+      "id": "drum-kit",
+      "name": "Drum Kit",
+      "gmProgram": null,
+      "category": "Drums",
+      "factory": "drum-machine",
+      "factoryOptions": { "instrument": "TR-808" }
+    }
+  ],
+  "categories": [
+    "Piano",
+    "Chromatic Percussion",
+    "Organ",
+    "Guitar",
+    "Bass",
+    "Strings",
+    "Ensemble",
+    "Brass",
+    "Reed",
+    "Pipe",
+    "Synth Lead",
+    "Synth Pad",
+    "Synth Effects",
+    "Ethnic",
+    "Percussive",
+    "Sound Effects",
+    "Drums"
+  ]
+}

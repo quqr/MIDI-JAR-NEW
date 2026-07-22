@@ -33,32 +33,8 @@ import type {
   StaffClef,
   NotationDisplayConfig,
 } from "@/components/Notation/types";
-
-const KEYBOARD_SETTINGS = {
-  skin: "classic",
-  from: "C3",
-  to: "B5",
-  label: "chordNote",
-  keyName: "none",
-  keyInfo: "tonicAndInterval",
-  textOpacity: 1,
-  displaySustained: true,
-  wrap: true,
-  fadeOutDuration: 0,
-  sizes: {
-    radius: 0.4,
-    height: 4,
-    ratio: 0.6,
-    bevel: true,
-  },
-  colors: {
-    white: null,
-    black: null,
-    played: null,
-    wrapped: null,
-    sustained: null,
-  },
-} as const;
+import { createKeyboardSettingsFromPiano } from "@/components/PianoKeyboard/utils";
+import type { KeyboardSettings } from "@/components/PianoKeyboard/types";
 
 const NOTATION_LABELS = ["long", "short", "symbol"];
 
@@ -82,7 +58,7 @@ export interface ChordDetailContext {
   alternativeChords: ComputedRef<TChord[]>;
   subsetChords: ComputedRef<TChord[]>;
   supersetChords: ComputedRef<TChord[]>;
-  keyboardSettings: ComputedRef<typeof KEYBOARD_SETTINGS>;
+  keyboardSettings: ComputedRef<KeyboardSettings>;
   notationLabels: ComputedRef<string[]>;
   disableUpdate: boolean;
   t: ReturnType<typeof useI18n>["t"];
@@ -183,7 +159,17 @@ export function useChordDetail() {
     getChordDegrees(chord.value!, pitchClasses),
   );
 
-  const keyboardSettings = computed(() => KEYBOARD_SETTINGS);
+  const keyboardSettings = computed(() =>
+    createKeyboardSettingsFromPiano(settingsStore.settings.piano, {
+      label: "chordNote",
+      keyName: "none",
+      keyInfo: "tonicAndInterval",
+      textOpacity: 1,
+      displaySustained: true,
+      wrap: true,
+      fadeOutDuration: 0,
+    }),
+  );
 
   const notationLabels = computed(() => NOTATION_LABELS);
 
