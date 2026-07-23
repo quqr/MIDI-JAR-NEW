@@ -6,6 +6,8 @@ import type { InstrumentCategory } from "@/stores/sampler";
 import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { Icon } from "@/components/Icon";
 
+
+
 const props = defineProps<{
   searchQuery: string;
   selectedCategory: InstrumentCategory | "all";
@@ -31,7 +33,13 @@ const categories = computed(() => [
     label: cat,
   })),
 ]);
+import { batchDownloadInstruments } from "@/composables/useSamplerService";
+async function batchDownloadInstrumentsFunction() {
+  // 批量下载所有音色
+  const result = await batchDownloadInstruments(samplerStore.gmInstrumentCatalog.map((inst) => inst.id));
+  console.log(result);
 
+}
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
@@ -52,11 +60,12 @@ async function handleClearAllCache() {
 
   // 清除所有音源的缓存状态
   for (const inst of samplerStore.gmInstrumentCatalog) {
-    samplerStore.updateInstrumentStatus(inst.id, {
-      loaded: false,
-      loading: false,
-      error: undefined,
-    });
+    const record = samplerStore.instruments[inst.id];
+    if (record) {
+      record.loaded = false;
+      record.loading = false;
+      record.error = undefined;
+    }
   }
 }
 
@@ -157,6 +166,17 @@ onUnmounted(() => {
       >
         <Icon name="trash" :size="16" aria-hidden="true" />
         <span>{{ t("sampler.clearCache") }}</span>
+      </button>
+      <button
+        class="btn btn-sm btn-primary w-full"
+        :disabled="samplerStore.isBatchDownloading"
+        @click="batchDownloadInstrumentsFunction"
+      >
+        <Icon name="refresh" :size="16" aria-hidden="true" />
+        <span v-if="samplerStore.isBatchDownloading">
+          下载中 {{ samplerStore.batchDownloadCompleted }}/{{ samplerStore.batchDownloadTotal }}
+        </span>
+        <span v-else>批量下载</span>
       </button>
     </div>
   </div>

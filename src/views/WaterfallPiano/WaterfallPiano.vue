@@ -7,8 +7,6 @@
         :mode="engine.mode.value"
         :show-fps="ui.showFPS.value"
         @ready="engine.onEngineReady"
-        @note-on="midi.onCanvasNoteOn"
-        @note-off="midi.onCanvasNoteOff"
       />
       <div
         class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none"

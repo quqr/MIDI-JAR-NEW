@@ -318,21 +318,21 @@
       "name": "Vibraphone",
       "gmProgram": 11,
       "category": "Chromatic Percussion",
-      "factory": "mallet"
+      "factory": "soundfont"
     },
     {
       "id": "marimba",
       "name": "Marimba",
       "gmProgram": 12,
       "category": "Chromatic Percussion",
-      "factory": "mallet"
+      "factory": "soundfont"
     },
     {
       "id": "xylophone",
       "name": "Xylophone",
       "gmProgram": 13,
       "category": "Chromatic Percussion",
-      "factory": "mallet"
+      "factory": "soundfont"
     },
     {
       "id": "tubular_bells",
@@ -846,7 +846,7 @@
       "factory": "soundfont"
     },
     {
-      "id": "lead_8_bass_lead",
+      "id": "lead_8_bass__lead",
       "name": "Lead 8 (Bass + Lead)",
       "gmProgram": 87,
       "category": "Synth Lead",
@@ -958,7 +958,7 @@
       "factory": "soundfont"
     },
     {
-      "id": "fx_8_sci-fi",
+      "id": "fx_8_scifi",
       "name": "FX 8 (Sci-fi)",
       "gmProgram": 103,
       "category": "Synth Effects",

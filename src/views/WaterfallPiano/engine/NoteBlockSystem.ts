@@ -9,19 +9,10 @@ import {
   BLACK_KEY_WIDTH_RATIO,
 } from "./NoteBlockRenderer";
 import { NoteBlockStateSync } from "./NoteBlockStateSync";
+import { Event } from "@/utils/delegate";
 
 /** note block 的渲染模式：realtime 为实时下落，synthesia 为跟随传输时间线滚动 */
 export type NoteBlockMode = "realtime" | "synthesia";
-
-/** note block 生命周期的回调集合 */
-export interface NoteBlockCallbacks {
-  onNoteTrigger?: (
-    midi: number,
-    velocity: number,
-    hand: "left" | "right" | "unknown",
-  ) => void;
-  onNoteEnd?: (midi: number) => void;
-}
 
 /**
  * 瀑布式钢琴的 note block 管理系统（Facade）
@@ -46,7 +37,8 @@ export class NoteBlockSystem {
   private synthesia: SynthesiaModeController;
   private renderer: NoteBlockRenderer;
   private stateSync: NoteBlockStateSync;
-  callbacks: NoteBlockCallbacks = {};
+  readonly onNoteTrigger = new Event<{ midi: number; velocity: number; hand?: string }>();
+  readonly onNoteEnd = new Event<{ midi: number }>();
   /** 预分配的 block positions 缓冲区，避免每帧 new Array + new Object */
   private _blockPosBuffer: Array<{
     midi: number;
@@ -70,7 +62,8 @@ export class NoteBlockSystem {
       () => this.height,
       () => this.particleConfig,
       () => this.mode,
-      () => this.callbacks,
+      this.onNoteTrigger,
+      this.onNoteEnd,
       (note) => this.noteKey(note),
     );
     this.renderer = new NoteBlockRenderer(

@@ -2,10 +2,15 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import type { LoadProgress } from "smplr";
 import { loadFromStorage, saveToStorage } from "@/helpers/storage";
+import { InstrumentEvents } from "@/types/instrument-events";
+import { createLogger } from "@/utils/logger";
 
 import instrumentsData from "@/data/instruments.json";
 
 const SAMPLER_STORAGE_KEY = "midi-jar-sampler-state";
+const SAMPLER_CACHE_KEY = "midi-jar-sampler-cached-instruments";
+
+const logger = createLogger("sampler");
 
 /** 音色工厂类型 */
 export type InstrumentFactoryType =
@@ -30,6 +35,8 @@ export type InstrumentInfo = {
   loaded?: boolean;
   loading?: boolean;
   error?: string;
+  /** 加载进度 (0-100) */
+  loadProgress?: number;
 };
 
 /** GM 音色分类 */
@@ -102,6 +109,9 @@ export const INSTRUMENT_CATEGORIES: InstrumentCategory[] = [
   "Drums",
 ];
 
+// ─── 模块级事件实例（与 service 共享） ───
+export const instrumentEvents = new InstrumentEvents();
+
 export const useSamplerStore = defineStore("sampler", () => {
   // --- State ---
   const currentInstrumentId = ref<string | null>(null);
@@ -116,6 +126,14 @@ export const useSamplerStore = defineStore("sampler", () => {
   const instrumentCatalog = ref<InstrumentInfo[]>(DEFAULT_INSTRUMENTS);
   /** 是否正在刷新音色列表 */
   const isRefreshing = ref(false);
+  /** 是否正在批量下载 */
+  const isBatchDownloading = ref(false);
+  /** 批量下载进度 (0-100) */
+  const batchDownloadProgress = ref(0);
+  /** 批量下载总数 */
+  const batchDownloadTotal = ref(0);
+  /** 批量下载已完成数 */
+  const batchDownloadCompleted = ref(0);
 
   // --- 持久化：仅保存 currentInstrumentId 和 soundEnabled ---
   const savedState = loadFromStorage<{
@@ -163,6 +181,15 @@ export const useSamplerStore = defineStore("sampler", () => {
     return instrumentCatalog.value;
   });
 
+  /** GM 音色字典（O(1) 查找） */
+  const gmInstrumentCatalogMap = computed<Map<string, InstrumentInfo>>(() => {
+    const map = new Map<string, InstrumentInfo>();
+    for (const inst of instrumentCatalog.value) {
+      map.set(inst.id, inst);
+    }
+    return map;
+  });
+
   const instrumentsByCategory = computed<
     Record<InstrumentCategory, InstrumentInfo[]>
   >(() => {
@@ -174,46 +201,62 @@ export const useSamplerStore = defineStore("sampler", () => {
     return result as Record<InstrumentCategory, InstrumentInfo[]>;
   });
 
-  // --- Actions ---
+  // --- Actions（仅保留非事件驱动的） ---
   function registerInstrument(info: InstrumentInfo) {
     instruments.value[info.id] = { ...info };
   }
 
-  function setCurrentInstrument(id: string) {
-    currentInstrumentId.value = id;
-  }
-
-  function setLoading(value: boolean) {
-    isLoading.value = value;
-  }
-
-  function setReady(value: boolean) {
-    isReady.value = value;
-  }
-
-  function setLoadProgress(progress: LoadProgress) {
-    loadProgress.value = progress;
-  }
-
-  function setError(msg: string | null) {
-    error.value = msg;
-  }
-
-  function updateInstrumentStatus(
-    id: string,
-    status: { loaded?: boolean; loading?: boolean; error?: string },
-  ) {
-    const inst = instruments.value[id];
-    if (inst) {
-      if (status.loaded !== undefined) inst.loaded = status.loaded;
-      if (status.loading !== undefined) inst.loading = status.loading;
-      if (status.error !== undefined) inst.error = status.error;
+  /**
+   * 持久化已缓存乐器列表到 localStorage
+   */
+  function persistCachedInstruments() {
+    const cachedIds: string[] = [];
+    for (const [id, inst] of Object.entries(instruments.value)) {
+      if (inst.loaded) {
+        cachedIds.push(id);
+      }
     }
+    saveToStorage(SAMPLER_CACHE_KEY, cachedIds);
+  }
+
+  /**
+   * 从 localStorage 恢复已缓存乐器的 UI 状态
+   * （实际音频数据在 CacheStorage 中，刷新不丢失）
+   */
+  function restoreCachedInstruments() {
+    const cachedIds = loadFromStorage<string[]>({
+      key: SAMPLER_CACHE_KEY,
+      defaultValue: [],
+    });
+
+    if (cachedIds.length === 0) return;
+
+    for (const id of cachedIds) {
+      // 在 catalog 中查找乐器信息
+      const info = instrumentCatalog.value.find((inst) => inst.id === id);
+      if (info) {
+        instruments.value[id] = {
+          ...info,
+          loaded: true,
+          loading: false,
+          loadProgress: 100,
+        };
+      }
+    }
+
+    logger.debug("[sampler] Restored %d cached instruments from localStorage", cachedIds.length);
+  }
+
+  // 初始化时恢复缓存状态
+  restoreCachedInstruments();
+
+  // 如果有保存的当前乐器且已缓存，恢复 isReady 状态
+  if (currentInstrumentId.value && instruments.value[currentInstrumentId.value]?.loaded) {
+    isReady.value = true;
   }
 
   /**
    * 从 JSON 文件加载音色列表
-   * @param jsonPath JSON 文件路径（默认为内置的 instruments.json）
    */
   async function loadInstrumentsFromJSON(
     jsonPath?: string,
@@ -233,7 +276,6 @@ export const useSamplerStore = defineStore("sampler", () => {
 
   /**
    * 刷新音色列表
-   * 重新从 JSON 文件加载音色列表并更新 catalog
    */
   async function refreshInstrumentList(): Promise<void> {
     if (isRefreshing.value) return;
@@ -247,6 +289,106 @@ export const useSamplerStore = defineStore("sampler", () => {
     }
   }
 
+  // --- 事件订阅：store 自行响应事件更新状态 ---
+  let eventsSubscribed = false;
+
+  /**
+   * 订阅事件（延迟初始化，避免循环依赖）
+   * 在 service 初始化后调用
+   */
+  function subscribeToEvents() {
+    if (eventsSubscribed) return;
+    eventsSubscribed = true;
+
+    // 加载开始 → 更新全局状态
+    instrumentEvents.onLoadStart.add((args) => {
+      registerInstrument(args.instrument);
+      isLoading.value = true;
+      error.value = null;
+      currentInstrumentId.value = args.instrumentId;
+
+      const inst = instruments.value[args.instrumentId];
+      if (inst) {
+        inst.loading = true;
+        inst.loadProgress = 0;
+      }
+    });
+
+    // 加载进度 → 更新单个乐器进度
+    instrumentEvents.onLoadProgress.add((args) => {
+      const inst = instruments.value[args.instrumentId];
+      if (inst) {
+        inst.loadProgress = args.progress;
+      }
+      // 同步更新全局进度（兼容旧代码）
+      loadProgress.value = {
+        loaded: args.progress,
+        total: 100,
+      };
+    });
+
+    // 加载成功 → 更新状态 + 持久化缓存列表
+    instrumentEvents.onLoadSuccess.add((args) => {
+      isReady.value = true;
+      isLoading.value = false;
+      currentInstrumentId.value = args.instrumentId;
+
+      const inst = instruments.value[args.instrumentId];
+      if (inst) {
+        inst.loaded = true;
+        inst.loading = false;
+        inst.loadProgress = 100;
+      }
+
+      // 持久化已缓存乐器列表
+      persistCachedInstruments();
+    });
+
+    // 加载失败 → 更新状态 + 从缓存列表移除
+    instrumentEvents.onLoadError.add((args) => {
+      isLoading.value = false;
+      error.value = args.error.message;
+
+      const inst = instruments.value[args.instrumentId];
+      if (inst) {
+        inst.loading = false;
+        inst.error = args.error.message;
+        inst.loadProgress = 0;
+        inst.loaded = false;
+      }
+
+      // 更新持久化缓存列表
+      persistCachedInstruments();
+    });
+
+    // 缓存切换 → 更新状态
+    instrumentEvents.onCacheSwitch.add((args) => {
+      currentInstrumentId.value = args.instrumentId;
+      isReady.value = true;
+      isLoading.value = false;
+    });
+
+    // 批量下载开始
+    instrumentEvents.onBatchStart.add((args) => {
+      isBatchDownloading.value = true;
+      batchDownloadTotal.value = args.total;
+      batchDownloadCompleted.value = 0;
+      batchDownloadProgress.value = 0;
+    });
+
+    // 批量下载进度
+    instrumentEvents.onBatchProgress.add((args) => {
+      batchDownloadCompleted.value = args.completed;
+      batchDownloadProgress.value = args.progress;
+    });
+
+    // 批量下载完成
+    instrumentEvents.onBatchComplete.add(() => {
+      isBatchDownloading.value = false;
+      batchDownloadProgress.value = 100;
+    });
+  }
+
   return {
     // state
     currentInstrumentId,
@@ -258,20 +400,20 @@ export const useSamplerStore = defineStore("sampler", () => {
     soundEnabled,
     instrumentCatalog,
     isRefreshing,
+    isBatchDownloading,
+    batchDownloadProgress,
+    batchDownloadTotal,
+    batchDownloadCompleted,
     // getters
     currentInstrument,
     gmInstrumentCatalog,
+    gmInstrumentCatalogMap,
     instrumentsByCategory,
     savedInstrumentId,
     // actions
     registerInstrument,
-    setCurrentInstrument,
-    setLoading,
-    setReady,
-    setLoadProgress,
-    setError,
-    updateInstrumentStatus,
     loadInstrumentsFromJSON,
     refreshInstrumentList,
+    subscribeToEvents,
   };
 });

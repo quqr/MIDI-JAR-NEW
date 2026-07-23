@@ -46,11 +46,6 @@ const filteredInstruments = computed(() => {
   return result;
 });
 
-const loadProgressPercent = computed(() => {
-  const { loaded, total } = samplerStore.loadProgress;
-  if (total === 0) return 0;
-  return Math.round((loaded / total) * 100);
-});
 
 // 暂时使用默认键盘设置
 const keyboardSettings = computed(() => undefined);
@@ -60,7 +55,7 @@ async function selectInstrument(info: InstrumentInfo) {
   try {
     await samplerService.loadInstrument(info.id);
     // 更新该音源的缓存大小
-    updateInstrumentCacheSize(info.id);
+    await updateInstrumentCacheSize(info.id);
   } catch {
     // 错误已由 store 处理
   }
@@ -97,9 +92,8 @@ async function handleClearInstrumentCache(instrumentId: string, event: Event) {
   instrumentCacheSizes.value[instrumentId] = 0;
 
   // 更新 store 中的缓存状态
-  samplerStore.updateInstrumentStatus(instrumentId, {
-    loaded: false,
-  });
+  const inst = samplerStore.instruments[instrumentId];
+  if (inst) inst.loaded = false;
 
   logger.info("Cleared cache for instrument: %s", instrumentId);
 }
@@ -172,7 +166,7 @@ onMounted(async () => {
         updateInstrumentCacheSize(inst.id);
       }
     }
-  }, 10_000);
+  }, 1000);
 });
 
 onUnmounted(() => {
@@ -253,36 +247,20 @@ onUnmounted(() => {
 
                 <!-- 加载进度（radial-progress） -->
                 <div
-                  v-if="
-                    samplerStore.instruments[inst.id]?.loading &&
-                    samplerStore.currentInstrumentId === inst.id
-                  "
+                  v-if="samplerStore.instruments[inst.id]?.loading"
                   class="flex items-center justify-center mt-2"
                 >
                   <div
                     class="radial-progress text-primary"
                     :style="{
-                      '--value': loadProgressPercent,
+                      '--value': samplerStore.instruments[inst.id]?.loadProgress || 0,
                       '--size': '2.5rem',
                       '--thickness': '3px',
                     }"
                     role="progressbar"
-                    :aria-valuenow="loadProgressPercent"
+                    :aria-valuenow="samplerStore.instruments[inst.id]?.loadProgress || 0"
                   >
-                    {{ loadProgressPercent }}%
-                  </div>
-                </div>
-
-                <!-- 错误显示 -->
-                <div
-                  v-else-if="samplerStore.instruments[inst.id]?.error"
-                  class="mt-2"
-                >
-                  <div class="badge badge-error badge-sm gap-1">
-                    <Icon name="error" :size="12" aria-hidden="true" />
-                    <span class="text-xs truncate max-w-[120px]">{{
-                      samplerStore.instruments[inst.id]?.error
-                    }}</span>
+                    {{ samplerStore.instruments[inst.id]?.loadProgress || 0 }}%
                   </div>
                 </div>
 

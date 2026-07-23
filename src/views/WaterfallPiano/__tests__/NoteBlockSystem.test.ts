@@ -111,7 +111,7 @@ describe("NoteBlockSystem", () => {
         },
       ];
       const triggerSpy = vi.fn();
-      nbs.callbacks = { onNoteTrigger: triggerSpy };
+      nbs.onNoteTrigger.add(triggerSpy);
       nbs.scheduleSynthesiaNotes(notes);
       nbs.setTransportTime(0);
       nbs.setTransportPlaying(true);
@@ -135,7 +135,7 @@ describe("NoteBlockSystem", () => {
         },
       ];
       const triggerSpy = vi.fn();
-      nbs.callbacks = { onNoteTrigger: triggerSpy };
+      nbs.onNoteTrigger.add(triggerSpy);
       nbs.scheduleSynthesiaNotes(notes);
       nbs.setTransportTime(0);
       nbs.setTransportPlaying(true);
@@ -143,7 +143,7 @@ describe("NoteBlockSystem", () => {
       nbs.setTransportTime(1);
       nbs.update(0.016);
       expect(triggerSpy).toHaveBeenCalledTimes(1);
-      expect(triggerSpy).toHaveBeenCalledWith(60, 100, "right");
+      expect(triggerSpy).toHaveBeenCalledWith({ midi: 60, velocity: 100, hand: "right" });
     });
 
     it("推进 transportTime 到 note.time+duration → onNoteEnd 触发", () => {
@@ -161,7 +161,7 @@ describe("NoteBlockSystem", () => {
         },
       ];
       const endSpy = vi.fn();
-      nbs.callbacks = { onNoteEnd: endSpy };
+      nbs.onNoteEnd.add(endSpy);
       nbs.scheduleSynthesiaNotes(notes);
       nbs.setTransportTime(0);
       nbs.setTransportPlaying(true);
@@ -171,7 +171,7 @@ describe("NoteBlockSystem", () => {
       nbs.setTransportTime(1.5);
       nbs.update(0.016);
       expect(endSpy).toHaveBeenCalledTimes(1);
-      expect(endSpy).toHaveBeenCalledWith(60);
+      expect(endSpy).toHaveBeenCalledWith({ midi: 60 });
     });
 
     it("transportPlaying=false 时不更新 synthesia", () => {
@@ -189,7 +189,7 @@ describe("NoteBlockSystem", () => {
         },
       ];
       const triggerSpy = vi.fn();
-      nbs.callbacks = { onNoteTrigger: triggerSpy };
+      nbs.onNoteTrigger.add(triggerSpy);
       nbs.scheduleSynthesiaNotes(notes);
       nbs.setTransportTime(0);
       nbs.setTransportPlaying(false);

@@ -1,7 +1,8 @@
 import type { ParticleConfig, ScheduledNote } from "../types";
 import type { NoteBlock, NoteBlockPool } from "./NoteBlockPool";
 import type { RealtimeModeController } from "./RealtimeModeController";
-import type { NoteBlockMode, NoteBlockCallbacks } from "./NoteBlockSystem";
+import type { NoteBlockMode } from "./NoteBlockSystem";
+import type { Event } from "@/utils/delegate";
 import { createLogger } from "@/utils/logger";
 
 const logger = createLogger("SynthesiaModeController");
@@ -35,7 +36,8 @@ export class SynthesiaModeController {
     private readonly getHeight: () => number,
     private readonly getParticleConfig: () => ParticleConfig | null,
     private readonly getMode: () => NoteBlockMode,
-    private readonly getCallbacks: () => NoteBlockCallbacks,
+    private readonly onNoteTrigger: Event<{ midi: number; velocity: number; hand?: string }>,
+    private readonly onNoteEnd: Event<{ midi: number }>,
     private readonly noteKey: NoteKeyFn,
   ) {}
 
@@ -119,7 +121,6 @@ export class SynthesiaModeController {
     const len = notes.length;
     const prevTime = this.lastTransportTime;
     const active = this.getActive();
-    const callbacks = this.getCallbacks();
 
     // 检测向后跳转或循环：transport 时间回退超过 0.1 秒
     if (t < this.lastTransportTime - 0.1) {
@@ -191,7 +192,7 @@ export class SynthesiaModeController {
         logger.debug(
           `Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
         );
-        callbacks.onNoteTrigger?.(note.midi, note.velocity, note.hand);
+        this.onNoteTrigger.internalInvoke({ midi: note.midi, velocity: note.velocity, hand: note.hand });
         frameTriggered++;
       }
 
@@ -199,7 +200,7 @@ export class SynthesiaModeController {
       if (!this.endedNoteKeys.has(key) && t >= note.time + note.duration) {
         this.endedNoteKeys.add(key);
         this.realtime.removeActiveMidi(note.midi);
-        callbacks.onNoteEnd?.(note.midi);
+        this.onNoteEnd.internalInvoke({ midi: note.midi });
       }
 
       // ── 段3: 视觉方块管理（仅 synthesia 模式）──

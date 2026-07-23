@@ -30,6 +30,7 @@ vi.mock("@/engine/fluid", () => ({
 }));
 
 import { WaterfallEngine } from "../engine/WaterfallEngine";
+import { waterfallPianoEvents } from "../events";
 
 function mockCanvas(): HTMLCanvasElement {
   const gradient = { addColorStop: () => {} };
@@ -114,27 +115,29 @@ describe("WaterfallEngine", () => {
   });
 
   describe("音符触发", () => {
-    it("triggerNoteOn → soundEngine.noteOn + callbacks.onNoteOn 被调用", () => {
+    it("triggerNoteOn → soundEngine.noteOn + onNoteOn 事件被触发", () => {
       engine.init(mockCanvases(), cloneSettings());
       const se = mockSoundEngine();
       engine.setSoundEngine(se);
       const onNoteOnSpy = vi.fn();
-      engine.callbacks = { onNoteOn: onNoteOnSpy };
+      const token = waterfallPianoEvents.onNoteOn.add(onNoteOnSpy);
       engine.triggerNoteOn(60, 100);
+      waterfallPianoEvents.onNoteOn.remove(token);
       expect(se.noteOn).toHaveBeenCalledWith(60, 100);
-      expect(onNoteOnSpy).toHaveBeenCalledWith(60, 100);
+      expect(onNoteOnSpy).toHaveBeenCalledWith({ midi: 60, velocity: 100 });
     });
 
-    it("triggerNoteOff → soundEngine.noteOff + callbacks.onNoteOff 被调用", () => {
+    it("triggerNoteOff → soundEngine.noteOff + onNoteOff 事件被触发", () => {
       engine.init(mockCanvases(), cloneSettings());
       const se = mockSoundEngine();
       engine.setSoundEngine(se);
       const onNoteOffSpy = vi.fn();
-      engine.callbacks = { onNoteOff: onNoteOffSpy };
+      const token = waterfallPianoEvents.onNoteOff.add(onNoteOffSpy);
       engine.triggerNoteOn(60, 100);
       engine.triggerNoteOff(60);
+      waterfallPianoEvents.onNoteOff.remove(token);
       expect(se.noteOff).toHaveBeenCalledWith(60);
-      expect(onNoteOffSpy).toHaveBeenCalledWith(60);
+      expect(onNoteOffSpy).toHaveBeenCalledWith({ midi: 60 });
     });
   });
 

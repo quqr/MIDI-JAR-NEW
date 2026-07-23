@@ -22,8 +22,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "noteOn", midi: number, velocity: number): void;
-  (e: "noteOff", midi: number): void;
   (e: "ready", engine: WaterfallEngine): void;
 }>();
 
@@ -78,7 +76,6 @@ function onKeyDown(e: KeyboardEvent): void {
 
   const velocity = props.settings.keyboard.defaultVelocity;
   engine?.triggerNoteOn(midi, velocity);
-  emit("noteOn", midi, velocity);
 }
 
 function onKeyUp(e: KeyboardEvent): void {
@@ -88,7 +85,6 @@ function onKeyUp(e: KeyboardEvent): void {
   if (!heldKeys.has(key)) return;
   heldKeys.delete(key);
   engine?.triggerNoteOff(midi);
-  emit("noteOff", midi);
 }
 
 /**
@@ -99,7 +95,6 @@ function clearAllHeld(): void {
     const midi = midiFromKey(key);
     if (midi !== null) {
       engine?.triggerNoteOff(midi);
-      emit("noteOff", midi);
     }
   }
   heldKeys.clear();
@@ -133,10 +128,6 @@ onMounted(async () => {
   );
   engine.setSoundEngine(soundEngine);
   engine.setMode(props.mode);
-  engine.callbacks = {
-    onNoteOn: (midi, vel) => emit("noteOn", midi, vel),
-    onNoteOff: (midi) => emit("noteOff", midi),
-  };
 
   const container = containerRef.value;
   const doResize = () => {

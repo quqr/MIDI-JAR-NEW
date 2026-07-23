@@ -12,6 +12,7 @@ import {
   type FluidSimulationConfig,
 } from "@/engine/fluid";
 import { createLogger } from "@/utils/logger";
+import { waterfallPianoEvents } from "../events";
 
 const logger = createLogger("WaterfallEngine");
 
@@ -20,11 +21,6 @@ export interface WaterfallCanvases {
   fluid: HTMLCanvasElement;
   waterfall: HTMLCanvasElement;
   keyboard: HTMLCanvasElement;
-}
-
-interface EngineCallbacks {
-  onNoteOn?: (midi: number, velocity: number) => void;
-  onNoteOff?: (midi: number) => void;
 }
 
 const DEFAULT_VELOCITY = 90;
@@ -66,7 +62,6 @@ export class WaterfallEngine {
   /** 缓存的 waterfall 2D 上下文引用，避免每帧 getContext 调用 */
   private _waterfallCtx: CanvasRenderingContext2D | null = null;
   public showFPS = true;
-  callbacks: EngineCallbacks = {};
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
   /** 资源清理任务注册表（增强型 RAII 模式） */
@@ -102,10 +97,8 @@ export class WaterfallEngine {
         settings.aura,
       );
       this.backgroundRenderer.init(canvases.background, settings.background);
-      this.noteBlockSystem.callbacks = {
-        onNoteTrigger: (midi, vel) => this.onSynthesiaTrigger(midi, vel),
-        onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
-      };
+      this.noteBlockSystem.onNoteTrigger.add((args) => this.onSynthesiaTrigger(args.midi, args.velocity));
+      this.noteBlockSystem.onNoteEnd.add((args) => this.onSynthesiaEnd(args.midi));
       this.maybeInitFluid();
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
       this.prevFluidEnabled = settings.background.fluidEnabled;
@@ -360,7 +353,7 @@ export class WaterfallEngine {
         this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
       }
     }
-    this.callbacks.onNoteOn?.(midi, velocity);
+    waterfallPianoEvents.onNoteOn.internalInvoke({ midi, velocity });
   }
 
   triggerNoteOff(midi: number): void {
@@ -369,7 +362,7 @@ export class WaterfallEngine {
       this.noteBlockSystem.releaseRealtimeNote(midi);
     }
     this.keyboardRenderer.clearHighlight(midi);
-    this.callbacks.onNoteOff?.(midi);
+    waterfallPianoEvents.onNoteOff.internalInvoke({ midi });
   }
 
   /**
@@ -389,6 +382,7 @@ export class WaterfallEngine {
         this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
       }
     }
+    waterfallPianoEvents.onNoteOn.internalInvoke({ midi, velocity });
   }
 
   /**
@@ -401,6 +395,7 @@ export class WaterfallEngine {
       this.noteBlockSystem.releaseRealtimeNoteFromMidi(midi);
     }
     this.keyboardRenderer.clearHighlight(midi);
+    waterfallPianoEvents.onNoteOff.internalInvoke({ midi });
   }
 
   /** FPS 叠加层渲染 */

@@ -22,6 +22,8 @@ import {
 } from "../strategies/modeStrategies";
 import { useRealtimeMidi } from "./useRealtimeMidi";
 import type { useWaterfallPianoStore } from "../stores/WaterfallPiano";
+import { waterfallPianoEvents } from "../events";
+import type { DelegateToken } from "@/utils/delegate";
 
 const logger = createLogger("WaterfallMidi");
 
@@ -77,6 +79,8 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
   const recorderRef = shallowRef<Recorder | null>(null);
   let player: MidiFilePlayer | null = null;
   let recorder: Recorder | null = null;
+  let noteOnToken: DelegateToken | null = null;
+  let noteOffToken: DelegateToken | null = null;
 
   /**
    * 根据当前 contentType 与播放源创建播放策略
@@ -335,6 +339,14 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
       right: store.settings.midiFile.rightHandTrackIdx,
       left: store.settings.midiFile.leftHandTrackIdx,
     });
+
+    // 订阅音符事件，替代 Vue 组件回调桥接
+    noteOnToken = waterfallPianoEvents.onNoteOn.add(({ midi, velocity }) => {
+      onCanvasNoteOn(midi, velocity);
+    });
+    noteOffToken = waterfallPianoEvents.onNoteOff.add(({ midi }) => {
+      onCanvasNoteOff(midi);
+    });
   });
 
   // 监听左右手轨道索引变化，同步到 player
@@ -349,6 +361,8 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
   );
 
   onUnmounted(() => {
+    if (noteOnToken) waterfallPianoEvents.onNoteOn.remove(noteOnToken);
+    if (noteOffToken) waterfallPianoEvents.onNoteOff.remove(noteOffToken);
     player?.dispose();
     recorder?.dispose();
     player = null;
@@ -365,8 +379,6 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
     selectedTracks,
     getStrategy,
     onEngineInit,
-    onCanvasNoteOn,
-    onCanvasNoteOff,
     onLoadMidi,
     onToggleRecord,
     onPlay,

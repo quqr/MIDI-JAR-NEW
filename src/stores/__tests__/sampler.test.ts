@@ -65,29 +65,29 @@ describe("useSamplerStore", () => {
     expect(store.instruments["test-piano"].name).toBe("Test Piano");
   });
 
-  it("should set current instrument id", () => {
+  it("should set current instrument id via ref", () => {
     const store = useSamplerStore();
-    store.setCurrentInstrument("test-piano");
+    store.currentInstrumentId = "test-piano";
     expect(store.currentInstrumentId).toBe("test-piano");
   });
 
-  it("should track loading state", () => {
+  it("should track loading state via ref", () => {
     const store = useSamplerStore();
-    store.setLoading(true);
+    store.isLoading = true;
     expect(store.isLoading).toBe(true);
-    store.setLoading(false);
+    store.isLoading = false;
     expect(store.isLoading).toBe(false);
   });
 
-  it("should update load progress", () => {
+  it("should update load progress via ref", () => {
     const store = useSamplerStore();
-    store.setLoadProgress({ loaded: 5, total: 10 });
+    store.loadProgress = { loaded: 5, total: 10 };
     expect(store.loadProgress).toEqual({ loaded: 5, total: 10 });
   });
 
-  it("should set ready state", () => {
+  it("should set ready state via ref", () => {
     const store = useSamplerStore();
-    store.setReady(true);
+    store.isReady = true;
     expect(store.isReady).toBe(true);
   });
 
@@ -99,7 +99,7 @@ describe("useSamplerStore", () => {
       category: "Percussive",
       factory: "soundfont",
     });
-    store.setCurrentInstrument("test-marimba");
+    store.currentInstrumentId = "test-marimba";
     expect(store.currentInstrument?.name).toBe("Marimba");
   });
 
