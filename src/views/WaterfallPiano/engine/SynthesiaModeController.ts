@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings, ScheduledNote } from "../types";
+import type { ParticleConfig, ScheduledNote } from "../types";
 import type { NoteBlock, NoteBlockPool } from "./NoteBlockPool";
 import type { RealtimeModeController } from "./RealtimeModeController";
 import type { NoteBlockMode, NoteBlockCallbacks } from "./NoteBlockSystem";
@@ -33,7 +33,7 @@ export class SynthesiaModeController {
     private readonly getActive: () => NoteBlock[],
     private readonly realtime: RealtimeModeController,
     private readonly getHeight: () => number,
-    private readonly getSettings: () => WaterfallPianoSettings | null,
+    private readonly getParticleConfig: () => ParticleConfig | null,
     private readonly getMode: () => NoteBlockMode,
     private readonly getCallbacks: () => NoteBlockCallbacks,
     private readonly noteKey: NoteKeyFn,
@@ -114,7 +114,7 @@ export class SynthesiaModeController {
    */
   update(pps: number): void {
     const t = this.transportTime;
-    const lookAhead = this.settings?.particles.lookAhead ?? 3;
+    const lookAhead = this.particleConfig?.lookAhead ?? 3;
     const notes = this.synthesiaNotes;
     const len = notes.length;
     const prevTime = this.lastTransportTime;
@@ -297,7 +297,7 @@ export class SynthesiaModeController {
     active.length = 0;
   }
 
-  private get settings(): WaterfallPianoSettings | null {
-    return this.getSettings();
+  private get particleConfig(): ParticleConfig | null {
+    return this.getParticleConfig();
   }
 }

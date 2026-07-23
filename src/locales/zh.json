@@ -479,21 +479,23 @@
       "labelMode": "标签模式",
       "labelNone": "无",
       "labelPitchClass": "音级",
-      "labelNote": "音名",
+      "labelNote": "音符",
       "labelChordNote": "和弦音",
       "labelInterval": "音程",
       "keyNameMode": "键名模式",
       "keyNameNone": "无",
-      "keyNameOctave": "八度",
+      "keyNameOctave": "带八度",
       "keyNamePitchClass": "音级",
-      "keyNameNote": "音名",
+      "keyNameNote": "音符",
       "showNoteNames": "显示音名",
       "colors": "颜色",
+      "useThemeColors": "使用主题颜色",
+      "gradientIntensity": "渐变强度",
       "whiteKeyColor": "白键颜色",
       "blackKeyColor": "黑键颜色",
-      "pressedKeyColor": "按下颜色",
+      "pressedKeyColor": "按下键颜色",
       "appearance": "外观",
-      "keyCornerRadius": "圆角半径"
+      "keyCornerRadius": "键圆角半径"
     }
   },
   "overlay": {

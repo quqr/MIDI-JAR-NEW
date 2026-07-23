@@ -33,8 +33,9 @@ import type {
   StaffClef,
   NotationDisplayConfig,
 } from "@/components/Notation/types";
-import { createKeyboardSettingsFromPiano } from "@/components/PianoKeyboard/utils";
-import type { KeyboardSettings } from "@/components/PianoKeyboard/types";
+// 注意：钢琴相关工具函数暂时未使用，保留注释以备将来使用
+// import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils";
+import type { KeyboardSettings } from "@/types/settings";
 
 const NOTATION_LABELS = ["long", "short", "symbol"];
 
@@ -159,17 +160,36 @@ export function useChordDetail() {
     getChordDegrees(chord.value!, pitchClasses),
   );
 
-  const keyboardSettings = computed(() =>
-    createKeyboardSettingsFromPiano(settingsStore.settings.piano, {
-      label: "chordNote",
-      keyName: "none",
-      keyInfo: "tonicAndInterval",
-      textOpacity: 1,
-      displaySustained: true,
-      wrap: true,
-      fadeOutDuration: 0,
-    }),
-  );
+  // 暂时使用默认键盘设置，待后续恢复键盘设置功能
+  const defaultKeyboardSettings: KeyboardSettings = {
+    skin: "classic",
+    from: "C3",
+    to: "C5",
+    label: "pitchClass",
+    keyName: "note",
+    keyInfo: "none",
+    fadeOutDuration: 0,
+    textOpacity: 1,
+    displaySustained: true,
+    wrap: false,
+    sizes: {
+      radius: 0,
+      height: 0,
+      ratio: 0,
+      bevel: false,
+    },
+    colors: {
+      white: null,
+      black: null,
+      played: null,
+      wrapped: null,
+      sustained: null,
+    },
+  };
+
+  const keyboardSettings = computed(() => defaultKeyboardSettings);
+
+  // ... 其他代码继续 ...
 
   const notationLabels = computed(() => NOTATION_LABELS);
 

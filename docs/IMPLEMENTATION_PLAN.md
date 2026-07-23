@@ -8,9 +8,11 @@
 ## 📋 项目概览
 
 ### 目标
+
 改进 MIDI-JAR 项目的采样器页面和钢琴设置，修复多个 bug，并优化代码结构。
 
 ### 进度
+
 - **已完成**：60%
 - **待实施**：40%
 
@@ -19,6 +21,7 @@
 ## ✅ 阶段1：已完成任务
 
 ### 任务1：钢琴设置页面 i18n 国际化
+
 - **状态**：✅ 已完成
 - **耗时**：约 1 小时
 - **关键成果**：
@@ -26,6 +29,7 @@
   - 更新了 zh.json 和 en.json 文件
 
 ### 任务2：清理无用代码
+
 - **状态**：✅ 已完成（初步分析）
 - **耗时**：约 30 分钟
 - **关键成果**：
@@ -33,6 +37,7 @@
   - 建议保留现有代码
 
 ### 任务3：修复 pressed color bug
+
 - **状态**：✅ 已完成
 - **耗时**：约 2 小时
 - **关键成果**：
@@ -46,9 +51,11 @@
 ## 🚧 阶段2：采样器页面改进（高优先级）
 
 ### 任务5.1：页面布局重新设计
+
 **预估耗时**：3-4 小时
 
 #### 子任务
+
 1. **创建 Navbar 组件**
    - 文件：`src/views/Sampler/components/SamplerNavbar.vue`
    - 内容：返回按钮 + 标题
@@ -64,6 +71,7 @@
    - 结构：Navbar + Sidebar + 主内容区
 
 #### 验收标准
+
 - [ ] Navbar 在页面最顶部显示
 - [ ] Sidebar 上部显示分类列表和搜索框
 - [ ] Sidebar 底部显示缓存管理
@@ -72,9 +80,11 @@
 ---
 
 ### 任务5.2：音源卡片改进
+
 **预估耗时**：4-5 小时
 
 #### 子任务
+
 1. **实现 radial-progress 加载进度**
    - 使用 daisyUI 的 `radial-progress` 组件
    - 显示百分比进度
@@ -91,6 +101,7 @@
    - 添加清除缓存按钮
 
 #### 技术要点
+
 ```vue
 <!-- radial-progress 示例 -->
 <div
@@ -103,6 +114,7 @@
 ```
 
 #### 验收标准
+
 - [ ] 加载时显示 radial-progress
 - [ ] 错误时卡片边框变红，显示错误信息
 - [ ] 已缓存显示 ✓ + 大小
@@ -111,9 +123,11 @@
 ---
 
 ### 任务5.3：试听按钮功能
+
 **预估耗时**：2-3 小时
 
 #### 子任务
+
 1. **创建播放音阶函数**
    - 文件：`src/composables/useScalePlayer.ts`
    - 功能：播放当前调式的音阶
@@ -129,15 +143,18 @@
    - 根据 `KeySignature` 获取音阶
 
 #### 技术要点
+
 ```typescript
 // 音阶播放伪代码
 async function playScale(
-  key: string,        // 如 "C"
-  startOctave = 4,    // C4
-  duration = 500,     // 500ms
+  key: string, // 如 "C"
+  startOctave = 4, // C4
+  duration = 500, // 500ms
 ) {
   const scaleNotes = getKeySignature(key).scale; // C大调: ["C", "D", "E", "F", "G", "A", "B"]
-  const notes = scaleNotes.map((n, i) => `${n}${i < 7 ? startOctave : startOctave + 1}`);
+  const notes = scaleNotes.map(
+    (n, i) => `${n}${i < 7 ? startOctave : startOctave + 1}`,
+  );
 
   // 上行
   for (const note of notes) {
@@ -152,6 +169,7 @@ async function playScale(
 ```
 
 #### 验收标准
+
 - [ ] 点击试听按钮播放音阶
 - [ ] 音阶为当前选择的调式
 - [ ] 从 C4 开始播放
@@ -161,9 +179,11 @@ async function playScale(
 ---
 
 ### 任务5.4：缓存管理功能
+
 **预估耗时**：2-3 小时
 
 #### 子任务
+
 1. **实现单个音源缓存清除**
    - 位置：音源卡片内
    - 显示缓存大小
@@ -180,10 +200,11 @@ async function playScale(
    - 清除全部缓存（localStorage + CacheStorage）
 
 #### 技术要点
+
 ```typescript
 // 获取缓存大小
 async function getCacheSize(): Promise<number> {
-  const cache = await caches.open('midi-jar-sampler');
+  const cache = await caches.open("midi-jar-sampler");
   const keys = await cache.keys();
   let size = 0;
   for (const key of keys) {
@@ -198,7 +219,7 @@ async function getCacheSize(): Promise<number> {
 
 // 清除单个音源缓存
 async function clearInstrumentCache(instrumentId: string) {
-  const cache = await caches.open('midi-jar-sampler');
+  const cache = await caches.open("midi-jar-sampler");
   const keys = await cache.keys();
   for (const key of keys) {
     if (key.url.includes(instrumentId)) {
@@ -209,6 +230,7 @@ async function clearInstrumentCache(instrumentId: string) {
 ```
 
 #### 验收标准
+
 - [ ] 显示单个音源缓存大小
 - [ ] 清除单个音源缓存正常工作
 - [ ] 显示总缓存大小
@@ -220,9 +242,11 @@ async function clearInstrumentCache(instrumentId: string) {
 ## 📋 阶段3：颜色选择器透明度支持（中等优先级）
 
 ### 任务4：实现透明度支持
+
 **预估耗时**：5-6 小时
 
 #### 子任务
+
 1. **选择颜色选择器库**
    - 选项：vue-color, v-color-picker, 自定义实现
    - 评估：功能、体积、维护状态
@@ -242,6 +266,7 @@ async function clearInstrumentCache(instrumentId: string) {
    - 添加颜色验证函数
 
 #### 验收标准
+
 - [ ] 所有颜色选择器支持透明度
 - [ ] RGBA 格式正确保存
 - [ ] 颜色正确应用到 UI
@@ -252,11 +277,13 @@ async function clearInstrumentCache(instrumentId: string) {
 ## 📊 资源估算
 
 ### 时间估算
+
 - **阶段2（采样器改进）**：11-15 小时
 - **阶段3（透明度支持）**：5-6 小时
 - **总计**：16-21 小时
 
 ### 技术栈
+
 - **前端框架**：Vue 3 + TypeScript
 - **UI 库**：daisyUI + Tailwind CSS
 - **状态管理**：Pinia
@@ -268,17 +295,20 @@ async function clearInstrumentCache(instrumentId: string) {
 ## 🎯 成功指标
 
 ### 功能性指标
+
 - [ ] 所有 bug 已修复
 - [ ] 所有新功能正常工作
 - [ ] 类型检查通过（`npm run type-check`）
 - [ ] 无控制台错误
 
 ### 代码质量指标
+
 - [ ] 代码复用率提高（通过工具函数）
 - [ ] 组件可测试性提高
 - [ ] 文档完整（需求文档 + 实施计划 + ADR）
 
 ### 用户体验指标
+
 - [ ] 页面加载速度正常
 - [ ] 交互响应流畅
 - [ ] 错误提示清晰
@@ -289,6 +319,7 @@ async function clearInstrumentCache(instrumentId: string) {
 ## 🚨 风险与缓解
 
 ### 风险1：颜色选择器库选择不当
+
 - **影响**：透明度功能无法实现或性能问题
 - **缓解**：
   1. 先评估多个库的性能和功能
@@ -296,6 +327,7 @@ async function clearInstrumentCache(instrumentId: string) {
   3. 先在单个组件中测试
 
 ### 风险2：缓存清除导致数据丢失
+
 - **影响**：用户需要重新下载所有音源
 - **缓解**：
   1. 添加确认对话框
@@ -303,6 +335,7 @@ async function clearInstrumentCache(instrumentId: string) {
   3. 提供"仅清除未使用的音源"选项
 
 ### 风险3：布局重构影响现有功能
+
 - **影响**：采样器页面功能异常
 - **缓解**：
   1. 分步重构，每步测试
@@ -314,10 +347,12 @@ async function clearInstrumentCache(instrumentId: string) {
 ## 📝 下一步行动
 
 ### 立即开始
+
 1. **创建 SamplerNavbar 组件**（任务5.1.1）
 2. **重构 SamplerSidebar 组件**（任务5.1.2）
 
 ### 等待确认
+
 - 是否继续处理阶段2？
 - 是否需要调整优先级？
 - 是否有其他需求？

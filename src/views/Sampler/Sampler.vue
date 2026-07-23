@@ -9,7 +9,7 @@ import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { useSettingsStore } from "@/stores/settings";
 import { Icon } from "@/components/Icon";
 import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
-import { createKeyboardSettingsFromPiano } from "@/components/PianoKeyboard/utils";
+// import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils"; // 已移除
 import { createLogger } from "@/utils/logger";
 
 import SamplerSidebar from "./components/SamplerSidebar.vue";
@@ -52,9 +52,8 @@ const loadProgressPercent = computed(() => {
   return Math.round((loaded / total) * 100);
 });
 
-const keyboardSettings = computed(() =>
-  createKeyboardSettingsFromPiano(settingsStore.settings.piano),
-);
+// 暂时使用默认键盘设置
+const keyboardSettings = computed(() => undefined);
 
 // --- Methods ---
 async function selectInstrument(info: InstrumentInfo) {
@@ -190,7 +189,9 @@ onUnmounted(() => {
     <!-- ═══ Main Body ═══ -->
     <div class="flex-1 flex min-h-0">
       <!-- ── Sidebar (左侧) ── -->
-      <div class="w-56 bg-base-200 border-r border-base-content/10 flex flex-col shrink-0">
+      <div
+        class="w-56 bg-base-200 border-r border-base-content/10 flex flex-col shrink-0"
+      >
         <SamplerSidebar
           v-model:search-query="searchQuery"
           v-model:selected-category="selectedCategory"
@@ -208,13 +209,16 @@ onUnmounted(() => {
           </div>
 
           <!-- Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div
+            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+          >
             <div
               v-for="inst in filteredInstruments"
               :key="inst.id"
               :class="[
                 'card bg-base-200 shadow-sm cursor-pointer hover:shadow-md transition-all relative group',
-                samplerStore.currentInstrumentId === inst.id && 'ring-2 ring-primary',
+                samplerStore.currentInstrumentId === inst.id &&
+                  'ring-2 ring-primary',
                 samplerStore.instruments[inst.id]?.error && 'ring-2 ring-error',
               ]"
               @click="selectInstrument(inst)"
@@ -223,12 +227,21 @@ onUnmounted(() => {
                 <!-- 试听按钮 (右上角) -->
                 <button
                   class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  :class="{ 'btn-active': isPlayingScale && samplerStore.currentInstrumentId === inst.id }"
+                  :class="{
+                    'btn-active':
+                      isPlayingScale &&
+                      samplerStore.currentInstrumentId === inst.id,
+                  }"
                   :aria-label="t('sampler.preview')"
                   @click="playInstrumentScale(inst, $event)"
                 >
                   <Icon
-                    :name="isPlayingScale && samplerStore.currentInstrumentId === inst.id ? 'stop' : 'play'"
+                    :name="
+                      isPlayingScale &&
+                      samplerStore.currentInstrumentId === inst.id
+                        ? 'stop'
+                        : 'play'
+                    "
                     :size="14"
                     aria-hidden="true"
                   />
@@ -240,7 +253,10 @@ onUnmounted(() => {
 
                 <!-- 加载进度（radial-progress） -->
                 <div
-                  v-if="samplerStore.instruments[inst.id]?.loading && samplerStore.currentInstrumentId === inst.id"
+                  v-if="
+                    samplerStore.instruments[inst.id]?.loading &&
+                    samplerStore.currentInstrumentId === inst.id
+                  "
                   class="flex items-center justify-center mt-2"
                 >
                   <div
@@ -272,9 +288,14 @@ onUnmounted(() => {
 
                 <!-- 状态标识 -->
                 <div v-else class="flex items-center justify-between mt-1">
-                  <span class="text-xs text-base-content/50">{{ inst.category }}</span>
+                  <span class="text-xs text-base-content/50">{{
+                    inst.category
+                  }}</span>
                   <!-- 已缓存标识 -->
-                  <div v-if="samplerStore.instruments[inst.id]?.loaded" class="flex items-center gap-1">
+                  <div
+                    v-if="samplerStore.instruments[inst.id]?.loaded"
+                    class="flex items-center gap-1"
+                  >
                     <span class="badge badge-success badge-xs gap-1">
                       <Icon name="check" :size="10" aria-hidden="true" />
                       <span class="text-xs">Cached</span>
@@ -308,7 +329,9 @@ onUnmounted(() => {
         </div>
 
         <!-- ── Bottom: Piano Keyboard ── -->
-        <div class="bg-base-200 border-t border-base-content/10 px-2 py-1" style="height: 120px">
+        <div
+          class="bg-base-200 border-t border-base-content/10 px-2 py-1 h-[120px]"
+        >
           <CanvasPianoKeyboard
             :keyboard="keyboardSettings"
             :played="[...activeNotes]"

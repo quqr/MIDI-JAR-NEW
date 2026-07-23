@@ -8,7 +8,11 @@
       style="cursor: pointer"
     />
     <path
-      :class="['vue-flow__connection', { animated: props.animated }]"
+      :class="[
+        'vue-flow__connection',
+        { animated: props.animated },
+        'pointer-events-none',
+      ]"
       fill="none"
       stroke="currentColor"
       :stroke-width="currentStrokeWidth"

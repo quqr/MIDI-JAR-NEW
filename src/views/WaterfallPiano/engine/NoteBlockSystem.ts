@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings, ScheduledNote } from "../types";
+import type { AuraConfig, ParticleConfig, ScheduledNote } from "../types";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockPool, type NoteBlock } from "./NoteBlockPool";
 import { RealtimeModeController } from "./RealtimeModeController";
@@ -34,7 +34,8 @@ export interface NoteBlockCallbacks {
 export class NoteBlockSystem {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private settings: WaterfallPianoSettings | null = null;
+  private particleConfig: ParticleConfig | null = null;
+  private auraConfig: AuraConfig | null = null;
   private keyboardRenderer: KeyboardRenderer | null = null;
   private width = 0;
   private height = 0;
@@ -67,14 +68,15 @@ export class NoteBlockSystem {
       () => this.active,
       this.realtime,
       () => this.height,
-      () => this.settings,
+      () => this.particleConfig,
       () => this.mode,
       () => this.callbacks,
       (note) => this.noteKey(note),
     );
     this.renderer = new NoteBlockRenderer(
       () => this.ctx,
-      () => this.settings,
+      () => this.particleConfig,
+      () => this.auraConfig,
       () => this.keyboardRenderer,
       () => this.width,
       () => this.height,
@@ -86,7 +88,7 @@ export class NoteBlockSystem {
       () => this.active,
       this.synthesia,
       () => this.height,
-      () => this.settings,
+      () => this.particleConfig,
       () => this.mode,
       () => this.pixelsPerSecond(),
       (note) => this.noteKey(note),
@@ -96,13 +98,19 @@ export class NoteBlockSystem {
   /**
    * 初始化画布和配置
    * @param canvas - 用于渲染 note block 的画布元素
-   * @param settings - 瀑布钢琴的全局配置
+   * @param particleConfig - 音符方块渲染配置
+   * @param auraConfig - 发光效果配置
    */
-  init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+  init(
+    canvas: HTMLCanvasElement,
+    particleConfig: ParticleConfig,
+    auraConfig: AuraConfig,
+  ): void {
     if (!canvas) return;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
-    this.settings = settings;
+    this.particleConfig = particleConfig;
+    this.auraConfig = auraConfig;
   }
 
   /**
@@ -160,8 +168,12 @@ export class NoteBlockSystem {
     // 保留: triggeredNoteKeys / endedNoteKeys / activeMidiCount / triggeredSet / synthesiaNotes / synthesiaCursor
   }
 
-  setSettings(settings: WaterfallPianoSettings): void {
-    this.settings = settings;
+  setParticleConfig(config: ParticleConfig): void {
+    this.particleConfig = config;
+  }
+
+  setAuraConfig(config: AuraConfig): void {
+    this.auraConfig = config;
   }
 
   /** 载入 synthesia 模式待播放的音符序列，并重置内部状态 */
@@ -263,7 +275,7 @@ export class NoteBlockSystem {
    * @param deltaTime - 距上一帧的时间间隔（秒）
    */
   update(deltaTime: number): void {
-    if (!this.settings) return;
+    if (!this.particleConfig) return;
     const pps = this.pixelsPerSecond();
     const dt = Math.min(deltaTime, 0.1);
 
@@ -304,8 +316,8 @@ export class NoteBlockSystem {
 
   /** 根据配置中的速度参数计算每秒下落像素数 */
   private pixelsPerSecond(): number {
-    if (!this.settings) return 200;
-    return this.settings.particles.speed * 100;
+    if (!this.particleConfig) return 200;
+    return this.particleConfig.speed * 100;
   }
 
   /** 根据音符的轨道、MIDI 编号和起始时间生成唯一标识键（优先使用预计算缓存） */

@@ -57,7 +57,26 @@
         icon="palette"
         :default-open="true"
       >
+        <SettingsToggle
+          :model-value="settingsStore.settings.piano.useThemeColors"
+          :label="t('settings.pianoSettings.useThemeColors')"
+          @update:model-value="
+            settingsStore.updateSetting('piano.useThemeColors', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settingsStore.settings.piano.gradientIntensity"
+          :label="t('settings.pianoSettings.gradientIntensity')"
+          :min="0"
+          :max="0.5"
+          :step="0.01"
+          :disabled="!settingsStore.settings.piano.useThemeColors"
+          @update:model-value="
+            settingsStore.updateSetting('piano.gradientIntensity', $event)
+          "
+        />
         <SettingsColorPicker
+          v-if="!settingsStore.settings.piano.useThemeColors"
           :model-value="settingsStore.settings.piano.whiteKeyColor"
           :label="t('settings.pianoSettings.whiteKeyColor')"
           @update:model-value="
@@ -65,6 +84,7 @@
           "
         />
         <SettingsColorPicker
+          v-if="!settingsStore.settings.piano.useThemeColors"
           :model-value="settingsStore.settings.piano.blackKeyColor"
           :label="t('settings.pianoSettings.blackKeyColor')"
           @update:model-value="
@@ -72,6 +92,7 @@
           "
         />
         <SettingsColorPicker
+          v-if="!settingsStore.settings.piano.useThemeColors"
           :model-value="settingsStore.settings.piano.pressedKeyColor"
           :label="t('settings.pianoSettings.pressedKeyColor')"
           @update:model-value="

@@ -33,7 +33,10 @@ export function useInstrumentCache() {
           for (const req of requests) {
             // 匹配包含音源 ID 的 URL
             const url = req.url;
-            if (url.includes(instrumentId) || url.includes(encodeURIComponent(instrumentId))) {
+            if (
+              url.includes(instrumentId) ||
+              url.includes(encodeURIComponent(instrumentId))
+            ) {
               const response = await cache.match(req);
               if (response) {
                 const blob = await response.blob();
@@ -71,7 +74,10 @@ export function useInstrumentCache() {
 
           for (const req of requests) {
             const url = req.url;
-            if (url.includes(instrumentId) || url.includes(encodeURIComponent(instrumentId))) {
+            if (
+              url.includes(instrumentId) ||
+              url.includes(encodeURIComponent(instrumentId))
+            ) {
               await cache.delete(req);
               cleared = true;
             }
@@ -141,7 +147,10 @@ export function useInstrumentCache() {
   /**
    * 清除全部缓存（localStorage + CacheStorage）
    */
-  async function clearAllCaches(): Promise<{ localStorage: boolean; cacheStorage: boolean }> {
+  async function clearAllCaches(): Promise<{
+    localStorage: boolean;
+    cacheStorage: boolean;
+  }> {
     const result = { localStorage: false, cacheStorage: false };
 
     // 清除 localStorage（保留关键设置）
@@ -180,7 +189,11 @@ export function useInstrumentCache() {
       logger.error("Failed to clear CacheStorage: %s", err);
     }
 
-    logger.info("Clear all caches: localStorage=%s, cacheStorage=%s", result.localStorage, result.cacheStorage);
+    logger.info(
+      "Clear all caches: localStorage=%s, cacheStorage=%s",
+      result.localStorage,
+      result.cacheStorage,
+    );
 
     return result;
   }

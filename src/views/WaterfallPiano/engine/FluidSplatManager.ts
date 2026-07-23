@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings } from "../types";
+import type { BackgroundConfig, ParticleConfig } from "../types";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import type { NoteBlockSystem } from "./NoteBlockSystem";
 import type { FluidSimulation } from "@/engine/fluid";
@@ -28,7 +28,8 @@ const DEFAULT_VELOCITY = 90;
 export interface FluidSplatDeps {
   keyboardRenderer: KeyboardRenderer;
   noteBlockSystem: NoteBlockSystem;
-  getSettings: () => WaterfallPianoSettings | null;
+  getParticleConfig: () => ParticleConfig | null;
+  getBackgroundConfig: () => BackgroundConfig | null;
   getLayout: () => { width: number; height: number; keyboardHeight: number };
   hasCanvases: () => boolean;
 }
@@ -54,50 +55,51 @@ export class FluidSplatManager {
     if (!this.deps.hasCanvases()) return;
     const { keyboardRenderer } = this.deps;
     const { width, height, keyboardHeight } = this.deps.getLayout();
-    const settings = this.deps.getSettings();
+    const pCfg = this.deps.getParticleConfig();
+    const bCfg = this.deps.getBackgroundConfig();
     let x = keyboardRenderer.midiToX(midi) / Math.max(1, width);
     let y = keyboardHeight / Math.max(1, height);
 
     let rgb: { r: number; g: number; b: number };
-    const hue = settings?.background.fluidParams.splatColorHue;
+    const hue = bCfg?.fluidParams.splatColorHue;
     if (hue !== undefined && hue > 0) {
       const lightness = 0.4 + (velocity / 127) * 0.3;
       rgb = hslToRgbNorm(hue, 0.8, lightness);
     } else {
       const colorHex = noteToColor(
         midi,
-        settings?.particles.colorScheme ?? "pitch",
+        pCfg?.colorScheme ?? "pitch",
         undefined,
-        settings?.particles.customColors,
+        pCfg?.customColors,
       );
       rgb = hexToRgbNorm(colorHex);
     }
 
     let dx = 0;
     let dy = 200;
-    const p = settings?.background.fluidParams.fluidSplatPerturbation;
-    if (hasPerturbation(p)) {
-      if (p!.positionJitter && p!.positionJitter > 0) {
-        x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
-        y += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
+    const perturbation = bCfg?.fluidParams.fluidSplatPerturbation;
+    if (hasPerturbation(perturbation)) {
+      if (perturbation!.positionJitter && perturbation!.positionJitter > 0) {
+        x += PerlinNoise1DRandomNumber() * perturbation!.positionJitter * 0.02;
+        y += PerlinNoise1DRandomNumber() * perturbation!.positionJitter * 0.02;
       }
-      if (p!.forceJitter && p!.forceJitter > 0) {
-        dx += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
-        dy += PerlinNoise1DRandomNumber() * dy * p!.forceJitter;
+      if (perturbation!.forceJitter && perturbation!.forceJitter > 0) {
+        dx += PerlinNoise1DRandomNumber() * dy * perturbation!.forceJitter;
+        dy += PerlinNoise1DRandomNumber() * dy * perturbation!.forceJitter;
       }
-      if (p!.colorJitter && p!.colorJitter > 0) {
+      if (perturbation!.colorJitter && perturbation!.colorJitter > 0) {
         rgb = {
           r: Math.max(
             0,
-            rgb.r + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+            rgb.r + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
           g: Math.max(
             0,
-            rgb.g + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+            rgb.g + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
           b: Math.max(
             0,
-            rgb.b + PerlinNoise1DRandomNumber() * p!.colorJitter * 0.15,
+            rgb.b + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
         };
       }
@@ -111,30 +113,31 @@ export class FluidSplatManager {
     midi: number,
     _velocity: number,
   ): void {
-    const settings = this.deps.getSettings();
-    if (!settings) return;
+    const pCfg = this.deps.getParticleConfig();
+    const bCfg = this.deps.getBackgroundConfig();
+    if (!pCfg || !bCfg) return;
     const { keyboardRenderer } = this.deps;
     const { width, height, keyboardHeight } = this.deps.getLayout();
     let x = keyboardRenderer.midiToX(midi) / Math.max(1, width);
     const hitLineY = (height - keyboardHeight) / Math.max(1, height);
     let rgb: { r: number; g: number; b: number };
-    const hue = settings.background.fluidParams.splatColorHue;
+    const hue = bCfg.fluidParams.splatColorHue;
     if (hue !== undefined && hue > 0) {
       rgb = hslToRgbNorm(hue, 0.9, 0.6);
     } else {
       const colorHex = noteToColor(
         midi,
-        settings.particles.colorScheme,
+        pCfg.colorScheme,
         undefined,
-        settings.particles.customColors,
+        pCfg.customColors,
       );
       rgb = hexToRgbNorm(colorHex);
     }
-    let spread = settings.particles.hitExplosionRadius ?? 0.03;
+    let spread = pCfg.hitExplosionRadius ?? 0.03;
     let force = spread * 5000;
     let colorMul = 0.7;
 
-    const p = settings.background.fluidParams.hitExplosionPerturbation;
+    const p = bCfg.fluidParams.hitExplosionPerturbation;
     if (hasPerturbation(p)) {
       if (p!.positionJitter && p!.positionJitter > 0) {
         x += PerlinNoise1DRandomNumber() * p!.positionJitter * 0.02;
@@ -164,27 +167,28 @@ export class FluidSplatManager {
   /** 流体模拟更新 + 持续 splat（长按持续 + blockCoverage 尾焰） */
   updateAndSplat(fluid: FluidSimulation): void {
     fluid.update();
-    const settings = this.deps.getSettings();
+    const pCfg = this.deps.getParticleConfig();
+    const bCfg = this.deps.getBackgroundConfig();
 
     // 长按持续触发：对键盘上持续按住的音符发射弱 splat
-    if (settings?.background.fluidEnabled) {
+    if (bCfg?.fluidEnabled) {
       const { keyboardRenderer } = this.deps;
       const { width, height, keyboardHeight } = this.deps.getLayout();
-      const sP = settings.background.fluidParams.sustainedSplatPerturbation;
+      const sP = bCfg.fluidParams.sustainedSplatPerturbation;
       const sHas = hasPerturbation(sP);
       for (const midi of keyboardRenderer.getActiveNotes()) {
         let x = keyboardRenderer.midiToX(midi) / Math.max(1, width);
         let y = keyboardHeight / Math.max(1, height);
-        const hue = settings.background.fluidParams.splatColorHue;
+        const hue = bCfg.fluidParams.splatColorHue;
         let rgb: { r: number; g: number; b: number };
         if (hue !== undefined && hue > 0) {
           rgb = hslToRgbNorm(hue, 0.8, 0.4);
         } else {
           const colorHex = noteToColor(
             midi,
-            settings.particles.colorScheme,
+            pCfg?.colorScheme ?? "pitch",
             undefined,
-            settings.particles.customColors,
+            pCfg?.customColors,
           );
           rgb = hexToRgbNorm(colorHex);
         }
@@ -214,10 +218,10 @@ export class FluidSplatManager {
     }
 
     // blockCoverage: 对每个活跃音符块持续发射尾焰式 splat
-    if (settings?.background.fluidParams.blockCoverage) {
+    if (bCfg?.fluidParams.blockCoverage) {
       const { keyboardRenderer, noteBlockSystem } = this.deps;
       const { height } = this.deps.getLayout();
-      const bP = settings.background.fluidParams.blockCoveragePerturbation;
+      const bP = bCfg.fluidParams.blockCoveragePerturbation;
       const bHas = hasPerturbation(bP);
       const blockPositions = noteBlockSystem.getActiveBlockPositions(
         keyboardRenderer,
@@ -226,16 +230,16 @@ export class FluidSplatManager {
       for (const pos of blockPositions) {
         let px = pos.normX;
         let py = pos.normY;
-        const hue = settings.background.fluidParams.splatColorHue;
+        const hue = bCfg.fluidParams.splatColorHue;
         let rgb: { r: number; g: number; b: number };
         if (hue !== undefined && hue > 0) {
           rgb = hslToRgbNorm(hue, 0.8, 0.5);
         } else {
           const colorHex = noteToColor(
             pos.midi,
-            settings.particles.colorScheme,
+            pCfg?.colorScheme ?? "pitch",
             undefined,
-            settings.particles.customColors,
+            pCfg?.customColors,
           );
           rgb = hexToRgbNorm(colorHex);
         }

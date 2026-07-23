@@ -107,7 +107,6 @@
         :played="combinedPlayedMidi"
         :midi="midiNotes"
         :chord="chords[0] ?? undefined"
-        :keySignature="keySignature"
         :keyboard="keyboard"
         :clickable="true"
         :sustain-mode="true"

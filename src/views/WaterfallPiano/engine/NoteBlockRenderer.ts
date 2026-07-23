@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings } from "../types";
+import type { AuraConfig, ParticleConfig } from "../types";
 import { noteToColor, type CustomColors } from "./NoteColorMapper";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import type { NoteBlock } from "./NoteBlockPool";
@@ -30,7 +30,8 @@ function brightenColor(hex: string, ratio: number): string {
 export class NoteBlockRenderer {
   constructor(
     private readonly getCtx: () => CanvasRenderingContext2D | null,
-    private readonly getSettings: () => WaterfallPianoSettings | null,
+    private readonly getParticleConfig: () => ParticleConfig | null,
+    private readonly getAuraConfig: () => AuraConfig | null,
     private readonly getKeyboardRenderer: () => KeyboardRenderer | null,
     private readonly getWidth: () => number,
     private readonly getHeight: () => number,
@@ -40,11 +41,10 @@ export class NoteBlockRenderer {
 
   render(): void {
     const ctx = this.getCtx();
-    const settings = this.getSettings();
+    const p = this.getParticleConfig();
+    const auraCfg = this.getAuraConfig();
     const keyboardRenderer = this.getKeyboardRenderer();
-    if (!ctx || !settings || !keyboardRenderer) return;
-    const p = settings.particles;
-    const auraCfg = settings.aura;
+    if (!ctx || !p || !keyboardRenderer) return;
     const width = this.getWidth();
     const height = this.getHeight();
     const active = this.getActive();
@@ -78,7 +78,7 @@ export class NoteBlockRenderer {
       h: number;
       color: string;
     }> = [];
-    const needAura = auraCfg.enabled;
+    const needAura = auraCfg?.enabled ?? false;
 
     for (const b of active) {
       const isBlack = isBlackKey(b.midi);
@@ -107,7 +107,7 @@ export class NoteBlockRenderer {
       ctx.globalAlpha = 1;
 
       // 收集 aura 数据
-      if (needAura) {
+      if (needAura && auraCfg) {
         const applyAura =
           auraCfg.target === "all" ||
           (auraCfg.target === "triggered" && isTriggered);
@@ -118,8 +118,8 @@ export class NoteBlockRenderer {
     }
 
     // 批量渲染 aura 图层
-    if (auraBlocks.length > 0) {
-      this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time, settings);
+    if (auraBlocks.length > 0 && auraCfg) {
+      this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time, auraCfg);
     }
 
     ctx.restore();
@@ -177,9 +177,8 @@ export class NoteBlockRenderer {
     }>,
     cornerRadius: number,
     time: number,
-    settings: WaterfallPianoSettings,
+    cfg: AuraConfig | null,
   ): void {
-    const cfg = settings.aura;
     if (!cfg) return;
 
     const style = cfg.style;

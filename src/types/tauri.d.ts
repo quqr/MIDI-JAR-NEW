@@ -1,4 +1,10 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import type {
+  ApiMidiRoute,
+  ApiMidiInput,
+  ApiMidiOutput,
+  ApiMidiWire,
+} from "./index";
 
 export interface TauriAPI {
   on: (channel: string, callback: (data?: any) => void) => void;
@@ -36,15 +42,19 @@ export interface TauriAPI {
   midi: {
     refreshDevices: () => Promise<void>;
     clearRoutes: () => Promise<void>;
-    addRoute: (route: any) => Promise<void>;
-    deleteRoute: (route: any) => Promise<void>;
-    syncRoutes: (routes: any[]) => Promise<void>;
-    getInputs: () => Promise<any[]>;
-    onInputs: (callback: (inputs: any[]) => void) => Promise<UnlistenFn>;
-    getOutputs: () => Promise<any[]>;
-    onOutputs: (callback: (outputs: any[]) => void) => Promise<UnlistenFn>;
-    getWires: () => Promise<any[]>;
-    onWires: (callback: (wires: any[]) => void) => Promise<UnlistenFn>;
+    addRoute: (route: ApiMidiRoute) => Promise<void>;
+    deleteRoute: (route: ApiMidiRoute) => Promise<void>;
+    syncRoutes: (routes: ApiMidiRoute[]) => Promise<void>;
+    getInputs: () => Promise<ApiMidiInput[]>;
+    onInputs: (
+      callback: (inputs: ApiMidiInput[]) => void,
+    ) => Promise<UnlistenFn>;
+    getOutputs: () => Promise<ApiMidiOutput[]>;
+    onOutputs: (
+      callback: (outputs: ApiMidiOutput[]) => void,
+    ) => Promise<UnlistenFn>;
+    getWires: () => Promise<ApiMidiWire[]>;
+    onWires: (callback: (wires: ApiMidiWire[]) => void) => Promise<UnlistenFn>;
     onLatency: (
       callback: (latency: number, device: string) => void,
     ) => Promise<UnlistenFn>;

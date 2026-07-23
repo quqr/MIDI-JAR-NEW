@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { NoteBlockSystem } from "../engine/NoteBlockSystem";
 import { defaultWaterfallSettings } from "../constants";
-import type { WaterfallPianoSettings, ScheduledNote } from "../types";
+import type { ScheduledNote } from "../types";
 
 function mockCanvas(): HTMLCanvasElement {
   const ctx = new Proxy(
@@ -21,15 +21,16 @@ function mockCanvas(): HTMLCanvasElement {
   } as unknown as HTMLCanvasElement;
 }
 
-function cloneSettings(): WaterfallPianoSettings {
-  return structuredClone(defaultWaterfallSettings);
+function initNbs(nbs: NoteBlockSystem): void {
+  const s = structuredClone(defaultWaterfallSettings);
+  nbs.init(mockCanvas(), s.particles, s.aura);
 }
 
 describe("NoteBlockSystem", () => {
   describe("realtime 模式", () => {
     it("playRealtimeNote 后 active count 增加", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       expect(nbs.getActiveBlockCount()).toBe(0);
       nbs.playRealtimeNote(60, 100);
       expect(nbs.getActiveBlockCount()).toBe(1);
@@ -37,7 +38,7 @@ describe("NoteBlockSystem", () => {
 
     it("重复 playRealtimeNote 同 midi 不增加（去重）", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       nbs.playRealtimeNote(60, 100);
       expect(nbs.getActiveBlockCount()).toBe(1);
@@ -45,7 +46,7 @@ describe("NoteBlockSystem", () => {
 
     it("update 后 block 仍在 active（height 增长）", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       nbs.update(0.016);
       expect(nbs.getActiveBlockCount()).toBe(1);
@@ -53,7 +54,7 @@ describe("NoteBlockSystem", () => {
 
     it("releaseRealtimeNote + update 后 block 被回收到 pool", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       nbs.update(0.016);
       expect(nbs.getPoolSize()).toBe(0);
@@ -65,7 +66,7 @@ describe("NoteBlockSystem", () => {
 
     it("releaseRealtimeNote 未播放的 midi 不报错", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       expect(() => nbs.releaseRealtimeNote(72)).not.toThrow();
     });
   });
@@ -73,7 +74,7 @@ describe("NoteBlockSystem", () => {
   describe("对象池", () => {
     it("多个音符释放后 pool 增长", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       for (let m = 60; m < 72; m++) {
         nbs.playRealtimeNote(m, 100);
       }
@@ -90,14 +91,14 @@ describe("NoteBlockSystem", () => {
   describe("synthesia 模式", () => {
     it("setMode 切换到 synthesia", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.setMode("synthesia");
       expect(nbs.getMode()).toBe("synthesia");
     });
 
     it("scheduleSynthesiaNotes + transportTime=0 → block 创建但未触发", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
         {
@@ -121,7 +122,7 @@ describe("NoteBlockSystem", () => {
 
     it("推进 transportTime 到 note.time → onNoteTrigger 触发", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
         {
@@ -147,7 +148,7 @@ describe("NoteBlockSystem", () => {
 
     it("推进 transportTime 到 note.time+duration → onNoteEnd 触发", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
         {
@@ -175,7 +176,7 @@ describe("NoteBlockSystem", () => {
 
     it("transportPlaying=false 时不更新 synthesia", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.setMode("synthesia");
       const notes: ScheduledNote[] = [
         {
@@ -200,7 +201,7 @@ describe("NoteBlockSystem", () => {
   describe("clearNoteBlocks", () => {
     it("清空 active 和 realtimeHeld", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       nbs.playRealtimeNote(62, 100);
       expect(nbs.getActiveBlockCount()).toBe(2);
@@ -211,20 +212,21 @@ describe("NoteBlockSystem", () => {
     });
   });
 
-  describe("setSettings", () => {
-    it("切换设置不报错", () => {
+  describe("setParticleConfig / setAuraConfig", () => {
+    it("切换配置不报错", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
-      const newSettings = cloneSettings();
-      newSettings.particles.speed = 5;
-      expect(() => nbs.setSettings(newSettings)).not.toThrow();
+      initNbs(nbs);
+      const s = structuredClone(defaultWaterfallSettings);
+      s.particles.speed = 5;
+      expect(() => nbs.setParticleConfig(s.particles)).not.toThrow();
+      expect(() => nbs.setAuraConfig(s.aura)).not.toThrow();
     });
   });
 
   describe("setMode 清空", () => {
     it("setMode 切换时清空已有 blocks", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       expect(nbs.getActiveBlockCount()).toBe(1);
       nbs.setMode("synthesia");
@@ -235,7 +237,7 @@ describe("NoteBlockSystem", () => {
   describe("dispose", () => {
     it("dispose 后 pool 清空", () => {
       const nbs = new NoteBlockSystem();
-      nbs.init(mockCanvas(), cloneSettings());
+      initNbs(nbs);
       nbs.playRealtimeNote(60, 100);
       nbs.releaseRealtimeNote(60);
       nbs.update(0.1);

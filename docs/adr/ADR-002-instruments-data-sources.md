@@ -14,6 +14,7 @@ Accepted
 2. **对 `smpldsnds` 毫无感知**。smplr 本身只是播放器，所有原始采样文件实际托管在 GitHub 组织 `smpldsnds`（通过 GitHub Pages 提供），共 **19** 个采样仓库，各有不同许可证（CC0 / Public Domain / GPL / 混合等）。原文件把 smpldsnds 仅写为 smplr 的一条 url，丢失了仓库级细节。
 
 数据来源（2026-07-22 爬取）：
+
 - `https://github.com/danigb/smplr`（README + `git/trees/HEAD?recursive=1` 源码树）
 - `https://github.com/smpldsnds`（组织 profile README，逐仓库描述与许可证）
 

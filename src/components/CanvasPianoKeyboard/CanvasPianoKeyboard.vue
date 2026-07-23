@@ -1,25 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
-import type { Chord } from "@tonaljs/chord";
+import { ref, onMounted, onUnmounted, watch, watchEffect } from "vue";
 import { KeyboardRenderer } from "@/views/WaterfallPiano/engine/KeyboardRenderer";
-import type {
-  KeyboardSettings,
-  KeySignatureConfig,
-} from "@/components/PianoKeyboard/types";
-import type { WaterfallPianoSettings } from "@/views/WaterfallPiano/types";
+import type { KeyboardSettings } from "@/types/settings";
+import {
+  getCanvasDpr,
+  chordNotesToMidi,
+  toKeyboardConfig,
+} from "./utils";
+
+// ── Props ──
+
+interface ChordLike {
+  notes?: string[];
+}
 
 interface Props {
   id?: string;
   className?: string;
   keyboard?: KeyboardSettings;
-  keySignature?: KeySignatureConfig;
   played?: number[];
   sustained?: number[];
   midi?: number[];
   targets?: number[] | null;
-  exactTargets?: boolean;
-  chord?: Chord | undefined;
+  /** 和弦对象（仅用 .notes），可接收 @tonaljs/chord#Chord */
+  chord?: ChordLike;
   clickable?: boolean;
+  /** true: 按下保持并 emit noteOn/noteOff；false: 点击即 emit noteClick */
   sustainMode?: boolean;
 }
 
@@ -50,7 +56,6 @@ const props = withDefaults(defineProps<Props>(), {
   sustained: () => [],
   midi: () => [],
   targets: null,
-  exactTargets: false,
   chord: undefined,
   clickable: false,
   sustainMode: false,
@@ -62,242 +67,161 @@ const emit = defineEmits<{
   noteOff: [midi: number];
 }>();
 
+// ── 模板引用 ──
+
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
+// ── 内部状态 ──
+
 let renderer: KeyboardRenderer | null = null;
 let resizeObserver: ResizeObserver | null = null;
-let animFrameId: number | null = null;
-/** 按 pointer 按下的 midi 音符（用于 sustainMode） */
-const pointerDownNotes = new Set<number>();
+let rafId: number | null = null;
+let resizeRafId: number | null = null;
+/** sustainMode 下当前按住的音符 */
+const sustainedNotes = new Set<number>();
 
-/** 将 KeyboardSettings 转换为 WaterfallPianoSettings 格式（仅 keyboard 部分） */
-function toWaterfallSettings(kb: KeyboardSettings): WaterfallPianoSettings {
-  return {
-    particles: {
-      colorScheme: "pitch",
-      customColors: { low: "#0000ff", mid: "#00ff00", high: "#ff0000" },
-      speed: 1,
-      lookAhead: 3,
-      opacity: 1,
-      cornerRadius: 2,
-      hitLine: { visible: false, color: "#ffffff", thickness: 1 },
-      hitExplosionRadius: 0,
-    },
-    background: {
-      type: "solid",
-      solidColor: "#1a1a2e",
-      fluidEnabled: false,
-      fluidQuality: "medium",
-      fluidStyle: "standard",
-      fluidAdvanced: false,
-      fluidParams: {},
-    },
-    keyboard: {
-      visible: true,
-      range: "61" as const,
-      customFrom: kb.from,
-      customTo: kb.to,
-      keyLabel:
-        kb.keyName === "none"
-          ? "none"
-          : kb.keyName === "note"
-            ? "note"
-            : kb.keyName === "pitchClass"
-              ? "pitchClass"
-              : "octave",
-      whiteKeyColor: kb.colors.white ?? "#ffffff",
-      blackKeyColor: kb.colors.black ?? "#000000",
-      pressedKeyColor: kb.colors.played ?? "#ff0000",
-      heightRatio: 0.3,
-      keyCornerRadius: Math.max(0, kb.sizes.radius ?? 0),
-      keyBorderWidth: 0,
-      keyBorderColor: "#666666",
-      gapBlur: 0,
-      separatorEnabled: false,
-      separatorColor: "#ffffff",
-      separatorThickness: 0,
-      staffVisible: false,
-      synthesiaFlowDirection: "down" as const,
-      showNoteNames: kb.label !== "none",
-      defaultVelocity: 90,
-    },
-    midiFile: {
-      playbackSpeed: 1,
-      selectedTracks: [],
-      trackColors: [],
-      loop: false,
-      showNoteNames: false,
-      rightHandTrackIdx: 0,
-      leftHandTrackIdx: 1,
-    },
-    sound: {
-      volume: 1,
-      reverbAmount: 0,
-      reverbDecay: 0,
-      sustain: false,
-      velocitySensitivity: true,
-      harmonicity: 1,
-      modulationIndex: 1,
-      oscillatorType: "triangle" as const,
-      envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.3 },
-      modulationEnvelope: {
-        attack: 0.01,
-        decay: 0.3,
-        sustain: 0.5,
-        release: 0.3,
-      },
-    },
-    aura: {
-      enabled: false,
-      style: "none" as const,
-      target: "off" as const,
-      padding: 2,
-      innerBlur: 4,
-      innerOpacity: 70,
-      outerBlur: 16,
-      outerOpacity: 30,
-      duration: 6,
-      rotationRange: 360,
-      beamAngle: 225,
-      beamWidth: 135,
-      glowExtent: 90,
-      glowPeakOpacity: 100,
-      glowPeakBlur: 12,
-      glowAfterPeakOpacity: 60,
-      glowAfterPeakBlur: 24,
-      rainbowMargin: 10,
-      dualOffRatio: 40,
-      dualOnRatio: 50,
-    },
-  };
-}
+// ── 高亮更新（经 RAF 去抖） ──
 
-function updateHighlights() {
+function applyHighlights(): void {
   if (!renderer) return;
-  // 先清除所有
   renderer.clearAllHighlights();
-  // 高亮 played
-  for (const midi of props.played) {
-    renderer.highlightNote(midi);
+
+  const highlight = (notes?: number[] | null) => {
+    if (!notes?.length) return;
+    for (const midi of notes) renderer!.highlightNote(midi);
+  };
+
+  highlight(props.played);
+  highlight(props.sustained);
+  highlight(props.targets);
+  highlight(props.midi);
+  highlight(
+    chordNotesToMidi(
+      props.chord?.notes ?? [],
+      renderer.getVisibleRange().from,
+      renderer.getVisibleRange().to,
+    ),
+  );
+  // sustainMode 下保持按住的键也要持续高亮
+  if (sustainedNotes.size > 0) {
+    for (const midi of sustainedNotes) renderer.highlightNote(midi);
   }
-  // 高亮 sustained
-  for (const midi of props.sustained) {
-    renderer.highlightNote(midi);
-  }
-  // 高亮 targets
-  if (props.targets) {
-    for (const midi of props.targets) {
-      renderer.highlightNote(midi);
-    }
-  }
-  // 高亮 midi
-  for (const midi of props.midi) {
-    renderer.highlightNote(midi);
-  }
-  // chord 的音符也高亮
-  if (props.chord && props.chord.notes) {
-    // chord.notes 是音名字符串数组，转换为 midi 需要额外逻辑
-    // 暂时不处理，使用 targets 代替
-  }
+
   renderer.render();
 }
 
-function scheduleRender() {
-  if (animFrameId !== null) return;
-  animFrameId = requestAnimationFrame(() => {
-    animFrameId = null;
-    updateHighlights();
+function scheduleRender(): void {
+  if (rafId !== null) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+    applyHighlights();
   });
 }
 
-function onPointerDown(e: PointerEvent) {
-  if (!renderer || !props.clickable) return;
+// ── 指针事件 ──
+
+function onPointerDown(e: PointerEvent): void {
+  if (!renderer || !props.clickable || !canvasRef.value) return;
   e.preventDefault();
-  const midi = renderer.xToMidi(e.offsetX);
+
+  const rect = canvasRef.value.getBoundingClientRect();
+  const midi = renderer.xToMidi(e.clientX - rect.left);
   if (midi === null) return;
 
+  canvasRef.value.setPointerCapture(e.pointerId);
+
   if (props.sustainMode) {
-    pointerDownNotes.add(midi);
+    sustainedNotes.add(midi);
     emit("noteOn", midi);
   } else {
     emit("noteClick", midi);
   }
-  renderer.highlightNote(midi);
-  renderer.render();
+  scheduleRender();
 }
 
-function onPointerUp(_e: PointerEvent) {
+function releasePointer(e: PointerEvent): void {
   if (!renderer) return;
-  // 释放所有 pointerDown 的音符
-  for (const midi of pointerDownNotes) {
-    emit("noteOff", midi);
+
+  // 非 sustainMode 下 pointerDownNotes 恒为空，直接跳过
+  if (sustainedNotes.size > 0) {
+    for (const midi of sustainedNotes) emit("noteOff", midi);
+    sustainedNotes.clear();
   }
-  pointerDownNotes.clear();
-  updateHighlights();
+
+  const canvas = canvasRef.value;
+  if (canvas?.hasPointerCapture(e.pointerId)) {
+    canvas.releasePointerCapture(e.pointerId);
+  }
+  scheduleRender();
 }
 
-function onPointerLeave(_e: PointerEvent) {
-  if (!renderer) return;
-  for (const midi of pointerDownNotes) {
-    emit("noteOff", midi);
-  }
-  pointerDownNotes.clear();
-  updateHighlights();
-}
+// ── 生命周期 ──
 
-onMounted(async () => {
+onMounted(() => {
   if (!canvasRef.value || !containerRef.value) return;
 
-  const settings = toWaterfallSettings(props.keyboard);
   renderer = new KeyboardRenderer();
-  renderer.init(canvasRef.value, settings);
+  renderer.init(
+    canvasRef.value,
+    toKeyboardConfig(props.keyboard),
+  );
 
-  // 初始尺寸
-  await nextTick();
   const rect = containerRef.value.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = getCanvasDpr();
   renderer.resize(Math.max(1, rect.width), Math.max(1, rect.height), dpr);
 
-  // 触发初始高亮
-  updateHighlights();
+  applyHighlights();
 
-  // ResizeObserver
+  // ResizeObserver — 经 RAF 去抖，避免高频触发浪费渲染
   resizeObserver = new ResizeObserver(() => {
-    if (!containerRef.value || !renderer) return;
-    const r = containerRef.value.getBoundingClientRect();
-    const d = Math.min(window.devicePixelRatio || 1, 2);
-    renderer.resize(Math.max(1, r.width), Math.max(1, r.height), d);
-    updateHighlights();
+    if (resizeRafId !== null) return;
+    resizeRafId = requestAnimationFrame(() => {
+      resizeRafId = null;
+      if (!containerRef.value || !renderer) return;
+      const r = containerRef.value.getBoundingClientRect();
+      const d = getCanvasDpr();
+      renderer.resize(Math.max(1, r.width), Math.max(1, r.height), d);
+      scheduleRender();
+    });
   });
   resizeObserver.observe(containerRef.value);
 });
 
 onUnmounted(() => {
-  if (animFrameId !== null) {
-    cancelAnimationFrame(animFrameId);
-    animFrameId = null;
-  }
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
   resizeObserver?.disconnect();
   resizeObserver = null;
   renderer = null;
-  pointerDownNotes.clear();
+  sustainedNotes.clear();
 });
 
-// 监听 props 变化更新渲染
-watch(
-  () => [props.played, props.sustained, props.midi, props.targets],
-  () => scheduleRender(),
-  { deep: true },
-);
+// ── 响应性 ──
+
+// watchEffect 自动追踪 props.played/sustained/midi/targets/chord 的变化，
+// 无需 deep:true，且不产生无谓的新引用比较
+watchEffect(() => {
+  // 显式读取所有依赖，让 watchEffect 追踪
+  const _deps = [
+    props.played,
+    props.sustained,
+    props.midi,
+    props.targets,
+    props.chord,
+  ] as const;
+  void _deps;
+  scheduleRender();
+});
 
 watch(
   () => props.keyboard,
   (kb) => {
     if (!renderer) return;
-    renderer.setSettings(toWaterfallSettings(kb));
-    updateHighlights();
+    renderer.setKeyboardConfig(toKeyboardConfig(kb));
+    scheduleRender();
   },
+  // 父组件可能原地修改 keyboard 对象的嵌套字段而不换引用，因此需要 deep
   { deep: true },
 );
 </script>
@@ -318,9 +242,9 @@ watch(
         cursor: clickable ? 'pointer' : 'default',
       }"
       @pointerdown="onPointerDown"
-      @pointerup="onPointerUp"
-      @pointerleave="onPointerLeave"
-      @pointercancel="onPointerUp"
+      @pointerup="releasePointer"
+      @pointercancel="releasePointer"
+      @pointerleave="releasePointer"
     />
   </div>
 </template>

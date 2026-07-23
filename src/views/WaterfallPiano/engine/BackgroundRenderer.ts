@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings } from "../types";
+import type { BackgroundConfig } from "../types";
 
 /**
  * 瀑布流钢琴的背景渲染器，使用离屏 Canvas 缓存静态背景以提升绘制性能
@@ -6,7 +6,7 @@ import type { WaterfallPianoSettings } from "../types";
 export class BackgroundRenderer {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private settings: WaterfallPianoSettings | null = null;
+  private config: BackgroundConfig | null = null;
   private width = 0;
   private height = 0;
   // 缓存的静态背景
@@ -15,15 +15,15 @@ export class BackgroundRenderer {
   private bgCached = false;
 
   /**
-   * 初始化渲染器，绑定目标 Canvas 和配置项
+   * 初始化渲染器，绑定目标 Canvas 和背景配置
    * @param canvas - 用于绘制背景的 Canvas 元素
-   * @param settings - 瀑布流钢琴的渲染配置
+   * @param config - 背景渲染配置
    */
-  init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
+  init(canvas: HTMLCanvasElement, config: BackgroundConfig): void {
     if (!canvas) return;
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
-    this.settings = settings;
+    this.config = config;
     this.markDirty();
   }
 
@@ -52,8 +52,8 @@ export class BackgroundRenderer {
     this.markDirty();
   }
 
-  setSettings(settings: WaterfallPianoSettings): void {
-    this.settings = settings;
+  setBackgroundConfig(config: BackgroundConfig): void {
+    this.config = config;
     this.markDirty();
   }
 
@@ -80,9 +80,8 @@ export class BackgroundRenderer {
    * @param _time - 当前时间戳（保留参数，当前未使用）
    */
   render(_time: number): void {
-    if (!this.ctx || !this.settings) return;
+    if (!this.ctx || !this.config) return;
     const ctx = this.ctx;
-    const bg = this.settings.background;
 
     // 纯色背景是静态的，使用缓存
     if (this.bgCached && this.bgCanvas) {
@@ -94,7 +93,7 @@ export class BackgroundRenderer {
     this.ensureBgCanvas();
     const targetCtx = this.bgCtx!;
     targetCtx.clearRect(0, 0, this.width, this.height);
-    targetCtx.fillStyle = bg.solidColor;
+    targetCtx.fillStyle = this.config.solidColor;
     targetCtx.fillRect(0, 0, this.width, this.height);
 
     ctx.clearRect(0, 0, this.width, this.height);

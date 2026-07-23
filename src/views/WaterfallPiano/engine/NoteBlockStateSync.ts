@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings } from "../types";
+import type { ParticleConfig } from "../types";
 import type { NoteBlock, NoteBlockPool } from "./NoteBlockPool";
 import type { SynthesiaModeController } from "./SynthesiaModeController";
 import type { NoteBlockMode } from "./NoteBlockSystem";
@@ -19,7 +19,7 @@ export class NoteBlockStateSync {
     private readonly getActive: () => NoteBlock[],
     private readonly synthesia: SynthesiaModeController,
     private readonly getHeight: () => number,
-    private readonly getSettings: () => WaterfallPianoSettings | null,
+    private readonly getParticleConfig: () => ParticleConfig | null,
     private readonly getMode: () => NoteBlockMode,
     private readonly getPixelsPerSecond: () => number,
     private readonly noteKey: NoteKeyFn,
@@ -33,7 +33,7 @@ export class NoteBlockStateSync {
     if (this.getMode() !== "synthesia") return;
 
     const pps = this.getPixelsPerSecond();
-    const lookAhead = this.settings?.particles.lookAhead ?? 3;
+    const lookAhead = this.particleConfig?.lookAhead ?? 3;
     const height = this.getHeight();
     const active = this.getActive();
     const triggeredNoteKeys = this.synthesia.getTriggeredNoteKeys();
@@ -80,7 +80,7 @@ export class NoteBlockStateSync {
     );
   }
 
-  private get settings(): WaterfallPianoSettings | null {
-    return this.getSettings();
+  private get particleConfig(): ParticleConfig | null {
+    return this.getParticleConfig();
   }
 }

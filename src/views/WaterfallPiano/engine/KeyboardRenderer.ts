@@ -1,4 +1,4 @@
-import type { WaterfallPianoSettings } from "../types";
+import type { KeyboardConfig } from "../types";
 import {
   midiToNoteName,
   midiToPitchClass,
@@ -7,6 +7,7 @@ import {
   KEYBOARD_RANGES,
   NARROW_RANGE,
 } from "../constants";
+import { getPianoThemeColors, createTopGradient } from "./themeColors";
 
 const BLACK_KEY_CLASSES = new Set([1, 3, 6, 8, 10]);
 const BLACK_KEY_WIDTH_RATIO = 0.6;
@@ -36,12 +37,11 @@ export interface KeyboardLayout {
 export class KeyboardRenderer {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private settings: WaterfallPianoSettings | null = null;
+  private config: KeyboardConfig | null = null;
   private width = 0;
   private height = 0;
   private from = 21;
   private to = 108;
-  private highlights = new Set<number>();
   private activeNotes = new Set<number>();
   private _cachedLayout: KeyboardLayout | null = null;
   private _midiToIndex = new Map<number, number>();
@@ -52,39 +52,49 @@ export class KeyboardRenderer {
   private _staticCacheDirty = true;
 
   /**
-   * 初始化渲染器，绑定 Canvas 元素和全局配置
-   * @param canvas - 键盘绘制目标 Canvas
-   * @param settings - WaterfallPiano 全局配置
+   * 获取主题颜色（从daisyUI）
+   * 如果无法获取CSS变量，则返回配置中的颜色作为后备
    */
-  init(canvas: HTMLCanvasElement, settings: WaterfallPianoSettings): void {
-    if (!canvas) return;
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
-    this.settings = settings;
-    this._staticCacheDirty = true;
-    this.applyRangeFromSettings();
-  }
-
-  /** 更新设置并标记静态缓存为脏 */
-  setSettings(settings: WaterfallPianoSettings): void {
-    this.settings = settings;
-    this._staticCacheDirty = true;
-    this.applyRangeFromSettings();
+  private _getThemeColors() {
+    const colors = getPianoThemeColors();
+    return {
+      whiteKey: colors.whiteKey,
+      blackKey: colors.blackKey,
+      pressedKey: colors.pressedKey,
+      labelLight: "#333333", // 深色标签用于白键
+      labelDark: "#ffffff",   // 浅色标签用于黑键
+    };
   }
 
   /**
-   * 根据配置中的键盘范围设置（预设或自定义）更新 MIDI 范围
+   * 初始化渲染器，绑定 Canvas 元素和键盘配置
+   * @param canvas - 键盘绘制目标 Canvas
+   * @param config - 键盘配置
    */
-  private applyRangeFromSettings(): void {
-    if (!this.settings) return;
-    const range = this.settings.keyboard.range;
-    if (range === "custom") {
-      const fromName = this.settings.keyboard.customFrom || "A0";
-      const toName = this.settings.keyboard.customTo || "C8";
-      this.from = noteNameToMidi(fromName);
-      this.to = noteNameToMidi(toName);
+  init(canvas: HTMLCanvasElement, config: KeyboardConfig): void {
+    if (!canvas) return;
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.config = config;
+    this._staticCacheDirty = true;
+    this.applyRangeFromConfig();
+  }
+
+  /** 更新键盘配置并标记静态缓存为脏 */
+  setKeyboardConfig(kb: KeyboardConfig): void {
+    this.config = kb;
+    this._staticCacheDirty = true;
+    this.applyRangeFromConfig();
+  }
+
+  /** 根据键盘配置中的范围设置更新 MIDI 范围 */
+  private applyRangeFromConfig(): void {
+    if (!this.config) return;
+    if (this.config.range === "custom") {
+      this.from = noteNameToMidi(this.config.customFrom || "A0");
+      this.to = noteNameToMidi(this.config.customTo || "C8");
     } else {
-      const r = KEYBOARD_RANGES[range];
+      const r = KEYBOARD_RANGES[this.config.range];
       this.from = r.from;
       this.to = r.to;
     }
@@ -108,11 +118,11 @@ export class KeyboardRenderer {
     if (this.ctx) {
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    if (this.settings && width < NARROW_BREAKPOINT) {
+    if (this.config && width < NARROW_BREAKPOINT) {
       this.from = NARROW_RANGE.from;
       this.to = NARROW_RANGE.to;
     } else {
-      this.applyRangeFromSettings();
+      this.applyRangeFromConfig();
     }
     this.invalidateLayout();
   }
@@ -215,7 +225,6 @@ export class KeyboardRenderer {
   }
 
   highlightNote(midi: number): void {
-    this.highlights.add(midi);
     this.activeNotes.add(midi);
   }
 
@@ -224,7 +233,6 @@ export class KeyboardRenderer {
   }
 
   clearAllHighlights(): void {
-    this.highlights.clear();
     this.activeNotes.clear();
   }
 
@@ -237,10 +245,10 @@ export class KeyboardRenderer {
   }
 
   render(): void {
-    if (!this.ctx || !this.settings) return;
+    if (!this.ctx || !this.config) return;
     const ctx = this.ctx;
     const layout = this.getLayout();
-    const kb = this.settings.keyboard;
+    const kb = this.config;
 
     ctx.clearRect(0, 0, this.width, this.height);
     if (!kb.visible) return;
@@ -255,13 +263,27 @@ export class KeyboardRenderer {
 
     // ── 仅绘制动态高亮层（按下的键） ──
     if (this.activeNotes.size > 0) {
+      const themeColors = this._getThemeColors();
+
       // 1. 高亮白键（整个高度，后续会被黑键覆盖）
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
         if (!this.activeNotes.has(midi)) continue;
         const x = i * layout.whiteKeyWidth;
         const w = layout.whiteKeyWidth;
-        ctx.fillStyle = kb.pressedKeyColor;
+
+        // 使用主题颜色并添加渐变效果
+        const gradient = createTopGradient(
+          ctx,
+          x,
+          0,
+          w,
+          this.height,
+          themeColors.pressedKey,
+          0.15,
+        );
+        ctx.fillStyle = gradient;
+
         if (kb.keyCornerRadius > 0) {
           roundRect(ctx, x, 0, w, this.height, kb.keyCornerRadius);
           ctx.fill();
@@ -269,7 +291,7 @@ export class KeyboardRenderer {
           ctx.fillRect(x, 0, w, this.height);
         }
       }
-      
+
       // 2. 重新绘制所有黑键（覆盖白键高亮，确保正确的显示）
       for (let m = this.from; m <= this.to; m++) {
         if (!isBlackKey(m)) continue;
@@ -277,8 +299,23 @@ export class KeyboardRenderer {
         const bx = x - layout.blackKeyWidth / 2;
         const bw = layout.blackKeyWidth;
         const bh = layout.blackKeyHeight;
-        // 根据是否被按下来决定颜色
-        ctx.fillStyle = this.activeNotes.has(m) ? kb.pressedKeyColor : kb.blackKeyColor;
+
+        // 根据是否被按下来决定颜色，添加渐变
+        const isActive = this.activeNotes.has(m);
+        const baseColor = isActive
+          ? themeColors.pressedKey
+          : themeColors.blackKey;
+        const gradient = createTopGradient(
+          ctx,
+          bx,
+          0,
+          bw,
+          bh,
+          baseColor,
+          isActive ? 0.2 : 0.15,
+        );
+        ctx.fillStyle = gradient;
+
         if (kb.keyCornerRadius > 0) {
           roundRect(ctx, bx, 0, bw, bh, kb.keyCornerRadius);
           ctx.fill();
@@ -292,9 +329,10 @@ export class KeyboardRenderer {
   /** 重建离屏 Canvas 缓存：静态键体、边框、分隔线、标签 */
   private rebuildStaticCache(
     layout: KeyboardLayout,
-    kb: WaterfallPianoSettings["keyboard"],
+    kb: KeyboardConfig,
   ): void {
     const dpr = this._staticCacheDpr || 1;
+    const themeColors = this._getThemeColors();
     // 创建或调整离屏 Canvas
     if (
       !this._staticCache ||
@@ -312,11 +350,23 @@ export class KeyboardRenderer {
     sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     sCtx.clearRect(0, 0, this.width, this.height);
 
-    // 白键
+    // 白键（添加3D渐变效果）
     for (let i = 0; i < layout.whiteKeys.length; i++) {
       const x = i * layout.whiteKeyWidth;
       const w = layout.whiteKeyWidth;
-      sCtx.fillStyle = kb.whiteKeyColor;
+
+      // 使用主题颜色和渐变
+      const gradient = createTopGradient(
+        sCtx,
+        x,
+        0,
+        w,
+        this.height,
+        themeColors.whiteKey,
+        0.15,
+      );
+      sCtx.fillStyle = gradient;
+
       if (kb.keyCornerRadius > 0) {
         roundRect(sCtx, x, 0, w, this.height, kb.keyCornerRadius);
         sCtx.fill();
@@ -345,14 +395,26 @@ export class KeyboardRenderer {
       sCtx.stroke();
     }
 
-    // 黑键
+    // 黑键（添加3D渐变效果）
     for (let m = this.from; m <= this.to; m++) {
       if (!isBlackKey(m)) continue;
       const x = this.midiToX(m);
       const bx = x - layout.blackKeyWidth / 2;
       const bw = layout.blackKeyWidth;
       const bh = layout.blackKeyHeight;
-      sCtx.fillStyle = kb.blackKeyColor;
+
+      // 使用主题颜色和渐变
+      const gradient = createTopGradient(
+        sCtx,
+        bx,
+        0,
+        bw,
+        bh,
+        themeColors.blackKey,
+        0.15,
+      );
+      sCtx.fillStyle = gradient;
+
       if (kb.keyCornerRadius > 0) {
         roundRect(sCtx, bx, 0, bw, bh, kb.keyCornerRadius);
         sCtx.fill();
@@ -367,7 +429,9 @@ export class KeyboardRenderer {
         kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
       sCtx.textAlign = "center";
       sCtx.textBaseline = "bottom";
-      sCtx.fillStyle = "#666";
+
+      // 白键标签
+      sCtx.fillStyle = themeColors.labelLight;
       sCtx.font = `${Math.max(8, layout.whiteKeyWidth * 0.3)}px sans-serif`;
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
@@ -376,7 +440,9 @@ export class KeyboardRenderer {
         const x = (i + 0.5) * layout.whiteKeyWidth;
         sCtx.fillText(label, x, this.height - 4);
       }
-      sCtx.fillStyle = "#999";
+
+      // 黑键标签
+      sCtx.fillStyle = themeColors.labelDark;
       sCtx.font = `${Math.max(7, layout.blackKeyWidth * 0.35)}px sans-serif`;
       for (let m = this.from; m <= this.to; m++) {
         if (!isBlackKey(m)) continue;
@@ -398,7 +464,7 @@ export class KeyboardRenderer {
    */
   private labelFor(
     midi: number,
-    mode: WaterfallPianoSettings["keyboard"]["keyLabel"],
+    mode: KeyboardConfig["keyLabel"],
   ): string | null {
     if (mode === "none") return null;
     if (mode === "note") return midiToNoteName(midi);

@@ -489,11 +489,13 @@
       "keyNameNote": "Note",
       "showNoteNames": "Show Note Names",
       "colors": "Colors",
+      "useThemeColors": "Use Theme Colors",
+      "gradientIntensity": "Gradient Intensity",
       "whiteKeyColor": "White Key Color",
       "blackKeyColor": "Black Key Color",
       "pressedKeyColor": "Pressed Key Color",
       "appearance": "Appearance",
-      "keyCornerRadius": "Corner Radius"
+      "keyCornerRadius": "Key Corner Radius"
     }
   },
   "overlay": {

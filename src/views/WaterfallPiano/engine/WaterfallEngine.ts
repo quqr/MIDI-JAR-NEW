@@ -45,7 +45,8 @@ export class WaterfallEngine {
   private splatManager = new FluidSplatManager({
     keyboardRenderer: this.keyboardRenderer,
     noteBlockSystem: this.noteBlockSystem,
-    getSettings: () => this.settings,
+    getParticleConfig: () => this.settings ? this.settings.particles : null,
+    getBackgroundConfig: () => this.settings ? this.settings.background : null,
     getLayout: () => ({
       width: this.width,
       height: this.height,
@@ -94,9 +95,13 @@ export class WaterfallEngine {
       this.canvases = canvases;
       this.settings = settings;
       this._waterfallCtx = canvases.waterfall.getContext("2d");
-      this.keyboardRenderer.init(canvases.keyboard, settings);
-      this.noteBlockSystem.init(canvases.waterfall, settings);
-      this.backgroundRenderer.init(canvases.background, settings);
+      this.keyboardRenderer.init(canvases.keyboard, settings.keyboard);
+      this.noteBlockSystem.init(
+        canvases.waterfall,
+        settings.particles,
+        settings.aura,
+      );
+      this.backgroundRenderer.init(canvases.background, settings.background);
       this.noteBlockSystem.callbacks = {
         onNoteTrigger: (midi, vel) => this.onSynthesiaTrigger(midi, vel),
         onNoteEnd: (midi) => this.onSynthesiaEnd(midi),
@@ -175,8 +180,9 @@ export class WaterfallEngine {
       this.resize(this.width, this.height);
     }
     this.keyboardRenderer.resize(this.width, this.keyboardHeight, this.dpr);
-    this.noteBlockSystem.setSettings(settings);
-    this.backgroundRenderer.setSettings(settings);
+    this.noteBlockSystem.setParticleConfig(settings.particles);
+    this.noteBlockSystem.setAuraConfig(settings.aura);
+    this.backgroundRenderer.setBackgroundConfig(settings.background);
     if (settings.background.fluidEnabled && !oldFluidEnabled) {
       this.maybeInitFluid();
       // 流体开启后需要重新布局确保 canvas 尺寸正确

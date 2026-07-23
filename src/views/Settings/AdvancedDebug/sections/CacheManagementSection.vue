@@ -15,12 +15,8 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const {
-  getLocalStorageSize,
-  getCacheStorageSize,
-  clearAllCaches,
-  isClearing,
-} = useInstrumentCache();
+const { getLocalStorageSize, getCacheStorageSize, clearAllCaches, isClearing } =
+  useInstrumentCache();
 
 const localStorageSize = ref(0);
 const cacheStorageSize = ref(0);
@@ -65,20 +61,34 @@ onUnmounted(() => {
     <div class="space-y-4">
       <!-- localStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{ t("advancedDebug.cache.localStorage", "localStorage") }}</span>
-        <span class="badge badge-neutral">{{ formatBytes(localStorageSize) }}</span>
+        <span class="text-sm">{{
+          t("advancedDebug.cache.localStorage", "localStorage")
+        }}</span>
+        <span class="badge badge-neutral">{{
+          formatBytes(localStorageSize)
+        }}</span>
       </div>
 
       <!-- CacheStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{ t("advancedDebug.cache.cacheStorage", "CacheStorage") }}</span>
-        <span class="badge badge-neutral">{{ formatBytes(cacheStorageSize) }}</span>
+        <span class="text-sm">{{
+          t("advancedDebug.cache.cacheStorage", "CacheStorage")
+        }}</span>
+        <span class="badge badge-neutral">{{
+          formatBytes(cacheStorageSize)
+        }}</span>
       </div>
 
       <!-- 总大小 -->
-      <div class="flex items-center justify-between pt-2 border-t border-base-300">
-        <span class="text-sm font-semibold">{{ t("advancedDebug.cache.total", "总计") }}</span>
-        <span class="badge badge-primary">{{ formatBytes(localStorageSize + cacheStorageSize) }}</span>
+      <div
+        class="flex items-center justify-between pt-2 border-t border-base-300"
+      >
+        <span class="text-sm font-semibold">{{
+          t("advancedDebug.cache.total", "总计")
+        }}</span>
+        <span class="badge badge-primary">{{
+          formatBytes(localStorageSize + cacheStorageSize)
+        }}</span>
       </div>
 
       <!-- 清除按钮 -->
@@ -87,13 +97,22 @@ onUnmounted(() => {
         :disabled="isClearing"
         @click="handleClearAllCaches"
       >
-        <Icon :name="isClearing ? 'loading' : 'trash'" :size="16" :class="{ 'animate-spin': isClearing }" />
+        <Icon
+          :name="isClearing ? 'loading' : 'trash'"
+          :size="16"
+          :class="{ 'animate-spin': isClearing }"
+        />
         <span>{{ t("advancedDebug.cache.clearAll", "清除全部缓存") }}</span>
       </button>
 
       <!-- 说明 -->
       <p class="text-xs text-base-content/60">
-        {{ t("advancedDebug.cache.note", "清除缓存后，已加载的音源需要重新下载。用户设置和主题将保留。") }}
+        {{
+          t(
+            "advancedDebug.cache.note",
+            "清除缓存后，已加载的音源需要重新下载。用户设置和主题将保留。",
+          )
+        }}
       </p>
     </div>
   </SettingsCollapse>

@@ -414,6 +414,54 @@ async function clearCache(): Promise<string | null> {
   return currentId;
 }
 
+/** 批量下载音源结果类型 */
+export type BatchDownloadResult = {
+  succeeded: string[];
+  failed: Array<{ id: string; error: string }>;
+};
+
+/**
+ * 批量下载缓存音源
+ *
+ * 依次加载多个音源，每个音源独立处理，失败不影响其他音源。
+ * 返回成功列表和失败列表（含错误信息）。
+ *
+ * @param instrumentIds - 要下载的音源 ID 列表
+ * @returns 批量下载结果
+ */
+async function batchDownloadInstruments(
+  instrumentIds: string[],
+): Promise<BatchDownloadResult> {
+  const result: BatchDownloadResult = {
+    succeeded: [],
+    failed: [],
+  };
+
+  for (const id of instrumentIds) {
+    try {
+      await loadInstrument(id);
+      result.succeeded.push(id);
+      logger.info("[SamplerService] Batch download success: %s", id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      result.failed.push({ id, error: msg });
+      logger.error(
+        "[SamplerService] Batch download failed for %s: %s",
+        id,
+        msg,
+      );
+    }
+  }
+
+  logger.info(
+    "[SamplerService] Batch download complete: %d succeeded, %d failed",
+    result.succeeded.length,
+    result.failed.length,
+  );
+
+  return result;
+}
+
 /** 释放所有资源 */
 function dispose() {
   const store = useSamplerStore();
@@ -465,5 +513,6 @@ export function useSamplerService() {
     getCacheSize,
     clearCache,
     dispose,
+    batchDownloadInstruments,
   };
 }

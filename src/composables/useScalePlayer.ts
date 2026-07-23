@@ -41,7 +41,10 @@ export function useScalePlayer() {
     const tonicUp = `${scaleNotes[0]}${startOctave + 1}`;
 
     // 构建下行音符列表
-    const downNotes = [...upNotes.slice().reverse().slice(1), tonicUp].reverse();
+    const downNotes = [
+      ...upNotes.slice().reverse().slice(1),
+      tonicUp,
+    ].reverse();
 
     let notesToPlay: string[];
 

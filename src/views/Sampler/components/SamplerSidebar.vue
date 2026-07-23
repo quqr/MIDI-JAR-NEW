@@ -18,7 +18,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const samplerStore = useSamplerStore();
-const { getCacheStorageSize, clearAllCaches, isClearing } = useInstrumentCache();
+const { getCacheStorageSize, clearAllCaches, isClearing } =
+  useInstrumentCache();
 
 const cacheSize = ref(0);
 let cacheRefreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -89,7 +90,7 @@ onUnmounted(() => {
         <button
           class="btn btn-ghost btn-xs"
           :disabled="samplerStore.isRefreshing"
-          :class="{ 'loading': samplerStore.isRefreshing }"
+          :class="{ loading: samplerStore.isRefreshing }"
           @click="handleRefreshInstruments"
           title="刷新音色列表"
         >
@@ -109,7 +110,12 @@ onUnmounted(() => {
           type="text"
           :placeholder="t('sampler.searchInstruments')"
           class="input input-bordered input-sm w-full"
-          @input="emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
+          @input="
+            emit(
+              'update:searchQuery',
+              ($event.target as HTMLInputElement).value,
+            )
+          "
         />
       </div>
 
@@ -117,12 +123,19 @@ onUnmounted(() => {
       <ul class="menu menu-sm bg-base-200 rounded-lg">
         <li v-for="cat in categories" :key="cat.id">
           <button
-            :class="{ active: selectedCategory === cat.id , 'bg-primary text-primary-content': selectedCategory === cat.id } "
+            :class="{
+              active: selectedCategory === cat.id,
+              'bg-primary text-primary-content': selectedCategory === cat.id,
+            }"
             @click="emit('update:selectedCategory', cat.id)"
           >
             {{ cat.label }}
-            <span class="badge badge-xs badge-ghost ml-auto ">
-              {{ cat.id === 'all' ? samplerStore.gmInstrumentCatalog.length : (samplerStore.instrumentsByCategory[cat.id]?.length ?? 0) }}
+            <span class="badge badge-xs badge-ghost ml-auto">
+              {{
+                cat.id === "all"
+                  ? samplerStore.gmInstrumentCatalog.length
+                  : (samplerStore.instrumentsByCategory[cat.id]?.length ?? 0)
+              }}
             </span>
           </button>
         </li>

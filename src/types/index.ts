@@ -86,31 +86,10 @@ export type WindowState = {
   path: string;
 };
 
-export type KeyboardSettings = {
-  skin: "classic" | "flat";
-  from: string;
-  to: string;
-  label: "none" | "pitchClass" | "note" | "chordNote" | "interval";
-  keyName: "none" | "octave" | "pitchClass" | "note";
-  keyInfo: "none" | "tonic" | "interval" | "tonicAndInterval";
-  fadeOutDuration: number;
-  textOpacity: number;
-  displaySustained: boolean;
-  wrap: boolean;
-  sizes: {
-    radius: number;
-    height: number;
-    ratio: number;
-    bevel: boolean;
-  };
-  colors: {
-    white: string | null;
-    black: string | null;
-    played: string | null;
-    wrapped: string | null;
-    sustained: string | null;
-  };
-};
+// 导入KeyboardSettings类型
+import type { KeyboardSettings } from "./settings";
+
+// 注意：KeyboardSettings 类型已移至 ./piano.ts
 
 export type ChordDisplaySettings = {
   id: string;
@@ -166,6 +145,7 @@ export type GeneralSettings = {
   language: "en" | "zh";
 };
 
+// 钢琴设置类型定义
 export type PianoSettings = {
   from: string;
   to: string;
@@ -176,6 +156,9 @@ export type PianoSettings = {
   pressedKeyColor: string;
   keyCornerRadius: number;
   showNoteNames: boolean;
+  // 主题集成相关设置
+  useThemeColors: boolean; // 是否使用主题颜色（替代硬编码颜色）
+  gradientIntensity: number; // 渐变强度（0-0.5）
 };
 
 export type Settings = {
@@ -191,31 +174,8 @@ export type Settings = {
 /**
  * 默认值
  */
-export const defaultKeyboardSettings: KeyboardSettings = {
-  skin: "classic",
-  from: "C3",
-  to: "C5",
-  label: "pitchClass",
-  keyName: "note",
-  keyInfo: "tonicAndInterval",
-  fadeOutDuration: 0,
-  textOpacity: 0.5,
-  displaySustained: true,
-  wrap: false,
-  sizes: {
-    radius: 0.4,
-    height: 6,
-    ratio: 0.6,
-    bevel: true,
-  },
-  colors: {
-    white: "#ffffff",
-    black: "#000000",
-    played: "#315bce",
-    wrapped: "#1d367b",
-    sustained: "#808080",
-  },
-};
+
+// defaultKeyboardSettings 已移除，改用 createKeyboardSettingsFromPiano 创建
 
 export const defaultChordDisplaySettings: ChordDisplaySettings = {
   id: "default",
@@ -229,7 +189,31 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
   displayNotation: true,
   displayAltChords: true,
   displayIntervals: true,
-  keyboard: defaultKeyboardSettings,
+  keyboard: {
+    skin: "classic",
+    from: "C3",
+    to: "C5",
+    label: "pitchClass",
+    keyName: "note",
+    keyInfo: "tonicAndInterval",
+    fadeOutDuration: 0,
+    textOpacity: 0.5,
+    displaySustained: true,
+    wrap: false,
+    sizes: {
+      radius: 0.4,
+      height: 6,
+      ratio: 0.6,
+      bevel: true,
+    },
+    colors: {
+      white: "#ffffff",
+      black: "#000000",
+      played: "#315bce",
+      wrapped: "#1d367b",
+      sustained: "#808080",
+    },
+  },
 };
 
 export const defaultChordDictionarySettings: ChordDictionarySettings = {
@@ -281,6 +265,8 @@ export const defaultPianoSettings: PianoSettings = {
   pressedKeyColor: "#315bce",
   keyCornerRadius: 0.4,
   showNoteNames: false,
+  useThemeColors: true, // 默认使用主题颜色
+  gradientIntensity: 0.15, // 默认渐变强度
 };
 
 export const defaultSettings: Settings = {
