@@ -1,108 +1,61 @@
+import { Container, Graphics } from "pixi.js";
 import type { BackgroundConfig } from "../types";
 
 /**
- * 瀑布流钢琴的背景渲染器，使用离屏 Canvas 缓存静态背景以提升绘制性能
+ * 瀑布流钢琴的背景渲染器，使用 PixiJS Graphics 绘制纯色/渐变背景
  */
 export class BackgroundRenderer {
-  private canvas: HTMLCanvasElement | null = null;
-  private ctx: CanvasRenderingContext2D | null = null;
+  private container: Container | null = null;
+  private bgGraphics: Graphics | null = null;
   private config: BackgroundConfig | null = null;
   private width = 0;
   private height = 0;
-  // 缓存的静态背景
-  private bgCanvas: HTMLCanvasElement | null = null;
-  private bgCtx: CanvasRenderingContext2D | null = null;
-  private bgCached = false;
+  private dirty = true;
 
   /**
-   * 初始化渲染器，绑定目标 Canvas 和背景配置
-   * @param canvas - 用于绘制背景的 Canvas 元素
+   * 初始化渲染器，绑定目标 Container 和背景配置
+   * @param container - 用于绘制背景的 PixiJS Container
    * @param config - 背景渲染配置
    */
-  init(canvas: HTMLCanvasElement, config: BackgroundConfig): void {
-    if (!canvas) return;
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
+  init(container: Container, config: BackgroundConfig): void {
+    this.container = container;
+    this.bgGraphics = new Graphics();
+    container.addChild(this.bgGraphics);
     this.config = config;
-    this.markDirty();
+    this.dirty = true;
   }
 
   /**
-   * 调整画布尺寸，同步更新主 Canvas 与离屏缓存 Canvas 的分辨率
+   * 调整尺寸
    * @param width - 逻辑宽度（CSS 像素）
    * @param height - 逻辑高度（CSS 像素）
-   * @param dpr - 设备像素比，用于高清屏适配
+   * @param _dpr - 设备像素比（PixiJS 自动处理）
    */
-  resize(width: number, height: number, dpr: number): void {
+  resize(width: number, height: number, _dpr: number): void {
     this.width = width;
     this.height = height;
-    if (this.canvas) {
-      this.canvas.width = Math.max(1, Math.floor(width * dpr));
-      this.canvas.height = Math.max(1, Math.floor(height * dpr));
-    }
-    if (this.ctx) {
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    if (this.bgCanvas) {
-      this.bgCanvas.width = Math.max(1, Math.floor(width * dpr));
-      this.bgCanvas.height = Math.max(1, Math.floor(height * dpr));
-      this.bgCtx = this.bgCanvas.getContext("2d");
-      if (this.bgCtx) this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    this.markDirty();
+    this.dirty = true;
   }
 
   setBackgroundConfig(config: BackgroundConfig): void {
     this.config = config;
-    this.markDirty();
-  }
-
-  private markDirty(): void {
-    this.bgCached = false;
+    this.dirty = true;
   }
 
   /**
-   * 懒创建离屏缓存 Canvas，仅在首次渲染或尺寸变化时调用
-   */
-  private ensureBgCanvas(): void {
-    if (!this.bgCanvas) {
-      this.bgCanvas = document.createElement("canvas");
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      this.bgCanvas.width = Math.max(1, Math.floor(this.width * dpr));
-      this.bgCanvas.height = Math.max(1, Math.floor(this.height * dpr));
-      this.bgCtx = this.bgCanvas.getContext("2d");
-      if (this.bgCtx) this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-  }
-
-  /**
-   * 渲染背景，优先使用缓存的离屏 Canvas；缓存失效时重新绘制并更新缓存
+   * 渲染背景，仅在配置变更或尺寸变化时重绘
    * @param _time - 当前时间戳（保留参数，当前未使用）
    */
   render(_time: number): void {
-    if (!this.ctx || !this.config) return;
-    const ctx = this.ctx;
-
-    // 纯色背景是静态的，使用缓存
-    if (this.bgCached && this.bgCanvas) {
-      ctx.clearRect(0, 0, this.width, this.height);
-      ctx.drawImage(this.bgCanvas, 0, 0, this.width, this.height);
-      return;
-    }
-
-    this.ensureBgCanvas();
-    const targetCtx = this.bgCtx!;
-    targetCtx.clearRect(0, 0, this.width, this.height);
-    targetCtx.fillStyle = this.config.solidColor;
-    targetCtx.fillRect(0, 0, this.width, this.height);
-
-    ctx.clearRect(0, 0, this.width, this.height);
-    ctx.drawImage(this.bgCanvas!, 0, 0, this.width, this.height);
-    this.bgCached = true;
+    if (!this.bgGraphics || !this.config || !this.dirty) return;
+    this.bgGraphics.clear();
+    this.bgGraphics.rect(0, 0, this.width, this.height);
+    this.bgGraphics.fill(this.config.solidColor);
+    this.dirty = false;
   }
 
   dispose(): void {
-    this.bgCanvas = null;
-    this.bgCtx = null;
+    this.bgGraphics?.destroy();
+    this.bgGraphics = null;
   }
 }

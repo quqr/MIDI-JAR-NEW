@@ -1,17 +1,18 @@
 <template>
   <div ref="containerRef" class="absolute inset-0 overflow-hidden">
-    <canvas ref="bgRef" class="absolute inset-0 pointer-events-none" />
-    <canvas ref="fluidRef" class="absolute inset-0 pointer-events-none" />
-    <canvas ref="waterfallRef" class="absolute pointer-events-none" />
-    <canvas ref="keyboardRef" class="absolute" />
+    <!-- PixiJS Application canvas is appended here by createWaterfallApp() -->
+    <!-- Separate canvas for fluid simulation (until PixiJS fluid migration is complete) -->
+    <canvas v-if="showFluidCanvas" ref="fluidRef" class="absolute inset-0 pointer-events-none" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import { WaterfallEngine } from "../engine/WaterfallEngine";
+import { Application, Container } from "pixi.js";
+import { WaterfallEngine, type WaterfallLayers } from "../engine/WaterfallEngine";
 import { SamplerSoundEngine } from "../audio/SamplerSoundEngine";
 import { keyboardMap } from "../constants";
+import { createWaterfallApp } from "../engine/PixiAppFactory";
 import type { WaterfallPianoSettings } from "../types";
 import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 
@@ -26,22 +27,16 @@ const emit = defineEmits<{
 }>();
 
 const containerRef = ref<HTMLDivElement>();
-const bgRef = ref<HTMLCanvasElement>();
 const fluidRef = ref<HTMLCanvasElement>();
-const waterfallRef = ref<HTMLCanvasElement>();
-const keyboardRef = ref<HTMLCanvasElement>();
+const showFluidCanvas = ref(false);
 
 let engine: WaterfallEngine | null = null;
 let soundEngine: SamplerSoundEngine | null = null;
+let pixiApp: Application | null = null;
 let resizeObserver: ResizeObserver | null = null;
 const heldKeys = new Set<string>();
 let audioInitialized = false;
 
-/**
- * 将电脑键盘按键映射为 MIDI 音符号
- * @param key - 键盘按键名称（如 "a", "w"）
- * @returns 对应的 MIDI 编号，无映射时返回 null
- */
 function midiFromKey(key: string): number | null {
   const base = keyboardMap[key.toLowerCase()];
   if (base === undefined) return null;
@@ -66,7 +61,6 @@ function onKeyDown(e: KeyboardEvent): void {
   if (heldKeys.has(key)) return;
   heldKeys.add(key);
 
-  // Initialize audio on first user interaction (user gesture)
   if (!audioInitialized && soundEngine) {
     audioInitialized = true;
     soundEngine.init().catch(() => {
@@ -87,9 +81,6 @@ function onKeyUp(e: KeyboardEvent): void {
   engine?.triggerNoteOff(midi);
 }
 
-/**
- * 释放所有正在按住的键，逐个触发 noteOff 并清空 heldKeys 集合
- */
 function clearAllHeld(): void {
   for (const key of heldKeys) {
     const midi = midiFromKey(key);
@@ -101,34 +92,44 @@ function clearAllHeld(): void {
 }
 
 onMounted(async () => {
-  if (
-    !containerRef.value ||
-    !bgRef.value ||
-    !fluidRef.value ||
-    !waterfallRef.value ||
-    !keyboardRef.value
-  ) {
-    return;
-  }
+  if (!containerRef.value) return;
 
   soundEngine = new SamplerSoundEngine();
-  // 必须调用 init() 以设置 initialized 标志，否则 noteOn/noteOff 会被静默忽略
   await soundEngine.init();
   audioInitialized = true;
 
+  // 创建 PixiJS Application
+  pixiApp = await createWaterfallApp(containerRef.value);
+
+  // 创建四层 Container
+  const backgroundLayer = new Container();
+  backgroundLayer.label = "background";
+  const fluidLayer = new Container();
+  fluidLayer.label = "fluid";
+  const waterfallLayer = new Container();
+  waterfallLayer.label = "waterfall";
+  const keyboardLayer = new Container();
+  keyboardLayer.label = "keyboard";
+
+  const layers: WaterfallLayers = {
+    background: backgroundLayer,
+    fluid: fluidLayer,
+    waterfall: waterfallLayer,
+    keyboard: keyboardLayer,
+  };
+
+  pixiApp.stage.addChild(backgroundLayer, fluidLayer, waterfallLayer, keyboardLayer);
+
+  // 初始化引擎
+  const fluidCanvas = props.settings.background.fluidEnabled ? fluidRef.value ?? undefined : undefined;
+  showFluidCanvas.value = props.settings.background.fluidEnabled;
+
   engine = new WaterfallEngine();
-  engine.init(
-    {
-      background: bgRef.value,
-      fluid: fluidRef.value,
-      waterfall: waterfallRef.value,
-      keyboard: keyboardRef.value,
-    },
-    props.settings,
-  );
+  engine.init(pixiApp, layers, props.settings, fluidCanvas);
   engine.setSoundEngine(soundEngine);
   engine.setMode(props.mode);
 
+  // 初始 resize
   const container = containerRef.value;
   const doResize = () => {
     if (!engine || !container) return;
@@ -148,7 +149,10 @@ onMounted(async () => {
 
 watch(
   () => props.settings,
-  (s) => engine?.applySettings(s),
+  (s) => {
+    engine?.applySettings(s);
+    showFluidCanvas.value = s.background.fluidEnabled;
+  },
   { deep: true },
 );
 
@@ -157,7 +161,6 @@ watch(
   (m) => engine?.setMode(m),
 );
 
-// FPS 显示通过 engine.showFPS 控制，不需要独立 RAF 循环
 watch(
   () => props.showFPS,
   (show) => {
@@ -177,6 +180,10 @@ onUnmounted(() => {
   engine = null;
   soundEngine?.dispose();
   soundEngine = null;
+  if (pixiApp) {
+    pixiApp.destroy(true, { children: true, texture: true });
+    pixiApp = null;
+  }
 });
 
 defineExpose({

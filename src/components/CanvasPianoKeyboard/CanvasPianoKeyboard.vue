@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, watchEffect } from "vue";
+import { Application, Container } from "pixi.js";
 import { KeyboardRenderer } from "@/views/WaterfallPiano/engine/KeyboardRenderer";
 import type { KeyboardSettings } from "@/types/settings";
 import {
@@ -70,11 +71,12 @@ const emit = defineEmits<{
 // ── 模板引用 ──
 
 const containerRef = ref<HTMLDivElement | null>(null);
-const canvasRef = ref<HTMLCanvasElement | null>(null);
 
 // ── 内部状态 ──
 
 let renderer: KeyboardRenderer | null = null;
+let pixiApp: Application | null = null;
+let pixiContainer: Container | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let rafId: number | null = null;
 let resizeRafId: number | null = null;
@@ -109,6 +111,8 @@ function applyHighlights(): void {
   }
 
   renderer.render();
+  // 驱动 PixiJS 渲染
+  pixiApp?.render();
 }
 
 function scheduleRender(): void {
@@ -122,14 +126,15 @@ function scheduleRender(): void {
 // ── 指针事件 ──
 
 function onPointerDown(e: PointerEvent): void {
-  if (!renderer || !props.clickable || !canvasRef.value) return;
+  if (!renderer || !props.clickable) return;
   e.preventDefault();
 
-  const rect = canvasRef.value.getBoundingClientRect();
+  const target = e.currentTarget as HTMLElement;
+  const rect = target.getBoundingClientRect();
   const midi = renderer.xToMidi(e.clientX - rect.left);
   if (midi === null) return;
 
-  canvasRef.value.setPointerCapture(e.pointerId);
+  target.setPointerCapture(e.pointerId);
 
   if (props.sustainMode) {
     sustainedNotes.add(midi);
@@ -149,21 +154,42 @@ function releasePointer(e: PointerEvent): void {
     sustainedNotes.clear();
   }
 
-  const canvas = canvasRef.value;
-  if (canvas?.hasPointerCapture(e.pointerId)) {
-    canvas.releasePointerCapture(e.pointerId);
+  const target = e.currentTarget as HTMLElement;
+  if (target?.hasPointerCapture(e.pointerId)) {
+    target.releasePointerCapture(e.pointerId);
   }
   scheduleRender();
 }
 
 // ── 生命周期 ──
 
-onMounted(() => {
-  if (!canvasRef.value || !containerRef.value) return;
+onMounted(async () => {
+  if (!containerRef.value) return;
+
+  // 创建 PixiJS Application
+  pixiApp = new Application();
+  await pixiApp.init({
+    antialias: false,
+    backgroundAlpha: 0,
+    preference: "webgl",
+    resolution: window.devicePixelRatio,
+    autoDensity: true,
+    autoStart: false,
+  });
+
+  // 将 PixiJS canvas 添加到容器
+  containerRef.value.appendChild(pixiApp.canvas);
+  pixiApp.canvas.style.width = "100%";
+  pixiApp.canvas.style.height = "100%";
+
+  // 创建键盘 Container
+  pixiContainer = new Container();
+  pixiApp.stage.addChild(pixiContainer);
 
   renderer = new KeyboardRenderer();
   renderer.init(
-    canvasRef.value,
+    pixiContainer,
+    pixiApp.renderer,
     toKeyboardConfig(props.keyboard),
   );
 
@@ -193,7 +219,11 @@ onUnmounted(() => {
   if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
   resizeObserver?.disconnect();
   resizeObserver = null;
+  renderer?.dispose();
   renderer = null;
+  pixiApp?.destroy(true, { children: true });
+  pixiApp = null;
+  pixiContainer = null;
   sustainedNotes.clear();
 });
 
@@ -232,19 +262,13 @@ watch(
     :id="id"
     :class="className"
     style="width: 100%; height: 100%; position: relative"
-  >
-    <canvas
-      ref="canvasRef"
-      :style="{
-        width: '100%',
-        height: '100%',
-        touchAction: clickable ? 'none' : 'auto',
-        cursor: clickable ? 'pointer' : 'default',
-      }"
-      @pointerdown="onPointerDown"
-      @pointerup="releasePointer"
-      @pointercancel="releasePointer"
-      @pointerleave="releasePointer"
-    />
-  </div>
+    :style="{
+      touchAction: clickable ? 'none' : 'auto',
+      cursor: clickable ? 'pointer' : 'default',
+    }"
+    @pointerdown="onPointerDown"
+    @pointerup="releasePointer"
+    @pointercancel="releasePointer"
+    @pointerleave="releasePointer"
+  />
 </template>

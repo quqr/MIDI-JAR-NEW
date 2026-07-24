@@ -146,7 +146,10 @@ describe("Error handling and recovery", () => {
       const { defaultWaterfallSettings } = await import("../constants");
       const settings = structuredClone(defaultWaterfallSettings);
 
-      engine.init(canvases, settings);
+      engine.init(canvases, settings, {
+        container: { addChild: vi.fn(), removeChild: vi.fn(), label: "" } as unknown as import("pixi.js").Container,
+        renderer: { render: vi.fn() } as unknown as import("pixi.js").Renderer,
+      });
       expect(engine.isDisposed()).toBe(false);
 
       await engine.dispose();

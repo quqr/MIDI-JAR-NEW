@@ -1,7 +1,7 @@
 import type { BackgroundConfig, ParticleConfig } from "../types";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import type { NoteBlockSystem } from "./NoteBlockSystem";
-import type { FluidSimulation } from "@/engine/fluid";
+import type { IFluidSimulation } from "@/engine/fluid-pixi";
 import { SplatPerturbation } from "@/engine/fluid/FluidConfig";
 import { noteToColor } from "./NoteColorMapper";
 import { hexToRgbNorm, hslToRgbNorm } from "./colorUtils";
@@ -48,7 +48,7 @@ export class FluidSplatManager {
    * 在命中线位置发射流体 splat，颜色取自音符色或单一色相配置
    */
   fluidSplat(
-    fluid: FluidSimulation,
+    fluid: IFluidSimulation,
     midi: number,
     velocity = DEFAULT_VELOCITY,
   ): void {
@@ -109,7 +109,7 @@ export class FluidSplatManager {
 
   /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
   hitExplosionSplat(
-    fluid: FluidSimulation,
+    fluid: IFluidSimulation,
     midi: number,
     _velocity: number,
   ): void {
@@ -165,7 +165,7 @@ export class FluidSplatManager {
   }
 
   /** 流体模拟更新 + 持续 splat（长按持续 + blockCoverage 尾焰） */
-  updateAndSplat(fluid: FluidSimulation): void {
+  updateAndSplat(fluid: IFluidSimulation): void {
     fluid.update();
     const pCfg = this.deps.getParticleConfig();
     const bCfg = this.deps.getBackgroundConfig();

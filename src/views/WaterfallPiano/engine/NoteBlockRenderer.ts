@@ -1,3 +1,4 @@
+import { Container, Graphics, Text, BlurFilter } from "pixi.js";
 import type { AuraConfig, ParticleConfig } from "../types";
 import { noteToColor, type CustomColors } from "./NoteColorMapper";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
@@ -24,12 +25,17 @@ function brightenColor(hex: string, ratio: number): string {
 }
 
 /**
- * Note block 渲染器：负责将活跃方块绘制到画布上，
- * 包含命中线、实体方块与 Aura 发光效果（逐层批处理以减少 save/restore）。
+ * Note block 渲染器：负责将活跃方块绘制到 PixiJS Container 上，
+ * 包含命中线、实体方块与 Aura 发光效果（单 Graphics 批绘制）。
  */
 export class NoteBlockRenderer {
+  private container: Container | null = null;
+  private auraGraphics: Graphics = new Graphics();
+  private blocksGraphics: Graphics = new Graphics();
+  private hitLineGraphics: Graphics = new Graphics();
+  private fpsText: Text | null = null;
+
   constructor(
-    private readonly getCtx: () => CanvasRenderingContext2D | null,
     private readonly getParticleConfig: () => ParticleConfig | null,
     private readonly getAuraConfig: () => AuraConfig | null,
     private readonly getKeyboardRenderer: () => KeyboardRenderer | null,
@@ -39,38 +45,51 @@ export class NoteBlockRenderer {
     private readonly getTriggeredSet: () => Set<number>,
   ) {}
 
+  init(container: Container): void {
+    this.container = container;
+    this.fpsText = new Text({
+      text: "",
+      style: { fontSize: 12, fill: "white", fontFamily: "monospace" },
+    });
+    container.addChild(
+      this.auraGraphics,
+      this.blocksGraphics,
+      this.hitLineGraphics,
+      this.fpsText,
+    );
+  }
+
   render(): void {
-    const ctx = this.getCtx();
     const p = this.getParticleConfig();
     const auraCfg = this.getAuraConfig();
     const keyboardRenderer = this.getKeyboardRenderer();
-    if (!ctx || !p || !keyboardRenderer) return;
+    if (!p || !keyboardRenderer) return;
     const width = this.getWidth();
     const height = this.getHeight();
     const active = this.getActive();
-    ctx.clearRect(0, 0, width, height);
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, width, height);
-    ctx.clip();
+    // 1. 清空所有图层
+    this.blocksGraphics.clear();
+    this.hitLineGraphics.clear();
+    this.auraGraphics.clear();
 
+    // 2. 绘制命中线
     if (p.hitLine.visible) {
-      ctx.strokeStyle = p.hitLine.color;
-      ctx.lineWidth = p.hitLine.thickness;
-      ctx.beginPath();
-      ctx.moveTo(0, height - p.hitLine.thickness / 2);
-      ctx.lineTo(width, height - p.hitLine.thickness / 2);
-      ctx.stroke();
+      this.hitLineGraphics.moveTo(0, height - p.hitLine.thickness / 2);
+      this.hitLineGraphics.lineTo(width, height - p.hitLine.thickness / 2);
+      this.hitLineGraphics.stroke({
+        color: p.hitLine.color,
+        width: p.hitLine.thickness,
+      });
     }
 
+    // 3. 收集 aura 数据 + 绘制实体方块
     const whiteKeyWidth = keyboardRenderer.getWhiteKeyWidth();
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const triggeredSet = this.getTriggeredSet();
     const time = performance.now();
 
-    // 单遍遍历：收集 aura 数据 + 绘制实体方块
     const auraBlocks: Array<{
       x: number;
       y: number;
@@ -86,25 +105,17 @@ export class NoteBlockRenderer {
       const x = keyboardRenderer.midiToX(b.midi) - blockWidth / 2;
       const h = b.height <= 0 ? blockWidth : b.height;
       const y = b.y - h;
-      const baseColor = noteToColor(
-        b.midi,
-        p.colorScheme,
-        b.hand,
-        customColors,
-      );
+      const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
       const isTriggered = triggeredSet.has(b.midi);
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
-      // 绘制实体方块
-      ctx.globalAlpha = p.opacity;
-      ctx.fillStyle = color;
+      // 绘制实体方块（单 Graphics 批绘制）
       if (p.cornerRadius > 0) {
-        this.roundRect(ctx, x, y, blockWidth, h, p.cornerRadius);
-        ctx.fill();
+        this.blocksGraphics.roundRect(x, y, blockWidth, h, p.cornerRadius);
       } else {
-        ctx.fillRect(x, y, blockWidth, h);
+        this.blocksGraphics.rect(x, y, blockWidth, h);
       }
-      ctx.globalAlpha = 1;
+      this.blocksGraphics.fill({ color, alpha: p.opacity });
 
       // 收集 aura 数据
       if (needAura && auraCfg) {
@@ -117,38 +128,22 @@ export class NoteBlockRenderer {
       }
     }
 
-    // 批量渲染 aura 图层
+    // 4. 批量渲染 aura 图层
     if (auraBlocks.length > 0 && auraCfg) {
-      this.renderAuraLayers(ctx, auraBlocks, p.cornerRadius, time, auraCfg);
+      this.renderAuraLayers(auraBlocks, p.cornerRadius, time, auraCfg);
     }
-
-    ctx.restore();
   }
 
-  private roundRect(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    r: number,
-  ): void {
-    const radius = Math.min(r, w / 2, Math.abs(h) / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + w, y, x + w, y + h, radius);
-    ctx.arcTo(x + w, y + h, x, y + h, radius);
-    ctx.arcTo(x, y + h, x, y, radius);
-    ctx.arcTo(x, y, x + w, y, radius);
-    ctx.closePath();
+  renderFPS(fps: number): void {
+    if (this.fpsText) this.fpsText.text = `FPS: ${Math.round(fps)}`;
   }
 
-  /** DaisyUI aura ease-out 插值：1 - (1 - t)^2 */
+  /** ease-out 插值：1 - (1 - t)^2 */
   private easeOut(t: number): number {
     return 1 - (1 - t) * (1 - t);
   }
 
-  /** DaisyUI aura-glow 关键帧插值（20%-50%-80% 三段式 easeOut） */
+  /** glow 关键帧插值（20%-50%-80% 三段式 easeOut） */
   private glowProgress(t: number, valley: number, peak: number): number {
     if (t < 0.2) return valley;
     if (t < 0.5) {
@@ -163,11 +158,11 @@ export class NoteBlockRenderer {
   }
 
   /**
-   * 批量渲染所有 Aura 图层（按层批处理，减少 save/restore 和 filter 切换）
-   * 性能：save/restore 3 + filter 2 + gradient N（旧版为 3N/2N/N）
+   * 批量渲染 Aura 图层（简化版：使用 BlurFilter + 半透明色块代替 Canvas 渐变）
+   * PixiJS Graphics 不支持 createConicGradient / createRadialGradient，
+   * 因此改用扩大尺寸的半透明色块 + BlurFilter 模拟光晕效果。
    */
   private renderAuraLayers(
-    ctx: CanvasRenderingContext2D,
     blocks: Array<{
       x: number;
       y: number;
@@ -177,143 +172,91 @@ export class NoteBlockRenderer {
     }>,
     cornerRadius: number,
     time: number,
-    cfg: AuraConfig | null,
+    cfg: AuraConfig,
   ): void {
-    if (!cfg) return;
-
-    const style = cfg.style;
     const p = cfg.padding;
     const auraR = p + cornerRadius;
     const animMs = cfg.duration * 1000;
-    const animT = (time % animMs) / animMs;
-    const angleRad = (animT * cfg.rotationRange * Math.PI) / 180;
-    const pulseT = animT;
+    const pulseT = (time % animMs) / animMs;
     const innerA = cfg.innerOpacity / 100;
     const outerA = cfg.outerOpacity / 100;
-    const beamStartNorm = cfg.beamAngle / 360;
-    const beamEndNorm = (cfg.beamAngle + cfg.beamWidth) / 360;
-    const glowStyle = style === "glow";
-    const isCustom = style === "custom";
+    const isGlow = cfg.style === "glow";
 
-    const buildGradient = (
-      cx: number,
-      cy: number,
-      color: string,
-    ): CanvasGradient | null => {
-      if (glowStyle) {
-        const extentNorm = cfg.glowExtent / 100;
-        const r = Math.min(p * 2, 200) * 0.5;
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r / extentNorm);
-        g.addColorStop(0, color);
-        g.addColorStop(extentNorm, "transparent");
-        return g;
-      }
-      const g = ctx.createConicGradient(angleRad, cx, cy);
-      if (style === "rainbow") {
-        const m = cfg.rainbowMargin / 100;
-        g.addColorStop(0, "transparent");
-        g.addColorStop(m, "hsl(0, 80%, 60%)");
-        g.addColorStop(0.25, "hsl(90, 80%, 60%)");
-        g.addColorStop(0.5, "hsl(180, 80%, 60%)");
-        g.addColorStop(0.75, "hsl(270, 80%, 60%)");
-        g.addColorStop(1 - m, "hsl(360, 80%, 60%)");
-        g.addColorStop(1, "transparent");
-        return g;
-      }
-      const useColor = isCustom && cfg.primaryColor ? cfg.primaryColor : color;
-      if (style === "dual") {
-        const offN = cfg.dualOffRatio / 100;
-        const onN = cfg.dualOnRatio / 100;
-        const total = offN + onN;
-        for (let i = 0; i < 1; i += total) {
-          g.addColorStop(Math.min(i, 1), "transparent");
-          g.addColorStop(Math.min(i + offN, 1), "transparent");
-          g.addColorStop(Math.min(i + offN + 0.01, 1), useColor);
-          g.addColorStop(Math.min(i + total, 1), useColor);
-        }
-        return g;
-      }
-      // 基底 conic
-      g.addColorStop(0, "transparent");
-      g.addColorStop(beamStartNorm, "transparent");
-      g.addColorStop(beamStartNorm + 0.001, useColor);
-      g.addColorStop(beamEndNorm, useColor);
-      g.addColorStop(beamEndNorm + 0.001, "transparent");
-      g.addColorStop(1, "transparent");
-      return g;
-    };
+    // 计算当前帧的动态模糊和透明度
+    let outerBlur: number;
+    let outerAlpha: number;
+    let innerBlur: number;
+    let innerAlpha: number;
 
-    const drawOne = (
-      bx: number,
-      by: number,
-      bw: number,
-      bh: number,
-      color: string,
-    ): void => {
-      const cx = bx + bw / 2;
-      const cy = by + bh / 2;
-      const g = buildGradient(cx, cy, color);
-      if (g) {
-        ctx.fillStyle = g;
-        // 内联 drawPath 逻辑
-        ctx.beginPath();
-        if (auraR > 0) {
-          this.roundRect(ctx, bx - p, by - p, bw + p * 2, bh + p * 2, auraR);
-        } else {
-          ctx.rect(bx - p, by - p, bw + p * 2, bh + p * 2);
-        }
-        ctx.closePath();
-        ctx.fill();
-      }
-    };
-
-    // Layer 1: ::after
-    ctx.save();
-    if (glowStyle) {
-      ctx.shadowBlur = this.glowProgress(
-        pulseT,
-        cfg.outerBlur,
-        cfg.glowAfterPeakBlur,
-      );
-      ctx.globalAlpha = this.glowProgress(
-        pulseT,
-        outerA,
-        cfg.glowAfterPeakOpacity / 100,
-      );
+    if (isGlow) {
+      outerBlur = this.glowProgress(pulseT, cfg.outerBlur, cfg.glowAfterPeakBlur);
+      outerAlpha = this.glowProgress(pulseT, outerA, cfg.glowAfterPeakOpacity / 100);
+      innerBlur = this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur);
+      innerAlpha = this.glowProgress(pulseT, innerA, cfg.glowPeakOpacity / 100);
     } else {
-      ctx.shadowBlur = cfg.outerBlur;
-      ctx.globalAlpha = outerA;
+      outerBlur = cfg.outerBlur;
+      outerAlpha = outerA;
+      innerBlur = cfg.innerBlur;
+      innerAlpha = innerA;
     }
-    for (const blk of blocks) {
-      ctx.shadowColor = blk.color;
-      drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
-    }
-    ctx.restore();
 
-    // Layer 2: ::before
-    ctx.save();
-    if (glowStyle) {
-      ctx.shadowBlur = this.glowProgress(
-        pulseT,
-        cfg.innerBlur,
-        cfg.glowPeakBlur,
-      );
-      ctx.globalAlpha = this.glowProgress(
-        pulseT,
-        innerA,
-        cfg.glowPeakOpacity / 100,
-      );
-    } else {
-      ctx.shadowBlur = cfg.innerBlur;
-      ctx.globalAlpha = innerA;
-    }
+    // Layer 1: ::after（外层光晕）
+    this.auraGraphics.filters = [new BlurFilter({ strength: outerBlur })];
     for (const blk of blocks) {
-      ctx.shadowColor = blk.color;
-      drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+      if (auraR > 0) {
+        this.auraGraphics.roundRect(
+          blk.x - p,
+          blk.y - p,
+          blk.w + p * 2,
+          blk.h + p * 2,
+          auraR,
+        );
+      } else {
+        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
+      }
+      this.auraGraphics.fill({ color: blk.color, alpha: outerAlpha });
     }
-    ctx.restore();
 
-    // Layer 3: 基底
-    for (const blk of blocks) drawOne(blk.x, blk.y, blk.w, blk.h, blk.color);
+    // Layer 2: ::before（内层光晕）
+    this.auraGraphics.filters = [new BlurFilter({ strength: innerBlur })];
+    for (const blk of blocks) {
+      if (auraR > 0) {
+        this.auraGraphics.roundRect(
+          blk.x - p,
+          blk.y - p,
+          blk.w + p * 2,
+          blk.h + p * 2,
+          auraR,
+        );
+      } else {
+        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
+      }
+      this.auraGraphics.fill({ color: blk.color, alpha: innerAlpha });
+    }
+
+    // Layer 3: 基底层（无模糊）
+    this.auraGraphics.filters = [];
+    for (const blk of blocks) {
+      if (auraR > 0) {
+        this.auraGraphics.roundRect(
+          blk.x - p,
+          blk.y - p,
+          blk.w + p * 2,
+          blk.h + p * 2,
+          auraR,
+        );
+      } else {
+        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
+      }
+      this.auraGraphics.fill({ color: blk.color, alpha: 1 });
+    }
+  }
+
+  dispose(): void {
+    this.auraGraphics.destroy();
+    this.blocksGraphics.destroy();
+    this.hitLineGraphics.destroy();
+    this.fpsText?.destroy();
+    this.container = null;
   }
 }

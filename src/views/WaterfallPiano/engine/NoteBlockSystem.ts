@@ -1,3 +1,4 @@
+import { Container } from "pixi.js";
 import type { AuraConfig, ParticleConfig, ScheduledNote } from "../types";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockPool, type NoteBlock } from "./NoteBlockPool";
@@ -23,8 +24,7 @@ export type NoteBlockMode = "realtime" | "synthesia";
  * Facade 负责生命周期管理与跨模块协调。
  */
 export class NoteBlockSystem {
-  private canvas: HTMLCanvasElement | null = null;
-  private ctx: CanvasRenderingContext2D | null = null;
+  private container: Container | null = null;
   private particleConfig: ParticleConfig | null = null;
   private auraConfig: AuraConfig | null = null;
   private keyboardRenderer: KeyboardRenderer | null = null;
@@ -67,7 +67,6 @@ export class NoteBlockSystem {
       (note) => this.noteKey(note),
     );
     this.renderer = new NoteBlockRenderer(
-      () => this.ctx,
       () => this.particleConfig,
       () => this.auraConfig,
       () => this.keyboardRenderer,
@@ -89,46 +88,39 @@ export class NoteBlockSystem {
   }
 
   /**
-   * 初始化画布和配置
-   * @param canvas - 用于渲染 note block 的画布元素
+   * 初始化容器和配置
+   * @param container - 用于渲染 note block 的 PixiJS Container
    * @param particleConfig - 音符方块渲染配置
    * @param auraConfig - 发光效果配置
    */
   init(
-    canvas: HTMLCanvasElement,
+    container: Container,
     particleConfig: ParticleConfig,
     auraConfig: AuraConfig,
   ): void {
-    if (!canvas) return;
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
+    if (!container) return;
+    this.container = container;
     this.particleConfig = particleConfig;
     this.auraConfig = auraConfig;
+    this.renderer.init(container);
   }
 
   /**
-   * 调整画布尺寸并设置设备像素比
+   * 调整尺寸
    * @param width - 逻辑宽度
    * @param height - 逻辑高度
-   * @param dpr - 设备像素比，用于高清屏适配
+   * @param _dpr - 设备像素比（PixiJS 自动处理，保留参数兼容）
    * @param keyboardRenderer - 键盘渲染器，用于计算方块水平位置
    */
   resize(
     width: number,
     height: number,
-    dpr: number,
+    _dpr: number,
     keyboardRenderer: KeyboardRenderer,
   ): void {
     this.width = width;
     this.height = height;
     this.keyboardRenderer = keyboardRenderer;
-    if (this.canvas) {
-      this.canvas.width = Math.max(1, Math.floor(width * dpr));
-      this.canvas.height = Math.max(1, Math.floor(height * dpr));
-    }
-    if (this.ctx) {
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
   }
 
   setMode(mode: NoteBlockMode): void {
@@ -285,6 +277,11 @@ export class NoteBlockSystem {
     this.renderer.render();
   }
 
+  /** 渲染 FPS 叠加层 */
+  renderFPS(fps: number): void {
+    this.renderer.renderFPS(fps);
+  }
+
   getActiveBlockCount(): number {
     return this.active.length;
   }
@@ -305,6 +302,7 @@ export class NoteBlockSystem {
   dispose(): void {
     this.clearNoteBlocks();
     this.pool.clear();
+    this.renderer.dispose();
   }
 
   /** 根据配置中的速度参数计算每秒下落像素数 */

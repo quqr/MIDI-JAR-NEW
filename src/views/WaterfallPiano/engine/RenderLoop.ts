@@ -1,4 +1,5 @@
 import { PerformanceMonitor } from "./PerformanceMonitor";
+import { Ticker, UPDATE_PRIORITY } from "pixi.js";
 
 /** 各渲染阶段耗时（毫秒） */
 export interface PhaseTimings {
@@ -28,6 +29,8 @@ export interface RenderLoopCallbacks {
   shouldUpdateFluid: () => boolean;
   /** 流体模拟更新 + 持续 splat 应用 */
   updateFluidAndSplats: () => void;
+  /** 将场景图提交到 GPU（调用 app.renderer.render） */
+  renderFrame: () => void;
   /** 性能日志输出 */
   logPerformance: (
     now: number,
@@ -38,12 +41,12 @@ export interface RenderLoopCallbacks {
 }
 
 /**
- * 独立的渲染循环，管理 requestAnimationFrame 生命周期与帧调度。
- * 每帧按固定顺序调用各阶段回调，并内置流体降帧与性能采样逻辑。
+ * 基于 PixiJS Ticker 的渲染循环，管理帧调度与优先级。
+ * 逻辑更新使用 HIGH 优先级，渲染使用 LOW 优先级。
+ * 内置流体降帧与性能采样逻辑。
  */
 export class RenderLoop {
-  private rafId: number | null = null;
-  private lastTime = 0;
+  private ticker: Ticker;
   private fluidFrameCount = 0;
   private lastPerfLog = 0;
   private readonly FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
@@ -53,88 +56,100 @@ export class RenderLoop {
   constructor(callbacks: RenderLoopCallbacks, perfMonitor: PerformanceMonitor) {
     this.callbacks = callbacks;
     this.perfMonitor = perfMonitor;
+
+    this.ticker = new Ticker();
+    this.ticker.autoStart = false;
+    this.ticker.maxFPS = 60;
+
+    // 逻辑更新（HIGH 优先级）
+    this.ticker.add(
+      (ticker) => {
+        const dt = ticker.deltaMS;
+        this.perfMonitor.recordFrame(dt);
+
+        const t0 = performance.now();
+
+        // 1. 推进播放
+        this.callbacks.advancePlayback();
+        const tPlayback = performance.now();
+
+        // 2. 渲染背景
+        this.callbacks.renderBackground(performance.now());
+        const tBg = performance.now();
+
+        // 3. 更新音符方块
+        this.callbacks.updateNoteBlocks(dt / 1000);
+        const tNbUpdate = performance.now();
+
+        // 4. 渲染音符方块
+        this.callbacks.renderNoteBlocks();
+        const tNbRender = performance.now();
+
+        // 5. 渲染键盘
+        this.callbacks.renderKeyboard();
+        const tKb = performance.now();
+
+        // 6. FPS 显示
+        this.callbacks.displayFPS(this.perfMonitor.getFps());
+
+        // 7. 流体模拟（降帧运行）
+        this.fluidFrameCount++;
+        let tFluid = 0;
+        if (
+          this.callbacks.shouldUpdateFluid() &&
+          this.fluidFrameCount > this.FLUID_SKIP_FRAMES
+        ) {
+          const tf0 = performance.now();
+          this.callbacks.updateFluidAndSplats();
+          tFluid = performance.now() - tf0;
+          this.fluidFrameCount = 0;
+        }
+
+        // 8. 提交场景图到 GPU
+        this.callbacks.renderFrame();
+
+        // 9. 性能日志（每秒一次）
+        const now = performance.now();
+        if (now - this.lastPerfLog > 1000) {
+          this.lastPerfLog = now;
+          const total = performance.now() - t0;
+          this.callbacks.logPerformance(
+            now,
+            total,
+            {
+              playback: tPlayback - t0,
+              background: tBg - tPlayback,
+              noteBlockUpdate: tNbUpdate - tBg,
+              noteBlockRender: tNbRender - tNbUpdate,
+              keyboard: tKb - tNbRender,
+              fluid: tFluid,
+            },
+            this.perfMonitor.getFps(),
+          );
+        }
+      },
+      null,
+      UPDATE_PRIORITY.HIGH,
+    );
   }
 
   get isRunning(): boolean {
-    return this.rafId !== null;
+    return this.ticker.started;
   }
 
   start(): void {
-    this.lastTime = performance.now();
     this.fluidFrameCount = 0;
     this.lastPerfLog = 0;
-
-    const loop = (now: number) => {
-      const dt = now - this.lastTime;
-      this.lastTime = now;
-      this.perfMonitor.recordFrame(dt);
-
-      const t0 = performance.now();
-
-      // 1. 推进播放
-      this.callbacks.advancePlayback();
-      const tPlayback = performance.now();
-
-      // 2. 渲染背景
-      this.callbacks.renderBackground(now);
-      const tBg = performance.now();
-
-      // 3. 更新音符方块
-      this.callbacks.updateNoteBlocks(dt / 1000);
-      const tNbUpdate = performance.now();
-
-      // 4. 渲染音符方块
-      this.callbacks.renderNoteBlocks();
-      const tNbRender = performance.now();
-
-      // 5. 渲染键盘
-      this.callbacks.renderKeyboard();
-      const tKb = performance.now();
-
-      // 6. FPS 显示
-      this.callbacks.displayFPS(this.perfMonitor.getFps());
-
-      // 7. 流体模拟（降帧运行）
-      this.fluidFrameCount++;
-      let tFluid = 0;
-      if (
-        this.callbacks.shouldUpdateFluid() &&
-        this.fluidFrameCount > this.FLUID_SKIP_FRAMES
-      ) {
-        const tf0 = performance.now();
-        this.callbacks.updateFluidAndSplats();
-        tFluid = performance.now() - tf0;
-        this.fluidFrameCount = 0;
-      }
-
-      // 8. 性能日志（每秒一次）
-      if (now - this.lastPerfLog > 1000) {
-        this.lastPerfLog = now;
-        const total = performance.now() - t0;
-        this.callbacks.logPerformance(
-          now,
-          total,
-          {
-            playback: tPlayback - t0,
-            background: tBg - tPlayback,
-            noteBlockUpdate: tNbUpdate - tBg,
-            noteBlockRender: tNbRender - tNbUpdate,
-            keyboard: tKb - tNbRender,
-            fluid: tFluid,
-          },
-          this.perfMonitor.getFps(),
-        );
-      }
-
-      this.rafId = requestAnimationFrame(loop);
-    };
-    this.rafId = requestAnimationFrame(loop);
+    this.ticker.start();
   }
 
   stop(): void {
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
+    this.ticker.stop();
+  }
+
+  /** 销毁时清理 */
+  destroy(): void {
+    this.ticker.stop();
+    this.ticker.destroy();
   }
 }

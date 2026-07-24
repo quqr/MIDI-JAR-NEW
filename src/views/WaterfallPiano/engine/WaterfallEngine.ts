@@ -1,4 +1,5 @@
 import type { WaterfallPianoSettings } from "../types";
+import { Application, Container, Renderer } from "pixi.js";
 import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
@@ -7,20 +8,20 @@ import { RenderLoop, type PhaseTimings } from "./RenderLoop";
 import { FluidSplatManager } from "./FluidSplatManager";
 import type { ISoundEngine } from "../audio/ISoundEngine";
 import {
-  FluidSimulation,
   resolveConfig,
   type FluidSimulationConfig,
 } from "@/engine/fluid";
+import { PixiFluidSimulation, type IFluidSimulation } from "@/engine/fluid-pixi";
 import { createLogger } from "@/utils/logger";
 import { waterfallPianoEvents } from "../events";
 
 const logger = createLogger("WaterfallEngine");
 
-export interface WaterfallCanvases {
-  background: HTMLCanvasElement;
-  fluid: HTMLCanvasElement;
-  waterfall: HTMLCanvasElement;
-  keyboard: HTMLCanvasElement;
+export interface WaterfallLayers {
+  background: Container;
+  fluid: Container;
+  waterfall: Container;
+  keyboard: Container;
 }
 
 const DEFAULT_VELOCITY = 90;
@@ -29,13 +30,15 @@ const DEFAULT_VELOCITY = 90;
  * 瀑布钢琴主引擎，协调键盘渲染、音符方块系统、背景渲染、流体模拟与音频输出
  */
 export class WaterfallEngine {
-  private canvases: WaterfallCanvases | null = null;
+  private app: Application | null = null;
+  private renderer: Renderer | null = null;
+  private layers: WaterfallLayers | null = null;
   private settings: WaterfallPianoSettings | null = null;
   private keyboardRenderer = new KeyboardRenderer();
   private noteBlockSystem = new NoteBlockSystem();
   private backgroundRenderer = new BackgroundRenderer();
   private perfMonitor = new PerformanceMonitor();
-  private fluid: FluidSimulation | null = null;
+  private fluid: IFluidSimulation | null = null;
   private soundEngine: ISoundEngine | null = null;
   private renderLoop: RenderLoop | null = null;
   private splatManager = new FluidSplatManager({
@@ -48,7 +51,7 @@ export class WaterfallEngine {
       height: this.height,
       keyboardHeight: this.keyboardHeight,
     }),
-    hasCanvases: () => !!this.canvases,
+    hasCanvases: () => !!this.layers && !!this.app,
   });
   private width = 0;
   private height = 0;
@@ -59,8 +62,6 @@ export class WaterfallEngine {
   /** 保存旧值的数值副本，用于检测设置变更（避免 deep watch 引用问题） */
   private prevKeyboardHeightRatio: number | null = null;
   private prevFluidEnabled: boolean | null = null;
-  /** 缓存的 waterfall 2D 上下文引用，避免每帧 getContext 调用 */
-  private _waterfallCtx: CanvasRenderingContext2D | null = null;
   public showFPS = true;
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
@@ -80,26 +81,38 @@ export class WaterfallEngine {
   }
 
   /**
-   * 初始化引擎：绑定画布、初始化各子系统、启动流体模拟与主循环
+   * 初始化引擎：绑定 PixiJS Application 与各层容器、初始化各子系统、启动流体模拟与主循环
    * 初始化失败时自动执行完整清理（dispose），避免半初始化状态
-   * @param canvases - 四层画布（背景、流体、瀑布、键盘）
+   * @param app - PixiJS Application 实例
+   * @param layers - 四层 PixiJS Container（背景、流体、瀑布、键盘）
    * @param settings - 瀑布钢琴配置
+   * @param fluidCanvas - 可选的流体模拟画布（临时兼容，后续将迁移至 PixiJS Filter 管线）
    */
-  init(canvases: WaterfallCanvases, settings: WaterfallPianoSettings): void {
+  init(
+    app: Application,
+    layers: WaterfallLayers,
+    settings: WaterfallPianoSettings,
+    fluidCanvas?: HTMLCanvasElement,
+  ): void {
     try {
-      this.canvases = canvases;
+      this.app = app;
+      this.renderer = app.renderer;
+      this.layers = layers;
       this.settings = settings;
-      this._waterfallCtx = canvases.waterfall.getContext("2d");
-      this.keyboardRenderer.init(canvases.keyboard, settings.keyboard);
+      this.keyboardRenderer.init(
+        layers.keyboard,
+        app.renderer,
+        settings.keyboard,
+      );
       this.noteBlockSystem.init(
-        canvases.waterfall,
+        layers.waterfall,
         settings.particles,
         settings.aura,
       );
-      this.backgroundRenderer.init(canvases.background, settings.background);
+      this.backgroundRenderer.init(layers.background, settings.background);
       this.noteBlockSystem.onNoteTrigger.add((args) => this.onSynthesiaTrigger(args.midi, args.velocity));
       this.noteBlockSystem.onNoteEnd.add((args) => this.onSynthesiaEnd(args.midi));
-      this.maybeInitFluid();
+      this.maybeInitFluid(fluidCanvas);
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
       this.prevFluidEnabled = settings.background.fluidEnabled;
       this.bindPointerEvents();
@@ -113,6 +126,7 @@ export class WaterfallEngine {
           displayFPS: (fps) => this.renderFPSOverlay(fps),
           shouldUpdateFluid: () => !!this.fluid && !this.fluidPaused,
           updateFluidAndSplats: () => this.updateFluidAndSplats(),
+          renderFrame: () => this.renderFrame(),
           logPerformance: (now, total, timings, fps) =>
             this.logFramePerf(now, total, timings, fps),
         },
@@ -134,6 +148,9 @@ export class WaterfallEngine {
       });
       this.registerCleanup("keyboardHighlights", () =>
         this.keyboardRenderer.clearAllHighlights(),
+      );
+      this.registerCleanup("keyboardRenderer", () =>
+        this.keyboardRenderer.dispose(),
       );
     } catch (error) {
       logger.error({ err: error }, "Initialization failed");
@@ -164,7 +181,7 @@ export class WaterfallEngine {
     // 保存数值副本供下次比较
     this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
     this.prevFluidEnabled = settings.background.fluidEnabled;
-    // 键盘高度比例变化时需要重新布局所有 canvas
+    // 键盘高度比例变化时需要重新布局
     if (
       settings.keyboard.heightRatio !== oldHeightRatio &&
       this.width > 0 &&
@@ -178,7 +195,7 @@ export class WaterfallEngine {
     this.backgroundRenderer.setBackgroundConfig(settings.background);
     if (settings.background.fluidEnabled && !oldFluidEnabled) {
       this.maybeInitFluid();
-      // 流体开启后需要重新布局确保 canvas 尺寸正确
+      // 流体开启后需要重新布局确保尺寸正确
       if (this.width > 0 && this.height > 0) {
         this.resize(this.width, this.height);
       }
@@ -210,7 +227,7 @@ export class WaterfallEngine {
   }
 
   /**
-   * 重新计算布局：根据键盘高度比例分配画布尺寸，并通知各子系统与流体
+   * 重新计算布局：根据键盘高度比例分配各层容器位置，并通知各子系统与流体
    * @param width - 画布总宽度（CSS 像素）
    * @param height - 画布总高度（CSS 像素）
    */
@@ -229,29 +246,13 @@ export class WaterfallEngine {
       this.keyboardRenderer,
     );
     this.backgroundRenderer.resize(width, height, this.dpr);
-    this.layoutCanvases(waterfallHeight);
+    // 通过 Container 定位各层（PixiJS 统一管理布局，无需手动 CSS）
+    if (this.layers) {
+      this.layers.keyboard.y = waterfallHeight;
+    }
     if (this.fluid) {
       this.fluid.resize();
     }
-  }
-
-  /**
-   * 设置四层画布的 CSS 定位：背景/流体全屏，瀑布区占顶部，键盘区占底部
-   * @param waterfallHeight - 瀑布区域高度（像素）
-   */
-  private layoutCanvases(waterfallHeight: number): void {
-    if (!this.canvases) return;
-    const setBox = (c: HTMLCanvasElement, top: number, h: number) => {
-      c.style.position = "absolute";
-      c.style.top = `${top}px`;
-      c.style.left = "0";
-      c.style.width = `${this.width}px`;
-      c.style.height = `${h}px`;
-    };
-    setBox(this.canvases.background, 0, this.height);
-    setBox(this.canvases.fluid, 0, this.height);
-    setBox(this.canvases.waterfall, 0, waterfallHeight);
-    setBox(this.canvases.keyboard, waterfallHeight, this.keyboardHeight);
   }
 
   /**
@@ -270,15 +271,16 @@ export class WaterfallEngine {
   }
 
   /**
-   * 在设置启用流体且尚未创建实例时，初始化 FluidSimulation 并启动
+   * 在设置启用流体且尚未创建实例时，初始化 PixiFluidSimulation 并启动
    */
-  private maybeInitFluid(): void {
-    if (!this.canvases || !this.settings) return;
+  private maybeInitFluid(_fluidCanvas?: HTMLCanvasElement): void {
+    if (!this.settings) return;
     if (!this.settings.background.fluidEnabled) return;
     const config = this.buildFluidConfig();
     if (this.fluid || (config.SIM_RESOLUTION ?? 0) <= 0) return;
+    if (!this.app || !this.layers) return;
     try {
-      this.fluid = new FluidSimulation(this.canvases.fluid, config);
+      this.fluid = new PixiFluidSimulation(this.app, this.layers.fluid, config);
       this.fluid.start();
     } catch {
       this.fluid = null;
@@ -286,24 +288,24 @@ export class WaterfallEngine {
   }
 
   private bindPointerEvents(): void {
-    if (!this.canvases) return;
-    const kb = this.canvases.keyboard;
-    kb.style.touchAction = "none";
-    kb.addEventListener("pointerdown", this.onPointerDown);
-    kb.addEventListener("pointermove", this.onPointerMove);
-    kb.addEventListener("pointerup", this.onPointerUp);
-    kb.addEventListener("pointercancel", this.onPointerUp);
-    kb.addEventListener("pointerleave", this.onPointerUp);
+    if (!this.app) return;
+    const canvas = this.app.canvas;
+    canvas.style.touchAction = "none";
+    canvas.addEventListener("pointerdown", this.onPointerDown);
+    canvas.addEventListener("pointermove", this.onPointerMove);
+    canvas.addEventListener("pointerup", this.onPointerUp);
+    canvas.addEventListener("pointercancel", this.onPointerUp);
+    canvas.addEventListener("pointerleave", this.onPointerUp);
   }
 
   private unbindPointerEvents(): void {
-    if (!this.canvases) return;
-    const kb = this.canvases.keyboard;
-    kb.removeEventListener("pointerdown", this.onPointerDown);
-    kb.removeEventListener("pointermove", this.onPointerMove);
-    kb.removeEventListener("pointerup", this.onPointerUp);
-    kb.removeEventListener("pointercancel", this.onPointerUp);
-    kb.removeEventListener("pointerleave", this.onPointerUp);
+    if (!this.app) return;
+    const canvas = this.app.canvas;
+    canvas.removeEventListener("pointerdown", this.onPointerDown);
+    canvas.removeEventListener("pointermove", this.onPointerMove);
+    canvas.removeEventListener("pointerup", this.onPointerUp);
+    canvas.removeEventListener("pointercancel", this.onPointerUp);
+    canvas.removeEventListener("pointerleave", this.onPointerUp);
   }
 
   private onPointerDown = (e: PointerEvent): void => {
@@ -398,19 +400,16 @@ export class WaterfallEngine {
     waterfallPianoEvents.onNoteOff.internalInvoke({ midi });
   }
 
-  /** FPS 叠加层渲染 */
+  /** FPS 叠加层渲染（委托给 NoteBlockSystem） */
   private renderFPSOverlay(fps: number): void {
     if (!this.showFPS) return;
-    const ctx = this._waterfallCtx;
-    if (ctx) {
-      ctx.save();
-      ctx.font = "bold 12px monospace";
-      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-      ctx.shadowBlur = 4;
-      ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 20);
-      ctx.restore();
-    }
+    this.noteBlockSystem.renderFPS(fps);
+  }
+
+  /** 将场景图提交到 GPU 进行渲染 */
+  private renderFrame(): void {
+    if (!this.app) return;
+    this.app.renderer.render({ container: this.app.stage });
   }
 
   /** 流体模拟更新 + 持续 splat（委托给 FluidSplatManager） */
@@ -508,6 +507,11 @@ export class WaterfallEngine {
 
     this.cleanupTasks.clear();
 
+    // 释放 PixiJS 引用
+    this.app = null;
+    this.renderer = null;
+    this.layers = null;
+
     // 报告失败的清理
     const failed = results.filter((r) => r.status === "rejected");
     if (failed.length > 0) {
@@ -521,7 +525,7 @@ export class WaterfallEngine {
   }
 
   /**
-   * 强制重绘：清空所有 canvas 并重新渲染当前帧
+   * 强制重绘：重新渲染当前帧
    * 用于窗口最小化恢复后消除残留显示问题
    */
   forceRedraw(): void {
