@@ -2,14 +2,21 @@
   <div ref="containerRef" class="absolute inset-0 overflow-hidden">
     <!-- PixiJS Application canvas is appended here by createWaterfallApp() -->
     <!-- Separate canvas for fluid simulation (until PixiJS fluid migration is complete) -->
-    <canvas v-if="showFluidCanvas" ref="fluidRef" class="absolute inset-0 pointer-events-none" />
+    <canvas
+      v-if="showFluidCanvas"
+      ref="fluidRef"
+      class="absolute inset-0 pointer-events-none"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Application, Container } from "pixi.js";
-import { WaterfallEngine, type WaterfallLayers } from "../engine/WaterfallEngine";
+import {
+  WaterfallEngine,
+  type WaterfallLayers,
+} from "../engine/WaterfallEngine";
 import { SamplerSoundEngine } from "../audio/SamplerSoundEngine";
 import { keyboardMap } from "../constants";
 import { createWaterfallApp } from "../engine/PixiAppFactory";
@@ -118,10 +125,17 @@ onMounted(async () => {
     keyboard: keyboardLayer,
   };
 
-  pixiApp.stage.addChild(backgroundLayer, fluidLayer, waterfallLayer, keyboardLayer);
+  pixiApp.stage.addChild(
+    backgroundLayer,
+    fluidLayer,
+    waterfallLayer,
+    keyboardLayer,
+  );
 
   // 初始化引擎
-  const fluidCanvas = props.settings.background.fluidEnabled ? fluidRef.value ?? undefined : undefined;
+  const fluidCanvas = props.settings.background.fluidEnabled
+    ? (fluidRef.value ?? undefined)
+    : undefined;
   showFluidCanvas.value = props.settings.background.fluidEnabled;
 
   engine = new WaterfallEngine();

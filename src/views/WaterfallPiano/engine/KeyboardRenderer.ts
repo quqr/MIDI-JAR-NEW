@@ -4,7 +4,14 @@
  * RenderTexture 缓存静态层，Graphics 叠加动态高亮层
  */
 
-import { Container, Graphics, Text, Sprite, RenderTexture, FillGradient } from "pixi.js";
+import {
+  Container,
+  Graphics,
+  Text,
+  Sprite,
+  RenderTexture,
+  FillGradient,
+} from "pixi.js";
 import type { Renderer } from "pixi.js";
 import type { KeyboardConfig } from "../types";
 import { midiToNoteName } from "../constants";
@@ -183,7 +190,10 @@ export class KeyboardRenderer {
       this.from,
       this.to,
     );
-    this._midiToIndex = KeyboardLayoutCalculator.buildMidiToIndex(this.from, this.to);
+    this._midiToIndex = KeyboardLayoutCalculator.buildMidiToIndex(
+      this.from,
+      this.to,
+    );
   }
 
   private getLayout(): KeyboardLayout {
@@ -239,7 +249,7 @@ export class KeyboardRenderer {
 
     if (!kb.visible) {
       this._staticSprite && (this._staticSprite.visible = false);
-      this._highlightGraphics && (this._highlightGraphics.clear());
+      this._highlightGraphics && this._highlightGraphics.clear();
       return;
     }
 
@@ -283,7 +293,14 @@ export class KeyboardRenderer {
       const x = i * layout.whiteKeyWidth;
       const w = layout.whiteKeyWidth;
 
-      const gradient = this._createFillGradient(x, 0, w, this.height, themeColors.whiteKey, 0.15);
+      const gradient = this._createFillGradient(
+        x,
+        0,
+        w,
+        this.height,
+        themeColors.whiteKey,
+        0.15,
+      );
       whiteG.roundRect(x, 0, w, this.height, kb.keyCornerRadius);
       whiteG.fill(gradient);
 
@@ -313,7 +330,14 @@ export class KeyboardRenderer {
       const bw = layout.blackKeyWidth;
       const bh = layout.blackKeyHeight;
 
-      const gradient = this._createFillGradient(bx, 0, bw, bh, themeColors.blackKey, 0.15);
+      const gradient = this._createFillGradient(
+        bx,
+        0,
+        bw,
+        bh,
+        themeColors.blackKey,
+        0.15,
+      );
       blackG.roundRect(bx, 0, bw, bh, kb.keyCornerRadius);
       blackG.fill(gradient);
     }
@@ -382,7 +406,10 @@ export class KeyboardRenderer {
   }
 
   /** 绘制动态高亮层（按下的键），直接在 _highlightGraphics 上绘制 */
-  private renderHighlightLayer(layout: KeyboardLayout, kb: KeyboardConfig): void {
+  private renderHighlightLayer(
+    layout: KeyboardLayout,
+    kb: KeyboardConfig,
+  ): void {
     if (!this._highlightGraphics) return;
     this._highlightGraphics.clear();
 
@@ -398,7 +425,14 @@ export class KeyboardRenderer {
       const x = i * layout.whiteKeyWidth;
       const w = layout.whiteKeyWidth;
 
-      const gradient = this._createFillGradient(x, 0, w, this.height, themeColors.pressedKey, 0.15);
+      const gradient = this._createFillGradient(
+        x,
+        0,
+        w,
+        this.height,
+        themeColors.pressedKey,
+        0.15,
+      );
       g.roundRect(x, 0, w, this.height, kb.keyCornerRadius);
       g.fill(gradient);
     }
@@ -415,7 +449,14 @@ export class KeyboardRenderer {
       const baseColor = isActive
         ? themeColors.pressedKey
         : themeColors.blackKey;
-      const gradient = this._createFillGradient(bx, 0, bw, bh, baseColor, isActive ? 0.2 : 0.15);
+      const gradient = this._createFillGradient(
+        bx,
+        0,
+        bw,
+        bh,
+        baseColor,
+        isActive ? 0.2 : 0.15,
+      );
       g.roundRect(bx, 0, bw, bh, kb.keyCornerRadius);
       g.fill(gradient);
     }

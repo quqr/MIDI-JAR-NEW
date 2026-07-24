@@ -37,6 +37,8 @@ import {
 } from "./shaders";
 import { DEFAULT_CONFIG } from "./FluidConfig";
 import type { FluidSimulationConfig } from "./FluidConfig";
+import type { FluidDiagnostics, SplatTrace, PassStatus } from "@/views/FluidCompare/diagnostics";
+import { EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
 
 interface SplatColor {
   r: number;
@@ -81,6 +83,11 @@ export class FluidSimulation {
   private paused = false;
   private destroyed = false;
   private initialized = false;
+
+  // 深度诊断：splat 链路追踪 + dye 采样节流缓存
+  private lastSplatTrace: SplatTrace | null = null;
+  private diagnosticsFrameCounter = 0;
+  private cachedDyeSample = { ...EMPTY_SAMPLE };
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -265,6 +272,11 @@ export class FluidSimulation {
 
   /** 注入一个流体 splat（MIDI 触发时调用） */
   splat(x: number, y: number, dx: number, dy: number, color: SplatColor) {
+    // 记录 splat 链路追踪（WebGL 侧无坐标转换，直接透传）
+    this.lastSplatTrace = {
+      input: { x, y, dx, dy },
+      color: { r: color.r, g: color.g, b: color.b },
+    };
     this.solver.splat(x, y, dx, dy, color);
   }
 
@@ -312,6 +324,32 @@ export class FluidSimulation {
 
   getConfig(): FluidSimulationConfig {
     return this.config;
+  }
+
+  /** 获取诊断数据（采样节流：每 30 帧 readPixels 一次） */
+  getDiagnostics(): FluidDiagnostics {
+    this.diagnosticsFrameCounter++;
+    if (this.diagnosticsFrameCounter >= 30) {
+      this.diagnosticsFrameCounter = 0;
+      this.cachedDyeSample = this.solver.sampleDyeCenter();
+    }
+    const passes: PassStatus = {
+      bloom: {
+        enabled: this.config.BLOOM,
+        iterations: this.config.BLOOM_ITERATIONS,
+      },
+      sunrays: {
+        enabled: this.config.SUNRAYS,
+        weight: this.config.SUNRAYS_WEIGHT,
+      },
+      display: { outputFormat: "RGBA16F" },
+    };
+    return {
+      stepTimings: this.solver.getLastStepTimings(),
+      dyeSample: this.cachedDyeSample,
+      passes,
+      lastSplat: this.lastSplatTrace ?? undefined,
+    };
   }
 
   /** 处理 canvas resize */

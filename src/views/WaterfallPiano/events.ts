@@ -5,9 +5,9 @@
  * 使用 C# 风格 Event<T> 实现多播、类型安全的事件通知。
  */
 
-import { Event } from '@/utils/delegate';
-import type { WaterfallEngine } from './engine/WaterfallEngine';
-import type { NoteBlockMode } from './engine/NoteBlockSystem';
+import { Event } from "@/utils/delegate";
+import type { WaterfallEngine } from "./engine/WaterfallEngine";
+import type { NoteBlockMode } from "./engine/NoteBlockSystem";
 
 // ============================================================================
 // 事件参数类型

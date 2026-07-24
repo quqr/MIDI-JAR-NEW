@@ -22,7 +22,7 @@
       <span class="label-text-alt text-error">{{ errorMessage }}</span>
     </label>
     <label v-else-if="description" class="label">
-      <span class="label-text-alt text-base-content/60">{{ description }}</span>
+      <span class="label-text-alt text-base-content/70">{{ description }}</span>
     </label>
   </div>
 </template>

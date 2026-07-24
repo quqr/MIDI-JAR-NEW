@@ -1,9 +1,12 @@
 // ─── PixiJS 流体 N-S 求解器：curl → vorticity → divergence → clear → pressure → gradient → advection → splat ───
 // 将原生 WebGL FluidSolver 迁移为 PixiJS Filter + RenderTexture 管线
 
-import { Filter, UniformGroup, RenderTexture } from 'pixi.js';
-import type { TEXTURE_FORMATS } from 'pixi.js';
-import { PixiFluidContext, type DoubleRT } from './PixiFluidContext';
+import { Filter, UniformGroup, RenderTexture, Texture } from "pixi.js";
+import type { TEXTURE_FORMATS } from "pixi.js";
+import type { SolverStepTimings, TextureSample } from "@/views/FluidCompare/diagnostics";
+import { EMPTY_TIMINGS, EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
+import type { Renderer } from "pixi.js";
+import { PixiFluidContext, type DoubleRT } from "./PixiFluidContext";
 import {
   defaultFilterVertex,
   splatShader,
@@ -14,9 +17,12 @@ import {
   clearShader,
   pressureShader,
   gradientSubtractShader,
-} from './shaders';
-import { DEFAULT_CONFIG, type FluidSimulationConfig } from '../fluid/FluidConfig';
-import { generateColor } from '../fluid/FluidSolver';
+} from "./shaders";
+import {
+  DEFAULT_CONFIG,
+  type FluidSimulationConfig,
+} from "../fluid/FluidConfig";
+import { generateColor } from "../fluid/FluidSolver";
 
 export interface RGBColor {
   r: number;
@@ -91,6 +97,9 @@ export class PixiFluidSolver {
   private dyeWidth = 0;
   private dyeHeight = 0;
 
+  // ─── 诊断插桩 ───
+  private lastStepTimings: SolverStepTimings = { ...EMPTY_TIMINGS };
+
   constructor(ctx: PixiFluidContext, config?: Partial<FluidSimulationConfig>) {
     this.ctx = ctx;
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -114,7 +123,7 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: curlShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
       },
     });
@@ -126,12 +135,12 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: vorticityShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
-          curl: { value: 30.0, type: 'f32' },
-          dt: { value: 0.016, type: 'f32' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
+          curl: { value: 30.0, type: "f32" },
+          dt: { value: 0.016, type: "f32" },
         }),
-        uCurl: null as unknown as RenderTexture,
-        uCurlStyle: null as unknown as object,
+        uCurl: Texture.WHITE.source,
+        uCurlStyle: Texture.WHITE.source.style,
       },
     });
   }
@@ -142,7 +151,7 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: divergenceShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
       },
     });
@@ -154,7 +163,7 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: clearShader },
       resources: {
         solverUniforms: new UniformGroup({
-          value: { value: 0.8, type: 'f32' },
+          value: { value: 0.8, type: "f32" },
         }),
       },
     });
@@ -166,10 +175,10 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: pressureShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
-        uDivergence: null as unknown as RenderTexture,
-        uDivergenceStyle: null as unknown as object,
+        uDivergence: Texture.WHITE.source,
+        uDivergenceStyle: Texture.WHITE.source.style,
       },
     });
   }
@@ -180,10 +189,10 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: gradientSubtractShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
-        uPressure: null as unknown as RenderTexture,
-        uPressureStyle: null as unknown as object,
+        uPressure: Texture.WHITE.source,
+        uPressureStyle: Texture.WHITE.source.style,
       },
     });
   }
@@ -194,13 +203,13 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: advectionShader },
       resources: {
         solverUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
-          dyeTexelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
-          dt: { value: 0.016, type: 'f32' },
-          dissipation: { value: 1.0, type: 'f32' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
+          dyeTexelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
+          dt: { value: 0.016, type: "f32" },
+          dissipation: { value: 1.0, type: "f32" },
         }),
-        uVelocity: null as unknown as RenderTexture,
-        uVelocityStyle: null as unknown as object,
+        uVelocity: Texture.WHITE.source,
+        uVelocityStyle: Texture.WHITE.source.style,
       },
     });
   }
@@ -211,10 +220,10 @@ export class PixiFluidSolver {
       gl: { vertex: defaultFilterVertex, fragment: splatShader },
       resources: {
         solverUniforms: new UniformGroup({
-          aspectRatio: { value: 1.0, type: 'f32' },
-          color: { value: new Float32Array([0, 0, 0]), type: 'vec3<f32>' },
-          point: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
-          radius: { value: 0.005, type: 'f32' },
+          aspectRatio: { value: 1.0, type: "f32" },
+          color: { value: new Float32Array([0, 0, 0]), type: "vec3<f32>" },
+          point: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
+          radius: { value: 0.005, type: "f32" },
         }),
       },
     });
@@ -231,8 +240,16 @@ export class PixiFluidSolver {
     const canvasWidth = app.screen.width;
     const canvasHeight = app.screen.height;
 
-    const simRes = getResolution(canvasWidth, canvasHeight, this.config.SIM_RESOLUTION);
-    const dyeRes = getResolution(canvasWidth, canvasHeight, this.config.DYE_RESOLUTION);
+    const simRes = getResolution(
+      canvasWidth,
+      canvasHeight,
+      this.config.SIM_RESOLUTION,
+    );
+    const dyeRes = getResolution(
+      canvasWidth,
+      canvasHeight,
+      this.config.DYE_RESOLUTION,
+    );
 
     this.simWidth = simRes.width;
     this.simHeight = simRes.height;
@@ -244,37 +261,42 @@ export class PixiFluidSolver {
 
     // 染料场：RGBA16F（颜色数据），线性插值
     this.dye = this.ctx.createDoubleRT(
-      dyeRes.width, dyeRes.height,
-      'rgba16float' as TEXTURE_FORMATS,
-      'linear',
+      dyeRes.width,
+      dyeRes.height,
+      "rgba16float" as TEXTURE_FORMATS,
+      "linear",
     );
 
     // 速度场：RG16F（2D 速度向量），线性插值
     this.velocity = this.ctx.createDoubleRT(
-      simRes.width, simRes.height,
-      'rg16float' as TEXTURE_FORMATS,
-      'linear',
+      simRes.width,
+      simRes.height,
+      "rg16float" as TEXTURE_FORMATS,
+      "linear",
     );
 
     // 散度场：R16F，最近邻采样
     this.divergenceRT = this.ctx.createRT(
-      simRes.width, simRes.height,
-      'r16float' as TEXTURE_FORMATS,
-      'nearest',
+      simRes.width,
+      simRes.height,
+      "r16float" as TEXTURE_FORMATS,
+      "nearest",
     );
 
     // 旋度场：R16F，最近邻采样
     this.curlRT = this.ctx.createRT(
-      simRes.width, simRes.height,
-      'r16float' as TEXTURE_FORMATS,
-      'nearest',
+      simRes.width,
+      simRes.height,
+      "r16float" as TEXTURE_FORMATS,
+      "nearest",
     );
 
     // 压力场：R16F 双缓冲，最近邻采样
     this.pressure = this.ctx.createDoubleRT(
-      simRes.width, simRes.height,
-      'r16float' as TEXTURE_FORMATS,
-      'nearest',
+      simRes.width,
+      simRes.height,
+      "r16float" as TEXTURE_FORMATS,
+      "nearest",
     );
   }
 
@@ -285,7 +307,13 @@ export class PixiFluidSolver {
    * @param dt - 时间步长（秒）
    */
   step(dt: number): void {
-    if (!this.dye || !this.velocity || !this.divergenceRT || !this.curlRT || !this.pressure) {
+    if (
+      !this.dye ||
+      !this.velocity ||
+      !this.divergenceRT ||
+      !this.curlRT ||
+      !this.pressure
+    ) {
       return;
     }
 
@@ -293,12 +321,17 @@ export class PixiFluidSolver {
     const velTexelX = 1.0 / this.simWidth;
     const velTexelY = 1.0 / this.simHeight;
 
+    const stepStart = performance.now();
+    let t0 = performance.now();
+
     // 1. curl → 输出到 curlRT
     const curlU = this.curlFilter.resources.solverUniforms.uniforms;
     curlU.texelSize = [velTexelX, velTexelY];
     this.ctx.applyPass(this.curlFilter, this.velocity.read, this.curlRT);
+    this.lastStepTimings.curl = performance.now() - t0;
 
     // 2. vorticity confinement → 输出到 velocity.write，swap
+    t0 = performance.now();
     const vortU = this.vorticityFilter.resources.solverUniforms.uniforms;
     vortU.texelSize = [velTexelX, velTexelY];
     vortU.curl = config.CURL;
@@ -306,41 +339,73 @@ export class PixiFluidSolver {
     // 设置额外纹理：uCurl（旋度场）
     this.vorticityFilter.resources.uCurl = this.curlRT.source;
     this.vorticityFilter.resources.uCurlStyle = this.curlRT.source.style;
-    this.ctx.applyPass(this.vorticityFilter, this.velocity.read, this.velocity.write);
+    this.ctx.applyPass(
+      this.vorticityFilter,
+      this.velocity.read,
+      this.velocity.write,
+    );
     this.velocity.swap();
+    this.lastStepTimings.vorticity = performance.now() - t0;
 
     // 3. divergence → 输出到 divergenceRT
+    t0 = performance.now();
     const divU = this.divergenceFilter.resources.solverUniforms.uniforms;
     divU.texelSize = [velTexelX, velTexelY];
-    this.ctx.applyPass(this.divergenceFilter, this.velocity.read, this.divergenceRT);
+    this.ctx.applyPass(
+      this.divergenceFilter,
+      this.velocity.read,
+      this.divergenceRT,
+    );
+    this.lastStepTimings.divergence = performance.now() - t0;
 
     // 4. clear pressure（衰减）
+    t0 = performance.now();
     const clearU = this.clearFilter.resources.solverUniforms.uniforms;
     clearU.value = config.PRESSURE;
-    this.ctx.applyPass(this.clearFilter, this.pressure.read, this.pressure.write);
+    this.ctx.applyPass(
+      this.clearFilter,
+      this.pressure.read,
+      this.pressure.write,
+    );
     this.pressure.swap();
+    this.lastStepTimings.clearPressure = performance.now() - t0;
 
     // 5. pressure Jacobi 迭代
+    t0 = performance.now();
     const presU = this.pressureFilter.resources.solverUniforms.uniforms;
     presU.texelSize = [velTexelX, velTexelY];
     // 设置额外纹理：uDivergence
     this.pressureFilter.resources.uDivergence = this.divergenceRT.source;
-    this.pressureFilter.resources.uDivergenceStyle = this.divergenceRT.source.style;
+    this.pressureFilter.resources.uDivergenceStyle =
+      this.divergenceRT.source.style;
     for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-      this.ctx.applyPass(this.pressureFilter, this.pressure.read, this.pressure.write);
+      this.ctx.applyPass(
+        this.pressureFilter,
+        this.pressure.read,
+        this.pressure.write,
+      );
       this.pressure.swap();
     }
+    this.lastStepTimings.pressure = performance.now() - t0;
 
     // 6. gradient subtract → 输出到 velocity.write，swap
+    t0 = performance.now();
     const gradU = this.gradientSubtractFilter.resources.solverUniforms.uniforms;
     gradU.texelSize = [velTexelX, velTexelY];
     // 设置额外纹理：uPressure
     this.gradientSubtractFilter.resources.uPressure = this.pressure.read.source;
-    this.gradientSubtractFilter.resources.uPressureStyle = this.pressure.read.source.style;
-    this.ctx.applyPass(this.gradientSubtractFilter, this.velocity.read, this.velocity.write);
+    this.gradientSubtractFilter.resources.uPressureStyle =
+      this.pressure.read.source.style;
+    this.ctx.applyPass(
+      this.gradientSubtractFilter,
+      this.velocity.read,
+      this.velocity.write,
+    );
     this.velocity.swap();
+    this.lastStepTimings.gradientSubtract = performance.now() - t0;
 
     // 7. advection (velocity)：uTexture（主输入）= velocity.read，uVelocity = velocity.read
+    t0 = performance.now();
     const advU = this.advectionFilter.resources.solverUniforms.uniforms;
     advU.texelSize = [velTexelX, velTexelY];
     advU.dyeTexelSize = [velTexelX, velTexelY];
@@ -348,11 +413,18 @@ export class PixiFluidSolver {
     advU.dissipation = config.VELOCITY_DISSIPATION;
     // velocity 平流时 uVelocity == uTexture，无需额外资源
     this.advectionFilter.resources.uVelocity = this.velocity.read.source;
-    this.advectionFilter.resources.uVelocityStyle = this.velocity.read.source.style;
-    this.ctx.applyPass(this.advectionFilter, this.velocity.read, this.velocity.write);
+    this.advectionFilter.resources.uVelocityStyle =
+      this.velocity.read.source.style;
+    this.ctx.applyPass(
+      this.advectionFilter,
+      this.velocity.read,
+      this.velocity.write,
+    );
     this.velocity.swap();
+    this.lastStepTimings.advectVelocity = performance.now() - t0;
 
     // 8. advection (dye)：uTexture = dye.read，uVelocity = velocity.read
+    t0 = performance.now();
     const dyeTexelX = 1.0 / this.dyeWidth;
     const dyeTexelY = 1.0 / this.dyeHeight;
     advU.texelSize = [velTexelX, velTexelY];
@@ -360,9 +432,13 @@ export class PixiFluidSolver {
     advU.dissipation = config.DENSITY_DISSIPATION;
     // dye 平流时 uVelocity != uTexture，需要额外绑定 velocity
     this.advectionFilter.resources.uVelocity = this.velocity.read.source;
-    this.advectionFilter.resources.uVelocityStyle = this.velocity.read.source.style;
+    this.advectionFilter.resources.uVelocityStyle =
+      this.velocity.read.source.style;
     this.ctx.applyPass(this.advectionFilter, this.dye.read, this.dye.write);
     this.dye.swap();
+    this.lastStepTimings.advectDye = performance.now() - t0;
+
+    this.lastStepTimings.total = performance.now() - stepStart;
   }
 
   /**
@@ -380,7 +456,10 @@ export class PixiFluidSolver {
     y = Math.max(0, Math.min(1, y));
 
     const aspectRatio = this.simWidth / this.simHeight;
-    const radius = Math.max(10e-6, correctRadius(this.config.SPLAT_RADIUS, aspectRatio));
+    const radius = Math.max(
+      10e-6,
+      correctRadius(this.config.SPLAT_RADIUS, aspectRatio),
+    );
 
     const splatU = this.splatFilter.resources.solverUniforms.uniforms;
 
@@ -389,7 +468,11 @@ export class PixiFluidSolver {
     splatU.point = [x, y];
     splatU.color = [dx, dy, 0];
     splatU.radius = radius;
-    this.ctx.applyPass(this.splatFilter, this.velocity.read, this.velocity.write);
+    this.ctx.applyPass(
+      this.splatFilter,
+      this.velocity.read,
+      this.velocity.write,
+    );
     this.velocity.swap();
 
     // 第二步：向染料场注入颜色
@@ -453,7 +536,10 @@ export class PixiFluidSolver {
     const prevDyeRes = this.config.DYE_RESOLUTION;
     Object.assign(this.config, config);
 
-    if (config.SIM_RESOLUTION !== prevSimRes || config.DYE_RESOLUTION !== prevDyeRes) {
+    if (
+      config.SIM_RESOLUTION !== prevSimRes ||
+      config.DYE_RESOLUTION !== prevDyeRes
+    ) {
       this.initFramebuffers();
     }
   }
@@ -461,6 +547,33 @@ export class PixiFluidSolver {
   /** 获取当前配置 */
   getConfig(): FluidSimulationConfig {
     return this.config;
+  }
+
+  // ─── 诊断插桩 ───
+
+  /** 获取上一次 step() 各子步骤耗时 */
+  getLastStepTimings(): SolverStepTimings {
+    return this.lastStepTimings;
+  }
+
+  /** 采样 dye 纹理中心像素 */
+  sampleDyeCenter(renderer: Renderer): TextureSample {
+    if (!this.dye || !this.dye.read) return { ...EMPTY_SAMPLE };
+    const cx = Math.floor(this.dyeWidth / 2);
+    const cy = Math.floor(this.dyeHeight / 2);
+    try {
+      // PixiJS v8 公开 API：通过 extract.pixels 读取纹理像素
+      const result = renderer.extract.pixels(this.dye.read);
+      const idx = (cy * result.width + cx) * 4;
+      return {
+        r: result.pixels[idx] / 255,
+        g: result.pixels[idx + 1] / 255,
+        b: result.pixels[idx + 2] / 255,
+        a: result.pixels[idx + 3] / 255,
+      };
+    } catch {
+      return { ...EMPTY_SAMPLE };
+    }
   }
 
   /** resize：重新初始化 RenderTexture */
@@ -472,24 +585,49 @@ export class PixiFluidSolver {
 
   /** 销毁仿真场 RenderTexture（保留 Filter 和 context） */
   private destroyFramebuffers(): void {
-    if (this.dye) { this.ctx.destroyDoubleRT(this.dye); this.dye = null; }
-    if (this.velocity) { this.ctx.destroyDoubleRT(this.velocity); this.velocity = null; }
-    if (this.divergenceRT) { this.ctx.destroyRT(this.divergenceRT); this.divergenceRT = null; }
-    if (this.curlRT) { this.ctx.destroyRT(this.curlRT); this.curlRT = null; }
-    if (this.pressure) { this.ctx.destroyDoubleRT(this.pressure); this.pressure = null; }
+    if (this.dye) {
+      this.ctx.destroyDoubleRT(this.dye);
+      this.dye = null;
+    }
+    if (this.velocity) {
+      this.ctx.destroyDoubleRT(this.velocity);
+      this.velocity = null;
+    }
+    if (this.divergenceRT) {
+      this.ctx.destroyRT(this.divergenceRT);
+      this.divergenceRT = null;
+    }
+    if (this.curlRT) {
+      this.ctx.destroyRT(this.curlRT);
+      this.curlRT = null;
+    }
+    if (this.pressure) {
+      this.ctx.destroyDoubleRT(this.pressure);
+      this.pressure = null;
+    }
   }
 
   /** 销毁所有资源 */
   destroy(): void {
     this.destroyFramebuffers();
-    // Filter 无需手动销毁（随 GC 回收），但断开纹理资源引用
-    this.vorticityFilter.resources.uCurl = null;
-    this.vorticityFilter.resources.uCurlStyle = null;
-    this.pressureFilter.resources.uDivergence = null;
-    this.pressureFilter.resources.uDivergenceStyle = null;
-    this.gradientSubtractFilter.resources.uPressure = null;
-    this.gradientSubtractFilter.resources.uPressureStyle = null;
-    this.advectionFilter.resources.uVelocity = null;
-    this.advectionFilter.resources.uVelocityStyle = null;
+    // 断开纹理资源引用，防止 Filter 持有已销毁的 RenderTexture
+    this.vorticityFilter.resources.uCurl = Texture.WHITE.source;
+    this.vorticityFilter.resources.uCurlStyle = Texture.WHITE.source.style;
+    this.pressureFilter.resources.uDivergence = Texture.WHITE.source;
+    this.pressureFilter.resources.uDivergenceStyle = Texture.WHITE.source.style;
+    this.gradientSubtractFilter.resources.uPressure = Texture.WHITE.source;
+    this.gradientSubtractFilter.resources.uPressureStyle =
+      Texture.WHITE.source.style;
+    this.advectionFilter.resources.uVelocity = Texture.WHITE.source;
+    this.advectionFilter.resources.uVelocityStyle = Texture.WHITE.source.style;
+    // 销毁所有 Filter（释放 GPU 着色器程序和 uniform 缓冲区）
+    this.curlFilter.destroy();
+    this.vorticityFilter.destroy();
+    this.divergenceFilter.destroy();
+    this.clearFilter.destroy();
+    this.pressureFilter.destroy();
+    this.gradientSubtractFilter.destroy();
+    this.advectionFilter.destroy();
+    this.splatFilter.destroy();
   }
 }

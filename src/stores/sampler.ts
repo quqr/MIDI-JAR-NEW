@@ -244,14 +244,20 @@ export const useSamplerStore = defineStore("sampler", () => {
       }
     }
 
-    logger.debug("[sampler] Restored %d cached instruments from localStorage", cachedIds.length);
+    logger.debug(
+      "[sampler] Restored %d cached instruments from localStorage",
+      cachedIds.length,
+    );
   }
 
   // 初始化时恢复缓存状态
   restoreCachedInstruments();
 
   // 如果有保存的当前乐器且已缓存，恢复 isReady 状态
-  if (currentInstrumentId.value && instruments.value[currentInstrumentId.value]?.loaded) {
+  if (
+    currentInstrumentId.value &&
+    instruments.value[currentInstrumentId.value]?.loaded
+  ) {
     isReady.value = true;
   }
 

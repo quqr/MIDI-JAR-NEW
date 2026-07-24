@@ -25,7 +25,8 @@ void main () {
     vec2 coord = vTextureCoord - dt * vel * texelSize;
 
     // 使用硬件双线性滤波（WebGL2 保证支持）
-    vec4 result = dissipation * texture(uTexture, coord);
-    finalColor = vec4(result.rgb, 1.0);
+    vec4 result = texture(uTexture, coord);
+    float decay = 1.0 + dissipation * dt;
+    finalColor = vec4(result.rgb / decay, 1.0);
 }
 `;

@@ -1,6 +1,6 @@
 // ─── 流体模拟统一接口：兼容旧 WebGL FluidSimulation 和新 PixiFluidSimulation ───
 
-import type { FluidSimulationConfig } from '../fluid/FluidConfig';
+import type { FluidSimulationConfig } from "../fluid/FluidConfig";
 
 /**
  * 流体模拟统一接口
@@ -8,7 +8,13 @@ import type { FluidSimulationConfig } from '../fluid/FluidConfig';
  */
 export interface IFluidSimulation {
   /** 注入一个流体 splat */
-  splat(x: number, y: number, dx: number, dy: number, color: { r: number; g: number; b: number }): void;
+  splat(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    color: { r: number; g: number; b: number },
+  ): void;
 
   /** 注入随机 splats */
   multipleSplats(amount: number): void;

@@ -4,6 +4,7 @@ import App from "./App.vue";
 import router from "./router";
 import i18n from "@/locales/i18n";
 import "@/styles/tailwind.css";
+import "@fontsource-variable/jetbrains-mono";
 import { useMidiRoutingStore } from "@/stores/midiRouting";
 import { createLogger } from "@/utils/logger";
 import { isTauri, getTauriAPI } from "@/utils/tauri";

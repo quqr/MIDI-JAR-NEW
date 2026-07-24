@@ -12,6 +12,8 @@ import {
   getResolution,
 } from "./FramebufferManager";
 import type { FluidSimulationConfig } from "./FluidConfig";
+import type { SolverStepTimings, TextureSample } from "@/views/FluidCompare/diagnostics";
+import { EMPTY_TIMINGS, EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
 
 export interface RGBColor {
   r: number;
@@ -41,6 +43,9 @@ export class FluidSolver {
   private divergence: FBO | null = null;
   private curl: FBO | null = null;
   private pressure: DoubleFBO | null = null;
+
+  // 深度诊断：上一次 step() 各子步骤耗时
+  private lastStepTimings: SolverStepTimings = { ...EMPTY_TIMINGS };
 
   constructor(
     gl: WebGLRenderingContext,
@@ -194,7 +199,10 @@ export class FluidSolver {
 
     gl.disable(gl.BLEND);
 
+    const stepStart = performance.now();
+
     // 1. curl
+    let t0 = performance.now();
     this.curlProgram.bind();
     gl.uniform2f(
       this.curlProgram.uniforms.texelSize,
@@ -206,8 +214,10 @@ export class FluidSolver {
       this.velocity.read.attach(0),
     );
     this.blit(this.curl);
+    this.lastStepTimings.curl = performance.now() - t0;
 
     // 2. vorticity confinement
+    t0 = performance.now();
     this.vorticityProgram.bind();
     gl.uniform2f(
       this.vorticityProgram.uniforms.texelSize,
@@ -223,8 +233,10 @@ export class FluidSolver {
     gl.uniform1f(this.vorticityProgram.uniforms.dt, dt);
     this.blit(this.velocity.write);
     this.velocity.swap();
+    this.lastStepTimings.vorticity = performance.now() - t0;
 
     // 3. divergence
+    t0 = performance.now();
     this.divergenceProgram.bind();
     gl.uniform2f(
       this.divergenceProgram.uniforms.texelSize,
@@ -236,8 +248,10 @@ export class FluidSolver {
       this.velocity.read.attach(0),
     );
     this.blit(this.divergence);
+    this.lastStepTimings.divergence = performance.now() - t0;
 
     // 4. clear pressure (衰减)
+    t0 = performance.now();
     this.clearProgram.bind();
     gl.uniform1i(
       this.clearProgram.uniforms.uTexture,
@@ -246,8 +260,10 @@ export class FluidSolver {
     gl.uniform1f(this.clearProgram.uniforms.value, config.PRESSURE);
     this.blit(this.pressure.write);
     this.pressure.swap();
+    this.lastStepTimings.clearPressure = performance.now() - t0;
 
     // 5. pressure Jacobi 迭代
+    t0 = performance.now();
     this.pressureProgram.bind();
     gl.uniform2f(
       this.pressureProgram.uniforms.texelSize,
@@ -266,8 +282,10 @@ export class FluidSolver {
       this.blit(this.pressure.write);
       this.pressure.swap();
     }
+    this.lastStepTimings.pressure = performance.now() - t0;
 
     // 6. gradient subtract
+    t0 = performance.now();
     this.gradientSubtractProgram.bind();
     gl.uniform2f(
       this.gradientSubtractProgram.uniforms.texelSize,
@@ -284,8 +302,10 @@ export class FluidSolver {
     );
     this.blit(this.velocity.write);
     this.velocity.swap();
+    this.lastStepTimings.gradientSubtract = performance.now() - t0;
 
     // 7. advection (velocity)
+    t0 = performance.now();
     this.advectionProgram.bind();
     gl.uniform2f(
       this.advectionProgram.uniforms.texelSize,
@@ -309,8 +329,10 @@ export class FluidSolver {
     );
     this.blit(this.velocity.write);
     this.velocity.swap();
+    this.lastStepTimings.advectVelocity = performance.now() - t0;
 
     // 8. advection (dye)
+    t0 = performance.now();
     if (!this.ext.supportLinearFiltering) {
       gl.uniform2f(
         this.advectionProgram.uniforms.dyeTexelSize,
@@ -332,6 +354,9 @@ export class FluidSolver {
     );
     this.blit(this.dye.write);
     this.dye.swap();
+    this.lastStepTimings.advectDye = performance.now() - t0;
+
+    this.lastStepTimings.total = performance.now() - stepStart;
   }
 
   /**
@@ -436,6 +461,33 @@ export class FluidSolver {
 
   getDyeDouble(): DoubleFBO | null {
     return this.dye;
+  }
+
+  /** 获取上一次 step() 各子步骤耗时 */
+  getLastStepTimings(): SolverStepTimings {
+    return this.lastStepTimings;
+  }
+
+  /** 采样 dye 纹理中心像素 */
+  sampleDyeCenter(): TextureSample {
+    if (!this.dye || !this.dye.read) return { ...EMPTY_SAMPLE };
+    const gl = this.gl;
+    const fbo = this.dye.read;
+    const cx = Math.floor(this.dye.width / 2);
+    const cy = Math.floor(this.dye.height / 2);
+    try {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo.fbo);
+      const pixels = new Uint8Array(4);
+      gl.readPixels(cx, cy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      return {
+        r: pixels[0] / 255,
+        g: pixels[1] / 255,
+        b: pixels[2] / 255,
+        a: pixels[3] / 255,
+      };
+    } catch {
+      return { ...EMPTY_SAMPLE };
+    }
   }
 
   getVelocity(): DoubleFBO | null {

@@ -46,7 +46,7 @@ interface InstrumentCacheInfo {
   /** 加载中的 Promise（加载完成后清理） */
   loadingPromise: Promise<void> | null;
   /** 当前状态 */
-  state: 'idle' | 'loading' | 'ready' | 'error';
+  state: "idle" | "loading" | "ready" | "error";
   /** 错误信息（失败时存储） */
   error?: Error;
   /** 重试次数 */
@@ -203,26 +203,41 @@ async function loadInstrument(instrumentId: string): Promise<void> {
   let cache = instrumentCachePool.get(instrumentId);
 
   // 情况 1：已缓存且已加载完成
-  if (cache?.state === 'ready' && cache.instrument) {
-    logger.debug("[SamplerService] Instrument already cached: %s", instrumentId);
+  if (cache?.state === "ready" && cache.instrument) {
+    logger.debug(
+      "[SamplerService] Instrument already cached: %s",
+      instrumentId,
+    );
     // 切换到该乐器
     switchToCachedInstrument(instrumentId, cache.instrument);
     return;
   }
 
   // 情况 2：正在加载中（复用 Promise）
-  if (cache?.state === 'loading' && cache.loadingPromise) {
-    logger.debug("[SamplerService] Reusing loading promise for %s", instrumentId);
+  if (cache?.state === "loading" && cache.loadingPromise) {
+    logger.debug(
+      "[SamplerService] Reusing loading promise for %s",
+      instrumentId,
+    );
     return cache.loadingPromise;
   }
 
   // 情况 3：加载失败（检查重试次数）
-  if (cache?.state === 'error') {
+  if (cache?.state === "error") {
     if (cache.retryCount >= MAX_RETRY_COUNT) {
-      logger.warn("[SamplerService] Max retry count reached for %s", instrumentId);
-      throw cache.error || new Error(`Failed to load instrument: ${instrumentId}`);
+      logger.warn(
+        "[SamplerService] Max retry count reached for %s",
+        instrumentId,
+      );
+      throw (
+        cache.error || new Error(`Failed to load instrument: ${instrumentId}`)
+      );
     }
-    logger.info("[SamplerService] Retrying to load %s (attempt %d)", instrumentId, cache.retryCount + 1);
+    logger.info(
+      "[SamplerService] Retrying to load %s (attempt %d)",
+      instrumentId,
+      cache.retryCount + 1,
+    );
   }
 
   // 情况 4：需要加载（新加载或重试）
@@ -234,7 +249,7 @@ async function loadInstrument(instrumentId: string): Promise<void> {
  */
 async function loadInstrumentInternal(
   instrumentId: string,
-  info: InstrumentInfo
+  info: InstrumentInfo,
 ): Promise<void> {
   const store = useSamplerStore();
   const ctx = await ensureInitialized();
@@ -250,28 +265,34 @@ async function loadInstrumentInternal(
     cache = {
       instrument: null,
       loadingPromise: null,
-      state: 'idle',
+      state: "idle",
       retryCount: 0,
     };
     instrumentCachePool.set(instrumentId, cache);
   }
 
   // 更新缓存状态
-  cache.state = 'loading';
+  cache.state = "loading";
 
   // 卸载旧音源：仅在旧音源不在缓存池中时才 dispose
   if (activeInstance.value) {
     const oldId = lastSuccessfulInstrumentId;
     const oldCache = oldId ? instrumentCachePool.get(oldId) : undefined;
 
-    if (oldCache && oldCache.state === 'ready') {
+    if (oldCache && oldCache.state === "ready") {
       // 旧音源在缓存池中 → 保留实例，仅切换引用
-      logger.debug("[SamplerService] Keeping old instrument in cache: %s", oldId);
+      logger.debug(
+        "[SamplerService] Keeping old instrument in cache: %s",
+        oldId,
+      );
     } else {
       // 旧音源不在缓存池中 → 安全销毁
       try {
         activeInstance.value.dispose();
-        logger.debug("[SamplerService] Disposed old instrument (not in cache): %s", oldId);
+        logger.debug(
+          "[SamplerService] Disposed old instrument (not in cache): %s",
+          oldId,
+        );
       } catch (err) {
         logger.warn("[SamplerService] dispose error (ignored): %s", err);
       }
@@ -280,7 +301,10 @@ async function loadInstrumentInternal(
   }
 
   // 触发加载开始事件（在创建加载 Promise 之前）
-  instrumentEvents.onLoadStart.internalInvoke({ instrumentId, instrument: info });
+  instrumentEvents.onLoadStart.internalInvoke({
+    instrumentId,
+    instrument: info,
+  });
 
   // 创建加载 Promise
   const loadingPromise = (async () => {
@@ -292,7 +316,9 @@ async function loadInstrumentInternal(
         try {
           const progress = instance.loadProgress;
           if (progress && progress.total > 0) {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
+            const percent = Math.round(
+              (progress.loaded / progress.total) * 100,
+            );
 
             // 触发进度事件
             instrumentEvents.onLoadProgress.internalInvoke({
@@ -313,7 +339,7 @@ async function loadInstrumentInternal(
 
       // 更新缓存
       cache.instrument = instance;
-      cache.state = 'ready';
+      cache.state = "ready";
       cache.loadingPromise = null; // 清理 Promise
 
       // 更新活跃实例
@@ -322,7 +348,8 @@ async function loadInstrumentInternal(
 
       // 触发成功事件
       const finalProgress = instance.loadProgress;
-      const fromCache = finalProgress && finalProgress.loaded === finalProgress.total;
+      const fromCache =
+        finalProgress && finalProgress.loaded === finalProgress.total;
       instrumentEvents.onLoadSuccess.internalInvoke({
         instrumentId,
         instrument: info,
@@ -335,7 +362,7 @@ async function loadInstrumentInternal(
       const error = err instanceof Error ? err : new Error(msg);
 
       // 更新缓存状态
-      cache.state = 'error';
+      cache.state = "error";
       cache.error = error;
       cache.retryCount++;
       cache.loadingPromise = null;
@@ -372,7 +399,10 @@ async function loadInstrumentInternal(
 /**
  * 切换到已缓存的乐器
  */
-function switchToCachedInstrument(instrumentId: string, instance: SmplrInstance): void {
+function switchToCachedInstrument(
+  instrumentId: string,
+  instance: SmplrInstance,
+): void {
   // 销毁旧实例
   if (activeInstance.value && activeInstance.value !== instance) {
     try {
@@ -399,19 +429,28 @@ function switchToCachedInstrument(instrumentId: string, instance: SmplrInstance)
 function unloadInstrument(instrumentId: string): boolean {
   // 不允许卸载当前正在使用的音源
   if (lastSuccessfulInstrumentId === instrumentId) {
-    logger.warn("[SamplerService] Cannot unload current active instrument: %s", instrumentId);
+    logger.warn(
+      "[SamplerService] Cannot unload current active instrument: %s",
+      instrumentId,
+    );
     return false;
   }
 
   const cache = instrumentCachePool.get(instrumentId);
   if (!cache) {
-    logger.debug("[SamplerService] Instrument not in cache pool: %s", instrumentId);
+    logger.debug(
+      "[SamplerService] Instrument not in cache pool: %s",
+      instrumentId,
+    );
     return false;
   }
 
   // 正在加载中，不允许卸载
-  if (cache.state === 'loading') {
-    logger.warn("[SamplerService] Cannot unload instrument while loading: %s", instrumentId);
+  if (cache.state === "loading") {
+    logger.warn(
+      "[SamplerService] Cannot unload instrument while loading: %s",
+      instrumentId,
+    );
     return false;
   }
 
@@ -420,7 +459,11 @@ function unloadInstrument(instrumentId: string): boolean {
     try {
       cache.instrument.dispose();
     } catch (err) {
-      logger.warn("[SamplerService] dispose error for %s: %s", instrumentId, err);
+      logger.warn(
+        "[SamplerService] dispose error for %s: %s",
+        instrumentId,
+        err,
+      );
     }
   }
 
@@ -588,7 +631,10 @@ async function downloadInstrumentToCache(instrumentId: string): Promise<void> {
   }
 
   // 触发加载开始事件
-  instrumentEvents.onLoadStart.internalInvoke({ instrumentId, instrument: info });
+  instrumentEvents.onLoadStart.internalInvoke({
+    instrumentId,
+    instrument: info,
+  });
 
   try {
     const instance = createInstrument(ctx, info);

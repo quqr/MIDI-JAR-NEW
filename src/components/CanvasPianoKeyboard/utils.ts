@@ -3,7 +3,18 @@ import type { KeyboardSettings } from "@/types/settings";
 
 // ─── 音级名查找表 ───
 const PITCH_CLASS_NAMES = [
-  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
 ];
 
 /** 将 MIDI 音符号转为音级名（不含八度，60→"C"） */

@@ -1,5 +1,5 @@
 <template>
-  <SettingsSection :on-reset="resetModule">
+  <SettingsSection>
     <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.chordDisplaySettings.chords')"
@@ -349,17 +349,6 @@ function updateNestedSetting(path: string, value: any) {
       JSON.stringify(settingsStore.settings.chordDisplay),
     );
     setValueByPath(updated[index], path, value);
-    settingsStore.settings.chordDisplay = updated;
-  }
-}
-
-function resetModule() {
-  const index = settingsStore.settings.chordDisplay.findIndex(
-    (m) => m.id === moduleId.value,
-  );
-  if (index !== -1) {
-    const updated = [...settingsStore.settings.chordDisplay];
-    updated[index] = { ...defaultChordDisplaySettings, id: moduleId.value };
     settingsStore.settings.chordDisplay = updated;
   }
 }

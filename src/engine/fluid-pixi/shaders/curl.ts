@@ -2,6 +2,12 @@
 // 输入: uTexture (速度场)
 // 无额外纹理资源
 // Uniforms: texelSize
+//
+// 完全对齐原版 PavelDoGreat WebGL-Fluid-Simulation:
+//   L = vy at left,  R = vy at right
+//   T = vx at top,   B = vx at bottom
+//   vorticity = R - L - T + B
+// 注意：无 0.5 因子（原版也没有）
 
 export const curlShader = `\
 precision highp float;
@@ -15,21 +21,17 @@ uniform vec2 texelSize;
 out vec4 finalColor;
 
 void main () {
-    // 计算相邻纹素的UV坐标
     vec2 vL = vTextureCoord - vec2(texelSize.x, 0.0);
     vec2 vR = vTextureCoord + vec2(texelSize.x, 0.0);
     vec2 vT = vTextureCoord + vec2(0.0, texelSize.y);
     vec2 vB = vTextureCoord - vec2(0.0, texelSize.y);
 
-    // 采样相邻速度
-    float vL_y = texture(uTexture, vL).y;
-    float vR_y = texture(uTexture, vR).y;
-    float vT_x = texture(uTexture, vT).x;
-    float vB_x = texture(uTexture, vB).x;
+    float L = texture(uTexture, vL).y;
+    float R = texture(uTexture, vR).y;
+    float T = texture(uTexture, vT).x;
+    float B = texture(uTexture, vB).x;
 
-    // 2D旋度 = dvx/dy - dvy/dx
-    float vorticity = 0.5 * (vT_x - vB_x - vR_y + vL_y);
-
+    float vorticity = R - L - T + B;
     finalColor = vec4(vorticity, 0.0, 0.0, 1.0);
 }
 `;

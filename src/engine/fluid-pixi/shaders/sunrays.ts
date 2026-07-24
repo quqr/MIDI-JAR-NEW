@@ -13,35 +13,27 @@ uniform float weight;
 
 out vec4 finalColor;
 
-const float GOLDEN_ANGLE = 2.39996;
+const int ITERATIONS = 16;
 
 void main () {
-    vec4 color = vec4(0.0);
-    // 从屏幕中心向当前像素方向采样
-    vec2 center = vec2(0.5);
-    vec2 dir = vTextureCoord - center;
-    float dist = length(dir);
-    dir = normalize(dir);
+    float Density = 0.3;
+    float Decay = 0.95;
+    float Exposure = 0.7;
 
-    // 黄金角螺旋采样，生成径向光线
-    for (int i = 0; i < 60; i++) {
-        float fi = float(i);
-        float t = (fi + 0.5) / 60.0;
-        float angle = fi * GOLDEN_ANGLE;
-        float r = 1.0 - t;
-        float x = center.x + cos(angle) * r;
-        float y = center.y + sin(angle) * r;
-        // 手动检查是否在纹理范围内
-        if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0) {
-            float sampleAlpha = texture(uTexture, vec2(x, y)).a;
-            color.rgb += sampleAlpha * weight;
-        }
+    vec2 coord = vTextureCoord;
+    vec2 dir = vTextureCoord - 0.5;
+    dir *= 1.0 / float(ITERATIONS) * Density;
+    float illuminationDecay = 1.0;
+
+    float color = texture(uTexture, vTextureCoord).a;
+
+    for (int i = 0; i < ITERATIONS; i++) {
+        coord -= dir;
+        float col = texture(uTexture, coord).a;
+        color += col * illuminationDecay * weight;
+        illuminationDecay *= Decay;
     }
 
-    // 根据到中心的距离衰减
-    float decay = 1.0 - dist;
-    color.rgb *= decay * decay;
-
-    finalColor = vec4(color.rgb, 1.0);
+    finalColor = vec4(color * Exposure, 0.0, 0.0, 1.0);
 }
 `;

@@ -34,7 +34,8 @@
     "debugger": "调试器",
     "advancedDebug": "高级调试",
     "WaterfallPiano": "瀑布流钢琴",
-    "Sampler": "采样器"
+    "Sampler": "采样器",
+    "fluidCompare": "流体对比"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -51,7 +52,8 @@
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息",
       "WaterfallPiano": "瀑布流式钢琴演奏与可视化",
-      "Sampler": "采样器音源 — 加载和演奏各种音色"
+      "Sampler": "采样器音源 — 加载和演奏各种音色",
+      "fluidCompare": "WebGL 与 PixiJS 流体模拟对比测试"
     }
   },
   "layout": {

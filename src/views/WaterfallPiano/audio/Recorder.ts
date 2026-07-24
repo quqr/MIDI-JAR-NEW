@@ -48,7 +48,10 @@ export class Recorder {
     this.scheduler = new EventScheduler<ScheduledNote>({
       onTrigger: (note) => {
         this.callbacks.onNoteOn?.(note.midi, note.velocity, note.hand);
-        waterfallPianoEvents.onNoteOn.internalInvoke({ midi: note.midi, velocity: note.velocity });
+        waterfallPianoEvents.onNoteOn.internalInvoke({
+          midi: note.midi,
+          velocity: note.velocity,
+        });
       },
       onRelease: (note) => {
         this.callbacks.onNoteOff?.(note.midi);
@@ -126,7 +129,9 @@ export class Recorder {
     const scheduled = this.getScheduledNotes();
     this.scheduler.setNotes(scheduled);
     this.callbacks.onScheduledNotesReady?.(scheduled);
-    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: scheduled });
+    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+      notes: scheduled,
+    });
   }
 
   startPlayback(): void {
@@ -137,7 +142,9 @@ export class Recorder {
     this.isPlaying = true;
     this.isPaused = false;
     this.callbacks.onScheduledNotesReady?.(this.getScheduledNotes());
-    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: this.getScheduledNotes() });
+    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+      notes: this.getScheduledNotes(),
+    });
   }
 
   pausePlayback(): void {
@@ -258,7 +265,10 @@ export class Recorder {
     const dur = this._maxDuration;
     this.scheduler.tick(current);
     this.callbacks.onProgress?.(current, dur);
-    waterfallPianoEvents.onPlaybackProgress.internalInvoke({ currentTime: current, duration: dur });
+    waterfallPianoEvents.onPlaybackProgress.internalInvoke({
+      currentTime: current,
+      duration: dur,
+    });
     if (current >= dur && dur > 0) {
       this.isPlaying = false;
       this.isPaused = false;

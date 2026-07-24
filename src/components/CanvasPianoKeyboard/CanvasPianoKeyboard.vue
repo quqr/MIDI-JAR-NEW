@@ -3,11 +3,7 @@ import { ref, onMounted, onUnmounted, watch, watchEffect } from "vue";
 import { Application, Container } from "pixi.js";
 import { KeyboardRenderer } from "@/views/WaterfallPiano/engine/KeyboardRenderer";
 import type { KeyboardSettings } from "@/types/settings";
-import {
-  getCanvasDpr,
-  chordNotesToMidi,
-  toKeyboardConfig,
-} from "./utils";
+import { getCanvasDpr, chordNotesToMidi, toKeyboardConfig } from "./utils";
 
 // ── Props ──
 
@@ -166,9 +162,16 @@ function releasePointer(e: PointerEvent): void {
 onMounted(async () => {
   if (!containerRef.value) return;
 
-  // 创建 PixiJS Application
+  // 获取容器尺寸，确保 PixiJS 渲染缓冲区与容器对齐
+  const rect = containerRef.value.getBoundingClientRect();
+  const canvasW = Math.max(1, Math.ceil(rect.width));
+  const canvasH = Math.max(1, Math.ceil(rect.height));
+
+  // 创建 PixiJS Application（使用容器尺寸初始化，避免默认 800x600 导致渲染不对齐）
   pixiApp = new Application();
   await pixiApp.init({
+    width: canvasW,
+    height: canvasH,
     antialias: false,
     backgroundAlpha: 0,
     preference: "webgl",
@@ -177,10 +180,8 @@ onMounted(async () => {
     autoStart: false,
   });
 
-  // 将 PixiJS canvas 添加到容器
+  // 将 PixiJS canvas 添加到容器（autoDensity 自动管理 CSS 尺寸，无需手动设置 100%）
   containerRef.value.appendChild(pixiApp.canvas);
-  pixiApp.canvas.style.width = "100%";
-  pixiApp.canvas.style.height = "100%";
 
   // 创建键盘 Container
   pixiContainer = new Container();
@@ -193,9 +194,8 @@ onMounted(async () => {
     toKeyboardConfig(props.keyboard),
   );
 
-  const rect = containerRef.value.getBoundingClientRect();
   const dpr = getCanvasDpr();
-  renderer.resize(Math.max(1, rect.width), Math.max(1, rect.height), dpr);
+  renderer.resize(canvasW, canvasH, dpr);
 
   applyHighlights();
 
@@ -204,10 +204,14 @@ onMounted(async () => {
     if (resizeRafId !== null) return;
     resizeRafId = requestAnimationFrame(() => {
       resizeRafId = null;
-      if (!containerRef.value || !renderer) return;
+      if (!containerRef.value || !renderer || !pixiApp) return;
       const r = containerRef.value.getBoundingClientRect();
       const d = getCanvasDpr();
-      renderer.resize(Math.max(1, r.width), Math.max(1, r.height), d);
+      const newW = Math.max(1, Math.ceil(r.width));
+      const newH = Math.max(1, Math.ceil(r.height));
+      // 同步 PixiJS 渲染器尺寸，确保渲染缓冲区与容器对齐
+      pixiApp.renderer.resize(newW, newH);
+      renderer.resize(newW, newH, d);
       scheduleRender();
     });
   });

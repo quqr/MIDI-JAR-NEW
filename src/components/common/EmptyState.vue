@@ -10,7 +10,7 @@
     </div>
     <div class="space-y-1">
       <p class="text-lg font-medium text-base-content/70">{{ title }}</p>
-      <p v-if="description" class="text-sm text-base-content/50 max-w-sm">
+      <p v-if="description" class="text-sm text-base-content/70 max-w-sm">
         {{ description }}
       </p>
     </div>

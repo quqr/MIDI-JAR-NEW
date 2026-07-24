@@ -1,6 +1,10 @@
-// 高斯模糊着色器：3采样点模糊
+// 高斯模糊着色器：3抽头高斯模糊
 // 输入: uTexture
 // Uniforms: texelSize
+//
+// 完全对齐原版 PavelDoGreat WebGL-Fluid-Simulation:
+//   center * 0.29411764 + left * 0.35294117 + right * 0.35294117
+// 用于 sunrays 双向模糊（texelSize 为完整偏移量：水平时 x=1/w,y=0；垂直时 x=0,y=1/h）
 
 export const blurShader = `\
 precision highp float;
@@ -14,14 +18,13 @@ uniform vec2 texelSize;
 out vec4 finalColor;
 
 void main () {
-    // 3采样点高斯模糊：中心权重0.5，两侧各0.25
-    vec2 vL = vTextureCoord - vec2(texelSize.x, 0.0);
-    vec2 vR = vTextureCoord + vec2(texelSize.x, 0.0);
+    vec2 vL = vTextureCoord - texelSize;
+    vec2 vR = vTextureCoord + texelSize;
 
-    vec3 c = texture(uTexture, vTextureCoord).rgb * 0.5;
-    c += texture(uTexture, vL).rgb * 0.25;
-    c += texture(uTexture, vR).rgb * 0.25;
+    vec4 sum = texture(uTexture, vTextureCoord) * 0.29411764;
+    sum += texture(uTexture, vL) * 0.35294117;
+    sum += texture(uTexture, vR) * 0.35294117;
 
-    finalColor = vec4(c, 1.0);
+    finalColor = sum;
 }
 `;

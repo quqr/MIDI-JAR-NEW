@@ -267,11 +267,15 @@ onMounted(async () => {
   align-items: center;
   height: 40px;
   min-height: 40px;
-  background-color: var(--color-base-200);
   padding: 0 8px;
   gap: 4px;
   user-select: none;
   -webkit-user-select: none;
+  background-color: color-mix(in oklch, var(--color-base-200) 70%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid
+    color-mix(in oklch, var(--color-base-content) 8%, transparent);
 }
 
 .app-navbar--mac {
@@ -315,17 +319,21 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-hig-md);
   color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   transition:
-    background-color 0.15s,
-    color 0.15s;
+    background-color var(--hig-duration-fast) var(--ease-hig-standard),
+    color var(--hig-duration-fast) var(--ease-hig-standard);
 }
 
 .app-navbar__action-btn:hover {
-  background-color: var(--color-base-100);
+  background-color: color-mix(
+    in oklch,
+    var(--color-base-content) 8%,
+    transparent
+  );
   color: var(--color-base-content);
 }
 
@@ -414,19 +422,23 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   width: 36px;
-  height: 28px;
+  height: 32px;
   border: none;
   background: transparent;
   color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   cursor: pointer;
   transition:
-    background-color 0.12s,
-    color 0.12s;
-  border-radius: 4px;
+    background-color var(--hig-duration-fast) var(--ease-hig-standard),
+    color var(--hig-duration-fast) var(--ease-hig-standard);
+  border-radius: var(--radius-hig-sm);
 }
 
 .win-ctrl-btn:hover {
-  background-color: var(--color-base-100);
+  background-color: color-mix(
+    in oklch,
+    var(--color-base-content) 8%,
+    transparent
+  );
   color: var(--color-base-content);
 }
 
@@ -443,13 +455,13 @@ onMounted(async () => {
   }
 
   .app-navbar__action-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 
   .win-ctrl-btn {
     width: 32px;
-    height: 26px;
+    height: 28px;
   }
 
   .app-navbar__mac-spacer {

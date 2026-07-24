@@ -9,10 +9,10 @@
         class="size-12 mx-auto text-primary/60 mb-3"
         :size="48"
       />
-      <h2 class="text-xl font-semibold mb-1">
+      <h2 class="text-hig-xl font-semibold mb-1">
         {{ t("chordDictionary.emptyTitle") }}
       </h2>
-      <p class="text-sm text-base-content/60">
+      <p class="text-hig-sm text-base-content/70">
         {{ t("chordDictionary.emptyHelp") }}
       </p>
     </div>
@@ -20,7 +20,7 @@
     <!-- Recent chords -->
     <section v-if="recentChords.length" class="w-full mb-6">
       <h3
-        class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 flex items-center gap-2"
+        class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2 flex items-center gap-2"
       >
         <Icon name="clock" :size="14" />
         {{ t("chordDictionary.previousChords") }}
@@ -40,34 +40,38 @@
     </section>
 
     <!-- Common chords by category -->
-    <section
-      v-for="category in commonChordCategories"
-      :key="category.label"
-      class="w-full mb-5"
-    >
-      <h3
-        class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2"
+    <MotionStaggerList class="w-full">
+      <MotionListItem
+        v-for="category in commonChordCategories"
+        :key="category.label"
+        class="w-full mb-5 block"
       >
-        {{ category.label }}
-      </h3>
-      <div
-        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
-      >
-        <button
-          v-for="entry in category.chords"
-          :key="entry.name"
-          class="chord-card btn btn-sm bg-base-200/50 hover:bg-base-200 border border-base-300 justify-start gap-2 font-normal normal-case"
-          @click="goToChord(entry.name)"
+        <h3
+          class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2"
         >
-          <span class="truncate font-medium text-sm">{{ entry.display }}</span>
-          <span
-            class="text-xs text-base-content/50 font-mono ml-auto whitespace-nowrap"
+          {{ category.label }}
+        </h3>
+        <div
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
+        >
+          <button
+            v-for="entry in category.chords"
+            :key="entry.name"
+            class="chord-card btn btn-sm bg-base-200/50 hover:bg-base-200 border border-base-300 justify-start gap-2 font-normal normal-case"
+            @click="goToChord(entry.name)"
           >
-            {{ entry.intervals }}
-          </span>
-        </button>
-      </div>
-    </section>
+            <span class="truncate font-medium text-hig-sm">{{
+              entry.display
+            }}</span>
+            <span
+              class="text-hig-2xs text-base-content/70 font-mono ml-auto whitespace-nowrap"
+            >
+              {{ entry.intervals }}
+            </span>
+          </button>
+        </div>
+      </MotionListItem>
+    </MotionStaggerList>
   </div>
 </template>
 
@@ -79,6 +83,7 @@ import { Chord } from "tonal";
 import type { Chord as TChord } from "@tonaljs/chord";
 import Icon from "@/components/Icon/Icon.vue";
 import ChordName from "@/components/ChordName/ChordName.vue";
+import { MotionStaggerList, MotionListItem } from "@/components/motion";
 
 const { t } = useI18n();
 const router = useRouter();

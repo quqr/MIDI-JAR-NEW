@@ -56,6 +56,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.Sampler", icon: "piano" },
       },
       {
+        path: "fluid-compare",
+        name: "fluid-compare",
+        component: () => import("@/views/FluidCompare/FluidCompare.vue"),
+        meta: { title: "nav.fluidCompare", icon: "piano" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },

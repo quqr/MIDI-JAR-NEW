@@ -5,7 +5,14 @@
       :chord-name="chordName ?? undefined"
     />
 
-    <template v-else>
+    <motion.div
+      v-else
+      :key="chordName"
+      :initial="preset.initial"
+      :animate="preset.animate"
+      :transition="preset.transition"
+      class="flex flex-col items-center w-full"
+    >
       <!-- Core: Chord name + toggle -->
       <h1
         class="flex justify-center items-center border-b border-base-200 mb-1 py-2 w-full flex-wrap gap-3"
@@ -13,13 +20,13 @@
         <ChordName
           :chord="chord"
           :class="[
-            'text-[min(64px,6vw)] flex-grow-0 flex-shrink-0 justify-center font-bold leading-tight',
+            'text-hig-4xl flex-grow-0 flex-shrink-0 justify-center font-bold leading-tight',
             { 'opacity-50': isDisabled },
           ]"
         />
         <label
           v-if="!disableUpdate"
-          class="flex items-center gap-2 cursor-pointer text-sm"
+          class="flex items-center gap-2 cursor-pointer text-hig-sm"
         >
           <input
             type="checkbox"
@@ -32,7 +39,7 @@
       </h1>
 
       <div
-        class="text-center text-[min(24px,4vw)] font-normal leading-tight text-base-content/60 mb-3"
+        class="text-center text-hig-lg font-normal leading-tight text-base-content/70 mb-3"
       >
         {{ chord.name }}
       </div>
@@ -40,7 +47,7 @@
       <!-- 和弦播放控制 -->
       <div class="flex items-center gap-3 mb-3">
         <!-- 声音开关 -->
-        <label class="flex items-center gap-1.5 cursor-pointer text-sm">
+        <label class="flex items-center gap-1.5 cursor-pointer text-hig-sm">
           <input
             type="checkbox"
             class="toggle toggle-primary toggle-sm"
@@ -88,7 +95,7 @@
 
       <!-- Core: Piano keyboard -->
       <CanvasPianoKeyboard
-        class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-lg"
+        class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-hig-lg border border-base-300"
         style="height: 140px"
         :targets="midi"
         :played="playedMidiNotes"
@@ -115,7 +122,7 @@
 
       <!-- Exploratory: Simplified & Extended -->
       <ChordRelated />
-    </template>
+    </motion.div>
   </div>
 </template>
 
@@ -123,6 +130,8 @@
 import ChordName from "@/components/ChordName/ChordName.vue";
 import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
 import Icon from "@/components/Icon/Icon.vue";
+import { motion } from "motion-v";
+import { useMotionPresets, pageFade } from "@/utils/motion";
 import EmptyChordDetail from "./EmptyChordDetail.vue";
 import ChordIntervalsTable from "./components/ChordIntervalsTable.vue";
 import ChordNotesDisplay from "./components/ChordNotesDisplay.vue";
@@ -151,6 +160,9 @@ const {
   stopChord,
   soundEnabled,
 } = useChordDetail();
+
+const { resolve } = useMotionPresets();
+const preset = resolve(pageFade);
 
 defineExpose({ detailRef });
 </script>

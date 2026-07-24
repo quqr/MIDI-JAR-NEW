@@ -11,7 +11,9 @@
       <div
         class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none"
       >
-        <div class="flex items-center gap-2 pointer-events-auto">
+        <div
+          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-hig-lg border border-white/10 px-1 py-1"
+        >
           <button
             class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20 tooltip tooltip-bottom"
             :data-tip="t('common.back')"
@@ -20,11 +22,15 @@
           >
             <Icon name="arrow-left" :size="18" aria-hidden="true" />
           </button>
-          <span class="text-white/80 font-semibold drop-shadow">
+          <span
+            class="text-white/80 font-semibold drop-shadow text-hig-base pr-2"
+          >
             {{ t("WaterfallPiano.title") }}
           </span>
         </div>
-        <div class="flex items-center gap-1 pointer-events-auto">
+        <div
+          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-hig-lg border border-white/10 px-1 py-1"
+        >
           <button
             class="btn btn-sm btn-circle btn-ghost text-white tooltip tooltip-bottom"
             :data-tip="t('WaterfallPiano.midiDrawer.title')"
@@ -83,28 +89,36 @@
       v-if="ui.isError.value"
       class="absolute inset-0 flex items-center justify-center bg-black/60 z-50"
     >
-      <div class="bg-base-200 rounded-xl p-6 max-w-md text-center shadow-2xl">
-        <div class="text-error text-5xl mb-4">
-          <Icon name="alert-circle" :size="48" aria-hidden="true" />
+      <motion.div
+        v-bind="errorMotion"
+        class="card bg-base-100 border border-base-300 max-w-md text-center"
+        style="box-shadow: var(--shadow-hig-xl)"
+      >
+        <div class="card-body p-6 items-center">
+          <div class="text-error mb-4">
+            <Icon name="alert-circle" :size="48" aria-hidden="true" />
+          </div>
+          <h3 class="text-hig-lg font-bold text-base-content mb-2">
+            {{ t("WaterfallPiano.errors.playbackFailed") || "播放失败" }}
+          </h3>
+          <p class="text-hig-sm text-base-content/70 mb-4">
+            {{ ui.errorMessage.value }}
+          </p>
+          <button class="btn btn-primary btn-sm" @click="ui.onRetry">
+            {{ t("common.retry") || "重试" }}
+          </button>
         </div>
-        <h3 class="text-lg font-bold text-base-content mb-2">
-          {{ t("WaterfallPiano.errors.playbackFailed") || "播放失败" }}
-        </h3>
-        <p class="text-sm text-base-content/70 mb-4">
-          {{ ui.errorMessage.value }}
-        </p>
-        <button class="btn btn-primary btn-sm" @click="ui.onRetry">
-          {{ t("common.retry") || "重试" }}
-        </button>
-      </div>
+      </motion.div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
+import { useMotionPresets, modal } from "@/utils/motion";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
 import PlaybackPanel from "./components/PlaybackPanel.vue";
 import MidiDrawer from "./components/MidiDrawer.vue";
@@ -118,6 +132,10 @@ import type { PlaybackStrategy } from "./strategies/modeStrategies";
 
 const { t } = useI18n();
 const store = useWaterfallPianoStore();
+
+// ── 动效预设（错误弹窗缩放入场，遵循 prefers-reduced-motion） ──
+const { resolve } = useMotionPresets();
+const errorMotion = computed(() => resolve(modal));
 
 // ── 状态机：所有播放状态转换的唯一真相源 ──
 const stateMachine = new PlayerStateMachine();

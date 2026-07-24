@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "瀑布流钢琴运行时架构",
+    "subtitle": "Vue 入口 → Composables 编排 → WaterfallEngine → RenderLoop → PixiJS 渲染管线 + 音频同步 + 流体模拟",
+    "output": "waterfall-piano-architecture.html",
+    "quality_profile": "standard",
+    "viewBox": [1280, 780],
+    "views": [
+      {
+        "id": "render-pipeline",
+        "label": "渲染管线主路径",
+        "focus": ["users", "vue", "canvas", "engine", "renderLoop", "pixiApp"],
+        "note": "跟随每帧渲染主路径：用户输入 → Vue 入口 → 引擎桥梁 → 引擎 Facade → 帧调度 → GPU 渲染。"
+      },
+      {
+        "id": "audio-sync",
+        "label": "音频与视觉同步",
+        "focus": ["midiPlayer", "engine", "renderLoop", "noteBlock", "sound"],
+        "note": "MIDI 文件播放下，音频由方块到达命中线驱动触发，与视觉同帧同步。"
+      },
+      {
+        "id": "fluid-subsystem",
+        "label": "流体模拟子系统",
+        "focus": ["engine", "fluid", "pixiApp"],
+        "note": "FluidSplatManager 接收 splat 注入，隔帧 30fps 求解 N-S 方程，输出 Sprite 接入 PixiJS 舞台。"
+      }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "用户输入", "sublabel": "MIDI 键盘·指针·Web MIDI", "pos": [40, 340], "size": [130, 60] },
+
+    { "id": "stateMachine", "type": "security", "label": "PlayerStateMachine", "sublabel": "7 态有限状态机", "pos": [240, 110], "size": [150, 60] },
+    { "id": "store", "type": "database", "label": "Pinia Store", "sublabel": "设置 localStorage 持久化", "pos": [440, 110], "size": [150, 60] },
+    { "id": "midiPlayer", "type": "backend", "label": "MidiFilePlayer", "sublabel": "MIDI 解析 + PerfClock 回放", "pos": [660, 110], "size": [170, 60] },
+
+    { "id": "vue", "type": "frontend", "label": "WaterfallPiano.vue", "sublabel": "页面入口·闭包回填", "pos": [240, 340], "size": [150, 60] },
+    { "id": "canvas", "type": "frontend", "label": "WaterfallCanvas.vue", "sublabel": "引擎桥梁·4 层 Container", "pos": [440, 340], "size": [160, 60] },
+    { "id": "engine", "type": "backend", "label": "WaterfallEngine", "sublabel": "引擎 Facade·协调五子系统", "pos": [660, 340], "size": [150, 60] },
+    { "id": "renderLoop", "type": "backend", "label": "RenderLoop", "sublabel": "Ticker HIGH·9 阶段调度", "pos": [860, 340], "size": [150, 60] },
+    { "id": "pixiApp", "type": "cloud", "label": "PixiJS Application", "sublabel": "WebGL2·stage.render()", "pos": [1060, 340], "size": [150, 60] },
+
+    { "id": "composables", "type": "frontend", "label": "Composables", "sublabel": "Engine/Midi/Ui 编排", "pos": [40, 570], "size": [130, 60] },
+    { "id": "noteBlock", "type": "backend", "label": "NoteBlockSystem", "sublabel": "Pool·Realtime·Synthesia", "pos": [240, 570], "size": [160, 60] },
+    { "id": "renderers", "type": "backend", "label": "键盘+背景渲染器", "sublabel": "RenderTexture 缓存", "pos": [440, 570], "size": [160, 60] },
+    { "id": "sound", "type": "backend", "label": "SamplerSoundEngine", "sublabel": "采样器·noteOn/Off", "pos": [660, 570], "size": [150, 60] },
+    { "id": "fluid", "type": "backend", "label": "FluidSplatManager", "sublabel": "splat·30fps 隔帧", "pos": [860, 570], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Vue 视图层", "wraps": ["composables", "vue", "canvas"] },
+    { "kind": "region", "label": "引擎核心层", "wraps": ["engine", "renderLoop", "noteBlock", "renderers", "sound", "fluid"] }
+  ],
+  "connections": [
+    { "id": "users-to-vue", "from": "users", "to": "vue", "label": "MIDI/指针", "variant": "emphasis" },
+    { "id": "vue-to-canvas", "from": "vue", "to": "canvas", "label": "挂载" },
+    { "id": "canvas-to-engine", "from": "canvas", "to": "engine", "label": "init", "variant": "emphasis" },
+    { "id": "engine-to-renderloop", "from": "engine", "to": "renderLoop", "label": "Ticker", "variant": "emphasis" },
+    { "id": "renderloop-to-pixiapp", "from": "renderLoop", "to": "pixiApp", "label": "render", "variant": "emphasis" },
+
+    { "id": "vue-to-statemachine", "from": "vue", "to": "stateMachine", "label": "状态查询", "fromSide": "top", "toSide": "bottom" },
+    { "id": "store-to-vue", "from": "store", "to": "vue", "label": "设置", "fromSide": "bottom", "toSide": "top" },
+    { "id": "midiplayer-to-engine", "from": "midiPlayer", "to": "engine", "label": "tick", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "canvas-to-composables", "from": "canvas", "to": "composables", "label": "组合", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+
+    { "id": "engine-to-noteblock", "from": "engine", "to": "noteBlock", "label": "update", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "engine-to-renderers", "from": "engine", "to": "renderers", "fromSide": "bottom", "toSide": "top" },
+    { "id": "engine-to-sound", "from": "engine", "to": "sound", "label": "noteOn", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "engine-to-fluid", "from": "engine", "to": "fluid", "label": "splat", "fromSide": "bottom", "toSide": "top" },
+
+    { "id": "fluid-to-pixiapp", "from": "fluid", "to": "pixiApp", "label": "outputSprite", "variant": "dashed", "fromSide": "right", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "渲染管线（每帧 9 阶段）", "items": ["advancePlayback → renderBackground → updateNoteBlocks", "renderNoteBlocks → renderKeyboard → displayFPS", "流体（隔帧 30fps）→ renderFrame → logPerformance"] },
+    { "dot": "emerald", "title": "音画同步机制", "items": ["MIDI 模式：SynthesiaModeController 检测方块到达命中线 → 同帧触发 noteOn + 高亮 + 流体", "实时模式：triggerNoteOn 同调用栈同步触发音频+视觉+流体", "PerfClock 基于 performance.now() 统一 MIDI/Recorder 时钟"] },
+    { "dot": "rose", "title": "流体模拟接入", "items": ["PixiFluidSimulation 持有 Solver + Bloom + Sunrays + Display 四 Pass", "splat() 边界转换 Y向上→Y向下（ADR-0001）", "HDR rgba16float 输出，对齐原版 PavelDoGreat（ADR-0002）"] },
+    { "dot": "amber", "title": "状态机 7 态", "items": ["idle → loading → ready → playing ↔ paused", "recording → idle/ready（停止后可回放）", "error → idle（仅重试）"] }
+  ]
+}

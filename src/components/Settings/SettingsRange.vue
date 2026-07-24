@@ -3,7 +3,7 @@
     <div v-if="label" :id="rangeLabelId" class="text-sm font-medium mb-1">
       {{ label }}
     </div>
-    <div v-if="description" class="text-xs text-base-content/60 mb-2">
+    <div v-if="description" class="text-xs text-base-content/70 mb-2">
       {{ description }}
     </div>
     <div class="flex items-center gap-2">

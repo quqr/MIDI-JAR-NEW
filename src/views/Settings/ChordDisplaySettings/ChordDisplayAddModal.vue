@@ -5,7 +5,7 @@
   >
     <div class="card bg-base-100 shadow-xl w-full max-w-sm rounded-xl">
       <div class="card-body p-6">
-        <h2 class="card-title text-base font-bold">
+        <h2 class="card-title text-hig-base font-bold">
           {{ t("settings.chordDisplaySettings.newModule") }}
         </h2>
         <div class="form-control w-full py-4">
@@ -14,7 +14,7 @@
           </label>
           <input
             type="text"
-            class="input input-bordered w-full rounded-lg"
+            class="input input-bordered w-full rounded-hig-md"
             :class="errors.name ? 'input-error' : ''"
             :value="name"
             @input="name = ($event.target as HTMLInputElement).value"

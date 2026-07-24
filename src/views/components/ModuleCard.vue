@@ -1,20 +1,13 @@
 <template>
-  <motion.div
-    :initial="{ opacity: 0, y: 12 }"
-    :animate="{ opacity: 1, y: 0 }"
-    :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
-    :while-hover="{ y: -4 }"
-    :while-press="{ scale: 0.98 }"
-    class="h-full"
-  >
+  <motion.div v-bind="cardHover" class="h-full">
     <RouterLink
       :to="to"
-      class="module-card-link block h-full rounded-box group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:aura aura-rainbow"
+      class="module-card-link block h-full rounded-box group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       role="link"
       :aria-label="title"
     >
       <div
-        class="card bg-base-100 border border-base-200 h-full transition-colors duration-hig-normal group-hover:border-primary/50 group-hover:shadow-lg"
+        class="card bg-base-100 border border-base-300 h-full transition-[color,background-color,border-color,box-shadow] duration-hig-normal group-hover:border-primary/50 group-hover:shadow-[var(--shadow-hig-md)]"
       >
         <div class="card-body p-5 gap-4">
           <div class="flex items-start gap-4 w-full">
@@ -62,6 +55,7 @@ import { RouterLink } from "vue-router";
 import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
 import type { IconName } from "@/components/Icon/types";
+import { cardHover } from "@/utils/motion";
 
 defineProps<{
   to: string;

@@ -1,8 +1,8 @@
 <template>
-  <SettingsSection :on-reset="resetAll">
+  <SettingsSection>
     <!-- ═══ 顶部工具栏 ═══ -->
     <div
-      class="sticky top-0 z-20 -mx-4 -mt-4 mb-4 px-4 py-3 bg-base-100/80 backdrop-blur-md border-b border-base-200/60"
+      class="glass sticky top-0 z-20 -mx-4 -mt-4 mb-4 px-4 py-3 border-b border-base-200/60"
     >
       <div class="flex flex-wrap items-center gap-2">
         <!-- 搜索框 -->
@@ -10,12 +10,12 @@
           <Icon
             name="search"
             :size="14"
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70 pointer-events-none"
           />
           <input
             v-model="searchQuery"
             type="search"
-            class="input input-bordered input-sm w-full pl-9 pr-3 rounded-lg"
+            class="input input-bordered input-sm w-full pl-9 pr-3 rounded-hig-md"
             :placeholder="t('advancedDebug.toolbar.searchPlaceholder')"
             :aria-label="t('advancedDebug.toolbar.searchPlaceholder')"
           />
@@ -59,7 +59,7 @@
           @click="presetDialogOpen = true"
         >
           <Icon name="bookmark" :size="14" />
-          <span class="hidden sm:inline">{{
+          <span class="hidden sm:inline text-hig-sm">{{
             t("advancedDebug.toolbar.presets")
           }}</span>
           <span
@@ -95,7 +95,7 @@
           :size="14"
           class="stroke-current flex-shrink-0"
         />
-        <span class="text-xs">{{ notification.message }}</span>
+        <span class="text-hig-xs">{{ notification.message }}</span>
         <button
           class="btn btn-xs btn-circle btn-ghost ml-auto"
           :aria-label="t('common.close')"
@@ -107,11 +107,11 @@
     </div>
 
     <!-- ═══ 配置区 ═══ -->
-    <div class="grid grid-cols-1 gap-4 m-4">
+    <div class="grid grid-cols-1 gap-hig-4 m-4">
       <!-- 搜索无结果提示 -->
       <div v-if="hasNoResults" class="alert alert-info alert-sm" role="status">
         <Icon name="search" :size="16" class="stroke-current flex-shrink-0" />
-        <span class="text-sm">{{ t("advancedDebug.toolbar.noResults") }}</span>
+        <span class="text-hig-sm">{{ t("advancedDebug.toolbar.noResults") }}</span>
       </div>
 
       <template v-else>

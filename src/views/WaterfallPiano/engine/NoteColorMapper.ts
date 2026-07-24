@@ -116,7 +116,7 @@ export function noteToColor(
 
     case "pitch":
     default:
-      return pitchToColor(midi, customColors ?? DEFAULT_CUSTOM);
+      return pitchToColor(midi, DEFAULT_CUSTOM);
   }
 }
 

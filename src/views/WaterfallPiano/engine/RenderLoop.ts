@@ -59,7 +59,7 @@ export class RenderLoop {
 
     this.ticker = new Ticker();
     this.ticker.autoStart = false;
-    this.ticker.maxFPS = 60;
+    this.ticker.maxFPS = 0;
 
     // 逻辑更新（HIGH 优先级）
     this.ticker.add(

@@ -18,8 +18,10 @@ void main () {
     vec3 c = texture(uTexture, vTextureCoord).rgb;
     // 计算亮度
     float br = max(c.r, max(c.g, c.b));
-    // 应用曲线和阈值过滤
-    float contribution = max(0.0, br - threshold) / max(br, curve);
-    finalColor = vec4(c * contribution, 1.0);
+    // soft-knee 二次曲线过滤
+    float rq = clamp(br - curve.x, 0.0, curve.y);
+    rq = curve.z * rq * rq;
+    c *= max(rq, br - threshold) / max(br, 0.0001);
+    finalColor = vec4(c, 0.0);
 }
 `;

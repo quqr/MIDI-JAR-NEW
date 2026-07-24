@@ -1,9 +1,6 @@
 <template>
-  <SettingsSection
-    :show-reset="true"
-    :on-reset="() => settingsStore.resetSetting('chordDictionary')"
-  >
-    <div class="grid grid-cols-1 gap-4 m-4">
+  <SettingsSection>
+    <div class="grid grid-cols-1 gap-hig-4 m-4">
       <SettingsCollapse
         :title="t('settings.chordDictionarySettings.browse')"
         icon="gamepad"
@@ -50,14 +47,14 @@
         icon="cross"
         :default-open="true"
       >
-        <ul class="space-y-2">
+        <ul class="flex flex-col gap-hig-2">
           <li
             v-for="disabledChord in settingsStore.settings.chordDictionary
               .disabled"
             :key="disabledChord"
-            class="flex items-center justify-between p-2 rounded-lg bg-base-200/50"
+            class="flex items-center justify-between p-2 rounded-hig-md bg-base-200/50"
           >
-            <span class="text-sm font-mono">{{ disabledChord }}</span>
+            <span class="text-hig-sm font-mono">{{ disabledChord }}</span>
             <div class="flex gap-1">
               <RouterLink
                 :to="`/chord-dictionary/${encodeURIComponent(`C${disabledChord}`)}`"
@@ -74,7 +71,7 @@
             </div>
           </li>
           <li v-if="!settingsStore.settings.chordDictionary.disabled.length">
-            <span class="text-sm text-base-content/60">
+            <span class="text-hig-sm text-base-content/70">
               {{ t("settings.chordDictionarySettings.noDisabledChords") }}
             </span>
           </li>
@@ -100,19 +97,19 @@
             )
           "
         />
-        <ul class="space-y-2 mt-3">
+        <ul class="flex flex-col gap-hig-2 mt-3">
           <li
             v-for="[chordType, alias] in settingsStore.settings.chordDictionary
               .aliases"
             :key="chordType"
-            class="flex items-center justify-between p-2 rounded-lg bg-base-200/50"
+            class="flex items-center justify-between p-2 rounded-hig-md bg-base-200/50"
           >
             <div class="flex items-center gap-2">
-              <code class="text-sm bg-base-200 px-2 py-0.5 rounded">{{
+              <code class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm">{{
                 chordType
               }}</code>
               <Icon name="angle-right" size="14" />
-              <code class="text-sm bg-base-200 px-2 py-0.5 rounded">{{
+              <code class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm">{{
                 alias
               }}</code>
             </div>
@@ -132,7 +129,7 @@
             </div>
           </li>
           <li v-if="!settingsStore.settings.chordDictionary.aliases.length">
-            <span class="text-sm text-base-content/60">
+            <span class="text-hig-sm text-base-content/70">
               {{ t("settings.chordDictionarySettings.noPreferredAliases") }}
             </span>
           </li>

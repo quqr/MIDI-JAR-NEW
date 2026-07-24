@@ -2,14 +2,20 @@
 // 将原生 WebGL FluidSimulation 迁移为 PixiJS 渲染管线
 // 不再使用独立 canvas + WebGL context，而是复用 PixiJS Application 的 renderer
 
-import { Application, Container, Sprite } from 'pixi.js';
-import { PixiFluidContext } from './PixiFluidContext';
-import { PixiFluidSolver, type RGBColor } from './PixiFluidSolver';
-import { PixiBloomPass } from './PixiBloomPass';
-import { PixiSunraysPass } from './PixiSunraysPass';
-import { PixiDisplayPass } from './PixiDisplayPass';
-import { DEFAULT_CONFIG, type FluidSimulationConfig } from '../fluid/FluidConfig';
-import type { IFluidSimulation } from './IFluidSimulation';
+import { Application, Container, Sprite } from "pixi.js";
+import type { Renderer } from "pixi.js";
+import type { FluidDiagnostics, SplatTrace, PassStatus } from "@/views/FluidCompare/diagnostics";
+import { EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
+import { PixiFluidContext } from "./PixiFluidContext";
+import { PixiFluidSolver, type RGBColor } from "./PixiFluidSolver";
+import { PixiBloomPass } from "./PixiBloomPass";
+import { PixiSunraysPass } from "./PixiSunraysPass";
+import { PixiDisplayPass } from "./PixiDisplayPass";
+import {
+  DEFAULT_CONFIG,
+  type FluidSimulationConfig,
+} from "../fluid/FluidConfig";
+import type { IFluidSimulation } from "./IFluidSimulation";
 
 /**
  * PixiJS 流体模拟入口类
@@ -42,6 +48,11 @@ export class PixiFluidSimulation implements IFluidSimulation {
   private destroyed = false;
   private initialized = false;
 
+  // ─── 诊断插桩 ───
+  private lastSplatTrace: SplatTrace | null = null;
+  private diagnosticsFrameCounter = 0;
+  private cachedDyeSample = { ...EMPTY_SAMPLE };
+
   constructor(
     app: Application,
     container: Container,
@@ -60,7 +71,7 @@ export class PixiFluidSimulation implements IFluidSimulation {
 
     // 创建输出 Sprite，添加到指定 container
     this.outputSprite = new Sprite();
-    this.outputSprite.label = 'fluid-output';
+    this.outputSprite.label = "fluid-output";
     container.addChild(this.outputSprite);
   }
 
@@ -72,6 +83,15 @@ export class PixiFluidSimulation implements IFluidSimulation {
     this.bloomPass.initFramebuffers();
     this.sunraysPass.initFramebuffers();
     this.displayPass.initFramebuffers();
+
+    // 设置初始 Sprite scale，避免首帧渲染前 scale 为 1 导致画面尺寸错误
+    const screen = this.ctx.application.screen;
+    if (this.solver.dyeW > 0 && this.solver.dyeH > 0) {
+      this.outputSprite.scale.set(
+        screen.width / this.solver.dyeW,
+        screen.height / this.solver.dyeH,
+      );
+    }
 
     this.initialized = true;
     this.lastUpdateTime = Date.now();
@@ -122,7 +142,9 @@ export class PixiFluidSimulation implements IFluidSimulation {
 
     // 最终合成
     const bloomTex = this.config.BLOOM ? this.bloomPass.getBloom() : null;
-    const sunraysTex = this.config.SUNRAYS ? this.sunraysPass.getSunrays() : null;
+    const sunraysTex = this.config.SUNRAYS
+      ? this.sunraysPass.getSunrays()
+      : null;
     const outputTex = this.displayPass.apply(dyeTex, bloomTex, sunraysTex);
 
     // 将输出纹理赋给 Sprite
@@ -132,15 +154,28 @@ export class PixiFluidSimulation implements IFluidSimulation {
   }
 
   /**
-   * 注入一个流体 splat
+   * 注入一个流体 splat（公共 API，调用方使用 Y向上约定）
+   *
+   * 调用方约定（Y向上）：y=0 在底部，y=1 在顶部，正 dy = 向上。
+   * 求解器内部约定（Y向下，PixiJS 原生）：y=0 在顶部，y=1 在底部，正 dy = 向下。
+   * 此处做一次性边界转换，见 ADR-0001。
+   *
    * @param x - 0-1 水平归一化坐标
-   * @param y - 0-1 垂直归一化坐标
+   * @param y - 0-1 垂直归一化坐标（Y向上：0=底部，1=顶部）
    * @param dx - x 方向力
-   * @param dy - y 方向力
+   * @param dy - y 方向力（Y向上：正=向上）
    * @param color - 染料颜色 {r, g, b}
    */
   splat(x: number, y: number, dx: number, dy: number, color: RGBColor): void {
-    this.solver.splat(x, y, dx, dy, color);
+    // 记录 splat 链路追踪
+    const converted = { x, y: 1 - y, dx, dy: -dy };
+    this.lastSplatTrace = {
+      input: { x, y, dx, dy },
+      converted,
+      color: { r: color.r, g: color.g, b: color.b },
+    };
+    // Y向上 → Y向下：翻转 y 坐标和 y 方向力
+    this.solver.splat(converted.x, converted.y, converted.dx, converted.dy, color);
   }
 
   /** 注入随机 splats */
@@ -164,10 +199,16 @@ export class PixiFluidSimulation implements IFluidSimulation {
     this.sunraysPass.updateConfig(this.config);
     this.displayPass.updateConfig(this.config);
 
-    if (this.config.SIM_RESOLUTION !== prevSimRes || this.config.DYE_RESOLUTION !== prevDyeRes) {
+    if (
+      this.config.SIM_RESOLUTION !== prevSimRes ||
+      this.config.DYE_RESOLUTION !== prevDyeRes
+    ) {
       this.solver.resize();
     }
-    if (this.config.BLOOM_RESOLUTION !== prevBloomRes || this.config.BLOOM_ITERATIONS !== prevBloomIter) {
+    if (
+      this.config.BLOOM_RESOLUTION !== prevBloomRes ||
+      this.config.BLOOM_ITERATIONS !== prevBloomIter
+    ) {
       this.bloomPass.resize();
     }
     if (this.config.BLOOM && !prevBloom) {
@@ -182,6 +223,32 @@ export class PixiFluidSimulation implements IFluidSimulation {
     return this.config;
   }
 
+  /** 获取诊断数据（采样节流：每 30 帧 readPixels 一次） */
+  getDiagnostics(renderer: Renderer): FluidDiagnostics {
+    this.diagnosticsFrameCounter++;
+    if (this.diagnosticsFrameCounter >= 30) {
+      this.diagnosticsFrameCounter = 0;
+      this.cachedDyeSample = this.solver.sampleDyeCenter(renderer);
+    }
+    const passes: PassStatus = {
+      bloom: {
+        enabled: this.config.BLOOM,
+        iterations: this.config.BLOOM_ITERATIONS,
+      },
+      sunrays: {
+        enabled: this.config.SUNRAYS,
+        weight: this.config.SUNRAYS_WEIGHT,
+      },
+      display: { outputFormat: "rgba16float" },
+    };
+    return {
+      stepTimings: this.solver.getLastStepTimings(),
+      dyeSample: this.cachedDyeSample,
+      passes,
+      lastSplat: this.lastSplatTrace ?? undefined,
+    };
+  }
+
   /**
    * 适配屏幕尺寸：更新 Sprite.scale
    * 流体 RenderTexture 使用固定低分辨率，不随窗口 resize 重建
@@ -191,17 +258,14 @@ export class PixiFluidSimulation implements IFluidSimulation {
   resize(screenWidth?: number, screenHeight?: number): void {
     const w = screenWidth ?? this.ctx.application.screen.width;
     const h = screenHeight ?? this.ctx.application.screen.height;
-    if (this.solver.width > 0 && this.solver.height > 0) {
-      this.outputSprite.scale.set(
-        w / this.solver.dyeW,
-        h / this.solver.dyeH,
-      );
-    }
-    // resize 各子系统（可能需要重建 RenderTexture）
+    // 先 resize 子系统（更新 dye 尺寸），再基于新尺寸设置 sprite scale
     this.solver.resize();
     this.bloomPass.resize();
     this.sunraysPass.resize();
     this.displayPass.resize();
+    if (this.solver.dyeW > 0 && this.solver.dyeH > 0) {
+      this.outputSprite.scale.set(w / this.solver.dyeW, h / this.solver.dyeH);
+    }
   }
 
   /** 暂停/恢复 */

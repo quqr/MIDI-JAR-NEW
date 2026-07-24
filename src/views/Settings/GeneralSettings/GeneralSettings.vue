@@ -1,6 +1,6 @@
 <template>
-  <SettingsSection :on-reset="handleReset">
-    <div class="grid grid-cols-1 gap-4 m-4">
+  <SettingsSection>
+    <div class="grid grid-cols-1 gap-hig-4 m-4">
       <SettingsCollapse
         :title="t('settings.generalSettings.language')"
         icon="translate"
@@ -19,7 +19,7 @@
         icon="palette"
         :default-open="true"
       >
-        <p class="text-sm text-base-content/70 mb-4">
+        <p class="text-hig-sm text-base-content/70 mb-4">
           {{ t("settings.generalSettings.themeHint") }}
         </p>
         <ThemePicker />
@@ -49,9 +49,5 @@ const languageOptions = [
 const handleLanguageChange = (value: string | number) => {
   settingsStore.updateSetting("general.language", value);
   locale.value = value as "en" | "zh";
-};
-
-const handleReset = () => {
-  settingsStore.resetSetting("general");
 };
 </script>

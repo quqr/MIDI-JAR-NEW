@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { loadFromStorage, saveToStorage } from "@/helpers/storage";
 import { debounce } from "@/helpers/debounce";
+import { deepClone } from "@/helpers/object";
 import {
   defaultWaterfallSettings,
   STORAGE_KEY,
@@ -21,8 +22,8 @@ function mergeSection<T extends object>(
   defaults: T,
   stored: Partial<T> | undefined,
 ): T {
-  if (!stored) return { ...defaults };
-  return { ...defaults, ...stored };
+  if (!stored) return deepClone(defaults);
+  return { ...deepClone(defaults), ...stored };
 }
 
 /**
@@ -34,7 +35,7 @@ function migrateFluidParams(
   raw: Record<string, unknown> | undefined,
 ): FluidAdvancedParams {
   const result: FluidAdvancedParams = {};
-  if (!raw) return { ...defaultWaterfallSettings.background.fluidParams };
+  if (!raw) return deepClone(defaultWaterfallSettings.background.fluidParams);
 
   for (const k of [
     "splatRadius",
@@ -91,7 +92,7 @@ function migrateFluidParams(
     result.splatColorHue = raw.SPLAT_COLOR_HUE as number;
 
   return {
-    ...defaultWaterfallSettings.background.fluidParams,
+    ...deepClone(defaultWaterfallSettings.background.fluidParams),
     ...result,
   };
 }
@@ -109,7 +110,7 @@ function loadSettings(): WaterfallPianoSettings {
   });
   if (storedVersion !== SETTINGS_VERSION) {
     saveToStorage(versionKey, SETTINGS_VERSION);
-    return { ...defaultWaterfallSettings };
+    return deepClone(defaultWaterfallSettings);
   }
 
   const stored = loadFromStorage<
@@ -183,7 +184,7 @@ function loadSettings(): WaterfallPianoSettings {
       aura: mergeSection(defaultWaterfallSettings.aura, stored.aura),
     };
   }
-  return { ...defaultWaterfallSettings };
+  return deepClone(defaultWaterfallSettings);
 }
 
 export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
@@ -192,7 +193,7 @@ export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
   const currentMidiFileName = ref<string>("");
   /** 将全部设置恢复为默认值 */
   function resetSettings() {
-    settings.value = { ...defaultWaterfallSettings };
+    settings.value = deepClone(defaultWaterfallSettings);
   }
 
   /**
@@ -201,7 +202,7 @@ export const useWaterfallPianoStore = defineStore("WaterfallPiano", () => {
    * @param group - 要重置的配置段名称（如 "particles"、"keyboard"）
    */
   function resetGroup<K extends keyof WaterfallPianoSettings>(group: K) {
-    settings.value[group] = { ...defaultWaterfallSettings[group] };
+    settings.value[group] = deepClone(defaultWaterfallSettings[group]);
   }
 
   /**

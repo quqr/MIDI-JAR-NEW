@@ -7,7 +7,7 @@
       <span class="text-sm">{{ label }}</span>
       <span
         v-if="description"
-        class="text-xs text-base-content/60 block mt-0.5"
+        class="text-xs text-base-content/70 block mt-0.5"
       >
         {{ description }}
       </span>

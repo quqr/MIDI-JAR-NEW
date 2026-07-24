@@ -7,7 +7,7 @@
     >
       <li v-for="note in notesList" :key="note">
         <a
-          class="rounded-lg"
+          class="rounded-hig-md"
           role="tab"
           :aria-selected="selected === getChroma(note)"
           :class="{

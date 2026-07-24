@@ -91,20 +91,27 @@ export class FluidSplatManager {
         rgb = {
           r: Math.max(
             0,
-            rgb.r + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
+            rgb.r +
+              PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
           g: Math.max(
             0,
-            rgb.g + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
+            rgb.g +
+              PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
           b: Math.max(
             0,
-            rgb.b + PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
+            rgb.b +
+              PerlinNoise1DRandomNumber() * perturbation!.colorJitter * 0.15,
           ),
         };
       }
     }
-    fluid.splat(x, y, dx, dy, rgb);
+    fluid.splat(x, y, dx, dy, {
+      r: rgb.r,
+      g: rgb.g,
+      b: rgb.b,
+    });
   }
 
   /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
@@ -119,7 +126,8 @@ export class FluidSplatManager {
     const { keyboardRenderer } = this.deps;
     const { width, height, keyboardHeight } = this.deps.getLayout();
     let x = keyboardRenderer.midiToX(midi) / Math.max(1, width);
-    const hitLineY = (height - keyboardHeight) / Math.max(1, height);
+    // 命中线 Y 坐标：键盘顶部位置（与 fluidSplat 一致，纹理坐标 Y=0 底部）
+    const y = keyboardHeight / Math.max(1, height);
     let rgb: { r: number; g: number; b: number };
     const hue = bCfg.fluidParams.splatColorHue;
     if (hue !== undefined && hue > 0) {
@@ -152,12 +160,12 @@ export class FluidSplatManager {
       }
     }
 
-    fluid.splat(x - spread, -hitLineY, -force * 0.6, force, {
+    fluid.splat(x - spread, y, -force * 0.6, force, {
       r: rgb.r * colorMul,
       g: rgb.g * colorMul,
       b: rgb.b * colorMul,
     });
-    fluid.splat(x + spread, -hitLineY, force * 0.6, force, {
+    fluid.splat(x + spread, y, force * 0.6, force, {
       r: rgb.r * colorMul,
       g: rgb.g * colorMul,
       b: rgb.b * colorMul,

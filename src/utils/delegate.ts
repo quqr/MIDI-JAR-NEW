@@ -21,8 +21,8 @@ export type DelegateHandler<TArgs = void> = (args: TArgs) => void;
  * 委托令牌（用于取消订阅，比单纯使用函数引用更安全）
  */
 export interface DelegateToken {
-    readonly id: number;
-    readonly handler: DelegateHandler<any>;
+  readonly id: number;
+  readonly handler: DelegateHandler<any>;
 }
 
 // ============================================================================
@@ -34,63 +34,63 @@ export interface DelegateToken {
  * 支持多播、类型安全、异常隔离
  */
 export class Delegate<TArgs = void> {
-    protected handlers = new Map<number, DelegateHandler<TArgs>>();
-    protected nextId = 0;
+  protected handlers = new Map<number, DelegateHandler<TArgs>>();
+  protected nextId = 0;
 
-    get count(): number {
-        return this.handlers.size;
-    }
+  get count(): number {
+    return this.handlers.size;
+  }
 
-    get isEmpty(): boolean {
-        return this.handlers.size === 0;
-    }
+  get isEmpty(): boolean {
+    return this.handlers.size === 0;
+  }
 
-    /**
-     * 添加委托
-     * @returns 返回令牌，用于精准移除
-     */
-    add(handler: DelegateHandler<TArgs>): DelegateToken {
-        const id = this.nextId++;
-        this.handlers.set(id, handler);
-        return { id, handler };
-    }
+  /**
+   * 添加委托
+   * @returns 返回令牌，用于精准移除
+   */
+  add(handler: DelegateHandler<TArgs>): DelegateToken {
+    const id = this.nextId++;
+    this.handlers.set(id, handler);
+    return { id, handler };
+  }
 
-    /**
-     * 移除委托
-     * 支持传入原始函数引用或 add 返回的 Token
-     */
-    remove(handlerOrToken: DelegateHandler<TArgs> | DelegateToken): void {
-        if (typeof handlerOrToken === 'function') {
-            // 线性查找删除（适用于直接传函数的场景）
-            for (const [id, h] of this.handlers) {
-                if (h === handlerOrToken) {
-                    this.handlers.delete(id);
-                    return; // 移除单个匹配项
-                }
-            }
-        } else {
-            // O(1) 删除（推荐使用 Token）
-            this.handlers.delete(handlerOrToken.id);
+  /**
+   * 移除委托
+   * 支持传入原始函数引用或 add 返回的 Token
+   */
+  remove(handlerOrToken: DelegateHandler<TArgs> | DelegateToken): void {
+    if (typeof handlerOrToken === "function") {
+      // 线性查找删除（适用于直接传函数的场景）
+      for (const [id, h] of this.handlers) {
+        if (h === handlerOrToken) {
+          this.handlers.delete(id);
+          return; // 移除单个匹配项
         }
+      }
+    } else {
+      // O(1) 删除（推荐使用 Token）
+      this.handlers.delete(handlerOrToken.id);
     }
+  }
 
-    /**
-     * 触发执行
-     * 包含异常捕获，防止单个处理器错误中断链路
-     */
-    invoke(args: TArgs): void {
-        this.handlers.forEach((handler) => {
-            try {
-                handler(args);
-            } catch (err) {
-                console.error('[Delegate] Handler execution error:', err);
-            }
-        });
-    }
+  /**
+   * 触发执行
+   * 包含异常捕获，防止单个处理器错误中断链路
+   */
+  invoke(args: TArgs): void {
+    this.handlers.forEach((handler) => {
+      try {
+        handler(args);
+      } catch (err) {
+        console.error("[Delegate] Handler execution error:", err);
+      }
+    });
+  }
 
-    clear(): void {
-        this.handlers.clear();
-    }
+  clear(): void {
+    this.handlers.clear();
+  }
 }
 
 // ============================================================================
@@ -98,7 +98,7 @@ export class Delegate<TArgs = void> {
 // ============================================================================
 
 export class Action<T = void> extends Delegate<T> {
-    // Action 本质上就是 Delegate 的别名，无需额外逻辑
+  // Action 本质上就是 Delegate 的别名，无需额外逻辑
 }
 
 // ============================================================================
@@ -111,23 +111,23 @@ export class Action<T = void> extends Delegate<T> {
  * 为了清晰性，此处限制为单播。如需多播返回值，建议使用 Event 或手动管理。
  */
 export class Func<TResult, TArgs = void> {
-    private handler: ((args: TArgs) => TResult) | null = null;
+  private handler: ((args: TArgs) => TResult) | null = null;
 
-    set(handler: (args: TArgs) => TResult): void {
-        this.handler = handler;
-    }
+  set(handler: (args: TArgs) => TResult): void {
+    this.handler = handler;
+  }
 
-    remove(): void {
-        this.handler = null;
-    }
+  remove(): void {
+    this.handler = null;
+  }
 
-    invoke(args: TArgs): TResult | undefined {
-        return this.handler?.(args);
-    }
+  invoke(args: TArgs): TResult | undefined {
+    return this.handler?.(args);
+  }
 
-    get isEmpty(): boolean {
-        return this.handler === null;
-    }
+  get isEmpty(): boolean {
+    return this.handler === null;
+  }
 }
 
 // ============================================================================
@@ -138,22 +138,22 @@ export class Func<TResult, TArgs = void> {
  * 事件触发器（内部类，仅类内部可见）
  */
 class EventDispatcher<TArgs> extends Delegate<TArgs> {
-    // 公开 invoke，给发布者使用
-    public declare invoke: (args: TArgs) => void;
+  // 公开 invoke，给发布者使用
+  declare public invoke: (args: TArgs) => void;
 }
 
 /**
  * C# 风格事件
- * 
+ *
  * 模拟 C# event 的封装性：
  * - 外部只能 add/remove (+=, -=)
  * - 外部无法 invoke (触发)
- * 
+ *
  * @example
  * class Button {
  *   // 对外暴露的是接口，实际逻辑在 dispatcher
  *   public readonly onClick = new Event<ClickArgs>();
- * 
+ *
  *   private _click() {
  *     // 只能在内部触发
  *     this.onClick.internalInvoke({ x: 1 });
@@ -161,32 +161,36 @@ class EventDispatcher<TArgs> extends Delegate<TArgs> {
  * }
  */
 export class Event<TArgs = void> {
-    private readonly _dispatcher = new EventDispatcher<TArgs>();
+  private readonly _dispatcher = new EventDispatcher<TArgs>();
 
-    constructor() {
-        // 将内部触发方法挂载到 internalInvoke
-        (this._dispatcher as any).invoke = this._dispatcher.invoke;
-    }
+  constructor() {
+    // 将内部触发方法挂载到 internalInvoke
+    (this._dispatcher as any).invoke = this._dispatcher.invoke;
+  }
 
-    /** 内部触发方法：仅类内部应调用 */
-    public internalInvoke(args: TArgs): void {
-        this._dispatcher.invoke(args);
-    }
+  /** 内部触发方法：仅类内部应调用 */
+  public internalInvoke(args: TArgs): void {
+    this._dispatcher.invoke(args);
+  }
 
-    // --- 对外暴露的接口 ---
+  // --- 对外暴露的接口 ---
 
-    public add(handler: DelegateHandler<TArgs>): DelegateToken {
-        return this._dispatcher.add(handler);
-    }
+  public add(handler: DelegateHandler<TArgs>): DelegateToken {
+    return this._dispatcher.add(handler);
+  }
 
-    public remove(handlerOrToken: DelegateHandler<TArgs> | DelegateToken): void {
-        this._dispatcher.remove(handlerOrToken);
-    }
+  public remove(handlerOrToken: DelegateHandler<TArgs> | DelegateToken): void {
+    this._dispatcher.remove(handlerOrToken);
+  }
 
-    // 兼容 C# 语法的属性访问器（模拟）
-    // TS 无法重载 +=，但可以提供便捷方法
-    public get subscribe() { return this.add.bind(this); }
-    public get unsubscribe() { return this.remove.bind(this); }
+  // 兼容 C# 语法的属性访问器（模拟）
+  // TS 无法重载 +=，但可以提供便捷方法
+  public get subscribe() {
+    return this.add.bind(this);
+  }
+  public get unsubscribe() {
+    return this.remove.bind(this);
+  }
 }
 
 // ============================================================================
@@ -198,18 +202,18 @@ export class Event<TArgs = void> {
  * 防止因事件订阅导致的对象无法释放
  */
 export function weakClosure<TArgs>(
-    handler: (this: any, args: TArgs) => void,
-    context: any
+  handler: (this: any, args: TArgs) => void,
+  context: any,
 ): DelegateHandler<TArgs> {
-    if (typeof WeakRef !== 'undefined') {
-        const ref = new WeakRef(context);
-        return (args) => {
-            const ctx = ref.deref();
-            if (ctx) handler.call(ctx, args);
-            else console.warn('[WeakClosure] Context has been garbage collected.');
-        };
-    }
-    return handler.bind(context);
+  if (typeof WeakRef !== "undefined") {
+    const ref = new WeakRef(context);
+    return (args) => {
+      const ctx = ref.deref();
+      if (ctx) handler.call(ctx, args);
+      else console.warn("[WeakClosure] Context has been garbage collected.");
+    };
+  }
+  return handler.bind(context);
 }
 
 // ============================================================================
@@ -217,13 +221,15 @@ export function weakClosure<TArgs>(
 // ============================================================================
 
 export abstract class EventArgs {
-    static readonly Empty: EventArgs = new (class extends EventArgs {})();
+  static readonly Empty: EventArgs = new (class extends EventArgs {})();
 }
 
 export class PropertyChangedEventArgs<T = any> extends EventArgs {
-    constructor(
-        public readonly propertyName: string,
-        public readonly oldValue: T,
-        public readonly newValue: T
-    ) { super(); }
+  constructor(
+    public readonly propertyName: string,
+    public readonly oldValue: T,
+    public readonly newValue: T,
+  ) {
+    super();
+  }
 }

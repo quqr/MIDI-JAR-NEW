@@ -13,6 +13,8 @@ export interface ThemeInfo {
 }
 
 export const themes: ThemeInfo[] = [
+  { name: "apple", colorScheme: "light" },
+  { name: "appleDark", colorScheme: "dark" },
   { name: "light", colorScheme: "light" },
   { name: "dark", colorScheme: "dark" },
   { name: "cupcake", colorScheme: "light" },
@@ -63,7 +65,7 @@ export function isDarkTheme(themeName: string): boolean {
 }
 
 export const useThemeStore = defineStore("theme", () => {
-  const defaultTheme = "light";
+  const defaultTheme = "apple";
   const savedTheme = loadFromStorage<string>({
     key: THEME_STORAGE_KEY,
     defaultValue: defaultTheme,
@@ -84,10 +86,10 @@ export const useThemeStore = defineStore("theme", () => {
   }
 
   /**
-   * 在亮色与暗色主题之间切换。当前为暗色则切换为默认亮色主题，否则切换为 dark
+   * 在亮色与暗色主题之间切换。当前为暗色则切换为默认亮色主题，否则切换为 appleDark
    */
   function toggleTheme() {
-    const newTheme = isDark.value ? defaultTheme : "dark";
+    const newTheme = isDark.value ? defaultTheme : "appleDark";
     setTheme(newTheme);
   }
 

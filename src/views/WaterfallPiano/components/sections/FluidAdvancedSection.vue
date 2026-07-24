@@ -63,7 +63,9 @@
 
     <!-- 随机扰动：每个发射点独立控制 -->
     <div class="divider my-2" />
-    <p class="text-xs opacity-60 mb-1">
+    <p
+      class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mb-1"
+    >
       {{ t("WaterfallPiano.perturbation") }}
     </p>
 

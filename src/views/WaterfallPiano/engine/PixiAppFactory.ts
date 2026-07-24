@@ -26,6 +26,7 @@ export async function createWaterfallApp(
     autoStart: false,
   });
   container.appendChild(app.canvas);
+  (globalThis as Record<string, unknown>).__PIXI_APP__ = app;
   logger.debug("PixiJS Application created");
   return app;
 }

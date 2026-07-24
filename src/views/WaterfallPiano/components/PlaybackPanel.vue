@@ -1,14 +1,34 @@
 <template>
-  <div class="absolute bottom-0 left-0 right-0 z-40">
-    <!-- 迷你进度条（始终可见） -->
-    <div
-      class="h-1 bg-white/10 cursor-pointer relative"
-      @click="onProgressClick"
-    >
+  <div
+    class="absolute bottom-0 left-0 right-0 z-40 px-3 pb-3 pointer-events-none"
+  >
+    <div class="mx-auto max-w-[var(--hig-container-max)] pointer-events-auto">
       <div
-        class="h-full bg-primary/80 transition-[width] duration-100"
-        :style="{ width: progressPercent + '%' }"
-      />
+        class="bg-black/30 backdrop-blur-md rounded-hig-lg border border-white/10 px-4 py-2 flex items-center gap-3"
+        style="box-shadow: var(--shadow-hig-lg)"
+      >
+        <!-- 当前时间 -->
+        <span
+          class="text-hig-sm text-white/80 tabular w-12 text-right select-none"
+        >
+          {{ formatTime(currentTime) }}
+        </span>
+
+        <!-- 可拖拽进度条 -->
+        <div class="flex-1 py-1.5 cursor-pointer" @click="onProgressClick">
+          <div class="h-1.5 bg-white/15 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-white/70 rounded-full transition-[width] duration-hig-fast"
+              :style="{ width: progressPercent + '%' }"
+            />
+          </div>
+        </div>
+
+        <!-- 总时长 -->
+        <span class="text-hig-sm text-white/60 tabular w-12 select-none">
+          {{ formatTime(duration) }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -36,5 +56,14 @@ function onProgressClick(e: MouseEvent): void {
   const rect = target.getBoundingClientRect();
   const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   emit("seek", ratio * props.duration);
+}
+
+/** 将秒数格式化为 m:ss（等宽显示） */
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+  const total = Math.floor(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 </script>

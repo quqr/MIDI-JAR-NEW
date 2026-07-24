@@ -27,6 +27,7 @@ export interface VisibilityRefreshTarget {
  */
 export function useVisibilityRefresh(target: VisibilityRefreshTarget) {
   let tauriUnlisten: (() => void) | null = null;
+  let disposed = false;
 
   function onVisibilityChange(): void {
     if (!document.hidden) {
@@ -49,6 +50,11 @@ export function useVisibilityRefresh(target: VisibilityRefreshTarget) {
             }
           },
         );
+        // 组件可能在异步设置过程中已卸载，需立即清理
+        if (disposed) {
+          unlisten();
+          return;
+        }
         tauriUnlisten = unlisten;
       } catch (e) {
         logger.warn({ err: e }, "Failed to setup Tauri focus listener");
@@ -62,7 +68,9 @@ export function useVisibilityRefresh(target: VisibilityRefreshTarget) {
   });
 
   onUnmounted(() => {
+    disposed = true;
     document.removeEventListener("visibilitychange", onVisibilityChange);
     tauriUnlisten?.();
+    tauriUnlisten = null;
   });
 }

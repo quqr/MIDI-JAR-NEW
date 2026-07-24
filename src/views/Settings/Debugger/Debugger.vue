@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
     <div
-      class="flex items-center border-b px-2 py-1 gap-2 flex-wrap flex-shrink-0"
+      class="glass flex items-center border-b px-2 py-1 gap-hig-2 flex-wrap flex-shrink-0 text-hig-sm"
       role="toolbar"
       :aria-label="t('settings.debugger')"
     >
@@ -34,14 +34,14 @@
 
       <label class="cursor-pointer flex items-center gap-2">
         <input type="checkbox" class="toggle" v-model="autoScroll" />
-        <span class="text-xs">{{
+        <span class="text-hig-xs">{{
           t("settings.debuggerSettings.autoScroll") || "Auto Scroll"
         }}</span>
       </label>
     </div>
 
     <div
-      class="flex-1 min-h-0 p-2 overflow-auto"
+      class="flex-1 min-h-0 p-2 overflow-auto rounded-hig-lg"
       ref="logContainer"
       role="log"
       aria-live="polite"
@@ -51,10 +51,10 @@
       <div
         v-for="log in filteredLogs"
         :key="log.id"
-        class="log-entry whitespace-pre-wrap break-words"
+        class="log-entry whitespace-pre-wrap break-words text-hig-xs"
         :class="logTypeClass(log.type)"
       >
-        <span class="opacity-70">[{{ log.timestamp }}]</span>
+        <span class="text-base-content/70">[{{ log.timestamp }}]</span>
         <span class="badge badge-sm mx-1" :class="badgeClass(log.type)">
           {{ log.type.toUpperCase() }}
         </span>

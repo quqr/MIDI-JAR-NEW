@@ -26,7 +26,7 @@
         />
       </button>
     </div>
-    <div v-if="selectedLabel" class="text-xs text-base-content/60 mt-1.5">
+    <div v-if="selectedLabel" class="text-xs text-base-content/70 mt-1.5">
       {{ selectedLabel }}
     </div>
   </div>

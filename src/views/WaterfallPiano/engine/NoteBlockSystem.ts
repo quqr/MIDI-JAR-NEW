@@ -24,7 +24,6 @@ export type NoteBlockMode = "realtime" | "synthesia";
  * Facade 负责生命周期管理与跨模块协调。
  */
 export class NoteBlockSystem {
-  private container: Container | null = null;
   private particleConfig: ParticleConfig | null = null;
   private auraConfig: AuraConfig | null = null;
   private keyboardRenderer: KeyboardRenderer | null = null;
@@ -37,7 +36,11 @@ export class NoteBlockSystem {
   private synthesia: SynthesiaModeController;
   private renderer: NoteBlockRenderer;
   private stateSync: NoteBlockStateSync;
-  readonly onNoteTrigger = new Event<{ midi: number; velocity: number; hand?: string }>();
+  readonly onNoteTrigger = new Event<{
+    midi: number;
+    velocity: number;
+    hand?: string;
+  }>();
   readonly onNoteEnd = new Event<{ midi: number }>();
   /** 预分配的 block positions 缓冲区，避免每帧 new Array + new Object */
   private _blockPosBuffer: Array<{
@@ -99,7 +102,6 @@ export class NoteBlockSystem {
     auraConfig: AuraConfig,
   ): void {
     if (!container) return;
-    this.container = container;
     this.particleConfig = particleConfig;
     this.auraConfig = auraConfig;
     this.renderer.init(container);

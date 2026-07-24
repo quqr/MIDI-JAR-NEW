@@ -75,10 +75,7 @@ export class KeyboardLayoutCalculator {
   /**
    * 构建 MIDI → 白键索引的映射表
    */
-  static buildMidiToIndex(
-    from: number,
-    to: number,
-  ): Map<number, number> {
+  static buildMidiToIndex(from: number, to: number): Map<number, number> {
     const map = new Map<number, number>();
     let whiteIdx = 0;
     for (let m = from; m <= to; m++) {
@@ -112,10 +109,7 @@ export class KeyboardLayoutCalculator {
   /**
    * 将水平像素坐标转换为对应的 MIDI 音符号，优先匹配黑键边界区域
    */
-  static xToMidi(
-    x: number,
-    layout: KeyboardLayout,
-  ): number | null {
+  static xToMidi(x: number, layout: KeyboardLayout): number | null {
     if (layout.whiteKeys.length === 0) return null;
     const wkw = layout.whiteKeyWidth;
     let wi = Math.floor(x / wkw);

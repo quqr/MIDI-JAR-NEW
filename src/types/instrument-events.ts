@@ -2,8 +2,8 @@
  * 乐器加载相关的事件类型定义
  */
 
-import { Event } from '@/utils/delegate';
-import type { InstrumentInfo } from '@/stores/sampler';
+import { Event } from "@/utils/delegate";
+import type { InstrumentInfo } from "@/stores/sampler";
 
 // ============================================================================
 // 事件参数类型

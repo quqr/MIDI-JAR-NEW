@@ -1,6 +1,10 @@
-// 泛光最终合成着色器：4邻域平均 × 强度
+// Bloom 最终合成着色器：4邻域平均 × intensity
 // 输入: uTexture
 // Uniforms: texelSize, intensity
+//
+// 完全对齐原版 PavelDoGreat WebGL-Fluid-Simulation:
+//   sum = vL + vR + vT + vB，sum *= 0.25，sum *= intensity
+// 注意：不含中心像素，权重 0.25（非 0.2）
 
 export const bloomFinalShader = `\
 precision highp float;
@@ -15,21 +19,18 @@ uniform float intensity;
 out vec4 finalColor;
 
 void main () {
-    // 计算相邻纹素的UV坐标
     vec2 vL = vTextureCoord - vec2(texelSize.x, 0.0);
     vec2 vR = vTextureCoord + vec2(texelSize.x, 0.0);
     vec2 vT = vTextureCoord + vec2(0.0, texelSize.y);
     vec2 vB = vTextureCoord - vec2(0.0, texelSize.y);
 
-    // 4邻域平均
-    vec3 c = texture(uTexture, vTextureCoord).rgb;
-    c += texture(uTexture, vL).rgb;
-    c += texture(uTexture, vR).rgb;
-    c += texture(uTexture, vT).rgb;
-    c += texture(uTexture, vB).rgb;
-    c *= 0.2;
+    vec4 sum = vec4(0.0);
+    sum += texture(uTexture, vL);
+    sum += texture(uTexture, vR);
+    sum += texture(uTexture, vT);
+    sum += texture(uTexture, vB);
+    sum *= 0.25;
 
-    // 乘以强度
-    finalColor = vec4(c * intensity, 1.0);
+    finalColor = sum * intensity;
 }
 `;

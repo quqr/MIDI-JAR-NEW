@@ -9,6 +9,9 @@ import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { useSettingsStore } from "@/stores/settings";
 import { Icon } from "@/components/Icon";
 import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import { motion } from "motion-v";
+import { cardHover } from "@/utils/motion";
+import { MotionStaggerList, MotionListItem } from "@/components/motion";
 // import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils"; // 已移除
 import { createLogger } from "@/utils/logger";
 
@@ -45,7 +48,6 @@ const filteredInstruments = computed(() => {
   }
   return result;
 });
-
 
 // 暂时使用默认键盘设置
 const keyboardSettings = computed(() => undefined);
@@ -184,7 +186,7 @@ onUnmounted(() => {
     <div class="flex-1 flex min-h-0">
       <!-- ── Sidebar (左侧) ── -->
       <div
-        class="w-56 bg-base-200 border-r border-base-content/10 flex flex-col shrink-0"
+        class="w-56 glass border-r border-base-300 flex flex-col shrink-0"
       >
         <SamplerSidebar
           v-model:search-query="searchQuery"
@@ -199,108 +201,117 @@ onUnmounted(() => {
           <!-- Error message -->
           <div v-if="samplerStore.error" class="alert alert-error mb-4">
             <Icon name="alert-circle" :size="16" aria-hidden="true" />
-            <span class="text-sm">{{ samplerStore.error }}</span>
+            <span class="text-hig-sm">{{ samplerStore.error }}</span>
           </div>
 
           <!-- Grid -->
-          <div
+          <MotionStaggerList
             class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
           >
-            <div
+            <MotionListItem
               v-for="inst in filteredInstruments"
               :key="inst.id"
-              :class="[
-                'card bg-base-200 shadow-sm cursor-pointer hover:shadow-md transition-all relative group',
-                samplerStore.currentInstrumentId === inst.id &&
-                  'ring-2 ring-primary',
-                samplerStore.instruments[inst.id]?.error && 'ring-2 ring-error',
-              ]"
-              @click="selectInstrument(inst)"
             >
-              <div class="card-body p-3">
-                <!-- 试听按钮 (右上角) -->
-                <button
-                  class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  :class="{
-                    'btn-active':
-                      isPlayingScale &&
-                      samplerStore.currentInstrumentId === inst.id,
-                  }"
-                  :aria-label="t('sampler.preview')"
-                  @click="playInstrumentScale(inst, $event)"
-                >
-                  <Icon
-                    :name="
-                      isPlayingScale &&
-                      samplerStore.currentInstrumentId === inst.id
-                        ? 'stop'
-                        : 'play'
-                    "
-                    :size="14"
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <h4 class="text-sm font-medium leading-tight pr-6">
-                  {{ inst.name }}
-                </h4>
-
-                <!-- 加载进度（radial-progress） -->
+              <motion.div v-bind="cardHover" class="h-full group">
                 <div
-                  v-if="samplerStore.instruments[inst.id]?.loading"
-                  class="flex items-center justify-center mt-2"
+                  :class="[
+                    'card bg-base-100 border border-base-300 h-full cursor-pointer relative transition-[border-color,box-shadow] duration-hig-normal ease-hig-standard group-hover:border-primary/50 group-hover:shadow-[var(--shadow-hig-md)]',
+                    samplerStore.currentInstrumentId === inst.id &&
+                      'ring-2 ring-primary',
+                    samplerStore.instruments[inst.id]?.error &&
+                      'ring-2 ring-error',
+                  ]"
+                  @click="selectInstrument(inst)"
                 >
-                  <div
-                    class="radial-progress text-primary"
-                    :style="{
-                      '--value': samplerStore.instruments[inst.id]?.loadProgress || 0,
-                      '--size': '2.5rem',
-                      '--thickness': '3px',
-                    }"
-                    role="progressbar"
-                    :aria-valuenow="samplerStore.instruments[inst.id]?.loadProgress || 0"
-                  >
-                    {{ samplerStore.instruments[inst.id]?.loadProgress || 0 }}%
-                  </div>
-                </div>
+                  <div class="card-body p-3">
+                    <!-- 试听按钮 (右上角) -->
+                    <button
+                      class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-hig-fast z-10"
+                      :class="{
+                        'btn-active':
+                          isPlayingScale &&
+                          samplerStore.currentInstrumentId === inst.id,
+                      }"
+                      :aria-label="t('sampler.preview')"
+                      @click="playInstrumentScale(inst, $event)"
+                    >
+                      <Icon
+                        :name="
+                          isPlayingScale &&
+                          samplerStore.currentInstrumentId === inst.id
+                            ? 'stop'
+                            : 'play'
+                        "
+                        :size="14"
+                        aria-hidden="true"
+                      />
+                    </button>
 
-                <!-- 状态标识 -->
-                <div v-else class="flex items-center justify-between mt-1">
-                  <span class="text-xs text-base-content/50">{{
-                    inst.category
-                  }}</span>
-                  <!-- 已缓存标识 -->
-                  <div
-                    v-if="samplerStore.instruments[inst.id]?.loaded"
-                    class="flex items-center gap-1"
-                  >
-                    <span class="badge badge-success badge-xs gap-1">
-                      <Icon name="check" :size="10" aria-hidden="true" />
-                      <span class="text-xs">Cached</span>
-                    </span>
-                    <!-- 缓存大小 + 清除按钮 -->
-                    <template v-if="instrumentCacheSizes[inst.id] > 0">
-                      <span class="text-xs text-base-content/40">
-                        {{ formatBytes(instrumentCacheSizes[inst.id]) }}
-                      </span>
-                      <button
-                        class="btn btn-xs btn-ghost btn-square p-0 min-h-0 h-4 w-4"
-                        :aria-label="t('sampler.clearInstrumentCache')"
-                        @click="handleClearInstrumentCache(inst.id, $event)"
+                    <h4 class="text-hig-sm font-medium leading-tight pr-6">
+                      {{ inst.name }}
+                    </h4>
+
+                    <!-- 加载进度（radial-progress） -->
+                    <div
+                      v-if="samplerStore.instruments[inst.id]?.loading"
+                      class="flex items-center justify-center mt-2"
+                    >
+                      <div
+                        class="radial-progress text-primary"
+                        :style="{
+                          '--value':
+                            samplerStore.instruments[inst.id]?.loadProgress || 0,
+                          '--size': '2.5rem',
+                          '--thickness': '3px',
+                        }"
+                        role="progressbar"
+                        :aria-valuenow="
+                          samplerStore.instruments[inst.id]?.loadProgress || 0
+                        "
                       >
-                        <Icon name="x" :size="10" aria-hidden="true" />
-                      </button>
-                    </template>
+                        {{ samplerStore.instruments[inst.id]?.loadProgress || 0 }}%
+                      </div>
+                    </div>
+
+                    <!-- 状态标识 -->
+                    <div v-else class="flex items-center justify-between mt-1">
+                      <span class="text-hig-xs text-base-content/70">{{
+                        inst.category
+                      }}</span>
+                      <!-- 已缓存标识 -->
+                      <div
+                        v-if="samplerStore.instruments[inst.id]?.loaded"
+                        class="flex items-center gap-1"
+                      >
+                        <span class="badge badge-success badge-xs gap-1">
+                          <Icon name="check" :size="10" aria-hidden="true" />
+                          <span class="text-hig-xs">Cached</span>
+                        </span>
+                        <!-- 缓存大小 + 清除按钮 -->
+                        <template v-if="instrumentCacheSizes[inst.id] > 0">
+                          <span class="text-hig-xs text-base-content/70 tabular">
+                            {{ formatBytes(instrumentCacheSizes[inst.id]) }}
+                          </span>
+                          <button
+                            class="btn btn-xs btn-ghost btn-square p-0 min-h-0 h-4 w-4"
+                            :aria-label="t('sampler.clearInstrumentCache')"
+                            @click="handleClearInstrumentCache(inst.id, $event)"
+                          >
+                            <Icon name="x" :size="10" aria-hidden="true" />
+                          </button>
+                        </template>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </MotionListItem>
+          </MotionStaggerList>
 
           <!-- Empty state -->
           <div
             v-if="filteredInstruments.length === 0"
-            class="text-center py-12 text-base-content/40"
+            class="text-center py-12 text-base-content/70 text-hig-sm"
           >
             {{ t("sampler.noInstrumentsFound") }}
           </div>
@@ -308,7 +319,7 @@ onUnmounted(() => {
 
         <!-- ── Bottom: Piano Keyboard ── -->
         <div
-          class="bg-base-200 border-t border-base-content/10 px-2 py-1 h-[120px]"
+          class="glass border-t border-base-300 px-2 py-1 h-[120px]"
         >
           <CanvasPianoKeyboard
             :keyboard="keyboardSettings"

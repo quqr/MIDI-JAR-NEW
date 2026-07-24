@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   Delegate,
   Action,
@@ -7,16 +7,16 @@ import {
   EventArgs,
   PropertyChangedEventArgs,
   weakClosure,
-} from '../delegate';
+} from "../delegate";
 
-describe('Delegate', () => {
+describe("Delegate", () => {
   let delegate: Delegate<number>;
 
   beforeEach(() => {
     delegate = new Delegate<number>();
   });
 
-  it('should add and invoke handlers', () => {
+  it("should add and invoke handlers", () => {
     const handler = vi.fn();
     delegate.add(handler);
 
@@ -26,7 +26,7 @@ describe('Delegate', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('should support multicast (multiple handlers)', () => {
+  it("should support multicast (multiple handlers)", () => {
     const handler1 = vi.fn();
     const handler2 = vi.fn();
 
@@ -39,7 +39,7 @@ describe('Delegate', () => {
     expect(handler2).toHaveBeenCalledWith(10);
   });
 
-  it('should remove handler by function reference', () => {
+  it("should remove handler by function reference", () => {
     const handler = vi.fn();
     delegate.add(handler);
 
@@ -51,7 +51,7 @@ describe('Delegate', () => {
     expect(handler).toHaveBeenCalledTimes(1); // 未增加
   });
 
-  it('should remove handler by token', () => {
+  it("should remove handler by token", () => {
     const handler = vi.fn();
     const token = delegate.add(handler);
 
@@ -63,7 +63,7 @@ describe('Delegate', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('should track count', () => {
+  it("should track count", () => {
     expect(delegate.count).toBe(0);
 
     const token1 = delegate.add(() => {});
@@ -79,7 +79,7 @@ describe('Delegate', () => {
     expect(delegate.count).toBe(0);
   });
 
-  it('should report isEmpty', () => {
+  it("should report isEmpty", () => {
     expect(delegate.isEmpty).toBe(true);
 
     const token = delegate.add(() => {});
@@ -89,9 +89,9 @@ describe('Delegate', () => {
     expect(delegate.isEmpty).toBe(true);
   });
 
-  it('should handle errors in handlers gracefully', () => {
+  it("should handle errors in handlers gracefully", () => {
     const errorHandler = vi.fn(() => {
-      throw new Error('Test error');
+      throw new Error("Test error");
     });
     const normalHandler = vi.fn();
 
@@ -105,7 +105,7 @@ describe('Delegate', () => {
     expect(normalHandler).toHaveBeenCalled();
   });
 
-  it('should clear all handlers', () => {
+  it("should clear all handlers", () => {
     delegate.add(() => {});
     delegate.add(() => {});
 
@@ -118,65 +118,65 @@ describe('Delegate', () => {
   });
 });
 
-describe('Action', () => {
+describe("Action", () => {
   let action: Action<string>;
 
   beforeEach(() => {
     action = new Action<string>();
   });
 
-  it('should work as a Delegate alias', () => {
+  it("should work as a Delegate alias", () => {
     const handler = vi.fn();
     const token = action.add(handler);
 
-    action.invoke('test');
+    action.invoke("test");
 
-    expect(handler).toHaveBeenCalledWith('test');
+    expect(handler).toHaveBeenCalledWith("test");
 
     action.remove(token);
     expect(action.isEmpty).toBe(true);
   });
 });
 
-describe('Func', () => {
+describe("Func", () => {
   let func: Func<number, string>;
 
   beforeEach(() => {
     func = new Func<number, string>();
   });
 
-  it('should set and invoke function', () => {
+  it("should set and invoke function", () => {
     func.set((s) => s.length);
 
-    const result = func.invoke('hello');
+    const result = func.invoke("hello");
 
     expect(result).toBe(5);
   });
 
-  it('should return undefined when no function set', () => {
-    const result = func.invoke('test');
+  it("should return undefined when no function set", () => {
+    const result = func.invoke("test");
 
     expect(result).toBeUndefined();
   });
 
-  it('should replace function when set again', () => {
+  it("should replace function when set again", () => {
     func.set(() => 1);
     func.set(() => 2);
 
-    const result = func.invoke('test');
+    const result = func.invoke("test");
 
     expect(result).toBe(2);
   });
 
-  it('should remove function', () => {
+  it("should remove function", () => {
     func.set(() => 1);
     func.remove();
 
     expect(func.isEmpty).toBe(true);
-    expect(func.invoke('test')).toBeUndefined();
+    expect(func.invoke("test")).toBeUndefined();
   });
 
-  it('should check isEmpty', () => {
+  it("should check isEmpty", () => {
     expect(func.isEmpty).toBe(true);
 
     func.set(() => 1);
@@ -187,8 +187,8 @@ describe('Func', () => {
   });
 });
 
-describe('Event', () => {
-  it('should allow adding and removing handlers', () => {
+describe("Event", () => {
+  it("should allow adding and removing handlers", () => {
     const event = new Event<number>();
     const handler = vi.fn();
 
@@ -200,74 +200,74 @@ describe('Event', () => {
     // 外部无法直接 invoke，这是正确的行为
   });
 
-  it('should support internal invoke', () => {
+  it("should support internal invoke", () => {
     const event = new Event<string>();
     const handler = vi.fn();
 
     event.add(handler);
-    event.internalInvoke('test');
+    event.internalInvoke("test");
 
-    expect(handler).toHaveBeenCalledWith('test');
+    expect(handler).toHaveBeenCalledWith("test");
   });
 
-  it('should prevent external invoke', () => {
+  it("should prevent external invoke", () => {
     const event = new Event<number>();
 
     // @ts-expect-error - invoke 不应该在外部可访问
     expect(event.invoke).toBeUndefined();
   });
 
-  it('should support subscribe/unsubscribe getters', () => {
+  it("should support subscribe/unsubscribe getters", () => {
     const event = new Event<string>();
     const handler = vi.fn();
 
     // 使用 subscribe getter
     const token = event.subscribe(handler);
-    event.internalInvoke('hello');
-    expect(handler).toHaveBeenCalledWith('hello');
+    event.internalInvoke("hello");
+    expect(handler).toHaveBeenCalledWith("hello");
 
     // 使用 unsubscribe getter
     event.unsubscribe(token);
-    event.internalInvoke('world');
+    event.internalInvoke("world");
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('WeakClosure', () => {
-  it('should bind context correctly', () => {
+describe("WeakClosure", () => {
+  it("should bind context correctly", () => {
     const context = { value: 42 };
 
-    const handler = weakClosure<string>(function(_args) {
+    const handler = weakClosure<string>(function (_args) {
       // @ts-ignore
       return this.value;
     }, context);
 
     // WeakRef 在现代环境中应该工作
     // 如果环境不支持，会回退到 bind
-    expect(typeof handler).toBe('function');
+    expect(typeof handler).toBe("function");
   });
 
-  it('should fallback to bind when WeakRef is not available', () => {
+  it("should fallback to bind when WeakRef is not available", () => {
     // 模拟不支持 WeakRef 的环境
     const originalWeakRef = globalThis.WeakRef;
     // @ts-ignore
     delete globalThis.WeakRef;
 
     const context = { value: 42 };
-    const handler = weakClosure<string>(function(_args) {
+    const handler = weakClosure<string>(function (_args) {
       // @ts-ignore
       return this.value;
     }, context);
 
-    expect(typeof handler).toBe('function');
+    expect(typeof handler).toBe("function");
 
     // 恢复 WeakRef
     globalThis.WeakRef = originalWeakRef;
   });
 });
 
-describe('EventArgs', () => {
-  it('should provide empty singleton', () => {
+describe("EventArgs", () => {
+  it("should provide empty singleton", () => {
     const args1 = EventArgs.Empty;
     const args2 = EventArgs.Empty;
 
@@ -276,26 +276,26 @@ describe('EventArgs', () => {
   });
 });
 
-describe('PropertyChangedEventArgs', () => {
-  it('should store property change info', () => {
-    const args = new PropertyChangedEventArgs('name', 'old', 'new');
+describe("PropertyChangedEventArgs", () => {
+  it("should store property change info", () => {
+    const args = new PropertyChangedEventArgs("name", "old", "new");
 
-    expect(args.propertyName).toBe('name');
-    expect(args.oldValue).toBe('old');
-    expect(args.newValue).toBe('new');
+    expect(args.propertyName).toBe("name");
+    expect(args.oldValue).toBe("old");
+    expect(args.newValue).toBe("new");
     expect(args).toBeInstanceOf(EventArgs);
   });
 
-  it('should support generic types', () => {
-    const args = new PropertyChangedEventArgs<number>('count', 1, 2);
+  it("should support generic types", () => {
+    const args = new PropertyChangedEventArgs<number>("count", 1, 2);
 
-    expect(typeof args.oldValue).toBe('number');
-    expect(typeof args.newValue).toBe('number');
+    expect(typeof args.oldValue).toBe("number");
+    expect(typeof args.newValue).toBe("number");
   });
 });
 
-describe('C# Style Usage', () => {
-  it('should simulate event pattern', () => {
+describe("C# Style Usage", () => {
+  it("should simulate event pattern", () => {
     // 模拟 C# 事件声明和使用
     class Button {
       public readonly onClick = new Event<{ x: number; y: number }>();
@@ -326,7 +326,7 @@ describe('C# Style Usage', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('should work like C# Action', () => {
+  it("should work like C# Action", () => {
     const action = new Action<string>();
 
     // C#: action += msg => Console.WriteLine(msg);
@@ -334,19 +334,19 @@ describe('C# Style Usage', () => {
     action.add(handler);
 
     // C#: action("Hello");
-    action.invoke('Hello');
+    action.invoke("Hello");
 
-    expect(handler).toHaveBeenCalledWith('Hello');
+    expect(handler).toHaveBeenCalledWith("Hello");
   });
 
-  it('should work like C# Func', () => {
+  it("should work like C# Func", () => {
     const func = new Func<number, string>();
 
     // C#: func = s => s.Length;
     func.set((s) => s.length);
 
     // C#: int result = func("Hello");
-    const result = func.invoke('Hello');
+    const result = func.invoke("Hello");
 
     expect(result).toBe(5);
   });

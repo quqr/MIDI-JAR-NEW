@@ -116,7 +116,15 @@ describe("Error handling and recovery", () => {
       const { WaterfallEngine } = await import("../engine/WaterfallEngine");
       const engine = new WaterfallEngine();
 
-      // 创建 mock canvases
+      // 创建 mock PixiJS Application + WaterfallLayers
+      const mkContainer = () =>
+        ({
+          addChild: vi.fn(),
+          removeChild: vi.fn(),
+          y: 0,
+          label: "",
+          destroy: vi.fn(),
+        }) as unknown as import("pixi.js").Container;
       const mockCtx = new Proxy(
         {},
         {
@@ -126,8 +134,7 @@ describe("Error handling and recovery", () => {
           },
         },
       ) as unknown as CanvasRenderingContext2D;
-
-      const mockCanvas = {
+      const mockCanvasEl = {
         getContext: () => mockCtx,
         style: { touchAction: "" },
         width: 0,
@@ -135,21 +142,22 @@ describe("Error handling and recovery", () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
       } as unknown as HTMLCanvasElement;
-
-      const canvases = {
-        background: mockCanvas,
-        fluid: mockCanvas,
-        waterfall: mockCanvas,
-        keyboard: mockCanvas,
+      const mockApp = {
+        renderer: { render: vi.fn() },
+        canvas: mockCanvasEl,
+        stage: mkContainer(),
+      } as unknown as import("pixi.js").Application;
+      const mockLayers = {
+        background: mkContainer(),
+        fluid: mkContainer(),
+        waterfall: mkContainer(),
+        keyboard: mkContainer(),
       };
 
       const { defaultWaterfallSettings } = await import("../constants");
       const settings = structuredClone(defaultWaterfallSettings);
 
-      engine.init(canvases, settings, {
-        container: { addChild: vi.fn(), removeChild: vi.fn(), label: "" } as unknown as import("pixi.js").Container,
-        renderer: { render: vi.fn() } as unknown as import("pixi.js").Renderer,
-      });
+      engine.init(mockApp, mockLayers, settings);
       expect(engine.isDisposed()).toBe(false);
 
       await engine.dispose();

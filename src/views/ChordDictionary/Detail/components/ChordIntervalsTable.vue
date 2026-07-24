@@ -1,12 +1,12 @@
 <template>
-  <section v-if="chord" class="w-full p-3 bg-base-200 rounded-lg mb-4">
+  <section v-if="chord" class="w-full p-3 bg-base-200 rounded-hig-lg mb-4">
     <h3
-      class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
+      class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2 px-1"
     >
       {{ t("chordDictionary.intervals") }}
     </h3>
     <ChordIntervals
-      class="text-2xl"
+      class="text-hig-2xl"
       :intervals="playedIntervals"
       :targets="chord.intervals"
       :pitch-classes="pitchClasses"

@@ -6,8 +6,6 @@ import type { InstrumentCategory } from "@/stores/sampler";
 import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { Icon } from "@/components/Icon";
 
-
-
 const props = defineProps<{
   searchQuery: string;
   selectedCategory: InstrumentCategory | "all";
@@ -36,9 +34,10 @@ const categories = computed(() => [
 import { batchDownloadInstruments } from "@/composables/useSamplerService";
 async function batchDownloadInstrumentsFunction() {
   // 批量下载所有音色
-  const result = await batchDownloadInstruments(samplerStore.gmInstrumentCatalog.map((inst) => inst.id));
+  const result = await batchDownloadInstruments(
+    samplerStore.gmInstrumentCatalog.map((inst) => inst.id),
+  );
   console.log(result);
-
 }
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -93,8 +92,8 @@ onUnmounted(() => {
     <div class="flex-1 overflow-y-auto p-4">
       <!-- 刷新按钮 -->
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-base-content/70">
-          {{ t("common.categories") || "Categories" }}
+        <h2 class="text-hig-sm font-semibold text-base-content/70">
+          {{ t("sampler.categories") }}
         </h2>
         <button
           class="btn btn-ghost btn-xs"
@@ -129,12 +128,12 @@ onUnmounted(() => {
       </div>
 
       <!-- 分类列表 -->
-      <ul class="menu menu-sm bg-base-200 rounded-lg">
+      <ul class="menu menu-sm rounded-hig-md">
         <li v-for="cat in categories" :key="cat.id">
           <button
             :class="{
               active: selectedCategory === cat.id,
-              'bg-primary text-primary-content': selectedCategory === cat.id,
+              'bg-primary/10 text-primary font-semibold': selectedCategory === cat.id,
             }"
             @click="emit('update:selectedCategory', cat.id)"
           >
@@ -152,15 +151,15 @@ onUnmounted(() => {
     </div>
 
     <!-- 底部：缓存管理区域 -->
-    <div class="border-t border-base-300 p-4 bg-base-200">
-      <h3 class="text-sm font-semibold mb-2">
-        {{ t("sampler.cacheSize") || "Cache Size" }}
-      </h3>
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-2xl font-bold">{{ formatBytes(cacheSize) }}</span>
+    <div class="flex flex-col border-t border-base-300 p-4 gap-3">
+      <div class="flex items-baseline justify-between">
+        <h3 class="text-hig-sm font-semibold text-base-content/70">
+          {{ t("sampler.cacheSize") || "Cache Size" }}
+        </h3>
+        <span class="text-hig-xl font-bold tabular">{{ formatBytes(cacheSize) }}</span>
       </div>
       <button
-        class="btn btn-sm btn-error w-full"
+        class="btn btn-sm btn-outline btn-error w-full"
         :disabled="isClearing"
         @click="handleClearAllCache"
       >
@@ -173,8 +172,10 @@ onUnmounted(() => {
         @click="batchDownloadInstrumentsFunction"
       >
         <Icon name="refresh" :size="16" aria-hidden="true" />
-        <span v-if="samplerStore.isBatchDownloading">
-          下载中 {{ samplerStore.batchDownloadCompleted }}/{{ samplerStore.batchDownloadTotal }}
+        <span v-if="samplerStore.isBatchDownloading" class="tabular">
+          下载中 {{ samplerStore.batchDownloadCompleted }}/{{
+            samplerStore.batchDownloadTotal
+          }}
         </span>
         <span v-else>批量下载</span>
       </button>

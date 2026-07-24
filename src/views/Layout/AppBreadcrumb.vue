@@ -183,19 +183,23 @@ function resolveFullPath(
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-hig-sm);
   font-size: 0.8125rem;
   color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background-color 0.15s,
-    color 0.15s;
+    background-color var(--hig-duration-fast) var(--ease-hig-standard),
+    color var(--hig-duration-fast) var(--ease-hig-standard);
   min-width: 0;
 }
 
 .breadcrumb-nav__link:hover {
-  background-color: var(--color-base-200);
+  background-color: color-mix(
+    in oklch,
+    var(--color-base-content) 8%,
+    transparent
+  );
   color: var(--color-base-content);
 }
 
@@ -204,7 +208,7 @@ function resolveFullPath(
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-hig-sm);
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color-primary);

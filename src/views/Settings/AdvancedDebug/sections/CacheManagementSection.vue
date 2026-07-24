@@ -61,7 +61,7 @@ onUnmounted(() => {
     <div class="space-y-4">
       <!-- localStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{
+        <span class="text-hig-sm">{{
           t("advancedDebug.cache.localStorage", "localStorage")
         }}</span>
         <span class="badge badge-neutral">{{
@@ -71,7 +71,7 @@ onUnmounted(() => {
 
       <!-- CacheStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{
+        <span class="text-hig-sm">{{
           t("advancedDebug.cache.cacheStorage", "CacheStorage")
         }}</span>
         <span class="badge badge-neutral">{{
@@ -83,7 +83,7 @@ onUnmounted(() => {
       <div
         class="flex items-center justify-between pt-2 border-t border-base-300"
       >
-        <span class="text-sm font-semibold">{{
+        <span class="text-hig-sm font-semibold">{{
           t("advancedDebug.cache.total", "总计")
         }}</span>
         <span class="badge badge-primary">{{
@@ -106,7 +106,7 @@ onUnmounted(() => {
       </button>
 
       <!-- 说明 -->
-      <p class="text-xs text-base-content/60">
+      <p class="text-hig-xs text-base-content/70">
         {{
           t(
             "advancedDebug.cache.note",

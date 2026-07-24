@@ -59,7 +59,10 @@ export class MidiFilePlayer {
           note.hand,
           note.trackIndex,
         );
-        waterfallPianoEvents.onNoteOn.internalInvoke({ midi: note.midi, velocity: note.velocity });
+        waterfallPianoEvents.onNoteOn.internalInvoke({
+          midi: note.midi,
+          velocity: note.velocity,
+        });
       },
       onRelease: (note) => {
         this.callbacks.onNoteOff?.(note.midi);
@@ -83,7 +86,9 @@ export class MidiFilePlayer {
     this.callbacks.onTracksReady?.(this.tracks);
     waterfallPianoEvents.onTracksReady.internalInvoke({ tracks: this.tracks });
     this.callbacks.onScheduledNotesReady?.(this.notes);
-    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: this.notes });
+    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+      notes: this.notes,
+    });
     return this.tracks;
   }
 
@@ -158,7 +163,9 @@ export class MidiFilePlayer {
     this.isPaused = false;
     // 重新通知 NoteBlockSystem，确保方块系统状态完全重置
     this.callbacks.onScheduledNotesReady?.(this.notes);
-    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: this.notes });
+    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+      notes: this.notes,
+    });
   }
 
   pausePlayback(): void {
@@ -232,7 +239,9 @@ export class MidiFilePlayer {
       this.notes = this.collectNotes();
       this.scheduler.setNotes(this.notes);
       this.callbacks.onScheduledNotesReady?.(this.notes);
-      waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: this.notes });
+      waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+        notes: this.notes,
+      });
     }
   }
 
@@ -246,7 +255,9 @@ export class MidiFilePlayer {
       this.notes = this.collectNotes();
       this.scheduler.setNotes(this.notes);
       this.callbacks.onScheduledNotesReady?.(this.notes);
-      waterfallPianoEvents.onScheduledNotesReady.internalInvoke({ notes: this.notes });
+      waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+        notes: this.notes,
+      });
     }
   }
 
@@ -263,7 +274,10 @@ export class MidiFilePlayer {
     const current = this.getCurrentTime();
     this.scheduler.tick(current);
     this.callbacks.onProgress?.(current, this.duration);
-    waterfallPianoEvents.onPlaybackProgress.internalInvoke({ currentTime: current, duration: this.duration });
+    waterfallPianoEvents.onPlaybackProgress.internalInvoke({
+      currentTime: current,
+      duration: this.duration,
+    });
     if (current >= this.duration) {
       if (this.loop) {
         this.clock.seek(0);

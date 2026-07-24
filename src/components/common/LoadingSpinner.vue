@@ -8,7 +8,7 @@
       class="loading loading-spinner loading-lg text-primary"
       aria-hidden="true"
     ></span>
-    <p v-if="label" class="text-sm text-base-content/60">{{ label }}</p>
+    <p v-if="label" class="text-sm text-base-content/70">{{ label }}</p>
   </div>
 </template>
 

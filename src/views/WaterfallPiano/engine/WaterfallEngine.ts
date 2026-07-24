@@ -1,5 +1,5 @@
 import type { WaterfallPianoSettings } from "../types";
-import { Application, Container, Renderer } from "pixi.js";
+import { Application, Container } from "pixi.js";
 import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
@@ -7,11 +7,11 @@ import { PerformanceMonitor } from "./PerformanceMonitor";
 import { RenderLoop, type PhaseTimings } from "./RenderLoop";
 import { FluidSplatManager } from "./FluidSplatManager";
 import type { ISoundEngine } from "../audio/ISoundEngine";
+import { resolveConfig, type FluidSimulationConfig } from "@/engine/fluid";
 import {
-  resolveConfig,
-  type FluidSimulationConfig,
-} from "@/engine/fluid";
-import { PixiFluidSimulation, type IFluidSimulation } from "@/engine/fluid-pixi";
+  PixiFluidSimulation,
+  type IFluidSimulation,
+} from "@/engine/fluid-pixi";
 import { createLogger } from "@/utils/logger";
 import { waterfallPianoEvents } from "../events";
 
@@ -31,7 +31,6 @@ const DEFAULT_VELOCITY = 90;
  */
 export class WaterfallEngine {
   private app: Application | null = null;
-  private renderer: Renderer | null = null;
   private layers: WaterfallLayers | null = null;
   private settings: WaterfallPianoSettings | null = null;
   private keyboardRenderer = new KeyboardRenderer();
@@ -44,8 +43,9 @@ export class WaterfallEngine {
   private splatManager = new FluidSplatManager({
     keyboardRenderer: this.keyboardRenderer,
     noteBlockSystem: this.noteBlockSystem,
-    getParticleConfig: () => this.settings ? this.settings.particles : null,
-    getBackgroundConfig: () => this.settings ? this.settings.background : null,
+    getParticleConfig: () => (this.settings ? this.settings.particles : null),
+    getBackgroundConfig: () =>
+      this.settings ? this.settings.background : null,
     getLayout: () => ({
       width: this.width,
       height: this.height,
@@ -96,7 +96,6 @@ export class WaterfallEngine {
   ): void {
     try {
       this.app = app;
-      this.renderer = app.renderer;
       this.layers = layers;
       this.settings = settings;
       this.keyboardRenderer.init(
@@ -110,8 +109,12 @@ export class WaterfallEngine {
         settings.aura,
       );
       this.backgroundRenderer.init(layers.background, settings.background);
-      this.noteBlockSystem.onNoteTrigger.add((args) => this.onSynthesiaTrigger(args.midi, args.velocity));
-      this.noteBlockSystem.onNoteEnd.add((args) => this.onSynthesiaEnd(args.midi));
+      this.noteBlockSystem.onNoteTrigger.add((args) =>
+        this.onSynthesiaTrigger(args.midi, args.velocity),
+      );
+      this.noteBlockSystem.onNoteEnd.add((args) =>
+        this.onSynthesiaEnd(args.midi),
+      );
       this.maybeInitFluid(fluidCanvas);
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
       this.prevFluidEnabled = settings.background.fluidEnabled;
@@ -251,7 +254,7 @@ export class WaterfallEngine {
       this.layers.keyboard.y = waterfallHeight;
     }
     if (this.fluid) {
-      this.fluid.resize();
+      this.fluid.resize(width, height);
     }
   }
 
@@ -282,7 +285,8 @@ export class WaterfallEngine {
     try {
       this.fluid = new PixiFluidSimulation(this.app, this.layers.fluid, config);
       this.fluid.start();
-    } catch {
+    } catch (e) {
+      logger.error({ err: e }, "Fluid initialization failed");
       this.fluid = null;
     }
   }
@@ -488,8 +492,8 @@ export class WaterfallEngine {
     if (this.disposed) return;
     this.disposed = true;
 
-    // 停止渲染循环
-    this.renderLoop?.stop();
+    // 停止并销毁渲染循环（detach ticker 回调）
+    this.renderLoop?.destroy();
     this.renderLoop = null;
 
     // 执行所有注册的清理任务
@@ -509,7 +513,6 @@ export class WaterfallEngine {
 
     // 释放 PixiJS 引用
     this.app = null;
-    this.renderer = null;
     this.layers = null;
 
     // 报告失败的清理

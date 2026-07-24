@@ -1,6 +1,6 @@
 <template>
   <div
-    class="chord-dictionary-toolbar flex flex-col gap-2 px-3 py-2 border-b border-base-200 bg-base-100 flex-shrink-0"
+    class="chord-dictionary-toolbar flex flex-col gap-2 px-4 py-2 border-b border-base-300 glass flex-shrink-0"
   >
     <!-- Row 1: Search + controls -->
     <div class="flex items-center gap-2">
@@ -87,7 +87,7 @@
         <!-- Filter toggles -->
         <div class="hidden md:flex items-center gap-3 ml-1">
           <label
-            class="flex items-center gap-1.5 cursor-pointer text-xs text-base-content/70 whitespace-nowrap"
+            class="flex items-center gap-1.5 cursor-pointer text-hig-xs text-base-content/70 whitespace-nowrap"
           >
             <input
               type="checkbox"
@@ -98,7 +98,7 @@
             {{ t("chordDictionary.onlyChordsInKey") }}
           </label>
           <label
-            class="flex items-center gap-1.5 cursor-pointer text-xs text-base-content/70 whitespace-nowrap"
+            class="flex items-center gap-1.5 cursor-pointer text-hig-xs text-base-content/70 whitespace-nowrap"
           >
             <input
               type="checkbox"
@@ -113,33 +113,35 @@
 
       <div class="flex-1"></div>
 
-      <!-- Interactive mode toggle -->
-      <div v-if="!disableUpdate" class="flex items-center">
+      <!-- Interactive mode toggle — Apple segmented control -->
+      <div v-if="!disableUpdate" class="join">
         <button
-          class="btn btn-sm btn-square"
+          class="btn btn-xs join-item"
           :class="
             interactiveMode === 'detect'
               ? 'btn-primary'
-              : 'btn-ghost text-base-content/50'
+              : 'btn-ghost text-base-content/70'
           "
           :title="t('chordDictionary.detect')"
           :aria-label="t('chordDictionary.detect')"
+          :aria-pressed="interactiveMode === 'detect'"
           @click="handleToggleInteractive('detect')"
         >
-          <Icon name="eye" :size="16" />
+          <Icon name="eye" :size="14" />
         </button>
         <button
-          class="btn btn-sm btn-square"
+          class="btn btn-xs join-item"
           :class="
             interactiveMode === 'play'
               ? 'btn-primary'
-              : 'btn-ghost text-base-content/50'
+              : 'btn-ghost text-base-content/70'
           "
           :title="t('chordDictionary.play')"
           :aria-label="t('chordDictionary.play')"
+          :aria-pressed="interactiveMode === 'play'"
           @click="handleToggleInteractive('play')"
         >
-          <Icon name="controller" :size="16" />
+          <Icon name="controller" :size="14" />
         </button>
       </div>
 
@@ -168,7 +170,7 @@
         :key="note"
         role="tab"
         :aria-selected="selectedChroma === getChroma(note)"
-        class="btn btn-xs sm:btn-sm px-0 min-h-0 h-7 sm:h-8 text-xs font-medium transition-colors"
+        class="btn btn-xs sm:btn-sm px-0 min-h-0 h-7 sm:h-8 text-hig-xs font-medium transition-colors"
         :class="
           selectedChroma === getChroma(note)
             ? 'btn-primary'

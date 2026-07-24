@@ -1,6 +1,6 @@
 <template>
   <div
-    class="collapse shadow-xl collapse-arrow bg-base-200/50 border border-base-200 rounded-xl mb-3"
+    class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-hig-lg mb-3"
     :class="{ 'collapse-open': isOpen }"
     :data-section-id="sectionId"
   >
@@ -8,7 +8,7 @@
       class="collapse-title text-base font-semibold flex items-center gap-2 cursor-pointer"
       @click="toggle"
     >
-      <Icon v-if="icon" :name="icon" :size="18" class="text-base-content/60" />
+      <Icon v-if="icon" :name="icon" :size="18" class="text-base-content/70" />
       <span>{{ title }}</span>
       <span
         v-if="badge"
@@ -17,7 +17,7 @@
         {{ badge }}
       </span>
     </div>
-    <div v-if="isOpen" class="collapse-content pt-2 pb-1">
+    <div class="collapse-content pt-2 pb-1">
       <slot></slot>
     </div>
   </div>

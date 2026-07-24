@@ -46,8 +46,13 @@
   --spacing-hig-7: 48px; /* 分区间距 */
   --spacing-hig-8: 64px; /* hero 级留白 */
 
-  /* 缓动曲线 */
-  --ease-hig-standard: cubic-bezier(0.2, 0, 0, 1); /* 默认 */
+  /* 缓动曲线 - 对齐 Apple HIG */
+  --ease-hig-standard: cubic-bezier(
+    0.2,
+    0.8,
+    0.2,
+    1
+  ); /* 标准（macOS 原生弹性） */
   --ease-hig-emphasized: cubic-bezier(0.3, 0, 0, 1); /* 强调入场 */
   --ease-hig-exit: cubic-bezier(0.4, 0, 1, 1); /* 退场 */
 }
@@ -78,25 +83,60 @@
   --hig-duration-normal: 220ms; /* 标准过渡 */
   --hig-duration-slow: 320ms; /* 入场动画、大型位移 */
 
-  /* 语义状态色（oklch，深浅色通用前景色） */
-  --hig-success: oklch(62% 0.17 145);
-  --hig-warning: oklch(72% 0.16 70);
-  --hig-error: oklch(58% 0.22 25);
-  --hig-info: oklch(60% 0.13 230);
+  /* 语义状态色 - 引用 daisyUI 主题变量（单一真相源） */
+  --hig-success: var(--color-success);
+  --hig-warning: var(--color-warning);
+  --hig-error: var(--color-error);
+  --hig-info: var(--color-info);
 
-  /* 语义状态色容器（浅色模式：高明度低彩度背景） */
-  --hig-success-container: oklch(95% 0.03 145);
-  --hig-warning-container: oklch(95% 0.04 70);
-  --hig-error-container: oklch(95% 0.03 25);
-  --hig-info-container: oklch(95% 0.02 230);
+  /* 语义状态色容器 - color-mix 派生，自动适配深浅主题 */
+  --hig-success-container: color-mix(
+    in oklch,
+    var(--color-success) 16%,
+    var(--color-base-100)
+  );
+  --hig-warning-container: color-mix(
+    in oklch,
+    var(--color-warning) 16%,
+    var(--color-base-100)
+  );
+  --hig-error-container: color-mix(
+    in oklch,
+    var(--color-error) 16%,
+    var(--color-base-100)
+  );
+  --hig-info-container: color-mix(
+    in oklch,
+    var(--color-info) 16%,
+    var(--color-base-100)
+  );
+
+  /* 阴影层级（Apple HIG 材质，浅色模式）
+   * 使用负 spread 锐化边缘，参照 Apple 设计库 shadow 规范 */
+  --shadow-hig-2xs: 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hig-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hig-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-hig-md: 0 4px 8px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-hig-lg:
+    0 8px 24px -8px rgba(0, 0, 0, 0.10), 0 4px 8px -4px rgba(0, 0, 0, 0.06);
+  --shadow-hig-xl:
+    0 16px 40px -10px rgba(0, 0, 0, 0.12), 0 8px 16px -8px rgba(0, 0, 0, 0.07);
+  --shadow-hig-2xl:
+    0 24px 64px -12px rgba(0, 0, 0, 0.14);
 }
 
-/* 深色模式：容器色反转明度（低明度背景） */
-[data-theme="dark"] {
-  --hig-success-container: oklch(30% 0.05 145);
-  --hig-warning-container: oklch(30% 0.05 70);
-  --hig-error-container: oklch(30% 0.06 25);
-  --hig-info-container: oklch(30% 0.04 230);
+/* Apple 暗色主题：提高阴影不透明度以保持深度感 */
+[data-theme="appleDark"] {
+  --shadow-hig-2xs: 0 1px 2px -1px rgba(0, 0, 0, 0.30);
+  --shadow-hig-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.30), 0 1px 3px -1px rgba(0, 0, 0, 0.30);
+  --shadow-hig-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.36), 0 1px 2px -1px rgba(0, 0, 0, 0.36);
+  --shadow-hig-md: 0 4px 8px -2px rgba(0, 0, 0, 0.44), 0 2px 4px -2px rgba(0, 0, 0, 0.36);
+  --shadow-hig-lg:
+    0 8px 24px -8px rgba(0, 0, 0, 0.50), 0 4px 8px -4px rgba(0, 0, 0, 0.40);
+  --shadow-hig-xl:
+    0 16px 40px -10px rgba(0, 0, 0, 0.55), 0 8px 16px -8px rgba(0, 0, 0, 0.44);
+  --shadow-hig-2xl:
+    0 24px 64px -12px rgba(0, 0, 0, 0.60);
 }
 
 /* ------------------------------------------------------------

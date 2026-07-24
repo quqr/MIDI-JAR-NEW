@@ -1,5 +1,5 @@
-import { Application, RenderTexture, Container, Sprite, Filter } from 'pixi.js';
-import type { TEXTURE_FORMATS, SCALE_MODE } from 'pixi.js';
+import { Application, RenderTexture, Container, Sprite, Filter } from "pixi.js";
+import type { TEXTURE_FORMATS, SCALE_MODE } from "pixi.js";
 
 /**
  * 双缓冲 RenderTexture（ping-pong 模式）
@@ -22,19 +22,19 @@ export interface DoubleRT {
  */
 export class PixiFluidContext {
   private app: Application;
-  
-  /** 持久化 Sprite：整个流体生命周期只创建一次，用于 Filter Pass 执行 */
+
+  /** 持久化 Sprite：整个流体生命周期只创建一次，用于 Filter Pass 渲染全屏 quad */
   private quadSprite: Sprite;
   /** 持久化 Container：包含 quadSprite，作为 renderer.render() 的目标容器 */
   private quadContainer: Container;
-  
+
   constructor(app: Application) {
     this.app = app;
-    
+
     // 创建持久化 quad Sprite（生命周期与 context 相同，零 GC）
     this.quadContainer = new Container();
     this.quadSprite = new Sprite();
-    this.quadSprite.label = 'fluid-quad';
+    this.quadSprite.label = "fluid-quad";
     this.quadContainer.addChild(this.quadSprite);
   }
 
@@ -53,8 +53,8 @@ export class PixiFluidContext {
   createRT(
     width: number,
     height: number,
-    format: TEXTURE_FORMATS = 'rgba8unorm',
-    scaleMode: SCALE_MODE = 'linear',
+    format: TEXTURE_FORMATS = "rgba8unorm",
+    scaleMode: SCALE_MODE = "linear",
   ): RenderTexture {
     return RenderTexture.create({
       width,
@@ -74,14 +74,18 @@ export class PixiFluidContext {
   createDoubleRT(
     width: number,
     height: number,
-    format: TEXTURE_FORMATS = 'rgba8unorm',
-    scaleMode: SCALE_MODE = 'linear',
+    format: TEXTURE_FORMATS = "rgba8unorm",
+    scaleMode: SCALE_MODE = "linear",
   ): DoubleRT {
     let read = this.createRT(width, height, format, scaleMode);
     let write = this.createRT(width, height, format, scaleMode);
     return {
-      get read() { return read; },
-      get write() { return write; },
+      get read() {
+        return read;
+      },
+      get write() {
+        return write;
+      },
       swap() {
         const temp = read;
         read = write;
@@ -91,38 +95,32 @@ export class PixiFluidContext {
   }
 
   /**
-   * 执行单次 Filter Pass（零分配版本）
-   * 核心渲染原语：将 filter 应用于 input 纹理，输出到 output RenderTexture
-   * 
-   * 实现细节：
-   * 1. 将 input RenderTexture 设为 quadSprite 的纹理（提供全屏 quad 几何）
-   * 2. 将 filter 应用到 quadSprite
-   * 3. 渲染 quadContainer 到 output RenderTexture
-   * 4. 清理 filter 引用，防止状态污染下一个 pass
+   * 执行单次 Filter Pass：将 filter 应用于 input 纹理，输出到 output RenderTexture
+   *
+   * 使用 PixiJS v8 FilterSystem.applyFilter() 直接应用 filter，
+   * 避免 Sprite 渲染管线中 bounds/坐标不匹配的问题。
    *
    * @param filter - 要应用的 PixiJS Filter
    * @param input - 输入 RenderTexture
    * @param output - 输出 RenderTexture
+   * @param clear - 是否清除输出纹理（默认 true）。设为 false 可实现累加混合。
    */
-  applyPass(
-    filter: Filter,
-    input: RenderTexture,
-    output: RenderTexture,
-  ): void {
-    // 1. 设置输入纹理（复用 quadSprite，不创建新对象）
+  applyPass(filter: Filter, input: RenderTexture, output: RenderTexture, clear: boolean = true): void {
+    // 优先使用 FilterSystem.applyFilter() 直接应用 filter
+    const filterSystem = (this.app.renderer as any).filters;
+    if (filterSystem && typeof filterSystem.applyFilter === "function") {
+      filterSystem.applyFilter(filter, input, output, clear);
+      return;
+    }
+
+    // 回退：通过 Sprite + Filter 渲染到 RenderTexture
     this.quadSprite.texture = input;
-    
-    // 2. 应用 Filter
     this.quadSprite.filters = [filter];
-    
-    // 3. 渲染到目标 RenderTexture
     this.app.renderer.render({
       container: this.quadContainer,
       target: output,
-      clear: true,
+      clear,
     });
-    
-    // 4. 清理 Filter 引用，防止状态污染下一个 pass
     this.quadSprite.filters = null;
   }
 

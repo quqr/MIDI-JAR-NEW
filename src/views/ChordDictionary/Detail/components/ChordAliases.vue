@@ -1,8 +1,8 @@
 <template>
   <div v-if="chord" class="w-full mb-4">
-    <details class="collapse collapse-arrow bg-base-200 rounded-lg" open>
+    <details class="collapse collapse-arrow bg-base-200 rounded-hig-lg" open>
       <summary
-        class="collapse-title text-sm font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
+        class="collapse-title text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
       >
         {{ t("chordDictionary.aliases") }}
       </summary>
@@ -11,7 +11,7 @@
           <li
             v-for="(alias, index) in chord.aliases"
             :key="index"
-            class="flex items-center justify-between px-3 py-1.5 hover:bg-base-300 rounded-lg text-sm"
+            class="flex items-center justify-between px-3 py-1.5 hover:bg-base-300 rounded-hig-md text-hig-sm"
             :class="{
               'border-l-[3px] border-l-warning bg-base-300': isPreferred(index),
               'border-l-[3px] border-l-info bg-base-200':

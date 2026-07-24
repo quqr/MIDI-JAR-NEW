@@ -3,12 +3,12 @@
     <!-- 工具栏 -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div class="flex items-center gap-2">
-        <button class="btn btn-sm btn-outline" @click="handleRefresh">
+        <button class="btn btn-sm btn-outline text-hig-sm" @click="handleRefresh">
           <Icon name="refresh" :size="16" aria-hidden="true" />
           {{ t("settings.routingSettings.refreshDevices") }}
         </button>
         <button
-          class="btn btn-sm btn-outline"
+          class="btn btn-sm btn-outline text-hig-sm"
           :disabled="!virtualPortSupported"
           :title="
             !virtualPortSupported
@@ -21,7 +21,7 @@
           {{ t("settings.routingSettings.addVirtualPort") }}
         </button>
         <button
-          class="btn btn-sm btn-error btn-outline"
+          class="btn btn-sm btn-error btn-outline text-hig-sm"
           :aria-label="t('settings.routingSettings.clearAll')"
           @click="handleClearAndRefresh"
         >
@@ -30,14 +30,14 @@
         </button>
       </div>
 
-      <!-- 视图切换 -->
+      <!-- 视图切换（segmented control） -->
       <div
-        class="flex items-center gap-1 p-1 rounded-lg bg-base-200/50"
+        class="flex items-center gap-1 p-1 rounded-hig-md bg-base-200/50"
         role="tablist"
         :aria-label="t('settings.routingSettings.viewMode')"
       >
         <button
-          class="btn btn-sm"
+          class="btn btn-sm text-hig-sm"
           :class="viewMode === 'matrix' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'matrix'"
@@ -47,7 +47,7 @@
           {{ t("settings.routingSettings.matrixView") }}
         </button>
         <button
-          class="btn btn-sm"
+          class="btn btn-sm text-hig-sm"
           :class="viewMode === 'flow' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'flow'"
@@ -60,24 +60,27 @@
     </div>
 
     <!-- 空状态 -->
-    <div
+    <motion.div
       v-if="inputs.length === 0 && outputs.length === 0"
-      class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/50"
+      class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/70"
+      :initial="{ opacity: 0, y: 8 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="transition.fast"
     >
       <Icon name="alert-circle" :size="48" aria-hidden="true" />
       <div class="text-center">
-        <p class="text-lg font-medium">
+        <p class="text-hig-lg font-medium">
           {{ t("settings.routingSettings.noDevicesTitle") }}
         </p>
-        <p class="text-sm mt-1">
+        <p class="text-hig-sm mt-1">
           {{ t("settings.routingSettings.noDevicesDesc") }}
         </p>
       </div>
-      <button class="btn btn-primary btn-sm" @click="handleRefresh">
+      <button class="btn btn-primary btn-sm text-hig-sm" @click="handleRefresh">
         <Icon name="refresh" :size="16" aria-hidden="true" />
         {{ t("settings.routingSettings.refreshDevices") }}
       </button>
-    </div>
+    </motion.div>
 
     <!-- 矩阵视图 -->
     <div
@@ -88,10 +91,10 @@
         <thead>
           <tr>
             <th
-              class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-sm"
+              class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-md"
             >
               <span
-                class="text-xs font-semibold uppercase tracking-wider text-base-content/60"
+                class="text-hig-xs font-semibold uppercase tracking-wider text-base-content/70"
               >
                 {{ t("settings.routingSettings.inputOutput") }}
               </span>
@@ -99,7 +102,7 @@
             <th
               v-for="output in outputs"
               :key="output.name"
-              class="sticky top-0 z-10 bg-base-200/80 backdrop-blur-sm"
+              class="sticky top-0 z-10 bg-base-200/80 backdrop-blur-md"
             >
               <div class="flex items-center gap-2 min-w-[120px]">
                 <span
@@ -114,7 +117,7 @@
                   "
                 ></span>
                 <span
-                  class="text-xs font-semibold truncate"
+                  class="text-hig-xs font-semibold truncate"
                   :title="output.name"
                 >
                   {{ output.name }}
@@ -136,7 +139,7 @@
                       : $t('common.disconnected')
                   "
                 ></span>
-                <span class="text-sm truncate" :title="input.name">
+                <span class="text-hig-sm truncate" :title="input.name">
                   {{ input.name }}
                 </span>
               </div>
@@ -165,7 +168,7 @@
     </div>
 
     <!-- 流程图视图（高级模式） -->
-    <div v-else class="flex-1 h-0 p-4">
+    <div v-else class="flex-1 h-0 p-4 rounded-hig-lg">
       <MidiFlowGraph
         :inputs="inputs"
         :outputs="outputs"
@@ -192,13 +195,18 @@
       :class="['modal', { 'modal-open': showVirtualPortModal }]"
       @close="showVirtualPortModal = false"
     >
-      <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">
+      <motion.div
+        class="modal-box"
+        :initial="modalMotion.initial"
+        :animate="showVirtualPortModal ? modalMotion.animate : modalMotion.initial"
+        :transition="modalMotion.transition"
+      >
+        <h3 class="font-bold text-hig-lg mb-4">
           {{ t("settings.routingSettings.addVirtualPort") }}
         </h3>
         <div class="form-control w-full mb-4">
           <label class="label">
-            <span class="label-text">{{
+            <span class="label-text text-hig-sm">{{
               t("settings.routingSettings.virtualPortName")
             }}</span>
           </label>
@@ -213,7 +221,7 @@
         </div>
         <div class="form-control w-full mb-4">
           <label class="label">
-            <span class="label-text">{{
+            <span class="label-text text-hig-sm">{{
               t("settings.routingSettings.virtualPortType")
             }}</span>
           </label>
@@ -225,7 +233,7 @@
                 value="input"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text">{{
+              <span class="label-text text-hig-sm">{{
                 t("settings.routingSettings.virtualInput")
               }}</span>
             </label>
@@ -236,7 +244,7 @@
                 value="output"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text">{{
+              <span class="label-text text-hig-sm">{{
                 t("settings.routingSettings.virtualOutput")
               }}</span>
             </label>
@@ -244,27 +252,27 @@
         </div>
         <div class="modal-action">
           <button
-            class="btn btn-ghost btn-sm"
+            class="btn btn-ghost btn-sm text-hig-sm"
             @click="showVirtualPortModal = false"
           >
             {{ t("common.cancel") }}
           </button>
           <button
-            class="btn btn-primary btn-sm"
+            class="btn btn-primary btn-sm text-hig-sm"
             :disabled="!virtualPortName.trim()"
             @click="handleCreateVirtualPort"
           >
             {{ t("settings.routingSettings.createVirtualPort") }}
           </button>
         </div>
-      </div>
+      </motion.div>
       <div class="modal-backdrop" @click="showVirtualPortModal = false"></div>
     </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   onMounted as vueOnMounted,
@@ -278,6 +286,8 @@ import type { MidiRoute } from "@/stores/midiRouting";
 import Icon from "@/components/Icon/Icon.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import MidiFlowGraph from "./MidiFlowGraph.vue";
+import { motion } from "motion-v";
+import { useMotionPresets, modal, transition } from "@/utils/motion";
 
 const { t } = useI18n();
 const routingStore = useMidiRoutingStore();
@@ -290,6 +300,9 @@ const {
   createVirtualInput,
   createVirtualOutput,
 } = routingStore;
+
+const { resolve } = useMotionPresets();
+const modalMotion = computed(() => resolve(modal));
 
 const viewMode = ref<"matrix" | "flow">("matrix");
 const showClearConfirm = ref(false);

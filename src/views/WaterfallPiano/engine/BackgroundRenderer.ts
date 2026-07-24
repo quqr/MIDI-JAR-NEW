@@ -5,7 +5,6 @@ import type { BackgroundConfig } from "../types";
  * 瀑布流钢琴的背景渲染器，使用 PixiJS Graphics 绘制纯色/渐变背景
  */
 export class BackgroundRenderer {
-  private container: Container | null = null;
   private bgGraphics: Graphics | null = null;
   private config: BackgroundConfig | null = null;
   private width = 0;
@@ -18,7 +17,6 @@ export class BackgroundRenderer {
    * @param config - 背景渲染配置
    */
   init(container: Container, config: BackgroundConfig): void {
-    this.container = container;
     this.bgGraphics = new Graphics();
     container.addChild(this.bgGraphics);
     this.config = config;

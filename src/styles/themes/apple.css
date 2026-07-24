@@ -1,0 +1,108 @@
+/* ============================================================
+ * Apple HIG 主题 — apple (light) / appleDark (dark)
+ *
+ * 基于 Apple Human Interface Guidelines 系统色：
+ *   System Blue #007AFF (light) / #0A84FF (dark)
+ *   System Green #34C759 / #30D158
+ *   System Red #FF3B30 / #FF453A
+ *   System Orange #FF9500 / #FF9F0A
+ *   系统灰阶 #FFFFFF / #f2f2f7 / #e5e5ea / #1d1d1f (light)
+ *                 #1c1c1e / #2c2c2e / #3a3a3c / #f5f5f7 (dark)
+ *
+ * 通过 daisyUI 5 `@plugin "daisyui/theme"` 定义，生成
+ * [data-theme="apple"] / [data-theme="appleDark"] 选择器。
+ * ============================================================ */
+
+@plugin "daisyui/theme" {
+  name: "apple";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f2f2f7;
+  --color-base-300: #e5e5ea;
+  --color-base-content: #1d1d1f;
+
+  --color-primary: #007aff;
+  --color-primary-content: #ffffff;
+
+  --color-secondary: #f2f2f7;
+  --color-secondary-content: #1d1d1f;
+
+  --color-accent: #f7f7fa;
+  --color-accent-content: #1d1d1f;
+
+  --color-neutral: #3a3a3c;
+  --color-neutral-content: #f5f5f7;
+
+  --color-info: #007aff;
+  --color-info-content: #ffffff;
+
+  --color-success: #34c759;
+  --color-success-content: #ffffff;
+
+  --color-warning: #ff9500;
+  --color-warning-content: #1d1d1f;
+
+  --color-error: #ff3b30;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.625rem;
+  --radius-box: 1.2rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "appleDark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #1c1c1e;
+  --color-base-200: #2c2c2e;
+  --color-base-300: #3a3a3c;
+  --color-base-content: #f5f5f7;
+
+  --color-primary: #0a84ff;
+  --color-primary-content: #ffffff;
+
+  --color-secondary: #1c1c1e;
+  --color-secondary-content: #f5f5f7;
+
+  --color-accent: #3a3a3c;
+  --color-accent-content: #f5f5f7;
+
+  --color-neutral: #8e8e93;
+  --color-neutral-content: #1c1c1e;
+
+  --color-info: #0a84ff;
+  --color-info-content: #ffffff;
+
+  --color-success: #30d158;
+  --color-success-content: #ffffff;
+
+  --color-warning: #ff9f0a;
+  --color-warning-content: #1d1d1f;
+
+  --color-error: #ff453a;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.625rem;
+  --radius-box: 1.2rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}

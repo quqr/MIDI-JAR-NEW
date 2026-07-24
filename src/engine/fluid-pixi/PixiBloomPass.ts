@@ -1,11 +1,16 @@
 // ─── PixiJS Bloom 后处理 pass：prefilter → 多级下采样模糊 → 上采样合成 → final ───
 // 将原生 WebGL BloomPass 迁移为 PixiJS Filter + RenderTexture 管线
 
-import { Filter, UniformGroup, RenderTexture } from 'pixi.js';
-import type { TEXTURE_FORMATS } from 'pixi.js';
-import { PixiFluidContext } from './PixiFluidContext';
-import { defaultFilterVertex, bloomPrefilterShader, bloomBlurShader, bloomFinalShader } from './shaders';
-import type { FluidSimulationConfig } from '../fluid/FluidConfig';
+import { Filter, UniformGroup, RenderTexture } from "pixi.js";
+import type { TEXTURE_FORMATS } from "pixi.js";
+import { PixiFluidContext } from "./PixiFluidContext";
+import {
+  defaultFilterVertex,
+  bloomPrefilterShader,
+  bloomBlurShader,
+  bloomFinalShader,
+} from "./shaders";
+import type { FluidSimulationConfig } from "../fluid/FluidConfig";
 
 /**
  * 根据短边分辨率和画布宽高比，计算实际纹理尺寸
@@ -55,8 +60,8 @@ export class PixiBloomPass {
       gl: { vertex: defaultFilterVertex, fragment: bloomPrefilterShader },
       resources: {
         bloomUniforms: new UniformGroup({
-          curve: { value: new Float32Array([0, 0, 0]), type: 'vec3<f32>' },
-          threshold: { value: 0.6, type: 'f32' },
+          curve: { value: new Float32Array([0, 0, 0]), type: "vec3<f32>" },
+          threshold: { value: 0.6, type: "f32" },
         }),
       },
     });
@@ -65,7 +70,7 @@ export class PixiBloomPass {
       gl: { vertex: defaultFilterVertex, fragment: bloomBlurShader },
       resources: {
         bloomUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
       },
     });
@@ -74,8 +79,8 @@ export class PixiBloomPass {
       gl: { vertex: defaultFilterVertex, fragment: bloomFinalShader },
       resources: {
         bloomUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
-          intensity: { value: 0.8, type: 'f32' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
+          intensity: { value: 0.8, type: "f32" },
         }),
       },
     });
@@ -84,18 +89,34 @@ export class PixiBloomPass {
   /** 初始化 Bloom RenderTexture */
   initFramebuffers(): void {
     const app = this.ctx.application;
-    const res = getResolution(app.screen.width, app.screen.height, this.config.BLOOM_RESOLUTION);
+    const res = getResolution(
+      app.screen.width,
+      app.screen.height,
+      this.config.BLOOM_RESOLUTION,
+    );
 
     this.destroyFramebuffers();
 
-    this.bloomRT = this.ctx.createRT(res.width, res.height, 'rgba16float' as TEXTURE_FORMATS, 'linear');
+    this.bloomRT = this.ctx.createRT(
+      res.width,
+      res.height,
+      "rgba16float" as TEXTURE_FORMATS,
+      "linear",
+    );
 
     this.bloomFBOs = [];
     for (let i = 0; i < this.config.BLOOM_ITERATIONS; i++) {
       const width = res.width >> (i + 1);
       const height = res.height >> (i + 1);
       if (width < 2 || height < 2) break;
-      this.bloomFBOs.push(this.ctx.createRT(width, height, 'rgba16float' as TEXTURE_FORMATS, 'linear'));
+      this.bloomFBOs.push(
+        this.ctx.createRT(
+          width,
+          height,
+          "rgba16float" as TEXTURE_FORMATS,
+          "linear",
+        ),
+      );
     }
   }
 
@@ -130,13 +151,16 @@ export class PixiBloomPass {
       last = dest;
     }
 
-    // 3. 上采样合成：从最小级别反向累加（使用 additive blend 模拟）
+    // 3. 上采样合成：从最小级别反向累加（additive blend: baseTex += blur(last)）
+    this.blurFilter.blendMode = "add";
     for (let i = this.bloomFBOs.length - 2; i >= 0; i--) {
       const baseTex = this.bloomFBOs[i];
       blurU.texelSize = [1.0 / last.width, 1.0 / last.height];
-      this.ctx.applyPass(this.blurFilter, last, baseTex);
+      // clear=false 保留 baseTex 已有的下采样内容，ADD blend 将模糊结果累加上去
+      this.ctx.applyPass(this.blurFilter, last, baseTex, false);
       last = baseTex;
     }
+    this.blurFilter.blendMode = "normal";
 
     // 4. final 合成
     const finalU = this.finalFilter.resources.bloomUniforms.uniforms;
@@ -168,13 +192,21 @@ export class PixiBloomPass {
 
   /** 销毁 RenderTexture */
   private destroyFramebuffers(): void {
-    if (this.bloomRT) { this.ctx.destroyRT(this.bloomRT); this.bloomRT = null; }
-    for (const fbo of this.bloomFBOs) { this.ctx.destroyRT(fbo); }
+    if (this.bloomRT) {
+      this.ctx.destroyRT(this.bloomRT);
+      this.bloomRT = null;
+    }
+    for (const fbo of this.bloomFBOs) {
+      this.ctx.destroyRT(fbo);
+    }
     this.bloomFBOs = [];
   }
 
   /** 销毁所有资源 */
   destroy(): void {
     this.destroyFramebuffers();
+    this.prefilterFilter.destroy();
+    this.blurFilter.destroy();
+    this.finalFilter.destroy();
   }
 }

@@ -5,14 +5,14 @@
  *
  * 状态转换图：
  *   idle → loading → ready → playing ↔ paused
- *           ↓          ↓          ↓
- *         error      error      error
- *           ↓
- *         idle（用户重试）
+ *     ↓       ↓        ↓        ↓
+ *  recording  error   error    error
+ *     ↓                 ↑
+ *   idle/ready ─────────┘（停止录制后可回放）
  *
  * 严格限制模式：
  * - playing/paused 时禁止：切换模式、加载新文件
- * - recording 时禁止：播放、加载文件
+ * - recording 时禁止：加载文件；停止录制后可回 ready 回放
  * - loading 时禁止：任何操作
  * - error 时仅允许：回到 idle（重试）
  */
@@ -40,7 +40,7 @@ const ALLOWED_TRANSITIONS: Record<PlayerState, PlayerState[]> = {
   ready: ["playing", "recording", "loading"],
   playing: ["paused", "ready", "error"], // playing → ready（停止）
   paused: ["playing", "ready", "error"], // paused → ready（停止）
-  recording: ["idle", "error"],
+  recording: ["idle", "ready", "error"], // recording → ready（停止录制后回放）
   error: ["idle"],
 };
 

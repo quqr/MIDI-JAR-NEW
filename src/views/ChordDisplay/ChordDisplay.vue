@@ -1,6 +1,6 @@
 <template>
-  <div id="chordDisplay" class="relative h-full w-full flex flex-col gap-3">
-    <div class="flex-1 rounded-lg p-3 relative">
+  <div id="chordDisplay" class="relative h-full w-full flex flex-col gap-hig-3">
+    <div class="flex-1 rounded-hig-lg p-hig-3 relative">
       <div class="flex flex-col md:flex-row h-full w-full gap-3">
         <div
           v-if="displayNotation"
@@ -27,17 +27,28 @@
             id="chord"
             class="w-full flex items-center justify-center text-hig-3xl md:text-hig-4xl font-bold group relative"
           >
-            <ChordNameLink
-              :chord="chords[0]"
-              class="items-center justify-center"
-              :notation="chordNotation"
-              :highlightAlterations="highlightAlterations"
-            />
+            <AnimatePresence>
+              <motion.div
+                :key="chords[0]?.name"
+                class="flex items-center justify-center"
+                :initial="{ opacity: 0, y: 8, scale: 0.98 }"
+                :animate="{ opacity: 1, y: 0, scale: 1 }"
+                :exit="{ opacity: 0, y: -8, scale: 0.98 }"
+                :transition="spring.gentle"
+              >
+                <ChordNameLink
+                  :chord="chords[0]"
+                  class="items-center justify-center"
+                  :notation="chordNotation"
+                  :highlightAlterations="highlightAlterations"
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
           <div
             v-if="displayName"
             id="name"
-            class="w-full text-center text-xl font-semibold"
+            class="w-full text-center text-hig-lg font-semibold"
           >
             {{ chords[0]?.name }}
           </div>
@@ -55,7 +66,7 @@
         </div>
       </div>
 
-      <div class="absolute top-2 right-2 z-10 flex flex-col gap-2 items-end">
+      <div class="absolute top-2 right-2 z-10 flex flex-col gap-hig-2 items-end">
         <SettingsButton
           :aria-label="t('chordDisplay.openSettings')"
           @click="settingsOpen = true"
@@ -80,13 +91,13 @@
         </label>
         <div
           v-if="displayAltChords"
-          class="flex flex-col gap-2 items-end rounded-lg p-2 backdrop-blur-sm"
+          class="glass flex flex-col gap-hig-2 items-end rounded-hig-lg p-hig-2"
         >
           <template v-for="(chord, index) in chords" :key="index">
             <span v-if="index > 0" class="inline-flex">
               <ChordNameLink
                 :chord="chord"
-                class="items-center justify-center text-lg"
+                class="items-center justify-center text-hig-md"
                 :notation="chordNotation"
                 :highlightAlterations="highlightAlterations"
               />
@@ -98,7 +109,7 @@
 
     <div
       v-if="displayKeyboard"
-      class="flex-shrink-0 rounded-lg p-2 group relative min-h-[150px] md:min-h-[200px]"
+      class="flex-shrink-0 rounded-hig-lg p-hig-2 group relative min-h-[150px] md:min-h-[200px]"
     >
       <CanvasPianoKeyboard
         id="keyboard"
@@ -125,6 +136,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { motion, AnimatePresence } from "motion-v";
 import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
 import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";
@@ -141,6 +153,7 @@ import {
   mergeLayoutConfig,
   mergeStyleConfig,
 } from "@/components/Notation/utils";
+import { spring } from "@/utils/motion";
 import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
 import type { StaffClef } from "@/components/Notation/types";
 

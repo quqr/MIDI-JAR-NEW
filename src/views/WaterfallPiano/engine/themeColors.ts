@@ -28,7 +28,7 @@ function oklchToHex(L: number, C: number, H: number): string {
   // oklab → linear sRGB (inverse of the oklab forward matrix)
   const l_ = L + 0.3963377774 * a_ + 0.2158037573 * b_;
   const m_ = L - 0.1055613458 * a_ - 0.0638541728 * b_;
-  const s_ = L - 0.0894841775 * a_ - 1.2914855480 * b_;
+  const s_ = L - 0.0894841775 * a_ - 1.291485548 * b_;
 
   const l3 = l_ * l_ * l_;
   const m3 = m_ * m_ * m_;
@@ -36,7 +36,7 @@ function oklchToHex(L: number, C: number, H: number): string {
 
   const rL = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
   const gL = -1.2684380046 * l3 + 2.6097575279 * m3 - 0.3413193965 * s3;
-  const bL = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
+  const bL = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3;
 
   // linear sRGB → gamma sRGB
   const srgbGamma = (c: number): number => {
@@ -78,7 +78,9 @@ export function cssColorToHex(color: string): string {
   }
 
   // hsl 格式
-  const hslMatch = color.match(/hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?/);
+  const hslMatch = color.match(
+    /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?/,
+  );
   if (hslMatch) {
     const h = parseFloat(hslMatch[1]) / 360;
     const s = parseFloat(hslMatch[2]) / 100;

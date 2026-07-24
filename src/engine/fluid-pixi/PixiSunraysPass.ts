@@ -1,11 +1,16 @@
 // ─── PixiJS Sunrays 后处理 pass：mask（亮度→alpha）→ radial light rays → 双向模糊 ───
 // 将原生 WebGL SunraysPass 迁移为 PixiJS Filter + RenderTexture 管线
 
-import { Filter, UniformGroup, RenderTexture } from 'pixi.js';
-import type { TEXTURE_FORMATS } from 'pixi.js';
-import { PixiFluidContext } from './PixiFluidContext';
-import { defaultFilterVertex, sunraysMaskShader, sunraysShader, blurShader } from './shaders';
-import type { FluidSimulationConfig } from '../fluid/FluidConfig';
+import { Filter, UniformGroup, RenderTexture } from "pixi.js";
+import type { TEXTURE_FORMATS } from "pixi.js";
+import { PixiFluidContext } from "./PixiFluidContext";
+import {
+  defaultFilterVertex,
+  sunraysMaskShader,
+  sunraysShader,
+  blurShader,
+} from "./shaders";
+import type { FluidSimulationConfig } from "../fluid/FluidConfig";
 
 /**
  * 根据短边分辨率和画布宽高比，计算实际纹理尺寸
@@ -59,7 +64,7 @@ export class PixiSunraysPass {
       gl: { vertex: defaultFilterVertex, fragment: sunraysShader },
       resources: {
         sunraysUniforms: new UniformGroup({
-          weight: { value: 1.0, type: 'f32' },
+          weight: { value: 1.0, type: "f32" },
         }),
       },
     });
@@ -68,7 +73,7 @@ export class PixiSunraysPass {
       gl: { vertex: defaultFilterVertex, fragment: blurShader },
       resources: {
         blurUniforms: new UniformGroup({
-          texelSize: { value: new Float32Array([0, 0]), type: 'vec2<f32>' },
+          texelSize: { value: new Float32Array([0, 0]), type: "vec2<f32>" },
         }),
       },
     });
@@ -77,12 +82,26 @@ export class PixiSunraysPass {
   /** 初始化 Sunrays RenderTexture */
   initFramebuffers(): void {
     const app = this.ctx.application;
-    const res = getResolution(app.screen.width, app.screen.height, this.config.SUNRAYS_RESOLUTION);
+    const res = getResolution(
+      app.screen.width,
+      app.screen.height,
+      this.config.SUNRAYS_RESOLUTION,
+    );
 
     this.destroyFramebuffers();
 
-    this.sunraysRT = this.ctx.createRT(res.width, res.height, 'r16float' as TEXTURE_FORMATS, 'linear');
-    this.sunraysTempRT = this.ctx.createRT(res.width, res.height, 'r16float' as TEXTURE_FORMATS, 'linear');
+    this.sunraysRT = this.ctx.createRT(
+      res.width,
+      res.height,
+      "r16float" as TEXTURE_FORMATS,
+      "linear",
+    );
+    this.sunraysTempRT = this.ctx.createRT(
+      res.width,
+      res.height,
+      "r16float" as TEXTURE_FORMATS,
+      "linear",
+    );
   }
 
   /**
@@ -91,7 +110,11 @@ export class PixiSunraysPass {
    * @param mask - 临时缓冲（用于 mask 输出，通常是 dye.write）
    * @param destination - 输出 sunrays 结果
    */
-  apply(source: RenderTexture, mask: RenderTexture, destination: RenderTexture): void {
+  apply(
+    source: RenderTexture,
+    mask: RenderTexture,
+    destination: RenderTexture,
+  ): void {
     if (!this.sunraysRT || !this.sunraysTempRT) return;
 
     // 1. mask：source → mask（亮度转 alpha）
@@ -148,12 +171,21 @@ export class PixiSunraysPass {
 
   /** 销毁 RenderTexture */
   private destroyFramebuffers(): void {
-    if (this.sunraysRT) { this.ctx.destroyRT(this.sunraysRT); this.sunraysRT = null; }
-    if (this.sunraysTempRT) { this.ctx.destroyRT(this.sunraysTempRT); this.sunraysTempRT = null; }
+    if (this.sunraysRT) {
+      this.ctx.destroyRT(this.sunraysRT);
+      this.sunraysRT = null;
+    }
+    if (this.sunraysTempRT) {
+      this.ctx.destroyRT(this.sunraysTempRT);
+      this.sunraysTempRT = null;
+    }
   }
 
   /** 销毁所有资源 */
   destroy(): void {
     this.destroyFramebuffers();
+    this.maskFilter.destroy();
+    this.sunraysFilter.destroy();
+    this.blurFilter.destroy();
   }
 }

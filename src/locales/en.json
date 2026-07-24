@@ -34,7 +34,8 @@
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
     "WaterfallPiano": "Waterfall Piano",
-    "Sampler": "Sampler"
+    "Sampler": "Sampler",
+    "fluidCompare": "Fluid Compare"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -51,7 +52,8 @@
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
-      "Sampler": "Sampler instruments — load and play various sound libraries"
+      "Sampler": "Sampler instruments — load and play various sound libraries",
+      "fluidCompare": "WebGL vs PixiJS fluid simulation comparison"
     }
   },
   "layout": {

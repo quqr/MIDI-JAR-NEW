@@ -18,25 +18,18 @@
     />
 
     <div class="flex flex-1 min-h-0 overflow-hidden relative">
-      <!-- Mobile/Tablet drawer overlay -->
-      <Transition name="drawer-overlay">
-        <div
-          v-if="drawerOpen"
-          class="fixed inset-0 bg-black/40 z-30 xl:hidden"
-          @click="drawerOpen = false"
-        ></div>
-      </Transition>
-
-      <!-- Mobile/Tablet drawer: chord type list -->
-      <Transition name="drawer-slide">
-        <div
-          v-if="drawerOpen"
-          class="fixed top-0 left-0 bottom-0 z-40 w-72 bg-base-100 shadow-xl flex flex-col overflow-hidden xl:hidden"
+      <!-- Mobile/Tablet drawer: chord type list（MotionDrawer 统一动效） -->
+      <div class="xl:hidden">
+        <MotionDrawer
+          :is-open="drawerOpen"
+          side="left"
+          :width="288"
+          @close="drawerOpen = false"
         >
           <div
-            class="flex items-center justify-between px-3 py-2 border-b border-base-200 flex-shrink-0"
+            class="flex items-center justify-between px-4 h-12 border-b border-base-200 flex-shrink-0"
           >
-            <span class="text-sm font-semibold text-base-content/70">
+            <span class="text-hig-sm font-semibold text-base-content/70">
               {{ t("chordDictionary.chordTypesNavigation") }}
             </span>
             <button
@@ -47,24 +40,24 @@
               <Icon name="x" :size="16" aria-hidden="true" />
             </button>
           </div>
-          <div class="flex-1 min-h-0 minw-full overflow-y-auto">
+          <div class="flex-1 min-h-0 overflow-y-auto">
             <ChordDictionaryChordMenu
               v-bind="chordMenuProps"
               @select="handleChordTypeChangeDrawer"
             />
           </div>
-        </div>
-      </Transition>
+        </MotionDrawer>
+      </div>
 
       <!-- Tablet (sm-xl): collapsible sidebar -->
       <AnimatePresence>
         <motion.aside
           v-if="sidebarVisible"
-          :initial="{ width: 0, opacity: 0 }"
-          :animate="{ width: 240, opacity: 1 }"
-          :exit="{ width: 0, opacity: 0 }"
-          :transition="{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }"
-          class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-200 bg-base-100/50"
+          :initial="sidebar.initial"
+          :animate="sidebar.animate"
+          :exit="sidebar.exit"
+          :transition="sidebar.transition"
+          class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-300 glass"
         >
           <div class="min-h-0 w-full overflow-y-auto">
             <ChordDictionaryChordMenu
@@ -82,7 +75,7 @@
       >
         <!-- Left: Chord type list -->
         <div
-          class="min-h-0 overflow-y-auto min-w-full border-r border-base-200"
+          class="min-h-0 overflow-y-auto min-w-full border-r border-base-300 glass"
         >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"
@@ -109,13 +102,14 @@ import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Chord, Note } from "tonal";
-import { motion } from "motion-v";
-import { AnimatePresence } from "motion-v";
+import { motion, AnimatePresence } from "motion-v";
 
 import { useSettingsStore } from "@/stores/settings";
 import useNotes from "@/composables/useNotes";
 import { NOTE_NAMES, getNoteInKeySignature } from "@/helpers";
 import Icon from "@/components/Icon/Icon.vue";
+import { MotionDrawer } from "@/components/motion";
+import { useMotionPresets, sidebarCollapse } from "@/utils/motion";
 import ChordDictionaryModuleProvider from "./ChordDictionaryModuleProvider.vue";
 import ChordDictionaryToolbar from "./ChordDictionaryToolbar.vue";
 import ChordDictionaryChordMenu from "./ChordDictionaryChordMenu.vue";
@@ -132,6 +126,7 @@ const { t } = useI18n();
 const settingsStore = useSettingsStore();
 const router = useRouter();
 const route = useRoute();
+const { resolve } = useMotionPresets();
 
 const {
   chords,
@@ -190,6 +185,8 @@ const chordMenuProps = computed(() => ({
   hideDisabled: settingsStore.settings.chordDictionary.hideDisabled,
   filterChordsInKey: settingsStore.settings.chordDictionary.filterInKey,
 }));
+
+const sidebar = computed(() => resolve(sidebarCollapse));
 
 function navigateToChord(tonic: string | null, type: string | null) {
   if (!tonic || type === null) {
@@ -255,23 +252,3 @@ onUnmounted(() => {
   tabletMql?.removeEventListener("change", handleTabletChange);
 });
 </script>
-
-<style scoped>
-.drawer-overlay-enter-active,
-.drawer-overlay-leave-active {
-  transition: opacity 0.25s ease;
-}
-.drawer-overlay-enter-from,
-.drawer-overlay-leave-to {
-  opacity: 0;
-}
-
-.drawer-slide-enter-active,
-.drawer-slide-leave-active {
-  transition: transform 0.25s ease;
-}
-.drawer-slide-enter-from,
-.drawer-slide-leave-to {
-  transform: translateX(-100%);
-}
-</style>

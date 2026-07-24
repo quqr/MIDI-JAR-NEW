@@ -26,11 +26,24 @@ function brightenColor(hex: string, ratio: number): string {
 
 /**
  * Note block 渲染器：负责将活跃方块绘制到 PixiJS Container 上，
- * 包含命中线、实体方块与 Aura 发光效果（单 Graphics 批绘制）。
+ * 包含命中线、实体方块与 Aura 发光效果。
+ *
+ * Aura 使用 3 个独立 Graphics 层实现多层光晕：
+ * - outerLayer: 外层光晕（大模糊 + 低透明度）
+ * - innerLayer: 内层光晕（小模糊 + 中透明度）
+ * - baseLayer:  基底光晕（无模糊 + 全透明度）
+ * 每层拥有独立的 BlurFilter 实例，避免每帧创建和资源泄漏。
  */
 export class NoteBlockRenderer {
-  private container: Container | null = null;
-  private auraGraphics: Graphics = new Graphics();
+  /** Aura 外层光晕（大模糊） */
+  private auraOuterLayer: Graphics = new Graphics();
+  /** Aura 内层光晕（小模糊） */
+  private auraInnerLayer: Graphics = new Graphics();
+  /** Aura 基底层（无模糊） */
+  private auraBaseLayer: Graphics = new Graphics();
+  /** 持久化 BlurFilter 实例，避免每帧创建 */
+  private outerBlurFilter: BlurFilter = new BlurFilter({ strength: 0 });
+  private innerBlurFilter: BlurFilter = new BlurFilter({ strength: 0 });
   private blocksGraphics: Graphics = new Graphics();
   private hitLineGraphics: Graphics = new Graphics();
   private fpsText: Text | null = null;
@@ -46,13 +59,14 @@ export class NoteBlockRenderer {
   ) {}
 
   init(container: Container): void {
-    this.container = container;
     this.fpsText = new Text({
       text: "",
       style: { fontSize: 12, fill: "white", fontFamily: "monospace" },
     });
     container.addChild(
-      this.auraGraphics,
+      this.auraOuterLayer,
+      this.auraInnerLayer,
+      this.auraBaseLayer,
       this.blocksGraphics,
       this.hitLineGraphics,
       this.fpsText,
@@ -71,7 +85,9 @@ export class NoteBlockRenderer {
     // 1. 清空所有图层
     this.blocksGraphics.clear();
     this.hitLineGraphics.clear();
-    this.auraGraphics.clear();
+    this.auraOuterLayer.clear();
+    this.auraInnerLayer.clear();
+    this.auraBaseLayer.clear();
 
     // 2. 绘制命中线
     if (p.hitLine.visible) {
@@ -105,7 +121,12 @@ export class NoteBlockRenderer {
       const x = keyboardRenderer.midiToX(b.midi) - blockWidth / 2;
       const h = b.height <= 0 ? blockWidth : b.height;
       const y = b.y - h;
-      const baseColor = noteToColor(b.midi, p.colorScheme, b.hand, customColors);
+      const baseColor = noteToColor(
+        b.midi,
+        p.colorScheme,
+        b.hand,
+        customColors,
+      );
       const isTriggered = triggeredSet.has(b.midi);
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
@@ -130,7 +151,14 @@ export class NoteBlockRenderer {
 
     // 4. 批量渲染 aura 图层
     if (auraBlocks.length > 0 && auraCfg) {
+      // 有内容时设置 filter
+      this.auraOuterLayer.filters = [this.outerBlurFilter];
+      this.auraInnerLayer.filters = [this.innerBlurFilter];
       this.renderAuraLayers(auraBlocks, p.cornerRadius, time, auraCfg);
+    } else {
+      // 无内容时移除 filter，避免空 Graphics + filter 导致 alphaMode 错误
+      this.auraOuterLayer.filters = null;
+      this.auraInnerLayer.filters = null;
     }
   }
 
@@ -158,9 +186,13 @@ export class NoteBlockRenderer {
   }
 
   /**
-   * 批量渲染 Aura 图层（简化版：使用 BlurFilter + 半透明色块代替 Canvas 渐变）
-   * PixiJS Graphics 不支持 createConicGradient / createRadialGradient，
-   * 因此改用扩大尺寸的半透明色块 + BlurFilter 模拟光晕效果。
+   * 批量渲染 Aura 图层：使用 3 个独立 Graphics 层 + 持久化 BlurFilter
+   *
+   * PixiJS v8 中 filters 在渲染时统一应用，同一 Graphics 对象无法分段
+   * 应用不同滤镜。因此使用 3 个独立层：
+   * - auraOuterLayer: 外层光晕（大模糊 + 低透明度）
+   * - auraInnerLayer: 内层光晕（小模糊 + 中透明度）
+   * - auraBaseLayer:  基底光晕（无模糊 + 全透明度）
    */
   private renderAuraLayers(
     blocks: Array<{
@@ -189,8 +221,16 @@ export class NoteBlockRenderer {
     let innerAlpha: number;
 
     if (isGlow) {
-      outerBlur = this.glowProgress(pulseT, cfg.outerBlur, cfg.glowAfterPeakBlur);
-      outerAlpha = this.glowProgress(pulseT, outerA, cfg.glowAfterPeakOpacity / 100);
+      outerBlur = this.glowProgress(
+        pulseT,
+        cfg.outerBlur,
+        cfg.glowAfterPeakBlur,
+      );
+      outerAlpha = this.glowProgress(
+        pulseT,
+        outerA,
+        cfg.glowAfterPeakOpacity / 100,
+      );
       innerBlur = this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur);
       innerAlpha = this.glowProgress(pulseT, innerA, cfg.glowPeakOpacity / 100);
     } else {
@@ -200,11 +240,18 @@ export class NoteBlockRenderer {
       innerAlpha = innerA;
     }
 
-    // Layer 1: ::after（外层光晕）
-    this.auraGraphics.filters = [new BlurFilter({ strength: outerBlur })];
-    for (const blk of blocks) {
+    // 更新持久化 BlurFilter 的 strength（避免每帧创建新实例）
+    this.outerBlurFilter.strength = outerBlur;
+    this.innerBlurFilter.strength = innerBlur;
+
+    // 辅助 lambda：绘制单个色块
+    const drawBlock = (
+      gfx: Graphics,
+      blk: (typeof blocks)[0],
+      alpha: number,
+    ) => {
       if (auraR > 0) {
-        this.auraGraphics.roundRect(
+        gfx.roundRect(
           blk.x - p,
           blk.y - p,
           blk.w + p * 2,
@@ -212,51 +259,35 @@ export class NoteBlockRenderer {
           auraR,
         );
       } else {
-        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
+        gfx.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
       }
-      this.auraGraphics.fill({ color: blk.color, alpha: outerAlpha });
+      gfx.fill({ color: blk.color, alpha });
+    };
+
+    // Layer 1: 外层光晕（大模糊 + 低透明度）
+    for (const blk of blocks) {
+      drawBlock(this.auraOuterLayer, blk, outerAlpha);
     }
 
-    // Layer 2: ::before（内层光晕）
-    this.auraGraphics.filters = [new BlurFilter({ strength: innerBlur })];
+    // Layer 2: 内层光晕（小模糊 + 中透明度）
     for (const blk of blocks) {
-      if (auraR > 0) {
-        this.auraGraphics.roundRect(
-          blk.x - p,
-          blk.y - p,
-          blk.w + p * 2,
-          blk.h + p * 2,
-          auraR,
-        );
-      } else {
-        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
-      }
-      this.auraGraphics.fill({ color: blk.color, alpha: innerAlpha });
+      drawBlock(this.auraInnerLayer, blk, innerAlpha);
     }
 
-    // Layer 3: 基底层（无模糊）
-    this.auraGraphics.filters = [];
+    // Layer 3: 基底层（无模糊 + 全透明度）
     for (const blk of blocks) {
-      if (auraR > 0) {
-        this.auraGraphics.roundRect(
-          blk.x - p,
-          blk.y - p,
-          blk.w + p * 2,
-          blk.h + p * 2,
-          auraR,
-        );
-      } else {
-        this.auraGraphics.rect(blk.x - p, blk.y - p, blk.w + p * 2, blk.h + p * 2);
-      }
-      this.auraGraphics.fill({ color: blk.color, alpha: 1 });
+      drawBlock(this.auraBaseLayer, blk, 1);
     }
   }
 
   dispose(): void {
-    this.auraGraphics.destroy();
+    this.auraOuterLayer.destroy();
+    this.auraInnerLayer.destroy();
+    this.auraBaseLayer.destroy();
+    this.outerBlurFilter.destroy();
+    this.innerBlurFilter.destroy();
     this.blocksGraphics.destroy();
     this.hitLineGraphics.destroy();
     this.fpsText?.destroy();
-    this.container = null;
   }
 }

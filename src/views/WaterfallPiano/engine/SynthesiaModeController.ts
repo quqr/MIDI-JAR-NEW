@@ -36,7 +36,11 @@ export class SynthesiaModeController {
     private readonly getHeight: () => number,
     private readonly getParticleConfig: () => ParticleConfig | null,
     private readonly getMode: () => NoteBlockMode,
-    private readonly onNoteTrigger: Event<{ midi: number; velocity: number; hand?: string }>,
+    private readonly onNoteTrigger: Event<{
+      midi: number;
+      velocity: number;
+      hand?: string;
+    }>,
     private readonly onNoteEnd: Event<{ midi: number }>,
     private readonly noteKey: NoteKeyFn,
   ) {}
@@ -192,7 +196,11 @@ export class SynthesiaModeController {
         logger.debug(
           `Trigger: midi=${note.midi}, time=${note.time.toFixed(2)}s`,
         );
-        this.onNoteTrigger.internalInvoke({ midi: note.midi, velocity: note.velocity, hand: note.hand });
+        this.onNoteTrigger.internalInvoke({
+          midi: note.midi,
+          velocity: note.velocity,
+          hand: note.hand,
+        });
         frameTriggered++;
       }
 

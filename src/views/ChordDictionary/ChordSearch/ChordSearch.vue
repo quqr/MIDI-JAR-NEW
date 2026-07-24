@@ -4,7 +4,7 @@
     <div class="relative">
       <Icon
         name="search"
-        class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none"
+        class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/70 pointer-events-none"
         :size="16"
       />
       <input
@@ -59,7 +59,7 @@
             />
             <li
               v-if="!searchResults.length"
-              class="text-base-content/50 text-sm px-3 py-2"
+              class="text-base-content/70 text-hig-sm px-3 py-2"
             >
               {{ t("chordDictionary.noChordsFound") }}
             </li>
@@ -74,7 +74,7 @@
             />
             <li
               v-if="!previousChords.length"
-              class="text-base-content/50 text-sm px-3 py-2"
+              class="text-base-content/70 text-hig-sm px-3 py-2"
             >
               {{ t("chordDictionary.noChordsInHistory") }}
             </li>
@@ -108,7 +108,7 @@
           <div class="relative">
             <Icon
               name="search"
-              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50"
+              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70"
               :size="16"
             />
             <input
@@ -155,7 +155,7 @@
           />
           <li
             v-if="!searchResults.length"
-            class="text-base-content/50 text-sm px-3 py-2"
+            class="text-base-content/70 text-hig-sm px-3 py-2"
           >
             {{ t("chordDictionary.noChordsFound") }}
           </li>
@@ -170,7 +170,7 @@
           />
           <li
             v-if="!previousChords.length"
-            class="text-base-content/50 text-sm px-3 py-2"
+            class="text-base-content/70 text-hig-sm px-3 py-2"
           >
             {{ t("chordDictionary.noChordsInHistory") }}
           </li>

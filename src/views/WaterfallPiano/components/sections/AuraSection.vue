@@ -24,7 +24,9 @@
       />
 
       <!-- 第 1 层：Aura 区域 -->
-      <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+      <div
+        class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+      >
         Area
       </div>
       <SettingsRange
@@ -37,7 +39,9 @@
       />
 
       <!-- 第 2 层：双层光晕 -->
-      <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+      <div
+        class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+      >
         Glow Layers
       </div>
       <SettingsRange
@@ -74,7 +78,9 @@
       />
 
       <!-- 第 3 层：动画 -->
-      <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+      <div
+        class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+      >
         Animation
       </div>
       <SettingsRange
@@ -96,7 +102,9 @@
 
       <!-- 第 4 层：光束形状（仅 conic 样式） -->
       <template v-if="settings.style !== 'glow'">
-        <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+        <div
+          class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+        >
           Beam Shape
         </div>
         <SettingsRange
@@ -119,7 +127,9 @@
 
       <!-- 第 5 层：样式专属参数 -->
       <template v-if="settings.style === 'glow'">
-        <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+        <div
+          class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+        >
           Glow Settings
         </div>
         <SettingsRange
@@ -165,7 +175,9 @@
       </template>
 
       <template v-if="settings.style === 'rainbow'">
-        <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+        <div
+          class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+        >
           Rainbow Settings
         </div>
         <SettingsRange
@@ -179,7 +191,9 @@
       </template>
 
       <template v-if="settings.style === 'dual'">
-        <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+        <div
+          class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+        >
           Dual Settings
         </div>
         <SettingsRange
@@ -202,7 +216,9 @@
 
       <!-- 第 6 层：颜色 -->
       <template v-if="settings.style === 'custom'">
-        <div class="text-xs font-medium text-base-content/60 mt-2 mb-1 px-1">
+        <div
+          class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mt-2 mb-1 px-1"
+        >
           Colors
         </div>
         <SettingsColorPicker

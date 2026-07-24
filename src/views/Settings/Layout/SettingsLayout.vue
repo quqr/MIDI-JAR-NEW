@@ -7,7 +7,7 @@
       class="drawer-toggle"
     />
     <div class="drawer-content flex flex-col min-h-0">
-      <div class="navbar bg-base-300 w-full flex-none glass">
+      <div class="navbar w-full flex-none glass">
         <label
           for="settings-drawer"
           :aria-label="t('common.openSidebar')"
@@ -15,7 +15,7 @@
         >
           <Icon name="menu" :size="20" aria-hidden="true" />
         </label>
-        <div class="px-4 font-semibold">{{ $t("settings.title") }}</div>
+        <div class="px-4 text-hig-lg font-semibold">{{ $t("settings.title") }}</div>
         <div class="flex-1"></div>
         <button
           class="btn btn-sm btn-ghost gap-1 text-base-content/70 hover:text-error"
@@ -34,8 +34,10 @@
           <span class="hidden sm:inline">{{ t("settings.resetAll") }}</span>
         </button>
       </div>
-      <div class="flex-1 min-h-0 overflow-y-auto">
-        <RouterView />
+      <div class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+        <MotionPageTransition :route-key="route.path">
+          <RouterView />
+        </MotionPageTransition>
       </div>
     </div>
     <div class="drawer-side is-drawer-close:overflow-visible">
@@ -45,7 +47,7 @@
         :aria-label="t('common.closeMenu')"
       ></label>
       <div
-        class="flex min-h-full flex-col bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64"
+        class="flex min-h-full flex-col glass is-drawer-close:w-14 is-drawer-open:w-64"
       >
         <!-- 分组导航 -->
         <ul
@@ -55,26 +57,32 @@
           <template v-for="group in groupOrder" :key="group">
             <li
               v-if="getItemsForGroup(group).length > 0"
-              class="menu-title is-drawer-close:hidden text-xs font-semibold uppercase tracking-wider text-base-content/40 px-4 pt-3 pb-1"
+              class="menu-title is-drawer-close:hidden text-hig-xs font-semibold uppercase tracking-wider text-base-content/70 px-4 pt-3 pb-1"
             >
               {{ t(groupLabels[group]) }}
             </li>
             <li v-for="item in getItemsForGroup(group)" :key="item.to">
-              <RouterLink
-                :to="item.to"
-                class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
-                :class="
-                  isActive(item.to)
-                    ? 'active bg-primary text-primary-content font-bold'
-                    : 'text-base-content/70 hover:bg-base-300'
-                "
-                :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
-                :aria-current="isActive(item.to) ? 'page' : undefined"
-              >
-                <Icon :name="item.icon" :size="20" aria-hidden="true" />
-                <span class="is-drawer-close:hidden">{{
-                  t(item.labelKey)
-                }}</span>
+              <RouterLink :to="item.to" custom v-slot="{ href, navigate }">
+                <motion.a
+                  :href="href"
+                  class="rounded-hig-md text-hig-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                  :class="
+                    isActive(item.to)
+                      ? 'active bg-primary/10 text-primary font-semibold'
+                      : 'text-base-content/70 hover:bg-base-300'
+                  "
+                  :whileHover="isActive(item.to) ? {} : { x: 2 }"
+                  :whilePress="{ scale: 0.97 }"
+                  :transition="spring.soft"
+                  :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
+                  :aria-current="isActive(item.to) ? 'page' : undefined"
+                  @click="navigate"
+                >
+                  <Icon :name="item.icon" :size="20" aria-hidden="true" />
+                  <span class="is-drawer-close:hidden">{{
+                    t(item.labelKey)
+                  }}</span>
+                </motion.a>
               </RouterLink>
             </li>
           </template>
@@ -88,10 +96,12 @@
       aria-labelledby="reset-dialog-title"
     >
       <div class="modal-box">
-        <h3 id="reset-dialog-title" class="font-bold text-lg">
+        <h3 id="reset-dialog-title" class="text-hig-lg font-bold">
           {{ t("settings.resetConfirmTitle") }}
         </h3>
-        <p class="py-4">{{ resetConfirmMessage }}</p>
+        <p class="py-4 text-hig-sm text-base-content/70">
+          {{ resetConfirmMessage }}
+        </p>
         <div class="modal-action">
           <button class="btn btn-sm" @click="closeDialog">
             {{ t("common.cancel") }}
@@ -114,6 +124,9 @@ import { navItems, groupOrder, groupLabels } from "./constants";
 import type { SettingsGroup } from "./constants";
 import { useI18n } from "vue-i18n";
 import { useRoute, RouterLink } from "vue-router";
+import { motion } from "motion-v";
+import { MotionPageTransition } from "@/components/motion";
+import { spring } from "@/utils/motion";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
 import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";
@@ -197,7 +210,7 @@ function confirmReset() {
   if (resetTarget.value === "all") {
     settingsStore.resetSettings();
     WaterfallPianoStore.resetSettings();
-    themeStore.setTheme("light");
+    themeStore.setTheme("apple");
   } else if (
     currentSettingKey.value === "WaterfallPiano" ||
     currentSettingKey.value === "advancedDebug"

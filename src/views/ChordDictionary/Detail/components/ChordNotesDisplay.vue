@@ -1,9 +1,9 @@
 <template>
   <section
-    class="w-full min-w-0 p-3 bg-base-200 rounded-lg mb-4 overflow-visible"
+    class="w-full min-w-0 p-3 bg-base-200 rounded-hig-lg mb-4 overflow-visible"
   >
     <h3
-      class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2 px-1"
+      class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2 px-1"
     >
       {{ t("chordDictionary.notation") }}
     </h3>

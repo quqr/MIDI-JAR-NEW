@@ -2,28 +2,21 @@ import { describe, it, expect, vi } from "vitest";
 import { NoteBlockSystem } from "../engine/NoteBlockSystem";
 import { defaultWaterfallSettings } from "../constants";
 import type { ScheduledNote } from "../types";
+import type { Container } from "pixi.js";
 
-function mockCanvas(): HTMLCanvasElement {
-  const ctx = new Proxy(
-    {},
-    {
-      get: (_t, prop) => {
-        if (prop === "canvas") return null;
-        return () => {};
-      },
-    },
-  ) as unknown as CanvasRenderingContext2D;
+function mockContainer(): Container {
   return {
-    getContext: () => ctx,
-    style: {},
-    width: 0,
-    height: 0,
-  } as unknown as HTMLCanvasElement;
+    addChild: vi.fn(),
+    removeChild: vi.fn(),
+    y: 0,
+    label: "",
+    destroy: vi.fn(),
+  } as unknown as Container;
 }
 
 function initNbs(nbs: NoteBlockSystem): void {
   const s = structuredClone(defaultWaterfallSettings);
-  nbs.init(mockCanvas(), s.particles, s.aura);
+  nbs.init(mockContainer(), s.particles, s.aura);
 }
 
 describe("NoteBlockSystem", () => {
@@ -143,7 +136,11 @@ describe("NoteBlockSystem", () => {
       nbs.setTransportTime(1);
       nbs.update(0.016);
       expect(triggerSpy).toHaveBeenCalledTimes(1);
-      expect(triggerSpy).toHaveBeenCalledWith({ midi: 60, velocity: 100, hand: "right" });
+      expect(triggerSpy).toHaveBeenCalledWith({
+        midi: 60,
+        velocity: 100,
+        hand: "right",
+      });
     });
 
     it("推进 transportTime 到 note.time+duration → onNoteEnd 触发", () => {

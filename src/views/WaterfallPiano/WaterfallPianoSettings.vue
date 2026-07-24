@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 mx-auto">
+  <div class="max-w-[var(--hig-container-max)] mx-auto p-4 sm:p-6">
     <WaterfallSettingsContent />
   </div>
 </template>

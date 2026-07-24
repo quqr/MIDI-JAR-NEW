@@ -1,6 +1,6 @@
 <template>
-  <SettingsSection :on-reset="() => settingsStore.resetSetting('piano')">
-    <div class="grid grid-cols-1 gap-4 m-4">
+  <SettingsSection>
+    <div class="grid grid-cols-1 gap-hig-4 m-4">
       <SettingsCollapse
         :title="t('settings.pianoSettings.range')"
         icon="piano"

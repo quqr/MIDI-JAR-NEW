@@ -2,6 +2,10 @@
 // 输入: uTexture (速度场)
 // 额外纹理: uPressure (压力场)
 // Uniforms: texelSize
+//
+// 完全对齐原版 PavelDoGreat WebGL-Fluid-Simulation:
+//   velocity.xy -= vec2(R - L, T - B)
+// 注意：无 0.5 因子（原版也没有）
 
 export const gradientSubtractShader = `\
 precision highp float;
@@ -16,24 +20,18 @@ uniform vec2 texelSize;
 out vec4 finalColor;
 
 void main () {
-    // 计算相邻纹素的UV坐标
     vec2 vL = vTextureCoord - vec2(texelSize.x, 0.0);
     vec2 vR = vTextureCoord + vec2(texelSize.x, 0.0);
     vec2 vT = vTextureCoord + vec2(0.0, texelSize.y);
     vec2 vB = vTextureCoord - vec2(0.0, texelSize.y);
 
-    // 采样相邻压力
-    float pL = texture(uPressure, vL).x;
-    float pR = texture(uPressure, vR).x;
-    float pT = texture(uPressure, vT).x;
-    float pB = texture(uPressure, vB).x;
+    float L = texture(uPressure, vL).x;
+    float R = texture(uPressure, vR).x;
+    float T = texture(uPressure, vT).x;
+    float B = texture(uPressure, vB).x;
 
-    // 采样当前速度
     vec2 velocity = texture(uTexture, vTextureCoord).xy;
-
-    // 减去压力梯度: v = v - grad(p)
-    velocity -= vec2(pR - pL, pT - pB) * 0.5;
-
+    velocity.xy -= vec2(R - L, T - B);
     finalColor = vec4(velocity, 0.0, 1.0);
 }
 `;
