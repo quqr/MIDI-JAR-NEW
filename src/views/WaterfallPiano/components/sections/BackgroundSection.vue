@@ -34,6 +34,12 @@
         :options="fluidStyleOptions"
         @update:model-value="emit('update', 'fluidStyle', $event)"
       />
+      <SettingsSelect
+        :model-value="settings.fluidLayerPosition"
+        :label="t('WaterfallPiano.fluidLayerPosition')"
+        :options="fluidLayerPositionOptions"
+        @update:model-value="emit('update', 'fluidLayerPosition', $event)"
+      />
       <SettingsToggle
         :model-value="settings.fluidAdvanced"
         :label="t('WaterfallPiano.fluidAdvanced')"
@@ -53,7 +59,10 @@ import {
   SettingsRange,
   SettingsColorPicker,
 } from "@/components/Settings";
-import { createFluidStyleOptions } from "../../config/options";
+import {
+  createFluidStyleOptions,
+  createFluidLayerPositionOptions,
+} from "../../config/options";
 import type { BackgroundConfig } from "../../types";
 
 defineProps<{
@@ -66,4 +75,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const fluidStyleOptions = computed(() => createFluidStyleOptions(t));
+const fluidLayerPositionOptions = computed(() =>
+  createFluidLayerPositionOptions(t),
+);
 </script>

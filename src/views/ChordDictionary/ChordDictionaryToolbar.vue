@@ -113,7 +113,6 @@
 
       <div class="flex-1"></div>
 
-      <!-- Interactive mode toggle — Apple segmented control -->
       <div v-if="!disableUpdate" class="join">
         <button
           class="btn btn-xs join-item"

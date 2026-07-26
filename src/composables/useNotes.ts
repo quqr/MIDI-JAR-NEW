@@ -107,6 +107,7 @@ export function useNotes({
   }
 
   // ── User interaction ─────────────────────────────────────────────
+  /** 点击切换（持久）：再次点击同音则关闭 */
   function toggleNote(midi: number) {
     state.playedMidiNotes.value = [];
     state.sustainedMidiNotes.value = [];

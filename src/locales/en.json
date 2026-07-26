@@ -34,8 +34,7 @@
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
     "WaterfallPiano": "Waterfall Piano",
-    "Sampler": "Sampler",
-    "fluidCompare": "Fluid Compare"
+    "Sampler": "Sampler"
   },
   "home": {
     "coreFeatures": "Core Features",
@@ -52,8 +51,7 @@
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
-      "Sampler": "Sampler instruments — load and play various sound libraries",
-      "fluidCompare": "WebGL vs PixiJS fluid simulation comparison"
+      "Sampler": "Sampler instruments — load and play various sound libraries"
     }
   },
   "layout": {
@@ -438,8 +436,9 @@
       "alreadyExists": "Already exists",
       "fieldsContainErrors": "One or more fields contains errors",
       "skinOptions": {
-        "classic": "Classic",
-        "flat": "Flat"
+        "coral": "Coral",
+        "indigo": "Indigo",
+        "midnight": "Midnight"
       },
       "keyNameOptions": {
         "none": "None",
@@ -595,6 +594,16 @@
     "fluidStyle": "Fluid Style",
     "fluidAdvanced": "Advanced",
     "fluidAdvancedParams": "Fluid Advanced",
+    "fluidLayerPosition": "Fluid Layer Position",
+    "fluidLayerPositionTop": "Top (above waterfall)",
+    "fluidLayerPositionBottom": "Bottom (above background)",
+    "effects": "Post Effects",
+    "advancedBloomEnabled": "Enable Advanced Bloom",
+    "advancedBloomThreshold": "Bloom Threshold",
+    "advancedBloomBloomScale": "Bloom Scale",
+    "advancedBloomBlur": "Bloom Blur",
+    "backdropBlurEnabled": "Enable Backdrop Blur",
+    "backdropBlurStrength": "Backdrop Blur Strength",
     "splatRadius": "Splat Radius",
     "splatColorHue": "Splat Hue",
     "trailLength": "Trail Length",
@@ -613,7 +622,14 @@
     "colorJitter": "Color Jitter",
     "keyRange": "Key Range",
     "keyLabel": "Key Label",
+    "pianoTheme": "Theme",
+    "themeOptions": {
+      "coral": "Coral",
+      "indigo": "Indigo",
+      "midnight": "Midnight"
+    },
     "heightRatio": "Keyboard Height Ratio",
+    "blackKeyHeightRatio": "Black Key Height Ratio",
     "whiteKeyColor": "White Key Color",
     "blackKeyColor": "Black Key Color",
     "pressedKeyColor": "Pressed Color",

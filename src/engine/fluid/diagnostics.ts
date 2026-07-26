@@ -1,5 +1,5 @@
-// 流体对比测试 — 深度诊断类型定义
-// 用于双侧（WebGL / PixiJS）对称插桩，定位 PixiJS 版异常
+// 流体模拟深度诊断类型定义
+// 用于 FluidSolver / FluidSimulation 内部插桩，定位渲染异常
 
 /** Solver 各步骤耗时（ms） */
 export interface SolverStepTimings {
@@ -40,12 +40,10 @@ export interface PassStatus {
 /** Splat 参数链路追踪 */
 export interface SplatTrace {
   input: { x: number; y: number; dx: number; dy: number };
-  /** 仅 PixiJS 侧有：Y向上→Y向下 转换后的值 */
-  converted?: { x: number; y: number; dx: number; dy: number };
   color: { r: number; g: number; b: number };
 }
 
-/** 单侧完整诊断数据 */
+/** 完整诊断数据 */
 export interface FluidDiagnostics {
   stepTimings: SolverStepTimings;
   dyeSample: TextureSample;

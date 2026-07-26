@@ -126,7 +126,7 @@ describe("WaterfallEngine", () => {
   describe("生命周期", () => {
     it("init 不抛错，推进时间后 getPerformanceFps > 0", () => {
       expect(() =>
-        engine.init(mockPixiApp(), mockLayers(), cloneSettings()),
+        engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas()),
       ).not.toThrow();
       expect(engine.getPerformanceFps()).toBe(0);
       vi.advanceTimersByTime(16);
@@ -138,7 +138,7 @@ describe("WaterfallEngine", () => {
 
   describe("音符触发", () => {
     it("triggerNoteOn → soundEngine.noteOn + onNoteOn 事件被触发", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       const se = mockSoundEngine();
       engine.setSoundEngine(se);
       const onNoteOnSpy = vi.fn();
@@ -150,7 +150,7 @@ describe("WaterfallEngine", () => {
     });
 
     it("triggerNoteOff → soundEngine.noteOff + onNoteOff 事件被触发", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       const se = mockSoundEngine();
       engine.setSoundEngine(se);
       const onNoteOffSpy = vi.fn();
@@ -165,7 +165,7 @@ describe("WaterfallEngine", () => {
 
   describe("延音", () => {
     it("setSustain 委托到 soundEngine", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       const se = mockSoundEngine();
       engine.setSoundEngine(se);
       engine.setSustain(true);
@@ -179,7 +179,7 @@ describe("WaterfallEngine", () => {
     it("applySettings fluid ON → FluidSimulation 创建并 start", () => {
       const initSettings = cloneSettings();
       initSettings.background.fluidEnabled = false;
-      engine.init(mockPixiApp(), mockLayers(), initSettings);
+      engine.init(mockPixiApp(), mockLayers(), initSettings, mockCanvas());
       expect(fluidMock.instances).toHaveLength(0);
       const settings = cloneSettings();
       settings.background.fluidEnabled = true;
@@ -189,7 +189,7 @@ describe("WaterfallEngine", () => {
     });
 
     it("applySettings fluid OFF → destroy 调用", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       const onSettings = cloneSettings();
       onSettings.background.fluidEnabled = true;
       engine.applySettings(onSettings);
@@ -201,9 +201,21 @@ describe("WaterfallEngine", () => {
     });
   });
 
+  describe("键盘配置更新", () => {
+    it("applySettings 传播 keyboard 配置到 KeyboardRenderer.setKeyboardConfig", () => {
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
+      const newSettings = cloneSettings();
+      newSettings.keyboard.keyCornerRadius = 15;
+      newSettings.keyboard.blackKeyHeightRatio = 0.7;
+      const spy = vi.spyOn(engine.keyboardRendererRef, "setKeyboardConfig");
+      engine.applySettings(newSettings);
+      expect(spy).toHaveBeenCalledWith(newSettings.keyboard);
+    });
+  });
+
   describe("模式切换", () => {
     it("setMode 委托到 noteBlockSystem", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       expect(engine.noteBlockSystemRef.getMode()).toBe("realtime");
       engine.setMode("synthesia");
       expect(engine.noteBlockSystemRef.getMode()).toBe("synthesia");
@@ -212,14 +224,14 @@ describe("WaterfallEngine", () => {
 
   describe("尺寸", () => {
     it("resize 不抛错", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       expect(() => engine.resize(800, 600)).not.toThrow();
     });
   });
 
   describe("性能监控", () => {
     it("getPerformanceFps 初始为 0，推进后 > 0", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       expect(engine.getPerformanceFps()).toBe(0);
       vi.advanceTimersByTime(16);
       vi.advanceTimersByTime(16);
@@ -229,7 +241,7 @@ describe("WaterfallEngine", () => {
 
   describe("清理", () => {
     it("dispose 不抛错，dispose 后推进时间不再记录帧", () => {
-      engine.init(mockPixiApp(), mockLayers(), cloneSettings());
+      engine.init(mockPixiApp(), mockLayers(), cloneSettings(), mockCanvas());
       vi.advanceTimersByTime(16);
       const fpsAfterFrame = engine.getPerformanceFps();
       expect(fpsAfterFrame).toBeGreaterThan(0);

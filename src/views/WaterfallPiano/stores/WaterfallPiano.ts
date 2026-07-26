@@ -182,6 +182,7 @@ function loadSettings(): WaterfallPianoSettings {
         ),
       },
       aura: mergeSection(defaultWaterfallSettings.aura, stored.aura),
+      effects: mergeSection(defaultWaterfallSettings.effects, stored.effects),
     };
   }
   return deepClone(defaultWaterfallSettings);

@@ -13,3 +13,4 @@ export {
   resolveConfig,
 } from "./FluidConfig";
 export { HSVtoRGB } from "./FluidSolver";
+export type { IFluidSimulation } from "./IFluidSimulation";

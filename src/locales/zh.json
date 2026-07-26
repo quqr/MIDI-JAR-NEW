@@ -34,8 +34,7 @@
     "debugger": "调试器",
     "advancedDebug": "高级调试",
     "WaterfallPiano": "瀑布流钢琴",
-    "Sampler": "采样器",
-    "fluidCompare": "流体对比"
+    "Sampler": "采样器"
   },
   "home": {
     "coreFeatures": "核心功能",
@@ -52,8 +51,7 @@
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息",
       "WaterfallPiano": "瀑布流式钢琴演奏与可视化",
-      "Sampler": "采样器音源 — 加载和演奏各种音色",
-      "fluidCompare": "WebGL 与 PixiJS 流体模拟对比测试"
+      "Sampler": "采样器音源 — 加载和演奏各种音色"
     }
   },
   "layout": {
@@ -438,8 +436,9 @@
       "alreadyExists": "已存在",
       "fieldsContainErrors": "一个或多个字段包含错误",
       "skinOptions": {
-        "classic": "经典",
-        "flat": "扁平"
+        "coral": "珊瑚",
+        "indigo": "靛蓝",
+        "midnight": "午夜"
       },
       "keyNameOptions": {
         "none": "无",
@@ -595,6 +594,16 @@
     "fluidStyle": "流体风格",
     "fluidAdvanced": "高级参数",
     "fluidAdvancedParams": "流体高级参数",
+    "fluidLayerPosition": "流体层位置",
+    "fluidLayerPositionTop": "顶层（在瀑布流之上）",
+    "fluidLayerPositionBottom": "底层（在背景之上）",
+    "effects": "后期效果",
+    "advancedBloomEnabled": "启用高级泛光",
+    "advancedBloomThreshold": "泛光阈值",
+    "advancedBloomBloomScale": "泛光强度",
+    "advancedBloomBlur": "泛光模糊",
+    "backdropBlurEnabled": "启用背景模糊",
+    "backdropBlurStrength": "背景模糊强度",
     "splatRadius": "溅射半径",
     "splatColorHue": "溅射色相",
     "trailLength": "拖尾长度",
@@ -613,7 +622,14 @@
     "colorJitter": "颜色抖动",
     "keyRange": "键盘范围",
     "keyLabel": "按键标签",
+    "pianoTheme": "主题",
+    "themeOptions": {
+      "coral": "珊瑚",
+      "indigo": "靛蓝",
+      "midnight": "午夜"
+    },
     "heightRatio": "键盘高度比",
+    "blackKeyHeightRatio": "黑键高度比",
     "whiteKeyColor": "白键颜色",
     "blackKeyColor": "黑键颜色",
     "pressedKeyColor": "按下颜色",

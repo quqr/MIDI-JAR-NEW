@@ -94,7 +94,7 @@
       </div>
 
       <!-- Core: Piano keyboard -->
-      <CanvasPianoKeyboard
+      <PianoKeyboard
         class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-hig-lg border border-base-300"
         style="height: 140px"
         :targets="midi"
@@ -128,7 +128,7 @@
 
 <script setup lang="ts">
 import ChordName from "@/components/ChordName/ChordName.vue";
-import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import { PianoKeyboard } from "@/components/PianoKeyboard";
 import Icon from "@/components/Icon/Icon.vue";
 import { motion } from "motion-v";
 import { useMotionPresets, pageFade } from "@/utils/motion";

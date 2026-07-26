@@ -44,12 +44,14 @@ export interface KeyboardLayout {
 export class KeyboardLayoutCalculator {
   /**
    * 根据容器尺寸与 MIDI 范围计算完整键盘布局
+   * @param blackKeyHeightRatio - 黑键高度占白键高度的比例，默认 0.62
    */
   static calculateLayout(
     width: number,
     height: number,
     from: number,
     to: number,
+    blackKeyHeightRatio: number = BLACK_KEY_HEIGHT_RATIO,
   ): KeyboardLayout {
     const whiteKeys: number[] = [];
     for (let m = from; m <= to; m++) {
@@ -60,7 +62,8 @@ export class KeyboardLayoutCalculator {
     const count = Math.max(1, whiteKeys.length);
     const whiteKeyWidth = width / count;
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
-    const blackKeyHeight = height * BLACK_KEY_HEIGHT_RATIO;
+    const clampedRatio = Math.max(0.3, Math.min(0.8, blackKeyHeightRatio));
+    const blackKeyHeight = height * clampedRatio;
     return {
       whiteKeys,
       whiteKeyWidth,

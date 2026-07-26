@@ -1,7 +1,7 @@
 import type { BackgroundConfig, ParticleConfig } from "../types";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import type { NoteBlockSystem } from "./NoteBlockSystem";
-import type { IFluidSimulation } from "@/engine/fluid-pixi";
+import type { IFluidSimulation } from "@/engine/fluid";
 import { SplatPerturbation } from "@/engine/fluid/FluidConfig";
 import { noteToColor } from "./NoteColorMapper";
 import { hexToRgbNorm, hslToRgbNorm } from "./colorUtils";

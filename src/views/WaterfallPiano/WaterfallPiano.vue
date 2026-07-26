@@ -49,12 +49,6 @@
           </button>
         </div>
       </div>
-
-      <PlaybackPanel
-        :current-time="midi.currentTime.value"
-        :duration="midi.duration.value"
-        @seek="midi.onSeek"
-      />
     </div>
 
     <MidiDrawer
@@ -120,7 +114,6 @@ import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
 import { useMotionPresets, modal } from "@/utils/motion";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
-import PlaybackPanel from "./components/PlaybackPanel.vue";
 import MidiDrawer from "./components/MidiDrawer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import { useWaterfallPianoStore } from "./stores/WaterfallPiano";

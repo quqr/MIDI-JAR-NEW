@@ -28,6 +28,7 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
       blockCoverage: false,
       splatRadius: 0.0001,
     },
+    fluidLayerPosition: "bottom",
   },
   keyboard: {
     visible: true,
@@ -35,16 +36,18 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     customFrom: "A0",
     customTo: "C8",
     keyLabel: "none",
-    whiteKeyColor: "#f0f0f0",
-    blackKeyColor: "#1a1a1a",
-    pressedKeyColor: "#6366f1",
+    theme: "coral",
+    whiteKeyColor: "#FBF8F3",
+    blackKeyColor: "#2B2020",
+    pressedKeyColor: "#FF5C5C",
     heightRatio: 0.3,
-    keyCornerRadius: 0,
+    blackKeyHeightRatio: 0.62,
+    keyCornerRadius: 4,
     keyBorderWidth: 1,
-    keyBorderColor: "#333333",
+    keyBorderColor: "#EBE0D6",
     gapBlur: 6,
     separatorEnabled: true,
-    separatorColor: "#ffffff",
+    separatorColor: "#FFC4B0",
     separatorThickness: 2,
     staffVisible: false,
     synthesiaFlowDirection: "down",
@@ -120,6 +123,14 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     dualOffRatio: 40,
     dualOnRatio: 50,
   },
+  effects: {
+    advancedBloomEnabled: false,
+    advancedBloomThreshold: 0.5,
+    advancedBloomBloomScale: 1.0,
+    advancedBloomBlur: 4,
+    backdropBlurEnabled: false,
+    backdropBlurStrength: 4,
+  },
 };
 
 // ─── 键盘快捷键映射（A-K → C4-C5） ───
@@ -141,7 +152,7 @@ export const keyboardMap: Record<string, number> = {
 
 // ─── 持久化键 ───
 export const STORAGE_KEY = "waterfall-piano-settings";
-export const SETTINGS_VERSION = 5; // 递增此版本号可强制重置 localStorage 中的旧设置
+export const SETTINGS_VERSION = 6; // 递增此版本号可强制重置 localStorage 中的旧设置
 export const RECORDING_STORAGE_KEY = "waterfall-piano-recordings";
 
 // ─── MIDI 路由 namespace ───

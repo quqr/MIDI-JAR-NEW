@@ -1,5 +1,6 @@
 import type { WaterfallPianoSettings } from "../types";
 import { Application, Container } from "pixi.js";
+import { AdvancedBloomFilter, BackdropBlurFilter } from "pixi-filters";
 import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
@@ -7,11 +8,12 @@ import { PerformanceMonitor } from "./PerformanceMonitor";
 import { RenderLoop, type PhaseTimings } from "./RenderLoop";
 import { FluidSplatManager } from "./FluidSplatManager";
 import type { ISoundEngine } from "../audio/ISoundEngine";
-import { resolveConfig, type FluidSimulationConfig } from "@/engine/fluid";
 import {
-  PixiFluidSimulation,
+  FluidSimulation,
+  resolveConfig,
+  type FluidSimulationConfig,
   type IFluidSimulation,
-} from "@/engine/fluid-pixi";
+} from "@/engine/fluid";
 import { createLogger } from "@/utils/logger";
 import { waterfallPianoEvents } from "../events";
 
@@ -38,6 +40,12 @@ export class WaterfallEngine {
   private backgroundRenderer = new BackgroundRenderer();
   private perfMonitor = new PerformanceMonitor();
   private fluid: IFluidSimulation | null = null;
+  /** 流体模拟专用 canvas（WebGL 独立 context，层叠在 PixiJS canvas 之下） */
+  private fluidCanvas: HTMLCanvasElement | null = null;
+  /** AdvancedBloomFilter 实例（持久化，应用到 waterfall 层） */
+  private advancedBloomFilter: AdvancedBloomFilter | null = null;
+  /** BackdropBlurFilter 实例（持久化，应用到 fluid 层以模糊 background 层） */
+  private backdropBlurFilter: BackdropBlurFilter | null = null;
   private soundEngine: ISoundEngine | null = null;
   private renderLoop: RenderLoop | null = null;
   private splatManager = new FluidSplatManager({
@@ -115,7 +123,18 @@ export class WaterfallEngine {
       this.noteBlockSystem.onNoteEnd.add((args) =>
         this.onSynthesiaEnd(args.midi),
       );
-      this.maybeInitFluid(fluidCanvas);
+      if (fluidCanvas) {
+        this.fluidCanvas = fluidCanvas;
+      }
+      this.maybeInitFluid();
+      // 仅当流体在 bottom 层时跳过背景绘制（让流体穿透显示）
+      // top 层时背景正常绘制（流体在 PixiJS 之上，从流体的透明区域看到背景）
+      this.backgroundRenderer.setFluidActive(
+        settings.background.fluidEnabled &&
+          !!this.fluid &&
+          settings.background.fluidLayerPosition === "bottom",
+      );
+      this.applyEffects(settings);
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
       this.prevFluidEnabled = settings.background.fluidEnabled;
       this.bindPointerEvents();
@@ -166,6 +185,14 @@ export class WaterfallEngine {
     this.soundEngine = engine;
   }
 
+  /**
+   * 更新流体模拟专用 canvas 引用
+   * 用于运行时流体 canvas 挂载/卸载后，让 engine 拿到最新的 canvas 引用
+   */
+  setFluidCanvas(canvas: HTMLCanvasElement | null): void {
+    this.fluidCanvas = canvas;
+  }
+
   setSustain(enabled: boolean): void {
     this.soundEngine?.setSustain(enabled);
   }
@@ -181,6 +208,8 @@ export class WaterfallEngine {
     const oldFluidEnabled =
       this.prevFluidEnabled ?? settings.background.fluidEnabled;
     this.settings = settings;
+    // 传播键盘配置（圆角、黑键高度比、主题、颜色等）到渲染器
+    this.keyboardRenderer.setKeyboardConfig(settings.keyboard);
     // 保存数值副本供下次比较
     this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
     this.prevFluidEnabled = settings.background.fluidEnabled;
@@ -198,6 +227,9 @@ export class WaterfallEngine {
     this.backgroundRenderer.setBackgroundConfig(settings.background);
     if (settings.background.fluidEnabled && !oldFluidEnabled) {
       this.maybeInitFluid();
+      this.backgroundRenderer.setFluidActive(
+        !!this.fluid && settings.background.fluidLayerPosition === "bottom",
+      );
       // 流体开启后需要重新布局确保尺寸正确
       if (this.width > 0 && this.height > 0) {
         this.resize(this.width, this.height);
@@ -209,9 +241,76 @@ export class WaterfallEngine {
     ) {
       this.fluid.destroy();
       this.fluid = null;
+      this.backgroundRenderer.setFluidActive(false);
     } else if (this.fluid && settings.background.fluidEnabled) {
       this.fluid.updateConfig(this.buildFluidConfig());
+      // 流体层位置变化时同步背景跳过状态
+      this.backgroundRenderer.setFluidActive(
+        settings.background.fluidLayerPosition === "bottom",
+      );
     }
+    this.applyEffects(settings);
+  }
+
+  /**
+   * 应用后期效果（AdvancedBloomFilter + BackdropBlurFilter）
+   *
+   * - AdvancedBloomFilter 应用到 waterfall 层：使音符方块/光晕产生泛光
+   * - BackdropBlurFilter 应用到 fluid 层（empty Container）：模糊其背后的 background 层
+   *
+   * 滤镜实例持久化，仅在启用/禁用状态切换时创建/销毁，参数变更原地更新。
+   */
+  private applyEffects(settings: WaterfallPianoSettings): void {
+    if (!this.layers) return;
+    const cfg = settings.effects;
+
+    // ── AdvancedBloomFilter（waterfall 层） ──
+    if (cfg.advancedBloomEnabled) {
+      if (!this.advancedBloomFilter) {
+        this.advancedBloomFilter = new AdvancedBloomFilter({
+          threshold: cfg.advancedBloomThreshold,
+          bloomScale: cfg.advancedBloomBloomScale,
+          blur: cfg.advancedBloomBlur,
+        });
+      } else {
+        this.advancedBloomFilter.threshold = cfg.advancedBloomThreshold;
+        this.advancedBloomFilter.bloomScale = cfg.advancedBloomBloomScale;
+        this.advancedBloomFilter.blur = cfg.advancedBloomBlur;
+      }
+      this.layers.waterfall.filters = this.composeWaterfallFilters(
+        this.advancedBloomFilter,
+      );
+    } else if (this.advancedBloomFilter) {
+      this.layers.waterfall.filters = this.composeWaterfallFilters(null);
+      this.advancedBloomFilter.destroy();
+      this.advancedBloomFilter = null;
+    }
+
+    // ── BackdropBlurFilter（fluid 层，模糊 background 层） ──
+    if (cfg.backdropBlurEnabled) {
+      if (!this.backdropBlurFilter) {
+        this.backdropBlurFilter = new BackdropBlurFilter({
+          strength: cfg.backdropBlurStrength,
+        });
+        this.layers.fluid.filters = [this.backdropBlurFilter];
+      } else {
+        this.backdropBlurFilter.strength = cfg.backdropBlurStrength;
+      }
+    } else if (this.backdropBlurFilter) {
+      this.layers.fluid.filters = null;
+      this.backdropBlurFilter.destroy();
+      this.backdropBlurFilter = null;
+    }
+  }
+
+  /**
+   * 组合 waterfall 层的 filters 数组（AdvancedBloomFilter 由本引擎管理，
+   * 其余由 NoteBlockRenderer 通过 setWaterfallFilterCompanion 注入）
+   */
+  private composeWaterfallFilters(
+    bloom: AdvancedBloomFilter | null,
+  ): Array<AdvancedBloomFilter> | null {
+    return bloom ? [bloom] : null;
   }
 
   /**
@@ -254,7 +353,7 @@ export class WaterfallEngine {
       this.layers.keyboard.y = waterfallHeight;
     }
     if (this.fluid) {
-      this.fluid.resize(width, height);
+      this.fluid.resize();
     }
   }
 
@@ -274,16 +373,23 @@ export class WaterfallEngine {
   }
 
   /**
-   * 在设置启用流体且尚未创建实例时，初始化 PixiFluidSimulation 并启动
+   * 在设置启用流体且尚未创建实例时，初始化 WebGL FluidSimulation 并启动
+   *
+   * WebGL 版本自带 canvas + GL context，渲染到独立的 canvas（由外部以 absolute
+   * 定位层叠在 PixiJS canvas 之下），不参与 PixiJS stage 渲染。
    */
-  private maybeInitFluid(_fluidCanvas?: HTMLCanvasElement): void {
+  private maybeInitFluid(): void {
     if (!this.settings) return;
     if (!this.settings.background.fluidEnabled) return;
     const config = this.buildFluidConfig();
     if (this.fluid || (config.SIM_RESOLUTION ?? 0) <= 0) return;
-    if (!this.app || !this.layers) return;
+    const canvas = this.fluidCanvas;
+    if (!canvas) {
+      logger.warn("Fluid enabled but no fluid canvas provided");
+      return;
+    }
     try {
-      this.fluid = new PixiFluidSimulation(this.app, this.layers.fluid, config);
+      this.fluid = new FluidSimulation(canvas, config);
       this.fluid.start();
     } catch (e) {
       logger.error({ err: e }, "Fluid initialization failed");

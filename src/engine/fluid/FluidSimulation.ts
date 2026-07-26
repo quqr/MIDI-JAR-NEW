@@ -37,8 +37,9 @@ import {
 } from "./shaders";
 import { DEFAULT_CONFIG } from "./FluidConfig";
 import type { FluidSimulationConfig } from "./FluidConfig";
-import type { FluidDiagnostics, SplatTrace, PassStatus } from "@/views/FluidCompare/diagnostics";
-import { EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
+import type { FluidDiagnostics, SplatTrace, PassStatus } from "./diagnostics";
+import { EMPTY_SAMPLE } from "./diagnostics";
+import type { IFluidSimulation } from "./IFluidSimulation";
 
 interface SplatColor {
   r: number;
@@ -67,7 +68,7 @@ function makeProgram(
   );
 }
 
-export class FluidSimulation {
+export class FluidSimulation implements IFluidSimulation {
   private canvas: HTMLCanvasElement;
   private gl: WebGLRenderingContext;
   private blit: (target: FBO | null, clear?: boolean) => void;
@@ -329,7 +330,7 @@ export class FluidSimulation {
   /** 获取诊断数据（采样节流：每 30 帧 readPixels 一次） */
   getDiagnostics(): FluidDiagnostics {
     this.diagnosticsFrameCounter++;
-    if (this.diagnosticsFrameCounter >= 30) {
+    if (this.diagnosticsFrameCounter >= 3) {
       this.diagnosticsFrameCounter = 0;
       this.cachedDyeSample = this.solver.sampleDyeCenter();
     }

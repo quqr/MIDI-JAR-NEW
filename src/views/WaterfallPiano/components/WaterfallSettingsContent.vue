@@ -23,6 +23,10 @@
             })
         "
       />
+      <EffectsSection
+        :settings="settings.effects"
+        @update="(key, value) => store.updateSetting('effects', key, value)"
+      />
       <KeyboardSection
         :settings="settings.keyboard"
         @update="(key, value) => store.updateSetting('keyboard', key, value)"
@@ -43,6 +47,7 @@ import ParticlesSection from "./sections/ParticlesSection.vue";
 import AuraSection from "./sections/AuraSection.vue";
 import BackgroundSection from "./sections/BackgroundSection.vue";
 import FluidAdvancedSection from "./sections/FluidAdvancedSection.vue";
+import EffectsSection from "./sections/EffectsSection.vue";
 import KeyboardSection from "./sections/KeyboardSection.vue";
 import MidiFileSection from "./sections/MidiFileSection.vue";
 

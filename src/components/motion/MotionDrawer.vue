@@ -67,9 +67,6 @@ const panel = computed(() =>
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Apple 毛玻璃材质：半透明基色 + blur20 saturate180% */
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   background-color: color-mix(in oklch, var(--color-base-100) 80%, transparent);
   box-shadow: var(--shadow-hig-xl);
 }

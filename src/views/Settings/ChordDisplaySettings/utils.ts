@@ -21,8 +21,9 @@ export const fields = {
   keyboard: {
     skin: {
       choices: [
-        { value: "classic", label: "Classic" },
-        { value: "flat", label: "Flat" },
+        { value: "coral", label: "Coral" },
+        { value: "indigo", label: "Indigo" },
+        { value: "midnight", label: "Midnight" },
       ],
     },
     keyName: {

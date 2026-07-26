@@ -162,7 +162,7 @@ export function useChordDetail() {
 
   // 暂时使用默认键盘设置，待后续恢复键盘设置功能
   const defaultKeyboardSettings: KeyboardSettings = {
-    skin: "classic",
+    skin: "coral",
     from: "C3",
     to: "C5",
     label: "pitchClass",

@@ -190,7 +190,7 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
   displayAltChords: true,
   displayIntervals: true,
   keyboard: {
-    skin: "classic",
+    skin: "coral",
     from: "C3",
     to: "C5",
     label: "pitchClass",
@@ -207,9 +207,9 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
       bevel: true,
     },
     colors: {
-      white: "#ffffff",
-      black: "#000000",
-      played: "#315bce",
+      white: "#FBF8F3",
+      black: "#2B2020",
+      played: "#FF5C5C",
       wrapped: "#1d367b",
       sustained: "#808080",
     },

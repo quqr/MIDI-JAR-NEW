@@ -5,12 +5,12 @@
     style="line-height: 1.2; vertical-align: baseline"
   >
     <!-- 根音 -->
-    <span class="font-bold text-lg">
+    <span class="font-bold text-xl">
       {{ latinSharpsFlats ? tonicPart : formatSharpsFlats(tonicPart) }}
     </span>
 
     <!-- 质量 + 上标扩展 -->
-    <span class="text-base font-bold italic" style="line-height: inherit">
+    <span class="text-lg font-bold italic" style="line-height: inherit">
       <span
         :class="{ 'rounded bg-error/20': highlightAlterations }"
         style="margin: 0 0.05em"
@@ -20,7 +20,7 @@
 
       <template v-for="(part, index) in restTokens" :key="`${part}_${index}`">
         <sup
-          class="text-xs italic"
+          class="text-sm italic"
           :class="{ 'rounded bg-info/20': highlightAlterations }"
           style="margin: 0 0.05em; font-weight: inherit"
         >
@@ -32,7 +32,7 @@
     <!-- 低音（可选） -->
     <span
       v-if="!hideRoot && chord?.root"
-      class="text-xs"
+      class="text-sm"
       style="line-height: inherit; opacity: 0.5; margin-left: 0.25em"
     >
       /{{ latinSharpsFlats ? chord.root : formatSharpsFlats(chord.root) }}

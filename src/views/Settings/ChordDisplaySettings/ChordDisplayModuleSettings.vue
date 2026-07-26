@@ -179,37 +179,35 @@
             updateNestedSetting('keyboard.sizes.height', $event)
           "
         />
-        <template v-if="moduleSettings.keyboard.skin === 'classic'">
-          <SettingsRange
-            :model-value="moduleSettings.keyboard.sizes.ratio"
-            :label="t('settings.chordDisplaySettings.blackKeyRatio')"
-            :description="t('settings.chordDisplaySettings.blackKeyRatioHint')"
-            :min="0.1"
-            :max="0.9"
-            :step="0.025"
-            @update:model-value="
-              updateNestedSetting('keyboard.sizes.ratio', $event)
-            "
-          />
-          <SettingsRange
-            :model-value="moduleSettings.keyboard.sizes.radius"
-            :label="t('settings.chordDisplaySettings.keyBorderRadius')"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            @update:model-value="
-              updateNestedSetting('keyboard.sizes.radius', $event)
-            "
-          />
-          <SettingsToggle
-            :model-value="moduleSettings.keyboard.sizes.bevel"
-            :label="t('settings.chordDisplaySettings.keyBevel')"
-            :description="t('settings.chordDisplaySettings.keyBevelHint')"
-            @update:model-value="
-              updateNestedSetting('keyboard.sizes.bevel', $event)
-            "
-          />
-        </template>
+        <SettingsRange
+          :model-value="moduleSettings.keyboard.sizes.ratio"
+          :label="t('settings.chordDisplaySettings.blackKeyRatio')"
+          :description="t('settings.chordDisplaySettings.blackKeyRatioHint')"
+          :min="0.1"
+          :max="0.9"
+          :step="0.025"
+          @update:model-value="
+            updateNestedSetting('keyboard.sizes.ratio', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="moduleSettings.keyboard.sizes.radius"
+          :label="t('settings.chordDisplaySettings.keyBorderRadius')"
+          :min="0"
+          :max="1"
+          :step="0.05"
+          @update:model-value="
+            updateNestedSetting('keyboard.sizes.radius', $event)
+          "
+        />
+        <SettingsToggle
+          :model-value="moduleSettings.keyboard.sizes.bevel"
+          :label="t('settings.chordDisplaySettings.keyBevel')"
+          :description="t('settings.chordDisplaySettings.keyBevelHint')"
+          @update:model-value="
+            updateNestedSetting('keyboard.sizes.bevel', $event)
+          "
+        />
       </SettingsCollapse>
 
       <SettingsCollapse

@@ -47,14 +47,6 @@
           </MotionListItem>
           <MotionListItem>
             <ModuleCard
-              to="/fluid-compare"
-              :title="$t('nav.fluidCompare')"
-              :description="$t('home.moduleDescriptions.fluidCompare')"
-              icon="mdi-water"
-            />
-          </MotionListItem>
-          <MotionListItem>
-            <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
               :title="$t('nav.routing')"

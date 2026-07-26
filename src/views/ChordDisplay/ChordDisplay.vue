@@ -19,13 +19,11 @@
           />
         </div>
 
-        <div
-          class="flex-1 flex flex-col gap-6 md:gap-20 items-center justify-center"
-        >
+        <div class="flex-1 grid grid-rows-[6fr_1fr_3fr]">
           <div
             v-if="displayChord"
             id="chord"
-            class="w-full flex items-center justify-center text-hig-3xl md:text-hig-4xl font-bold group relative"
+            class="w-full h-full flex items-center justify-center text-hig-3xl md:text-hig-4xl font-bold group relative"
           >
             <AnimatePresence>
               <motion.div
@@ -48,14 +46,14 @@
           <div
             v-if="displayName"
             id="name"
-            class="w-full text-center text-hig-lg font-semibold"
+            class="w-full h-full flex items-center justify-center text-center text-hig-lg font-semibold"
           >
             {{ chords[0]?.name }}
           </div>
           <div
             v-if="displayIntervals"
             id="intervals"
-            class="w-full flex items-center justify-center group relative"
+            class="w-full h-full flex items-center justify-center group relative"
           >
             <ChordIntervals
               :intervals="chords[0]?.intervals ?? []"
@@ -111,7 +109,7 @@
       v-if="displayKeyboard"
       class="flex-shrink-0 rounded-hig-lg p-hig-2 group relative min-h-[150px] md:min-h-[200px]"
     >
-      <CanvasPianoKeyboard
+      <PianoKeyboard
         id="keyboard"
         class="w-full h-full"
         :sustained="sustainedMidiNotes"
@@ -120,10 +118,8 @@
         :chord="chords[0] ?? undefined"
         :keyboard="keyboard"
         :clickable="true"
-        :sustain-mode="true"
+        :sustain-mode="false"
         @note-click="onNoteClick"
-        @note-on="onNoteOn"
-        @note-off="onNoteOff"
       />
     </div>
 
@@ -137,7 +133,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { motion, AnimatePresence } from "motion-v";
-import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import { PianoKeyboard } from "@/components/PianoKeyboard";
 import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";
 import { ChordIntervals } from "@/components/ChordIntervals/";
@@ -212,19 +208,15 @@ const {
 });
 
 function onNoteClick(midi: number) {
-  toggleNote(midi);
-}
-
-function onNoteOn(midi: number) {
+  // toggleNote 是持久切换：点击同音则关闭，否则加入
+  const wasOn = clickedMidiNotes.value.includes(midi);
   toggleNote(midi);
   if (samplerStore.soundEnabled && samplerStore.isReady) {
-    samplerService.noteOn(midi, 100);
-  }
-}
-
-function onNoteOff(midi: number) {
-  if (samplerStore.soundEnabled && samplerStore.isReady) {
-    samplerService.noteOff(midi);
+    if (!wasOn) {
+      samplerService.noteOn(midi, 100);
+    } else {
+      samplerService.noteOff(midi);
+    }
   }
 }
 

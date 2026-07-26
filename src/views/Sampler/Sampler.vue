@@ -8,7 +8,7 @@ import { useScalePlayer } from "@/composables/useScalePlayer";
 import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { useSettingsStore } from "@/stores/settings";
 import { Icon } from "@/components/Icon";
-import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import { PianoKeyboard } from "@/components/PianoKeyboard";
 import { motion } from "motion-v";
 import { cardHover } from "@/utils/motion";
 import { MotionStaggerList, MotionListItem } from "@/components/motion";
@@ -321,7 +321,7 @@ onUnmounted(() => {
         <div
           class="glass border-t border-base-300 px-2 py-1 h-[120px]"
         >
-          <CanvasPianoKeyboard
+          <PianoKeyboard
             :keyboard="keyboardSettings"
             :played="[...activeNotes]"
             :clickable="true"

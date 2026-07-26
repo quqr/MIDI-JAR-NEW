@@ -1,6 +1,6 @@
-// ─── 流体模拟统一接口：兼容旧 WebGL FluidSimulation 和新 PixiFluidSimulation ───
+// ─── 流体模拟统一接口：供 FluidSplatManager 和 WaterfallEngine 使用，解耦具体实现 ───
 
-import type { FluidSimulationConfig } from "../fluid/FluidConfig";
+import type { FluidSimulationConfig } from "./FluidConfig";
 
 /**
  * 流体模拟统一接口
@@ -44,5 +44,5 @@ export interface IFluidSimulation {
   isPaused(): boolean;
 
   /** 适配屏幕尺寸 */
-  resize(screenWidth?: number, screenHeight?: number): void;
+  resize(): void;
 }

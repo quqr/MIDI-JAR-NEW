@@ -210,7 +210,7 @@ function confirmReset() {
   if (resetTarget.value === "all") {
     settingsStore.resetSettings();
     WaterfallPianoStore.resetSettings();
-    themeStore.setTheme("apple");
+    themeStore.setTheme("light");
   } else if (
     currentSettingKey.value === "WaterfallPiano" ||
     currentSettingKey.value === "advancedDebug"

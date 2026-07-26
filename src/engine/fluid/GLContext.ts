@@ -28,7 +28,7 @@ export function getWebGLContext(canvas: HTMLCanvasElement): GLContextResult {
     alpha: true,
     depth: false,
     stencil: false,
-    antialias: false,
+    antialias: true,
     preserveDrawingBuffer: false,
   };
 

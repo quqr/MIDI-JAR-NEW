@@ -1,4 +1,5 @@
-import type { ColorScheme } from "../types";
+import type { ColorScheme, FluidLayerPosition } from "../types";
+import type { PianoTheme } from "./pianoThemes";
 
 /** vue-i18n 翻译函数的最小签名 */
 export type TranslateFunction = (key: string) => string;
@@ -30,6 +31,16 @@ export function createFluidStyleOptions(_t: TranslateFunction): OptionItem[] {
     { value: "gentle", label: "Gentle" },
     { value: "standard", label: "Standard" },
     { value: "turbulent", label: "Turbulent" },
+  ];
+}
+
+/** 流体画布层叠位置选项 */
+export function createFluidLayerPositionOptions(
+  t: TranslateFunction,
+): OptionItem<FluidLayerPosition>[] {
+  return [
+    { value: "top", label: t("WaterfallPiano.fluidLayerPositionTop") },
+    { value: "bottom", label: t("WaterfallPiano.fluidLayerPositionBottom") },
   ];
 }
 
@@ -70,5 +81,14 @@ export function createAuraTargetOptions(t: TranslateFunction): OptionItem[] {
     { value: "triggered", label: t("WaterfallPiano.auraTargetTriggered") },
     { value: "all", label: t("WaterfallPiano.auraTargetAll") },
     { value: "off", label: t("WaterfallPiano.auraTargetOff") },
+  ];
+}
+
+/** 钢琴主题选项 */
+export function createPianoThemeOptions(t: TranslateFunction): OptionItem<PianoTheme>[] {
+  return [
+    { value: "coral", label: t("WaterfallPiano.themeOptions.coral") },
+    { value: "indigo", label: t("WaterfallPiano.themeOptions.indigo") },
+    { value: "midnight", label: t("WaterfallPiano.themeOptions.midnight") },
   ];
 }

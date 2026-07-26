@@ -1,3 +1,5 @@
+import type { PianoTheme } from "./config/pianoThemes";
+
 // ─── 颜色方案 ───
 export type ColorScheme =
   | "pitch"
@@ -31,6 +33,11 @@ export type FluidQuality = "low" | "medium" | "high";
 
 // ─── 流体模拟风格预设 ───
 export type FluidStyle = "gentle" | "standard" | "turbulent";
+
+// ─── 流体画布层叠位置 ───
+// "top": 流体 canvas 在 PixiJS canvas 之上（染料会遮蔽瀑布流/键盘）
+// "bottom": 流体 canvas 在 PixiJS canvas 之下（背景透明，流体作为底层背景穿透显示）
+export type FluidLayerPosition = "top" | "bottom";
 
 // ─── Aura 样式类型 ───
 export type AuraStyle = "none" | "glow" | "rainbow" | "dual" | "custom";
@@ -117,6 +124,20 @@ export interface BackgroundConfig {
   fluidStyle: FluidStyle;
   fluidAdvanced: boolean;
   fluidParams: import("@/engine/fluid").FluidAdvancedParams;
+  /** 流体 canvas 相对 PixiJS canvas 的层叠位置 */
+  fluidLayerPosition: FluidLayerPosition;
+}
+
+/** 后期效果配置（基于 pixi-filters） */
+export interface EffectsConfig {
+  // AdvancedBloomFilter：应用到 waterfall 层，使音符方块/光晕产生泛光
+  advancedBloomEnabled: boolean;
+  advancedBloomThreshold: number; // 0-1，亮度阈值
+  advancedBloomBloomScale: number; // 0-5，泛光强度
+  advancedBloomBlur: number; // 0-20，泛光模糊
+  // BackdropBlurFilter：应用到 fluid 层，模糊其背后的 background 层
+  backdropBlurEnabled: boolean;
+  backdropBlurStrength: number; // 0-20，模糊强度
 }
 
 /** 钢琴键盘的布局、外观与交互配置 */
@@ -126,10 +147,14 @@ export interface KeyboardConfig {
   customFrom: string;
   customTo: string;
   keyLabel: KeyLabel;
+  /** 钢琴主题预设；设置后渲染器使用主题色板覆盖各独立颜色字段 */
+  theme?: PianoTheme;
   whiteKeyColor: string;
   blackKeyColor: string;
   pressedKeyColor: string;
   heightRatio: number;
+  /** 黑键高度占白键高度的比例 (0.3-0.8) */
+  blackKeyHeightRatio: number;
   keyCornerRadius: number;
   keyBorderWidth: number;
   keyBorderColor: string;
@@ -191,7 +216,7 @@ export interface SoundEngineUserConfig {
   modulationEnvelope: SynthEnvelopeConfig;
 }
 
-/** 瀑布流钢琴的完整设置项，由六个子配置段组成 */
+/** 瀑布流钢琴的完整设置项，由七个子配置段组成 */
 export interface WaterfallPianoSettings {
   particles: ParticleConfig;
   background: BackgroundConfig;
@@ -199,6 +224,7 @@ export interface WaterfallPianoSettings {
   midiFile: MidiFileConfig;
   sound: SoundEngineUserConfig;
   aura: AuraConfig;
+  effects: EffectsConfig;
 }
 
 /** 实时录制产生的单个音符记录 */

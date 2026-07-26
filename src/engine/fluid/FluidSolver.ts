@@ -12,8 +12,8 @@ import {
   getResolution,
 } from "./FramebufferManager";
 import type { FluidSimulationConfig } from "./FluidConfig";
-import type { SolverStepTimings, TextureSample } from "@/views/FluidCompare/diagnostics";
-import { EMPTY_TIMINGS, EMPTY_SAMPLE } from "@/views/FluidCompare/diagnostics";
+import type { SolverStepTimings, TextureSample } from "./diagnostics";
+import { EMPTY_TIMINGS, EMPTY_SAMPLE } from "./diagnostics";
 
 export interface RGBColor {
   r: number;
@@ -468,23 +468,28 @@ export class FluidSolver {
     return this.lastStepTimings;
   }
 
-  /** 采样 dye 纹理中心像素 */
+  /** 采样 dye 纹理中心像素（用于诊断；非主流程，静默失败） */
   sampleDyeCenter(): TextureSample {
-    if (!this.dye || !this.dye.read) return { ...EMPTY_SAMPLE };
+    if (!this.dye) return { ...EMPTY_SAMPLE };
     const gl = this.gl;
-    const fbo = this.dye.read;
-    const cx = Math.floor(this.dye.width / 2);
-    const cy = Math.floor(this.dye.height / 2);
+    const wgl2 = gl as WebGL2RenderingContext;
+    const read = this.dye.read;
     try {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo.fbo);
-      const pixels = new Uint8Array(4);
-      gl.readPixels(cx, cy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-      return {
-        r: pixels[0] / 255,
-        g: pixels[1] / 255,
-        b: pixels[2] / 255,
-        a: pixels[3] / 255,
+      gl.bindFramebuffer(gl.FRAMEBUFFER, read.fbo);
+      gl.viewport(0, 0, read.width, read.height);
+      const px = Math.floor(read.width / 2);
+      const py = Math.floor(read.height / 2);
+      const buf = new Uint16Array(4);
+      wgl2.readPixels(px, py, 1, 1, wgl2.RGBA, wgl2.HALF_FLOAT, buf);
+      const decode = (h: number): number => {
+        const s = (h & 0x8000) >> 15;
+        const e = (h & 0x7c00) >> 10;
+        const f = h & 0x03ff;
+        if (e === 0) return (s ? -1 : 1) * Math.pow(2, -14) * (f / 1024);
+        if (e === 0x1f) return f ? NaN : (s ? -Infinity : Infinity);
+        return (s ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / 1024);
       };
+      return { r: decode(buf[0]), g: decode(buf[1]), b: decode(buf[2]), a: decode(buf[3]) };
     } catch {
       return { ...EMPTY_SAMPLE };
     }

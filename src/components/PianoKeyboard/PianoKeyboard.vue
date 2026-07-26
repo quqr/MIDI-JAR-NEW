@@ -3,7 +3,16 @@ import { ref, onMounted, onUnmounted, watch, watchEffect } from "vue";
 import { Application, Container } from "pixi.js";
 import { KeyboardRenderer } from "@/views/WaterfallPiano/engine/KeyboardRenderer";
 import type { KeyboardSettings } from "@/types/settings";
+import { Event } from "@/utils/delegate";
 import { getCanvasDpr, chordNotesToMidi, toKeyboardConfig } from "./utils";
+
+// ============================================================================
+// 事件参数类型定义（供 Event 系统使用）
+// ============================================================================
+
+export interface NoteEventArgs {
+  midi: number;
+}
 
 // ── Props ──
 
@@ -30,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
   id: undefined,
   className: undefined,
   keyboard: () => ({
-    skin: "classic",
+    skin: "coral",
     from: "C3",
     to: "B5",
     label: "none",
@@ -42,9 +51,9 @@ const props = withDefaults(defineProps<Props>(), {
     wrap: false,
     sizes: { radius: 1, height: 5, ratio: 0.6, bevel: true },
     colors: {
-      white: "#ffffff",
-      black: "#000000",
-      played: "#ff0000",
+      white: "#FBF8F3",
+      black: "#2B2020",
+      played: "#FF5C5C",
       wrapped: "#800000",
       sustained: "#777777",
     },
@@ -63,6 +72,33 @@ const emit = defineEmits<{
   noteOn: [midi: number];
   noteOff: [midi: number];
 }>();
+
+// ── Event 系统（供 JS 层订阅） ──
+
+const events = {
+  noteClick: new Event<NoteEventArgs>(),
+  noteOn: new Event<NoteEventArgs>(),
+  noteOff: new Event<NoteEventArgs>(),
+};
+
+defineExpose({ events });
+
+// ── 事件触发函数（统一 Vue emit 和 Event 系统） ──
+
+function triggerNoteClick(midi: number): void {
+  emit("noteClick", midi);
+  events.noteClick.internalInvoke({ midi });
+}
+
+function triggerNoteOn(midi: number): void {
+  emit("noteOn", midi);
+  events.noteOn.internalInvoke({ midi });
+}
+
+function triggerNoteOff(midi: number): void {
+  emit("noteOff", midi);
+  events.noteOff.internalInvoke({ midi });
+}
 
 // ── 模板引用 ──
 
@@ -94,11 +130,20 @@ function applyHighlights(): void {
   highlight(props.sustained);
   highlight(props.targets);
   highlight(props.midi);
+  // 和弦音高亮：优先匹配已活跃的 MIDI，避免引入用户未点击的"幽灵键"
+  // （例如点击 A3+E4 识别为 A5 时，不应把 E3 也高亮）
+  const hintMidi = [
+    ...(props.played ?? []),
+    ...(props.sustained ?? []),
+    ...(props.midi ?? []),
+    ...(props.targets ?? []),
+  ];
   highlight(
     chordNotesToMidi(
       props.chord?.notes ?? [],
       renderer.getVisibleRange().from,
       renderer.getVisibleRange().to,
+      hintMidi,
     ),
   );
   // sustainMode 下保持按住的键也要持续高亮
@@ -134,9 +179,9 @@ function onPointerDown(e: PointerEvent): void {
 
   if (props.sustainMode) {
     sustainedNotes.add(midi);
-    emit("noteOn", midi);
+    triggerNoteOn(midi);
   } else {
-    emit("noteClick", midi);
+    triggerNoteClick(midi);
   }
   scheduleRender();
 }
@@ -144,9 +189,9 @@ function onPointerDown(e: PointerEvent): void {
 function releasePointer(e: PointerEvent): void {
   if (!renderer) return;
 
-  // 非 sustainMode 下 pointerDownNotes 恒为空，直接跳过
+  // 非 sustainMode 下 sustainedNotes 恒为空，直接跳过
   if (sustainedNotes.size > 0) {
-    for (const midi of sustainedNotes) emit("noteOff", midi);
+    for (const midi of sustainedNotes) triggerNoteOff(midi);
     sustainedNotes.clear();
   }
 
@@ -172,7 +217,7 @@ onMounted(async () => {
   await pixiApp.init({
     width: canvasW,
     height: canvasH,
-    antialias: false,
+    antialias: true,
     backgroundAlpha: 0,
     preference: "webgl",
     resolution: window.devicePixelRatio,

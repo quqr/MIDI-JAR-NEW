@@ -40,7 +40,7 @@
                 </a>
               </div>
             </div>
-            <CanvasPianoKeyboard
+            <PianoKeyboard
               class="flex-grow"
               :played="getInversionMidi(index)"
               :midi="getInversionMidi(index)"
@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import ChordName from "@/components/ChordName/ChordName.vue";
-import { CanvasPianoKeyboard } from "@/components/CanvasPianoKeyboard";
+import { PianoKeyboard } from "@/components/PianoKeyboard";
 import Notation from "@/components/Notation/Notation.vue";
 import { useChordDetailContext } from "../composables/useChordDetail";
 

@@ -1,5 +1,5 @@
 export type KeyboardSettings = {
-  skin: "classic" | "flat";
+  skin: "coral" | "indigo" | "midnight";
   from: string;
   to: string;
   label: "none" | "pitchClass" | "note" | "chordNote" | "interval";

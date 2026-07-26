@@ -1,7 +1,7 @@
 /* ============================================================
  * motion-v 预设层 — 全局动效单一真相源
  *
- * 对齐 Apple HIG：
+ * 
  *   - 缓动：standard [0.2,0.8,0.2,1] / emphasized [0.3,0,0,1] / exit [0.4,0,1,1]
  *   - 时长：instant 0.08 / fast 0.15 / normal 0.22 / slow 0.32（秒）
  *   - 弹簧：soft（卡片微交互）/ gentle（面板/抽屉/模态）/ snappy（按压）
@@ -16,7 +16,6 @@ import type { Transition } from "motion-v";
 /** cubic-bezier 控制点（4 元组） */
 export type Bezier = [number, number, number, number];
 
-/** Apple HIG 缓动曲线 */
 export const EASE: { standard: Bezier; emphasized: Bezier; exit: Bezier } = {
   standard: [0.2, 0.8, 0.2, 1],
   emphasized: [0.3, 0, 0, 1],
@@ -66,7 +65,7 @@ export interface MotionPreset {
  * ------------------------------------------------------------ */
 
 /** 路由淡入淡出（配合 AnimatePresence mode="wait"）
- * 纯 opacity 交叉淡入——去除 y 位移抖动，转场更平稳（Apple HIG 克制） */
+ * 纯 opacity 交叉淡入——去除 y 位移抖动，转场更平稳 */
 export const pageFade: MotionPreset = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },

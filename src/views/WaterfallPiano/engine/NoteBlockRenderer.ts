@@ -1,4 +1,5 @@
-import { Container, Graphics, Text, BlurFilter } from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
+import { OutlineFilter, GlowFilter } from "pixi-filters";
 import type { AuraConfig, ParticleConfig } from "../types";
 import { noteToColor, type CustomColors } from "./NoteColorMapper";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
@@ -24,26 +25,48 @@ function brightenColor(hex: string, ratio: number): string {
   return `#${br.toString(16).padStart(2, "0")}${bg.toString(16).padStart(2, "0")}${bb.toString(16).padStart(2, "0")}`;
 }
 
+/** 将 hex 颜色字符串转为 number（用于 pixi-filters 的 color 参数） */
+function hexToNumber(hex: string): number {
+  const h = hex.replace("#", "").padEnd(6, "0");
+  return parseInt(h.slice(0, 6), 16);
+}
+
 /**
  * Note block 渲染器：负责将活跃方块绘制到 PixiJS Container 上，
  * 包含命中线、实体方块与 Aura 发光效果。
  *
- * Aura 使用 3 个独立 Graphics 层实现多层光晕：
- * - outerLayer: 外层光晕（大模糊 + 低透明度）
- * - innerLayer: 内层光晕（小模糊 + 中透明度）
- * - baseLayer:  基底光晕（无模糊 + 全透明度）
- * 每层拥有独立的 BlurFilter 实例，避免每帧创建和资源泄漏。
+ * Aura 使用 3 个独立 Graphics 层实现多层光晕（基于 pixi-filters）：
+ * - auraOuterLayer: 外层光晕（GlowFilter, knockout=true，仅渲染辉光）
+ * - auraInnerLayer: 内层描边（OutlineFilter, knockout=true，仅渲染描边）
+ * - auraBaseLayer:  基底光晕（无滤镜，彩色实体基底，全透明度）
+ *
+ * OutlineFilter 与 GlowFilter 的颜色取自 AuraConfig.primaryColor（默认白色）。
+ * 滤镜基于 alpha 通道工作，knockout=true 使其仅输出描边/辉光，不输出原图，
+ * 因此多层叠加得到：彩色基底 + 单色描边 + 单色辉光的干净 Aura 效果。
+ * 每层拥有独立的滤镜实例（持久化），避免每帧创建和资源泄漏。
  */
 export class NoteBlockRenderer {
-  /** Aura 外层光晕（大模糊） */
+  /** Aura 外层光晕（GlowFilter, knockout） */
   private auraOuterLayer: Graphics = new Graphics();
-  /** Aura 内层光晕（小模糊） */
+  /** Aura 内层描边（OutlineFilter, knockout） */
   private auraInnerLayer: Graphics = new Graphics();
-  /** Aura 基底层（无模糊） */
+  /** Aura 基底层（无滤镜，彩色实体） */
   private auraBaseLayer: Graphics = new Graphics();
-  /** 持久化 BlurFilter 实例，避免每帧创建 */
-  private outerBlurFilter: BlurFilter = new BlurFilter({ strength: 0 });
-  private innerBlurFilter: BlurFilter = new BlurFilter({ strength: 0 });
+  /** 持久化 OutlineFilter 实例（knockout=true，仅渲染描边） */
+  private outlineFilter: OutlineFilter = new OutlineFilter({
+    thickness: 0,
+    color: 0xffffff,
+    alpha: 0,
+    knockout: true,
+  });
+  /** 持久化 GlowFilter 实例（knockout=true，仅渲染辉光） */
+  private glowFilter: GlowFilter = new GlowFilter({
+    distance: 0,
+    outerStrength: 4,
+    color: 0xffffff,
+    alpha: 0,
+    knockout: true,
+  });
   private blocksGraphics: Graphics = new Graphics();
   private hitLineGraphics: Graphics = new Graphics();
   private fpsText: Text | null = null;
@@ -152,8 +175,8 @@ export class NoteBlockRenderer {
     // 4. 批量渲染 aura 图层
     if (auraBlocks.length > 0 && auraCfg) {
       // 有内容时设置 filter
-      this.auraOuterLayer.filters = [this.outerBlurFilter];
-      this.auraInnerLayer.filters = [this.innerBlurFilter];
+      this.auraOuterLayer.filters = [this.glowFilter];
+      this.auraInnerLayer.filters = [this.outlineFilter];
       this.renderAuraLayers(auraBlocks, p.cornerRadius, time, auraCfg);
     } else {
       // 无内容时移除 filter，避免空 Graphics + filter 导致 alphaMode 错误
@@ -186,13 +209,16 @@ export class NoteBlockRenderer {
   }
 
   /**
-   * 批量渲染 Aura 图层：使用 3 个独立 Graphics 层 + 持久化 BlurFilter
+   * 批量渲染 Aura 图层：使用 3 个独立 Graphics 层 + 持久化滤镜
    *
    * PixiJS v8 中 filters 在渲染时统一应用，同一 Graphics 对象无法分段
    * 应用不同滤镜。因此使用 3 个独立层：
-   * - auraOuterLayer: 外层光晕（大模糊 + 低透明度）
-   * - auraInnerLayer: 内层光晕（小模糊 + 中透明度）
-   * - auraBaseLayer:  基底光晕（无模糊 + 全透明度）
+   * - auraOuterLayer: 外层光晕（GlowFilter, knockout=true）
+   * - auraInnerLayer: 内层描边（OutlineFilter, knockout=true）
+   * - auraBaseLayer:  基底光晕（无滤镜，彩色实体）
+   *
+   * 滤镜颜色取自 cfg.primaryColor（默认白色），通过 hexToNumber 转换。
+   * 滤镜基于 alpha 通道工作，knockout=true 仅输出描边/辉光本身。
    */
   private renderAuraLayers(
     blocks: Array<{
@@ -214,14 +240,14 @@ export class NoteBlockRenderer {
     const outerA = cfg.outerOpacity / 100;
     const isGlow = cfg.style === "glow";
 
-    // 计算当前帧的动态模糊和透明度
-    let outerBlur: number;
+    // 计算当前帧的动态参数
+    let outerDistance: number;
     let outerAlpha: number;
-    let innerBlur: number;
+    let innerThickness: number;
     let innerAlpha: number;
 
     if (isGlow) {
-      outerBlur = this.glowProgress(
+      outerDistance = this.glowProgress(
         pulseT,
         cfg.outerBlur,
         cfg.glowAfterPeakBlur,
@@ -231,18 +257,34 @@ export class NoteBlockRenderer {
         outerA,
         cfg.glowAfterPeakOpacity / 100,
       );
-      innerBlur = this.glowProgress(pulseT, cfg.innerBlur, cfg.glowPeakBlur);
-      innerAlpha = this.glowProgress(pulseT, innerA, cfg.glowPeakOpacity / 100);
+      innerThickness = this.glowProgress(
+        pulseT,
+        cfg.innerBlur,
+        cfg.glowPeakBlur,
+      );
+      innerAlpha = this.glowProgress(
+        pulseT,
+        innerA,
+        cfg.glowPeakOpacity / 100,
+      );
     } else {
-      outerBlur = cfg.outerBlur;
+      outerDistance = cfg.outerBlur;
       outerAlpha = outerA;
-      innerBlur = cfg.innerBlur;
+      innerThickness = cfg.innerBlur;
       innerAlpha = innerA;
     }
 
-    // 更新持久化 BlurFilter 的 strength（避免每帧创建新实例）
-    this.outerBlurFilter.strength = outerBlur;
-    this.innerBlurFilter.strength = innerBlur;
+    // 滤镜颜色：custom 样式使用 primaryColor，其余默认白色
+    const auraColorHex = cfg.primaryColor ?? "#ffffff";
+    const auraColorNum = hexToNumber(auraColorHex);
+
+    // 更新持久化滤镜参数（避免每帧创建新实例）
+    this.glowFilter.distance = outerDistance;
+    this.glowFilter.alpha = outerAlpha;
+    this.glowFilter.color = auraColorNum;
+    this.outlineFilter.thickness = innerThickness;
+    this.outlineFilter.alpha = innerAlpha;
+    this.outlineFilter.color = auraColorNum;
 
     // 辅助 lambda：绘制单个色块
     const drawBlock = (
@@ -264,17 +306,18 @@ export class NoteBlockRenderer {
       gfx.fill({ color: blk.color, alpha });
     };
 
-    // Layer 1: 外层光晕（大模糊 + 低透明度）
+    // Layer 1: 外层光晕（GlowFilter, knockout=true → 仅辉光）
+    // alpha=1 仅为让滤镜检测到形状，knockout 会隐藏原图
     for (const blk of blocks) {
-      drawBlock(this.auraOuterLayer, blk, outerAlpha);
+      drawBlock(this.auraOuterLayer, blk, 1);
     }
 
-    // Layer 2: 内层光晕（小模糊 + 中透明度）
+    // Layer 2: 内层描边（OutlineFilter, knockout=true → 仅描边）
     for (const blk of blocks) {
-      drawBlock(this.auraInnerLayer, blk, innerAlpha);
+      drawBlock(this.auraInnerLayer, blk, 1);
     }
 
-    // Layer 3: 基底层（无模糊 + 全透明度）
+    // Layer 3: 基底层（无滤镜，彩色实体，全透明度）
     for (const blk of blocks) {
       drawBlock(this.auraBaseLayer, blk, 1);
     }
@@ -284,8 +327,8 @@ export class NoteBlockRenderer {
     this.auraOuterLayer.destroy();
     this.auraInnerLayer.destroy();
     this.auraBaseLayer.destroy();
-    this.outerBlurFilter.destroy();
-    this.innerBlurFilter.destroy();
+    this.outlineFilter.destroy();
+    this.glowFilter.destroy();
     this.blocksGraphics.destroy();
     this.hitLineGraphics.destroy();
     this.fpsText?.destroy();
