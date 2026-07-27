@@ -132,7 +132,21 @@
           <Icon name="controller" :size="14" />
         </button>
       </div>
+
+      <SettingsButton
+        :aria-label="t('chordDictionary.openDictionarySettings')"
+        @click="settingsOpen = true"
+      />
+
+      <SettingsDrawer
+        v-model="settingsOpen"
+        :title="t('chordDictionary.settings')"
+      >
+        <ChordDictionarySettings />
+      </SettingsDrawer>
     </div>
+
+    <!-- Row 2: Chroma selector auto-fit grid -->
     <div
       class="grid gap-1"
       style="grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr))"
@@ -170,8 +184,11 @@ import {
   formatSharpsFlats,
   getNoteInKeySignature,
 } from "@/helpers";
+import { SettingsButton } from "@/components/SettingsButton";
+import { SettingsDrawer } from "@/components/SettingsDrawer/";
 import Icon from "@/components/Icon/Icon.vue";
 import ChordSearch from "./ChordSearch/ChordSearch.vue";
+import ChordDictionarySettings from "../Settings/ChordDictionarySettings/ChordDictionarySettings.vue";
 
 interface Props {
   disableUpdate?: boolean;
@@ -194,6 +211,7 @@ const { t } = useI18n();
 const router = useRouter();
 const settingsStore = useSettingsStore();
 
+const settingsOpen = ref(false);
 const menuOpen = ref(false);
 
 const groupBy = computed(() => settingsStore.settings.chordDictionary.groupBy);

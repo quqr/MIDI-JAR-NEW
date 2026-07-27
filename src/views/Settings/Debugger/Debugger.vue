@@ -6,6 +6,18 @@
       :aria-label="t('settings.debugger')"
     >
       <button
+        class="btn btn-sm"
+        :class="displayTimingClock ? 'btn-primary' : 'btn-outline'"
+        :aria-pressed="displayTimingClock"
+        @click="displayTimingClock = !displayTimingClock"
+      >
+        <Icon name="clock" size="16" class="mr-1" />
+        {{ t("settings.debuggerSettings.midiClock") }}
+      </button>
+
+      <div class="divider divider-horizontal mx-1"></div>
+
+      <button
         v-for="filter in filters"
         :key="filter.value"
         class="btn btn-sm"
@@ -55,6 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import Icon from "@/components/Icon/Icon.vue";
 import { useMidiMessages } from "@/composables";
 import { debuggerLogger, LogType } from "./debugger-logger";
 import { MIDI_CLOCK_CMD, MIDI_SYSEX_CMD } from "./constants";
@@ -62,6 +75,7 @@ import { formatMidiMessage } from "./utils";
 
 const { t } = useI18n();
 
+const displayTimingClock = ref(false);
 const autoScroll = ref(true);
 const activeFilter = ref<LogType | "all">("all");
 const logContainer = ref<HTMLElement | null>(null);
@@ -108,8 +122,7 @@ function shouldDisplayMessage(m: [number, number, number]) {
   const cmd = m[0] & 0xf0;
 
   if (cmd === MIDI_SYSEX_CMD) {
-    // Always filter out MIDI timing clock messages — they are too noisy
-    if (m[0] === MIDI_CLOCK_CMD) {
+    if (!displayTimingClock.value && m[0] === MIDI_CLOCK_CMD) {
       return false;
     }
   }

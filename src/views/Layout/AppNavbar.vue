@@ -2,42 +2,9 @@
   <div class="app-navbar" :class="{ 'app-navbar--mac': isMac }">
     <div v-if="isMac" class="app-navbar__mac-spacer"></div>
 
-    <!-- Brand -->
-    <RouterLink
-      to="/home"
-      class="app-navbar__brand"
-      :aria-label="t('layout.midiJar')"
-    >
-      <Icon name="music" :size="18" aria-hidden="true" />
-      <span class="app-navbar__brand-text">{{ t("layout.midiJar") }}</span>
-    </RouterLink>
-
-    <!-- Center nav links (desktop) -->
-    <nav
-      class="app-navbar__nav-links hidden lg:flex"
-      :aria-label="t('nav.midiTools')"
-    >
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.path"
-        :to="item.path"
-        class="nav-link"
-        :class="{ 'nav-link--active': isActive(item.path) }"
-        :aria-current="isActive(item.path) ? 'page' : undefined"
-      >
-        {{ t(item.label) }}
-      </RouterLink>
-    </nav>
-
-    <!-- Mobile menu toggle -->
-    <button
-      class="app-navbar__action-btn lg:hidden"
-      :aria-label="t('common.menu')"
-      :aria-expanded="mobileMenuOpen"
-      @click="mobileMenuOpen = !mobileMenuOpen"
-    >
-      <Icon name="menu" :size="18" aria-hidden="true" />
-    </button>
+    <div class="app-navbar__breadcrumb">
+      <AppBreadcrumb />
+    </div>
 
     <div v-if="inTauri" class="app-navbar__drag-region">
       <div
@@ -62,8 +29,8 @@
       <RouterLink
         to="/settings"
         class="app-navbar__action-btn"
-        :title="t('settings.title')"
-        :aria-label="t('settings.title')"
+        :title="$t('settings.title')"
+        :aria-label="$t('settings.title')"
       >
         <Icon name="settings" :size="20" aria-hidden="true" />
       </RouterLink>
@@ -74,7 +41,7 @@
         <button
           class="win-ctrl-btn"
           @click="handleMinimize"
-          :title="t('layout.minimize')"
+          :title="$t('layout.minimize')"
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
             <line
@@ -91,7 +58,7 @@
         <button
           class="win-ctrl-btn"
           @click="handleMaximize"
-          :title="isMaximized ? t('layout.unmaximize') : t('layout.maximize')"
+          :title="isMaximized ? $t('layout.unmaximize') : $t('layout.maximize')"
         >
           <svg v-if="!isMaximized" width="12" height="12" viewBox="0 0 12 12">
             <rect
@@ -137,7 +104,7 @@
         <button
           class="win-ctrl-btn win-ctrl-btn--close"
           @click="handleClose"
-          :title="t('common.close')"
+          :title="$t('common.close')"
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
             <line
@@ -166,7 +133,7 @@
 
   <div
     v-if="mobileMenuOpen"
-    class="lg:hidden shadow-md"
+    class="md:hidden shadow-md"
     style="-webkit-app-region: no-drag"
   >
     <ul class="menu menu-vertical p-3 gap-2">
@@ -182,7 +149,7 @@
           @click="mobileMenuOpen = false"
         >
           <component :is="Icon" :name="item.icon" :size="16" />
-          <span>{{ t(item.label) }}</span>
+          <span>{{ $t(item.label) }}</span>
         </RouterLink>
       </li>
     </ul>
@@ -194,20 +161,19 @@ import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { IconName } from "@/components/Icon/types";
 import { useRoute, RouterLink } from "vue-router";
+import AppBreadcrumb from "./AppBreadcrumb.vue";
 import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 import Icon from "@/components/Icon/Icon.vue";
 import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
 import { isTauri } from "@/utils/tauri";
-import { useSettingsStore } from "@/stores/settings";
 
 const logger = createLogger("AppNavbar");
 const inTauri = isTauri();
 
 const { t } = useI18n();
 const route = useRoute();
-const settingsStore = useSettingsStore();
 
 const mobileMenuOpen = ref(false);
 const isMaximized = ref(false);
@@ -231,48 +197,14 @@ const latencyAriaLabel = computed(() =>
   t("layout.latencyAriaLabel", { ms: currentLatency.value.toFixed(2) }),
 );
 
-const navItems = computed<{ path: string; label: string; icon: IconName }[]>(
-  () => {
-    const firstChordModule = settingsStore.settings.chordDisplay[0];
-    return [
-      { path: "/home", label: "nav.home", icon: "home" as IconName },
-      {
-        path: firstChordModule ? `/chords/${firstChordModule.id}` : "/chords",
-        label: "nav.chordDisplay",
-        icon: "piano" as IconName,
-      },
-      {
-        path: "/chord-dictionary",
-        label: "nav.chordDictionary",
-        icon: "book" as IconName,
-      },
-      {
-        path: "/waterfall-piano",
-        label: "nav.WaterfallPiano",
-        icon: "piano" as IconName,
-      },
-      { path: "/sampler", label: "nav.Sampler", icon: "music" as IconName },
-      {
-        path: "/settings/routing",
-        label: "nav.routing",
-        icon: "swap" as IconName,
-      },
-      {
-        path: "/settings/debug",
-        label: "nav.debugger",
-        icon: "bug" as IconName,
-      },
-    ];
-  },
-);
+const navItems: { path: string; label: string; icon: IconName }[] = [
+  { path: "/home", label: "nav.home", icon: "home" },
+  { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
+];
 
 const isActive = (path: string) => {
   if (path === "/home") {
     return route.path === "/home" || route.path === "/";
-  }
-  // Any chord display module should highlight the chord display nav link
-  if (path.startsWith("/chords/")) {
-    return route.path.startsWith("/chords/");
   }
   return route.path.startsWith(path);
 };
@@ -356,66 +288,11 @@ onMounted(async () => {
   -webkit-app-region: drag;
 }
 
-.app-navbar__brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  flex-shrink: 0;
-  text-decoration: none;
-  color: var(--color-base-content);
-  font-weight: 600;
-  font-size: 0.875rem;
+.app-navbar__breadcrumb {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
   -webkit-app-region: no-drag;
-  transition: opacity var(--hig-duration-fast) var(--ease-hig-standard);
-}
-
-.app-navbar__brand:hover {
-  opacity: 0.8;
-}
-
-.app-navbar__brand-text {
-  white-space: nowrap;
-}
-
-.app-navbar__nav-links {
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  -webkit-app-region: no-drag;
-}
-
-.nav-link {
-  padding: 0.25rem 0.625rem;
-  border-radius: var(--radius-hig-md);
-  font-size: 0.8125rem;
-  line-height: 1.25rem;
-  color: color-mix(in oklch, var(--color-base-content) 65%, transparent);
-  text-decoration: none;
-  white-space: nowrap;
-  transition:
-    background-color var(--hig-duration-fast) var(--ease-hig-standard),
-    color var(--hig-duration-fast) var(--ease-hig-standard);
-}
-
-.nav-link:hover {
-  color: var(--color-base-content);
-  background-color: color-mix(
-    in oklch,
-    var(--color-base-content) 8%,
-    transparent
-  );
-}
-
-.nav-link--active {
-  color: var(--color-primary);
-  background-color: color-mix(in oklch, var(--color-primary) 10%, transparent);
-  font-weight: 500;
-}
-
-.nav-link--active:hover {
-  color: var(--color-primary);
-  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
 }
 
 .app-navbar__drag-region {
