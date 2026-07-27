@@ -13,10 +13,7 @@
   --apple-card: var(--card, var(--background));
   --apple-card-foreground: var(--card-foreground, var(--foreground));
   --apple-popover: var(--popover, var(--card));
-  --apple-popover-foreground: var(
-    --popover-foreground,
-    var(--card-foreground, var(--foreground))
-  );
+  --apple-popover-foreground: var(--popover-foreground, var(--card-foreground, var(--foreground)));
   --apple-primary: var(--primary, #111827);
   --apple-primary-foreground: var(--primary-foreground, #ffffff);
   --apple-secondary: var(--secondary, var(--muted, var(--card)));
@@ -38,18 +35,9 @@
   --apple-sidebar: var(--sidebar, var(--background));
   --apple-sidebar-foreground: var(--sidebar-foreground, var(--foreground));
   --apple-sidebar-primary: var(--sidebar-primary, var(--primary));
-  --apple-sidebar-primary-foreground: var(
-    --sidebar-primary-foreground,
-    var(--primary-foreground)
-  );
-  --apple-sidebar-accent: var(
-    --sidebar-accent,
-    var(--accent, var(--muted, var(--card)))
-  );
-  --apple-sidebar-accent-foreground: var(
-    --sidebar-accent-foreground,
-    var(--accent-foreground, var(--foreground))
-  );
+  --apple-sidebar-primary-foreground: var(--sidebar-primary-foreground, var(--primary-foreground));
+  --apple-sidebar-accent: var(--sidebar-accent, var(--accent, var(--muted, var(--card))));
+  --apple-sidebar-accent-foreground: var(--sidebar-accent-foreground, var(--accent-foreground, var(--foreground)));
 
   /* ===== PRIMITIVE PALETTE ===== */
 
@@ -166,11 +154,11 @@
 
   /* RADIUS — Apple HIG continuous corner scale */
   --radius: 1.2rem;
-  --apple-radius-sm: 0.5rem; /* 8px — inputs, labels, small controls */
-  --apple-radius-md: 0.75rem; /* 12px — buttons, medium elements */
-  --apple-radius-lg: 1.2rem; /* 19.2px — cards, containers (matches --radius) */
-  --apple-radius-xl: 1.75rem; /* 28px — hero sections, large panels */
-  --apple-radius-full: 9999px; /* pill-shaped buttons, avatars */
+  --apple-radius-sm: 0.5rem;      /* 8px — inputs, labels, small controls */
+  --apple-radius-md: 0.75rem;     /* 12px — buttons, medium elements */
+  --apple-radius-lg: 1.2rem;      /* 19.2px — cards, containers (matches --radius) */
+  --apple-radius-xl: 1.75rem;     /* 28px — hero sections, large panels */
+  --apple-radius-full: 9999px;    /* pill-shaped buttons, avatars */
 
   /* mj-prefixed semantic aliases for apply-html-head-contract.mjs */
   --mj-radius-sm: var(--apple-radius-sm);
@@ -181,16 +169,11 @@
   /* SHADOWS — whisper-light elevation */
   --shadow-2xs: 0 1px 2px -1px rgba(0, 0, 0, 0.04);
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-sm:
-    0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px -1px rgba(0, 0, 0, 0.05);
-  --shadow:
-    0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
-  --shadow-md:
-    0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg:
-    0 8px 24px -8px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.05);
-  --shadow-xl:
-    0 16px 40px -10px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px -1px rgba(0, 0, 0, 0.05);
+  --shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px -8px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 16px 40px -10px rgba(0, 0, 0, 0.10), 0 8px 16px -8px rgba(0, 0, 0, 0.06);
   --shadow-2xl: 0 24px 64px -12px rgba(0, 0, 0, 0.12);
   --apple-shadow-sm: var(--shadow-sm);
   --apple-shadow-md: var(--shadow-md);
@@ -267,17 +250,12 @@
   --sidebar-border: var(--background-700);
   --sidebar-ring: var(--brand-400);
 
-  --shadow-2xs: 0 1px 2px -1px rgba(0, 0, 0, 0.3);
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-sm:
-    0 1px 2px 0 rgba(0, 0, 0, 0.36), 0 1px 3px -1px rgba(0, 0, 0, 0.36);
-  --shadow:
-    0 2px 4px -1px rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.36);
-  --shadow-md:
-    0 4px 8px -2px rgba(0, 0, 0, 0.44), 0 2px 4px -2px rgba(0, 0, 0, 0.36);
-  --shadow-lg:
-    0 8px 24px -8px rgba(0, 0, 0, 0.5), 0 4px 8px -4px rgba(0, 0, 0, 0.4);
-  --shadow-xl:
-    0 16px 40px -10px rgba(0, 0, 0, 0.55), 0 8px 16px -8px rgba(0, 0, 0, 0.44);
-  --shadow-2xl: 0 24px 64px -12px rgba(0, 0, 0, 0.6);
+  --shadow-2xs: 0 1px 2px -1px rgba(0, 0, 0, 0.30);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.30);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.36), 0 1px 3px -1px rgba(0, 0, 0, 0.36);
+  --shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.40), 0 1px 2px -1px rgba(0, 0, 0, 0.36);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.44), 0 2px 4px -2px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 8px 24px -8px rgba(0, 0, 0, 0.50), 0 4px 8px -4px rgba(0, 0, 0, 0.40);
+  --shadow-xl: 0 16px 40px -10px rgba(0, 0, 0, 0.55), 0 8px 16px -8px rgba(0, 0, 0, 0.44);
+  --shadow-2xl: 0 24px 64px -12px rgba(0, 0, 0, 0.60);
 }

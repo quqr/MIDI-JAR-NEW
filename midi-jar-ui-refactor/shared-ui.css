@@ -1,0 +1,298 @@
+/*
+ * MIDI Jar — Shared UI Components
+ * Unified navbar, toggle switch, segmented control, toolbar button CSS.
+ * All pages link this via <link rel="stylesheet" href="../shared-ui.css">.
+ * Tokens are inherited from each page's <style id="theme-vars"> block.
+ */
+
+/* ===== Navbar — translucent, blurred, HIG-style ===== */
+.midi-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 52px;
+  background-color: color-mix(in srgb, var(--apple-background) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid color-mix(in srgb, var(--apple-border) 50%, transparent);
+}
+
+/* ===== Navbar — immersive modifier (waterfall-piano) ===== */
+.midi-navbar--immersive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: color-mix(in srgb, rgba(0,0,0,0.4) 72%, transparent);
+  border-bottom-color: rgba(255,255,255,0.12);
+}
+.midi-navbar--immersive .nav-link-inactive { color: rgba(255,255,255,0.7); }
+.midi-navbar--immersive .nav-link-inactive:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.midi-navbar--immersive .nav-link-active { color: #fff; background: rgba(255,255,255,0.18); }
+.midi-navbar--immersive .key-switcher {
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
+}
+.midi-navbar--immersive .key-switcher:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.midi-navbar--immersive .icon-btn { color: rgba(255,255,255,0.7); }
+.midi-navbar--immersive .icon-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.midi-navbar--immersive .win-controls { border-left-color: rgba(255,255,255,0.15); }
+.midi-navbar--immersive .win-btn { color: rgba(255,255,255,0.7); }
+.midi-navbar--immersive .win-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.midi-navbar--immersive .brand-text { color: #fff; }
+
+/* ===== Nav links ===== */
+.nav-link {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--apple-radius-md);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+}
+.nav-link-inactive { color: var(--apple-muted-foreground); }
+.nav-link-inactive:hover { color: var(--apple-foreground); background-color: var(--apple-accent); }
+.nav-link-active {
+  color: var(--apple-primary);
+  background-color: color-mix(in srgb, var(--apple-primary) 10%, transparent);
+}
+
+/* ===== Icon buttons (navbar) ===== */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--apple-radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--apple-muted-foreground);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+}
+.icon-btn:hover { background-color: var(--apple-accent); color: var(--apple-foreground); }
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-ring) 50%, transparent);
+}
+
+/* ===== Latency dot — green with subtle glow ===== */
+.latency-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--apple-radius-full);
+  background-color: var(--apple-success);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--apple-success) 20%, transparent),
+    0 0 8px color-mix(in srgb, var(--apple-success) 60%, transparent);
+  animation: latency-pulse 2.4s var(--ease-hig-standard) infinite;
+}
+@keyframes latency-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--apple-success) 20%, transparent),
+      0 0 8px color-mix(in srgb, var(--apple-success) 60%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--apple-success) 12%, transparent),
+      0 0 12px color-mix(in srgb, var(--apple-success) 75%, transparent);
+  }
+}
+
+/* ===== Tonality switcher ===== */
+.key-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--apple-radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--apple-foreground);
+  background-color: var(--apple-accent);
+  border: 1px solid color-mix(in srgb, var(--apple-border) 60%, transparent);
+  cursor: pointer;
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+  white-space: nowrap;
+}
+.key-switcher:hover {
+  background-color: color-mix(in srgb, var(--apple-primary) 8%, var(--apple-accent));
+  border-color: color-mix(in srgb, var(--apple-primary) 30%, var(--apple-border));
+}
+.key-switcher svg { width: 14px; height: 14px; color: var(--apple-primary); }
+
+/* ===== Window controls ===== */
+.win-controls {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid color-mix(in srgb, var(--apple-border) 50%, transparent);
+}
+.win-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--apple-radius-sm);
+  color: var(--apple-muted-foreground);
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+}
+.win-btn:hover { background-color: var(--apple-accent); color: var(--apple-foreground); }
+.win-btn-close:hover { background-color: var(--apple-error); color: #ffffff; }
+.win-btn svg { width: 12px; height: 12px; }
+
+/* ===== Toggle switch (40x24px standard) ===== */
+.toggle-switch {
+  width: 40px;
+  height: 24px;
+  border-radius: var(--apple-radius-full);
+  background-color: var(--apple-muted);
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition: background-color var(--hig-duration-fast) var(--ease-hig-standard);
+}
+.toggle-switch--on { background-color: var(--apple-success); }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--apple-radius-full);
+  background-color: var(--apple-primary-foreground);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform var(--hig-duration-fast) var(--ease-hig-standard);
+}
+.toggle-switch--on::after { transform: translateX(16px); }
+.toggle-switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-ring) 50%, transparent);
+}
+.toggle-switch.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ===== Segmented control ===== */
+.seg-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+  border-radius: var(--apple-radius-md);
+  background: color-mix(in srgb, var(--apple-muted) 50%, transparent);
+}
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  height: 28px;
+  padding: 0 0.75rem;
+  border-radius: var(--apple-radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--apple-muted-foreground);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+  white-space: nowrap;
+}
+.seg-btn svg { width: 14px; height: 14px; }
+.seg-btn:hover:not(.active) {
+  color: var(--apple-foreground);
+  background: color-mix(in srgb, var(--apple-background) 50%, transparent);
+}
+.seg-btn.active {
+  background: var(--apple-card);
+  color: var(--apple-primary);
+  box-shadow: var(--shadow-xs);
+  font-weight: 600;
+}
+.seg-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-ring) 40%, transparent);
+}
+
+/* ===== Toolbar button ===== */
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 32px;
+  padding: 0 0.75rem;
+  border-radius: var(--apple-radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--apple-border);
+  color: var(--apple-foreground);
+  transition: all var(--hig-duration-fast) var(--ease-hig-standard);
+  white-space: nowrap;
+}
+.toolbar-btn svg { width: 14px; height: 14px; }
+.toolbar-btn:hover {
+  background: var(--apple-accent);
+  border-color: color-mix(in srgb, var(--apple-foreground) 30%, transparent);
+}
+.toolbar-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-ring) 40%, transparent);
+}
+.toolbar-btn.is-active {
+  background: var(--apple-primary);
+  border-color: var(--apple-primary);
+  color: var(--apple-primary-foreground);
+}
+.toolbar-btn.is-active:hover {
+  background: color-mix(in srgb, var(--apple-primary) 88%, black);
+  border-color: color-mix(in srgb, var(--apple-primary) 88%, black);
+}
+.toolbar-btn-error {
+  color: var(--apple-error);
+  border-color: color-mix(in srgb, var(--apple-error) 40%, transparent);
+}
+.toolbar-btn-error:hover {
+  background: color-mix(in srgb, var(--apple-error) 8%, transparent);
+  border-color: color-mix(in srgb, var(--apple-error) 60%, transparent);
+  color: var(--apple-error);
+}
+
+/* ===== Line clamp (fallback for browser CDN) ===== */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== Reduced motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .latency-dot { animation: none; }
+  .toggle-switch,
+  .toggle-switch::after {
+    transition: none;
+  }
+  .toolbar-btn,
+  .seg-btn {
+    transition: none;
+  }
+}

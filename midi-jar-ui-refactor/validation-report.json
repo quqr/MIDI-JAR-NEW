@@ -17,7 +17,7 @@
   },
   "operatingMode": "free-explore",
   "renderBlockingErrorCount": 0,
-  "softWarningCount": 24,
+  "softWarningCount": 21,
   "renderBlockingErrors": [],
   "errorSignatures": [],
   "softWarnings": [
@@ -37,53 +37,16 @@
     "[html-quality] chord-dictionary.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] chord-display.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] debugger.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] home.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] home.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] routing.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] sampler.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] settings.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] settings.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] waterfall-piano.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] waterfall-piano.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
   ],
-  "repairPlanHints": [
-    {
-      "errorClass": "hardcoded-color-in-body",
-      "owner": "sub-agent",
-      "repairScope": "targeted-token-replace",
-      "strategy": "targeted_token_replace_once",
-      "affectedFiles": ["home.html"],
-      "repairReportPath": null,
-      "repairAlreadyAttempted": false,
-      "allowSourceRead": "no-full-html-read",
-      "maxValidationRuns": 2
-    },
-    {
-      "errorClass": "hardcoded-color-in-body",
-      "owner": "sub-agent",
-      "repairScope": "targeted-token-replace",
-      "strategy": "targeted_token_replace_once",
-      "affectedFiles": ["settings.html"],
-      "repairReportPath": null,
-      "repairAlreadyAttempted": false,
-      "allowSourceRead": "no-full-html-read",
-      "maxValidationRuns": 2
-    },
-    {
-      "errorClass": "hardcoded-color-in-body",
-      "owner": "sub-agent",
-      "repairScope": "targeted-token-replace",
-      "strategy": "targeted_token_replace_once",
-      "affectedFiles": ["waterfall-piano.html"],
-      "repairReportPath": null,
-      "repairAlreadyAttempted": false,
-      "allowSourceRead": "no-full-html-read",
-      "maxValidationRuns": 2
-    }
-  ],
+  "repairPlanHints": [],
   "repairActionTable": [],
   "errorCount": 0,
-  "warningCount": 24,
+  "warningCount": 21,
   "errors": [],
   "warnings": [
     "[orchestration-summary] runtime-orchestration-summary.json is missing skillProvenance.name/version/version_source. Version provenance will be reported as observed_unknown by external evaluators.",
@@ -102,13 +65,10 @@
     "[html-quality] chord-dictionary.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] chord-display.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] debugger.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] home.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] home.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] routing.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
     "[html-quality] sampler.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] settings.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] settings.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
-    "[html-quality] waterfall-piano.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
     "[html-quality] waterfall-piano.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
   ],
   "validationRunDisciplineStatus": {
@@ -148,7 +108,7 @@
       "reason": "runtime-orchestration-summary.json missing skillProvenance; used skill-release-manifest.json"
     },
     "renderBlockingErrorCount": 0,
-    "softWarningCount": 24,
+    "softWarningCount": 21,
     "renderBlockingErrors": [],
     "repairActionTable": [],
     "nextCheck": {
@@ -168,15 +128,15 @@
     "midi-jar-ui-refactor.design": "cf8e4903167f25cb8f421436f029665e9111f5a476cca6276003be9c652f5e76",
     "colors_and_type.css": "d6a0197e2145b9c9e2b388354563437e8288a66d837654fd6deaf94ffacfd40d",
     "runtime-orchestration-summary.json": "132964fb1bfb47c3b8871b9a1dbf45f765ac67599a223f05a73f0703dca3d1b7",
-    "pages/advanced-debug.html": "4c7f7641ed8fe7aea4115e4332a97603f2d2bce0e0f58f37f7422bc36a381a0b",
-    "pages/chord-dictionary.html": "1b83d9a73e2c9bd2be0aa21f6a6f4ad9ff4d9b94eb47ba8d90a8876d2f3a6912",
-    "pages/chord-display.html": "e269c95db40b985ac0df357d9cec28705becaf280b8e9adc0b19d90ad7c94140",
-    "pages/debugger.html": "442f31ed4bef2ae6070670eb27b0cc1c757a7f6a7066e3058fd43d51e09f0a3d",
-    "pages/home.html": "b4e056643562d679980c948843b27d9b56a836b6c3546f3f9ee57d3aeac9a8bc",
-    "pages/routing.html": "4abbf966f09cb6ae6fc5c1b37547dbba8b4cc10ef32b14ca454b2380aa8bde1f",
-    "pages/sampler.html": "1f94bd0ddb0f0fb587defb9158c4f95d102e4a815689eb67280261e1a4b9fbff",
-    "pages/settings.html": "1d57a8c6dde68cd860dde490ba3c122270acf38ecdf65a4c1ab0807f69677878",
-    "pages/waterfall-piano.html": "520d3df9b41175ecea7bda1cacc64c089cc0a15f31fc87c33d1994dabe0e4467",
+    "pages/advanced-debug.html": "343a9c03dfb3943e893880cb3f4899537ec426b33f33f785d23d8a57557d62f4",
+    "pages/chord-dictionary.html": "0406df35950619509424f816bfbadda0271c0ad236ab0f9b05bd7acd627d17b9",
+    "pages/chord-display.html": "cded95a99d27c19fbe33adf6866a063ad626e085907ab5ad8bff8f43cb26821b",
+    "pages/debugger.html": "f4231e100e0008efa0c13b8e8f74a61200f42713bbc4913baef02c1df54d94a4",
+    "pages/home.html": "31f1996a4e733f87d941d23abf8a9711f1061d1b8dc03bbbb2dc46d59409d9fd",
+    "pages/routing.html": "3eb9a1de876a8929180c1632f3280bf8f5d9743624a53bd20ccdc2ba36b16f7a",
+    "pages/sampler.html": "ecd24bb8ba9a8dd2200374b6874b1bf5cef05b1119b81e704a3e8409fc738662",
+    "pages/settings.html": "f7b0d232164cb4626de07a9fa84ddfda67d819b6c4d9a1922fdff7b558b59e3c",
+    "pages/waterfall-piano.html": "0b8d49fe310c7c414b5f922af026db2d7b9ad5342afa9a8f8275a9d8d31ddbd9",
     "assets/icons/apple/arrow-down.svg": "0ba482e989813473fb7b1c8da6081a84ce399367f70dbee0a448deeeaeb5d9d4",
     "assets/icons/apple/arrow-left.svg": "ea2b7505ca9d8d2ab540075c3df561ed6a9c54e5b903d373daab015d0b79342d",
     "assets/icons/apple/arrow-right.svg": "03e8f44a4b87f3710bf316c5ed18f16025448ffe9652a229c974df98341c8d78",
@@ -219,7 +179,7 @@
     "assets/icons/apple/user.svg": "4bdceb57f2eeca2020dde928173734d68d905932e75a8ab4acfaa0f40945eaa0"
   },
   "designDir": "f:\\Codes\\MIDI-JAR-NEW\\midi-jar-ui-refactor",
-  "expectedPages": null,
+  "expectedPages": 9,
   "requireInteractions": null,
-  "checkedAt": "2026-07-27T07:27:22.078Z"
+  "checkedAt": "2026-07-27T11:34:15.408Z"
 }
