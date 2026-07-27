@@ -55,7 +55,7 @@ const panel = computed(() =>
 .motion-drawer__overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-overlay);
   background-color: rgb(0 0 0 / 0.4);
 }
 
@@ -63,7 +63,7 @@ const panel = computed(() =>
   position: fixed;
   top: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: var(--z-drawer);
   display: flex;
   flex-direction: column;
   overflow: hidden;

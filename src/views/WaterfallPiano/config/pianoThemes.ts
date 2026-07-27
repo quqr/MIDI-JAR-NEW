@@ -107,7 +107,9 @@ export const PIANO_THEMES: Record<PianoTheme, PianoThemeColors> = {
  * @param theme - 主题标识
  * @returns 主题色板；若 theme 为 undefined 返回 null
  */
-export function getThemeColors(theme: PianoTheme | undefined): PianoThemeColors | null {
+export function getThemeColors(
+  theme: PianoTheme | undefined,
+): PianoThemeColors | null {
   if (!theme) return null;
   return PIANO_THEMES[theme] ?? null;
 }

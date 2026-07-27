@@ -185,9 +185,7 @@ onUnmounted(() => {
     <!-- ═══ Main Body ═══ -->
     <div class="flex-1 flex min-h-0">
       <!-- ── Sidebar (左侧) ── -->
-      <div
-        class="w-56 glass border-r border-base-300 flex flex-col shrink-0"
-      >
+      <div class="w-56 glass border-r border-base-300 flex flex-col shrink-0">
         <SamplerSidebar
           v-model:search-query="searchQuery"
           v-model:selected-category="selectedCategory"
@@ -208,10 +206,7 @@ onUnmounted(() => {
           <MotionStaggerList
             class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
           >
-            <MotionListItem
-              v-for="inst in filteredInstruments"
-              :key="inst.id"
-            >
+            <MotionListItem v-for="inst in filteredInstruments" :key="inst.id">
               <motion.div v-bind="cardHover" class="h-full group">
                 <div
                   :class="[
@@ -226,7 +221,7 @@ onUnmounted(() => {
                   <div class="card-body p-3">
                     <!-- 试听按钮 (右上角) -->
                     <button
-                      class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-hig-fast z-10"
+                      class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-hig-fast z-sticky"
                       :class="{
                         'btn-active':
                           isPlayingScale &&
@@ -260,7 +255,8 @@ onUnmounted(() => {
                         class="radial-progress text-primary"
                         :style="{
                           '--value':
-                            samplerStore.instruments[inst.id]?.loadProgress || 0,
+                            samplerStore.instruments[inst.id]?.loadProgress ||
+                            0,
                           '--size': '2.5rem',
                           '--thickness': '3px',
                         }"
@@ -269,7 +265,9 @@ onUnmounted(() => {
                           samplerStore.instruments[inst.id]?.loadProgress || 0
                         "
                       >
-                        {{ samplerStore.instruments[inst.id]?.loadProgress || 0 }}%
+                        {{
+                          samplerStore.instruments[inst.id]?.loadProgress || 0
+                        }}%
                       </div>
                     </div>
 
@@ -289,7 +287,9 @@ onUnmounted(() => {
                         </span>
                         <!-- 缓存大小 + 清除按钮 -->
                         <template v-if="instrumentCacheSizes[inst.id] > 0">
-                          <span class="text-hig-xs text-base-content/70 tabular">
+                          <span
+                            class="text-hig-xs text-base-content/70 tabular"
+                          >
                             {{ formatBytes(instrumentCacheSizes[inst.id]) }}
                           </span>
                           <button
@@ -318,9 +318,7 @@ onUnmounted(() => {
         </div>
 
         <!-- ── Bottom: Piano Keyboard ── -->
-        <div
-          class="glass border-t border-base-300 px-2 py-1 h-[120px]"
-        >
+        <div class="glass border-t border-base-300 px-2 py-1 h-[120px]">
           <PianoKeyboard
             :keyboard="keyboardSettings"
             :played="[...activeNotes]"

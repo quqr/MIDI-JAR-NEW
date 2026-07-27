@@ -37,9 +37,9 @@ describe("useNotes — ChordDisplay toggleNote 持久切换", () => {
     notes.toggleNote(66);
 
     // 两个都应保持高亮（持久切换）
-    expect(
-      [...notes.clickedMidiNotes.value].sort((a, b) => a - b),
-    ).toEqual([60, 66]);
+    expect([...notes.clickedMidiNotes.value].sort((a, b) => a - b)).toEqual([
+      60, 66,
+    ]);
 
     // 关闭 A，B 应仍然保持
     notes.toggleNote(60);

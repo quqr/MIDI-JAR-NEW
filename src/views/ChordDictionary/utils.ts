@@ -1,11 +1,6 @@
 import { ChordType } from "@tonaljs/chord-type";
 import { ChordDictionarySettings } from "@/types";
-import {
-  KeySignatureConfig,
-  containsInterval,
-  getChordTypes,
-  getChordsInKey,
-} from "@/helpers";
+import { containsInterval, getChordTypes } from "@/helpers";
 
 export type ChordItem = {
   type: "item";
@@ -192,15 +187,10 @@ function getChordIntervals(chordType: ChordType) {
 
 export function getChordGroups(
   groupBy: ChordDictionarySettings["groupBy"],
-  keySignature: KeySignatureConfig,
-  chroma: number | null,
   disabled: ChordDictionarySettings["disabled"],
   hideDisabled: boolean,
-  filterChordsInKey: boolean,
 ): (ChordGroup | ChordItem)[] {
-  const chordTypes = filterChordsInKey
-    ? getChordsInKey(keySignature, chroma)
-    : getChordTypes();
+  const chordTypes = getChordTypes();
 
   if (groupBy === "none") {
     return chordTypes

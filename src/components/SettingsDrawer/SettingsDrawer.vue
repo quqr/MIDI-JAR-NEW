@@ -3,7 +3,7 @@
     <Transition name="drawer">
       <div
         v-if="modelValue"
-        class="fixed top-0 right-0 bottom-0 z-50 flex"
+        class="fixed top-0 right-0 bottom-0 z-drawer flex"
         role="dialog"
         aria-modal="false"
         :aria-label="title"
@@ -12,7 +12,7 @@
           class="card bg-base-100/90 backdrop-blur-md shadow-xl border-l border-base-200/30 w-96 max-w-[calc(100vw-1rem)] max-h-full overflow-y-auto rounded-none"
         >
           <div
-            class="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-base-200/30 bg-base-100/90 backdrop-blur-md"
+            class="sticky top-0 z-sticky px-4 py-3 flex items-center justify-between border-b border-base-200/30 bg-base-100/90 backdrop-blur-md"
           >
             <h2 class="text-lg font-bold">{{ title }}</h2>
             <button

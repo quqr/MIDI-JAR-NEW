@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="fixed inset-0 z-modal flex items-center justify-center bg-black/50"
   >
     <div class="card bg-base-100 shadow-xl w-full max-w-sm rounded-xl">
       <div class="card-body p-6">

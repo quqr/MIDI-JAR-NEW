@@ -1,40 +1,10 @@
 @import "tailwindcss";
 @plugin "daisyui/index.js" {
   themes:
-    light,
-    dark,
-    cupcake,
-    bumblebee,
-    emerald,
-    corporate,
-    synthwave,
-    retro,
-    cyberpunk,
-    valentine,
-    halloween,
-    garden,
-    forest,
-    aqua,
-    lofi,
-    pastel,
-    fantasy,
-    wireframe,
-    black,
-    luxury,
-    dracula,
-    cmyk,
-    autumn,
-    business,
-    acid,
-    lemonade,
-    night,
-    coffee,
-    winter,
-    dim,
-    nord,
-    sunset,
-    caramellatte,
-    abyss,
+    light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro,
+    cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel,
+    fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid,
+    lemonade, night, coffee, winter, dim, nord, sunset, caramellatte, abyss,
     silk;
 }
 /* 等宽字体用于数字/状态显示 */
@@ -53,4 +23,26 @@ pre {
   --duration-micro: var(--hig-duration-fast); /* 微交互 */
   --duration-panel: var(--hig-duration-normal); /* 面板 */
   --duration-page: var(--hig-duration-slow); /* 页面转场 */
+}
+
+/* z-index 规范 - 全局层级语义（从底到顶）：
+   base: 正常文档流
+   sticky: sticky header / 控件层
+   overlay: 遮罩层（与 dropdown 配对，overlay < dropdown）
+   dropdown: 下拉菜单 / popover
+   drawer: 抽屉 / 设置面板
+   modal: 模态框
+   toast: toast 提示
+   cursor: 自定义光标（始终最高）
+
+   Tailwind v4 要求使用 --z-index-* 格式才能生成 .z-* utility class */
+@theme {
+  --z-index-base: 0;
+  --z-index-sticky: 10;
+  --z-index-overlay: 30;
+  --z-index-dropdown: 40;
+  --z-index-drawer: 50;
+  --z-index-modal: 60;
+  --z-index-toast: 70;
+  --z-index-cursor: 9999;
 }

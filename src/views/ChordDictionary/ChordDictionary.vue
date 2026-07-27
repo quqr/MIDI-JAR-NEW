@@ -12,7 +12,6 @@
       :show-drawer-toggle="true"
       :key-signature="keySignature"
       :selected-chroma="chroma"
-      :filter-chords-in-key="settingsStore.settings.chordDictionary.filterInKey"
       @toggle-drawer="toggleSidebar"
       @select-chroma="handleChromaChange"
     />
@@ -183,7 +182,6 @@ const chordMenuProps = computed(() => ({
   groupBy: settingsStore.settings.chordDictionary.groupBy,
   disabledChords: settingsStore.settings.chordDictionary.disabled,
   hideDisabled: settingsStore.settings.chordDictionary.hideDisabled,
-  filterChordsInKey: settingsStore.settings.chordDictionary.filterInKey,
 }));
 
 const sidebar = computed(() => resolve(sidebarCollapse));
@@ -201,12 +199,7 @@ function navigateToChord(tonic: string | null, type: string | null) {
 
 function handleChromaChange(newChroma: number) {
   chroma.value = newChroma;
-  if (settingsStore.settings.chordDictionary.filterInKey) {
-    chordType.value = null;
-    navigateToChord(NOTE_NAMES[newChroma], null);
-  } else {
-    navigateToChord(NOTE_NAMES[newChroma], chordType.value);
-  }
+  navigateToChord(NOTE_NAMES[newChroma], chordType.value);
 }
 
 function handleChordTypeChange(newChordType: string) {

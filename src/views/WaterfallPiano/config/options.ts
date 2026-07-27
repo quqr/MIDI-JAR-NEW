@@ -85,7 +85,9 @@ export function createAuraTargetOptions(t: TranslateFunction): OptionItem[] {
 }
 
 /** 钢琴主题选项 */
-export function createPianoThemeOptions(t: TranslateFunction): OptionItem<PianoTheme>[] {
+export function createPianoThemeOptions(
+  t: TranslateFunction,
+): OptionItem<PianoTheme>[] {
   return [
     { value: "coral", label: t("WaterfallPiano.themeOptions.coral") },
     { value: "indigo", label: t("WaterfallPiano.themeOptions.indigo") },

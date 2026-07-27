@@ -179,9 +179,7 @@
                 />
                 <span class="label-text text-hig-xs">
                   {{ track.name || `Track ${track.index + 1}` }}
-                  <span class="opacity-60"
-                    >({{ track.noteCount }} notes)</span
-                  >
+                  <span class="opacity-60">({{ track.noteCount }} notes)</span>
                 </span>
               </label>
             </div>

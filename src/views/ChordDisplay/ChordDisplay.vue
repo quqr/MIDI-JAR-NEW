@@ -64,7 +64,9 @@
         </div>
       </div>
 
-      <div class="absolute top-2 right-2 z-10 flex flex-col gap-hig-2 items-end">
+      <div
+        class="absolute top-2 right-2 z-sticky flex flex-col gap-hig-2 items-end"
+      >
         <SettingsButton
           :aria-label="t('chordDisplay.openSettings')"
           @click="settingsOpen = true"

@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="zh" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preflight</title>
+    <style id="theme-vars">
+      /* ============================================================
+ * MIDI Jar UI Refactor — Design Tokens
+ * Style: Modern Minimalist · Whitespace & Breathing Room · Smooth Micro-interactions
+ * Brand: Teal (#0D9488) — calm, professional, musical
+ * Neutral: Zinc scale — cool, modern
+ * ============================================================ */
+
+      /* ---------- Light Mode (Default) ---------- */
+      :root {
+        /* --- Brand --- */
+        --mj-brand: #0d9488;
+        --mj-brand-hover: #0f766e;
+        --mj-brand-active: #115e56;
+        --mj-brand-subtle: #0d948814;
+        --mj-brand-muted: #0d948822;
+
+        /* --- Semantic Aliases (required by apply-html-head-contract) --- */
+        --mj-background: #fafafa;
+        --mj-foreground: #18181b;
+        --mj-card: #ffffff;
+        --mj-card-foreground: #18181b;
+        --mj-popover: #ffffff;
+        --mj-popover-foreground: #18181b;
+        --mj-primary: #0d9488;
+        --mj-primary-foreground: #ffffff;
+        --mj-secondary: #f4f4f5;
+        --mj-secondary-foreground: #18181b;
+        --mj-muted: #f4f4f5;
+        --mj-muted-foreground: #71717a;
+        --mj-accent: #f4f4f5;
+        --mj-accent-foreground: #18181b;
+        --mj-destructive: #dc2626;
+        --mj-destructive-foreground: #ffffff;
+        --mj-border: #e4e4e7;
+        --mj-input: #e4e4e7;
+        --mj-ring: #0d9488;
+
+        /* --- Surface Depth --- */
+        --mj-surface: #ffffff;
+        --mj-surface-2: #f4f4f5;
+        --mj-surface-3: #ebebef;
+
+        /* --- Ink Scale --- */
+        --mj-ink: #18181b;
+        --mj-ink-2: #52525b;
+        --mj-ink-3: #71717a;
+        --mj-ink-4: #a1a1aa;
+
+        /* --- Line / Divider --- */
+        --mj-line: #e4e4e7;
+        --mj-line-strong: #d4d4d8;
+
+        /* --- State Colors --- */
+        --mj-state-success: #16a34a;
+        --mj-state-success-subtle: #16a34a14;
+        --mj-state-warning: #d97706;
+        --mj-state-warning-subtle: #d9770614;
+        --mj-state-error: #dc2626;
+        --mj-state-error-subtle: #dc262614;
+        --mj-state-info: #0ea5e9;
+        --mj-state-info-subtle: #0ea5e914;
+
+        /* --- Radius Scale (2 / 4 / 8 / 16) --- */
+        --mj-radius-xs: 2px;
+        --mj-radius-sm: 4px;
+        --mj-radius-md: 8px;
+        --mj-radius-lg: 16px;
+        --mj-radius-pill: 999px;
+
+        /* --- Shadow Scale (subtle for static, deeper for floating) --- */
+        --mj-shadow-1:
+          0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.02);
+        --mj-shadow-2: 0 8px 24px -8px rgba(15, 23, 42, 0.1);
+        --mj-shadow-3: 0 24px 60px -20px rgba(15, 23, 42, 0.18);
+
+        /* --- Spacing (8pt grid) --- */
+        --mj-s-1: 4px;
+        --mj-s-2: 8px;
+        --mj-s-3: 12px;
+        --mj-s-4: 16px;
+        --mj-s-5: 24px;
+        --mj-s-6: 32px;
+        --mj-s-7: 48px;
+        --mj-s-8: 80px;
+
+        /* --- Typography --- */
+        --mj-font-sans:
+          "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui,
+          -apple-system, sans-serif;
+        --mj-font-mono:
+          "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace,
+          monospace;
+
+        /* --- Motion --- */
+        --mj-duration-instant: 0.08s;
+        --mj-duration-fast: 0.15s;
+        --mj-duration-normal: 0.22s;
+        --mj-duration-slow: 0.32s;
+        --mj-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --mj-ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+        --mj-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+      }
+
+      /* ---------- Dark Mode ---------- */
+      .dark {
+        --mj-brand: #2dd4bf;
+        --mj-brand-hover: #14b8a6;
+        --mj-brand-active: #0d9488;
+        --mj-brand-subtle: #2dd4bf14;
+        --mj-brand-muted: #2dd4bf22;
+
+        --mj-background: #0b0b0f;
+        --mj-foreground: #f4f4f5;
+        --mj-card: #14141a;
+        --mj-card-foreground: #f4f4f5;
+        --mj-popover: #14141a;
+        --mj-popover-foreground: #f4f4f5;
+        --mj-primary: #2dd4bf;
+        --mj-primary-foreground: #0b0b0f;
+        --mj-secondary: #1c1c24;
+        --mj-secondary-foreground: #f4f4f5;
+        --mj-muted: #1c1c24;
+        --mj-muted-foreground: #a1a1aa;
+        --mj-accent: #1c1c24;
+        --mj-accent-foreground: #f4f4f5;
+        --mj-destructive: #f87171;
+        --mj-destructive-foreground: #0b0b0f;
+        --mj-border: #27272e;
+        --mj-input: #27272e;
+        --mj-ring: #2dd4bf;
+
+        --mj-surface: #14141a;
+        --mj-surface-2: #1c1c24;
+        --mj-surface-3: #25252e;
+
+        --mj-ink: #f4f4f5;
+        --mj-ink-2: #d4d4d8;
+        --mj-ink-3: #a1a1aa;
+        --mj-ink-4: #71717a;
+
+        --mj-line: #27272e;
+        --mj-line-strong: #3f3f46;
+
+        --mj-state-success: #4ade80;
+        --mj-state-success-subtle: #4ade8014;
+        --mj-state-warning: #fbbf24;
+        --mj-state-warning-subtle: #fbbf2414;
+        --mj-state-error: #f87171;
+        --mj-state-error-subtle: #f8717114;
+        --mj-state-info: #38bdf8;
+        --mj-state-info-subtle: #38bdf814;
+
+        --mj-shadow-1:
+          0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.08);
+        --mj-shadow-2: 0 8px 24px -8px rgba(0, 0, 0, 0.28);
+        --mj-shadow-3: 0 24px 60px -20px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-background: var(--mj-background);
+        --color-foreground: var(--mj-foreground);
+        --color-card: var(--mj-card);
+        --color-card-foreground: var(--mj-card-foreground);
+        --color-popover: var(--mj-popover);
+        --color-popover-foreground: var(--mj-popover-foreground);
+        --color-primary: var(--mj-primary);
+        --color-primary-foreground: var(--mj-primary-foreground);
+        --color-secondary: var(--mj-secondary);
+        --color-secondary-foreground: var(--mj-secondary-foreground);
+        --color-muted: var(--mj-muted);
+        --color-muted-foreground: var(--mj-muted-foreground);
+        --color-accent: var(--mj-accent);
+        --color-accent-foreground: var(--mj-accent-foreground);
+        --color-destructive: var(--mj-destructive);
+        --color-destructive-foreground: var(--mj-destructive-foreground);
+        --color-border: var(--mj-border);
+        --color-input: var(--mj-input);
+        --color-ring: var(--mj-ring);
+        --radius-sm: var(--mj-radius-sm);
+        --radius-md: var(--mj-radius-md);
+        --radius-lg: var(--mj-radius-lg);
+      }
+      @layer base {
+        body {
+          background: var(--mj-background);
+          color: var(--mj-foreground);
+        }
+        td,
+        th {
+          @apply break-words;
+          word-break: break-all;
+          word-break: auto-phrase;
+        }
+        th {
+          @apply whitespace-nowrap;
+        }
+      }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background {
+        background-color: var(--mj-background);
+      }
+      .text-background {
+        color: var(--mj-background);
+      }
+      .border-background {
+        border-color: var(--mj-background);
+      }
+      .ring-background {
+        --tw-ring-color: var(--mj-background);
+      }
+      .bg-foreground {
+        background-color: var(--mj-foreground);
+      }
+      .text-foreground {
+        color: var(--mj-foreground);
+      }
+      .border-foreground {
+        border-color: var(--mj-foreground);
+      }
+      .ring-foreground {
+        --tw-ring-color: var(--mj-foreground);
+      }
+      .bg-card {
+        background-color: var(--mj-card);
+      }
+      .text-card {
+        color: var(--mj-card);
+      }
+      .border-card {
+        border-color: var(--mj-card);
+      }
+      .ring-card {
+        --tw-ring-color: var(--mj-card);
+      }
+      .bg-card-foreground {
+        background-color: var(--mj-card-foreground);
+      }
+      .text-card-foreground {
+        color: var(--mj-card-foreground);
+      }
+      .border-card-foreground {
+        border-color: var(--mj-card-foreground);
+      }
+      .ring-card-foreground {
+        --tw-ring-color: var(--mj-card-foreground);
+      }
+      .bg-popover {
+        background-color: var(--mj-popover);
+      }
+      .text-popover {
+        color: var(--mj-popover);
+      }
+      .border-popover {
+        border-color: var(--mj-popover);
+      }
+      .ring-popover {
+        --tw-ring-color: var(--mj-popover);
+      }
+      .bg-popover-foreground {
+        background-color: var(--mj-popover-foreground);
+      }
+      .text-popover-foreground {
+        color: var(--mj-popover-foreground);
+      }
+      .border-popover-foreground {
+        border-color: var(--mj-popover-foreground);
+      }
+      .ring-popover-foreground {
+        --tw-ring-color: var(--mj-popover-foreground);
+      }
+      .bg-primary {
+        background-color: var(--mj-primary);
+      }
+      .text-primary {
+        color: var(--mj-primary);
+      }
+      .border-primary {
+        border-color: var(--mj-primary);
+      }
+      .ring-primary {
+        --tw-ring-color: var(--mj-primary);
+      }
+      .bg-primary-foreground {
+        background-color: var(--mj-primary-foreground);
+      }
+      .text-primary-foreground {
+        color: var(--mj-primary-foreground);
+      }
+      .border-primary-foreground {
+        border-color: var(--mj-primary-foreground);
+      }
+      .ring-primary-foreground {
+        --tw-ring-color: var(--mj-primary-foreground);
+      }
+      .bg-secondary {
+        background-color: var(--mj-secondary);
+      }
+      .text-secondary {
+        color: var(--mj-secondary);
+      }
+      .border-secondary {
+        border-color: var(--mj-secondary);
+      }
+      .ring-secondary {
+        --tw-ring-color: var(--mj-secondary);
+      }
+      .bg-secondary-foreground {
+        background-color: var(--mj-secondary-foreground);
+      }
+      .text-secondary-foreground {
+        color: var(--mj-secondary-foreground);
+      }
+      .border-secondary-foreground {
+        border-color: var(--mj-secondary-foreground);
+      }
+      .ring-secondary-foreground {
+        --tw-ring-color: var(--mj-secondary-foreground);
+      }
+      .bg-muted {
+        background-color: var(--mj-muted);
+      }
+      .text-muted {
+        color: var(--mj-muted);
+      }
+      .border-muted {
+        border-color: var(--mj-muted);
+      }
+      .ring-muted {
+        --tw-ring-color: var(--mj-muted);
+      }
+      .bg-muted-foreground {
+        background-color: var(--mj-muted-foreground);
+      }
+      .text-muted-foreground {
+        color: var(--mj-muted-foreground);
+      }
+      .border-muted-foreground {
+        border-color: var(--mj-muted-foreground);
+      }
+      .ring-muted-foreground {
+        --tw-ring-color: var(--mj-muted-foreground);
+      }
+      .bg-accent {
+        background-color: var(--mj-accent);
+      }
+      .text-accent {
+        color: var(--mj-accent);
+      }
+      .border-accent {
+        border-color: var(--mj-accent);
+      }
+      .ring-accent {
+        --tw-ring-color: var(--mj-accent);
+      }
+      .bg-accent-foreground {
+        background-color: var(--mj-accent-foreground);
+      }
+      .text-accent-foreground {
+        color: var(--mj-accent-foreground);
+      }
+      .border-accent-foreground {
+        border-color: var(--mj-accent-foreground);
+      }
+      .ring-accent-foreground {
+        --tw-ring-color: var(--mj-accent-foreground);
+      }
+      .bg-destructive {
+        background-color: var(--mj-destructive);
+      }
+      .text-destructive {
+        color: var(--mj-destructive);
+      }
+      .border-destructive {
+        border-color: var(--mj-destructive);
+      }
+      .ring-destructive {
+        --tw-ring-color: var(--mj-destructive);
+      }
+      .bg-destructive-foreground {
+        background-color: var(--mj-destructive-foreground);
+      }
+      .text-destructive-foreground {
+        color: var(--mj-destructive-foreground);
+      }
+      .border-destructive-foreground {
+        border-color: var(--mj-destructive-foreground);
+      }
+      .ring-destructive-foreground {
+        --tw-ring-color: var(--mj-destructive-foreground);
+      }
+      .bg-border {
+        background-color: var(--mj-border);
+      }
+      .text-border {
+        color: var(--mj-border);
+      }
+      .border-border {
+        border-color: var(--mj-border);
+      }
+      .ring-border {
+        --tw-ring-color: var(--mj-border);
+      }
+      .bg-input {
+        background-color: var(--mj-input);
+      }
+      .text-input {
+        color: var(--mj-input);
+      }
+      .border-input {
+        border-color: var(--mj-input);
+      }
+      .ring-input {
+        --tw-ring-color: var(--mj-input);
+      }
+      .bg-ring {
+        background-color: var(--mj-ring);
+      }
+      .text-ring {
+        color: var(--mj-ring);
+      }
+      .border-ring {
+        border-color: var(--mj-ring);
+      }
+      .ring-ring {
+        --tw-ring-color: var(--mj-ring);
+      }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans antialiased">
+    <main></main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

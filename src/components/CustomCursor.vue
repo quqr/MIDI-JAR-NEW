@@ -260,13 +260,13 @@ onUnmounted(() => {
     <div
       v-if="cursorSettings.enabled"
       ref="innerPointer"
-      class="fixed top-0 left-0 rounded-full pointer-events-none z-[99999] will-change-transform"
+      class="fixed top-0 left-0 rounded-full pointer-events-none z-cursor will-change-transform"
       :style="innerPointerStyle"
     />
     <div
       v-if="cursorSettings.enabled"
       ref="outerPointer"
-      class="fixed top-0 left-0 pointer-events-none z-[9999] will-change-transform"
+      class="fixed top-0 left-0 pointer-events-none z-cursor will-change-transform"
       :style="outerPointerStyle"
     />
   </Teleport>

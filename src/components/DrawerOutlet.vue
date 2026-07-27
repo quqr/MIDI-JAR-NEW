@@ -3,7 +3,7 @@
     <Transition name="drawer">
       <div
         v-if="isOpen"
-        class="fixed top-0 right-0 z-40 h-full w-80 bg-base-100 shadow-xl border-l border-base-200 overflow-hidden"
+        class="fixed top-0 right-0 z-drawer h-full w-80 bg-base-100 shadow-xl border-l border-base-200 overflow-hidden"
       >
         <div
           class="flex items-center justify-end px-3 py-2 border-b border-base-200"

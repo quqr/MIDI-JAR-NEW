@@ -2,7 +2,7 @@
   <SettingsSection>
     <!-- ═══ 顶部工具栏 ═══ -->
     <div
-      class="glass sticky top-0 z-20 -mx-4 -mt-4 mb-4 px-4 py-3 border-b border-base-200/60"
+      class="glass sticky top-0 z-sticky -mx-4 -mt-4 mb-4 px-4 py-3 border-b border-base-200/60"
     >
       <div class="flex flex-wrap items-center gap-2">
         <!-- 搜索框 -->
@@ -111,7 +111,9 @@
       <!-- 搜索无结果提示 -->
       <div v-if="hasNoResults" class="alert alert-info alert-sm" role="status">
         <Icon name="search" :size="16" class="stroke-current flex-shrink-0" />
-        <span class="text-hig-sm">{{ t("advancedDebug.toolbar.noResults") }}</span>
+        <span class="text-hig-sm">{{
+          t("advancedDebug.toolbar.noResults")
+        }}</span>
       </div>
 
       <template v-else>

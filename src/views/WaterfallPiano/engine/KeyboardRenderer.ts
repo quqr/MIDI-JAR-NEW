@@ -115,7 +115,10 @@ export class KeyboardRenderer {
     lightAmount: number,
     darkAmount: number,
   ): FillGradient {
-    const gradient = new FillGradient({ start: { x, y }, end: { x, y: y + h } });
+    const gradient = new FillGradient({
+      start: { x, y },
+      end: { x, y: y + h },
+    });
     const rgb = this._hexToRgb(baseColor);
     if (!rgb) {
       gradient.addColorStop(0, baseColor);
@@ -145,7 +148,10 @@ export class KeyboardRenderer {
     lightAmount: number,
     darkAmount: number,
   ): FillGradient {
-    const gradient = new FillGradient({ start: { x, y }, end: { x, y: y + h } });
+    const gradient = new FillGradient({
+      start: { x, y },
+      end: { x, y: y + h },
+    });
     const rgb = this._hexToRgb(baseColor);
     if (!rgb) {
       gradient.addColorStop(0, baseColor);
@@ -171,10 +177,10 @@ export class KeyboardRenderer {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
       : null;
   }
 
@@ -185,14 +191,20 @@ export class KeyboardRenderer {
     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
   }
 
-  private _lightenColor(rgb: { r: number; g: number; b: number }, amount: number): string {
+  private _lightenColor(
+    rgb: { r: number; g: number; b: number },
+    amount: number,
+  ): string {
     const r = Math.min(255, Math.floor(rgb.r + (255 - rgb.r) * amount));
     const g = Math.min(255, Math.floor(rgb.g + (255 - rgb.g) * amount));
     const b = Math.min(255, Math.floor(rgb.b + (255 - rgb.b) * amount));
     return `rgb(${r}, ${g}, ${b})`;
   }
 
-  private _darkenColor(rgb: { r: number; g: number; b: number }, amount: number): string {
+  private _darkenColor(
+    rgb: { r: number; g: number; b: number },
+    amount: number,
+  ): string {
     const r = Math.max(0, Math.floor(rgb.r * (1 - amount)));
     const g = Math.max(0, Math.floor(rgb.g * (1 - amount)));
     const b = Math.max(0, Math.floor(rgb.b * (1 - amount)));
@@ -402,7 +414,10 @@ export class KeyboardRenderer {
   }
 
   /** 构建白键静态层 RenderTexture */
-  private rebuildWhiteKeyCache(layout: KeyboardLayout, kb: KeyboardConfig): void {
+  private rebuildWhiteKeyCache(
+    layout: KeyboardLayout,
+    kb: KeyboardConfig,
+  ): void {
     if (!this.renderer) return;
     const r = this.renderer;
     const colors = this._resolveColors(kb);
@@ -431,8 +446,12 @@ export class KeyboardRenderer {
       const w = layout.whiteKeyWidth;
 
       const gradient = this._createWhiteKeyGradient(
-        x, 0, this.height, colors.whiteKeyColor,
-        colors.whiteGradientLight, colors.whiteGradientDark,
+        x,
+        0,
+        this.height,
+        colors.whiteKeyColor,
+        colors.whiteGradientLight,
+        colors.whiteGradientDark,
       );
       whiteG.roundRect(x, 0, w, this.height, kb.keyCornerRadius);
       whiteG.fill(gradient);
@@ -440,7 +459,10 @@ export class KeyboardRenderer {
       // 边框
       if (kb.keyBorderWidth > 0) {
         whiteG.roundRect(x, 0, w, this.height, kb.keyCornerRadius);
-        whiteG.stroke({ color: colors.keyBorderColor, width: kb.keyBorderWidth });
+        whiteG.stroke({
+          color: colors.keyBorderColor,
+          width: kb.keyBorderWidth,
+        });
       }
     }
     tmpContainer.addChild(whiteG);
@@ -451,7 +473,10 @@ export class KeyboardRenderer {
       const y = this.height - kb.separatorThickness / 2;
       sepG.moveTo(0, y);
       sepG.lineTo(this.width, y);
-      sepG.stroke({ color: colors.separatorColor, width: kb.separatorThickness });
+      sepG.stroke({
+        color: colors.separatorColor,
+        width: kb.separatorThickness,
+      });
       tmpContainer.addChild(sepG);
     }
 
@@ -460,7 +485,10 @@ export class KeyboardRenderer {
       const effectiveLabel =
         kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
 
-      const whiteFontSize = Math.max(11, Math.min(16, layout.whiteKeyWidth * 0.26));
+      const whiteFontSize = Math.max(
+        11,
+        Math.min(16, layout.whiteKeyWidth * 0.26),
+      );
       const labelY = this.height - 8;
 
       for (let i = 0; i < layout.whiteKeys.length; i++) {
@@ -473,7 +501,8 @@ export class KeyboardRenderer {
           text: label,
           style: {
             fontSize: whiteFontSize,
-            fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            fontFamily:
+              "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
             fontWeight: "600",
             fill: colors.labelColor,
             letterSpacing: 0.5,
@@ -486,7 +515,12 @@ export class KeyboardRenderer {
 
         // ── tonic 圆点（C 键上的小圆点） ──
         const noteName = midiToNoteName(midi);
-        if (noteName && noteName.startsWith("C") && !noteName.includes("#") && !noteName.includes("b")) {
+        if (
+          noteName &&
+          noteName.startsWith("C") &&
+          !noteName.includes("#") &&
+          !noteName.includes("b")
+        ) {
           const dotRadius = Math.max(2.5, layout.whiteKeyWidth * 0.05);
           const dotY = labelY - whiteFontSize - 10;
 
@@ -511,7 +545,10 @@ export class KeyboardRenderer {
   }
 
   /** 构建黑键静态层 RenderTexture */
-  private rebuildBlackKeyCache(layout: KeyboardLayout, kb: KeyboardConfig): void {
+  private rebuildBlackKeyCache(
+    layout: KeyboardLayout,
+    kb: KeyboardConfig,
+  ): void {
     if (!this.renderer) return;
     const r = this.renderer;
     const colors = this._resolveColors(kb);
@@ -543,8 +580,12 @@ export class KeyboardRenderer {
       const bh = layout.blackKeyHeight;
 
       const gradient = this._createBlackKeyGradient(
-        bx, 0, bh, colors.blackKeyColor,
-        colors.blackGradientLight, colors.blackGradientDark,
+        bx,
+        0,
+        bh,
+        colors.blackKeyColor,
+        colors.blackGradientLight,
+        colors.blackGradientDark,
       );
       blackG.roundRect(bx, 0, bw, bh, kb.keyCornerRadius);
       blackG.fill(gradient);
@@ -556,7 +597,10 @@ export class KeyboardRenderer {
       const effectiveLabel =
         kb.showNoteNames && kb.keyLabel === "none" ? "note" : kb.keyLabel;
 
-      const blackFontSize = Math.max(9, Math.min(13, layout.blackKeyWidth * 0.3));
+      const blackFontSize = Math.max(
+        9,
+        Math.min(13, layout.blackKeyWidth * 0.3),
+      );
       const labelY = layout.blackKeyHeight - 6;
 
       for (let m = this.from; m <= this.to; m++) {
@@ -569,7 +613,8 @@ export class KeyboardRenderer {
           text: label,
           style: {
             fontSize: blackFontSize,
-            fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            fontFamily:
+              "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
             fontWeight: "600",
             fill: colors.blackLabelColor,
             letterSpacing: 0.3,
@@ -628,7 +673,10 @@ export class KeyboardRenderer {
           start: { x, y: 0 },
           end: { x, y: glowH },
         });
-        glowGrad.addColorStop(0, this._hexToRgba(pressedColor, overlayAlpha * 0.55));
+        glowGrad.addColorStop(
+          0,
+          this._hexToRgba(pressedColor, overlayAlpha * 0.55),
+        );
         glowGrad.addColorStop(1, this._hexToRgba(pressedColor, 0));
         g.roundRect(x, 0, w, glowH, kb.keyCornerRadius);
         g.fill(glowGrad);
@@ -657,7 +705,10 @@ export class KeyboardRenderer {
           start: { x: bx, y: 0 },
           end: { x: bx, y: glowH },
         });
-        glowGrad.addColorStop(0, this._hexToRgba(pressedColor, overlayAlpha * 0.55));
+        glowGrad.addColorStop(
+          0,
+          this._hexToRgba(pressedColor, overlayAlpha * 0.55),
+        );
         glowGrad.addColorStop(1, this._hexToRgba(pressedColor, 0));
         g.roundRect(bx, 0, bw, glowH, kb.keyCornerRadius);
         g.fill(glowGrad);

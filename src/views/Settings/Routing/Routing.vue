@@ -3,7 +3,10 @@
     <!-- 工具栏 -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div class="flex items-center gap-2">
-        <button class="btn btn-sm btn-outline text-hig-sm" @click="handleRefresh">
+        <button
+          class="btn btn-sm btn-outline text-hig-sm"
+          @click="handleRefresh"
+        >
           <Icon name="refresh" :size="16" aria-hidden="true" />
           {{ t("settings.routingSettings.refreshDevices") }}
         </button>
@@ -91,7 +94,7 @@
         <thead>
           <tr>
             <th
-              class="sticky left-0 top-0 z-20 bg-base-200/80 backdrop-blur-md"
+              class="sticky left-0 top-0 z-sticky bg-base-200/80 backdrop-blur-md"
             >
               <span
                 class="text-hig-xs font-semibold uppercase tracking-wider text-base-content/70"
@@ -102,7 +105,7 @@
             <th
               v-for="output in outputs"
               :key="output.name"
-              class="sticky top-0 z-10 bg-base-200/80 backdrop-blur-md"
+              class="sticky top-0 z-sticky bg-base-200/80 backdrop-blur-md"
             >
               <div class="flex items-center gap-2 min-w-[120px]">
                 <span
@@ -128,7 +131,7 @@
         </thead>
         <tbody>
           <tr v-for="input in inputs" :key="input.name">
-            <td class="font-semibold sticky left-0 z-10 bg-base-100">
+            <td class="font-semibold sticky left-0 z-sticky bg-base-100">
               <div class="flex items-center gap-2 min-w-[150px]">
                 <span
                   class="w-2 h-2 rounded-full flex-shrink-0"
@@ -198,7 +201,9 @@
       <motion.div
         class="modal-box"
         :initial="modalMotion.initial"
-        :animate="showVirtualPortModal ? modalMotion.animate : modalMotion.initial"
+        :animate="
+          showVirtualPortModal ? modalMotion.animate : modalMotion.initial
+        "
         :transition="modalMotion.transition"
       >
         <h3 class="font-bold text-hig-lg mb-4">

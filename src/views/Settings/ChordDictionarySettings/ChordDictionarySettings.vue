@@ -105,13 +105,15 @@
             class="flex items-center justify-between p-2 rounded-hig-md bg-base-200/50"
           >
             <div class="flex items-center gap-2">
-              <code class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm">{{
-                chordType
-              }}</code>
+              <code
+                class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm"
+                >{{ chordType }}</code
+              >
               <Icon name="angle-right" size="14" />
-              <code class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm">{{
-                alias
-              }}</code>
+              <code
+                class="text-hig-sm bg-base-200 px-2 py-0.5 rounded-hig-sm"
+                >{{ alias }}</code
+              >
             </div>
             <div class="flex gap-1">
               <RouterLink

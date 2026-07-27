@@ -15,7 +15,9 @@
         >
           <Icon name="menu" :size="20" aria-hidden="true" />
         </label>
-        <div class="px-4 text-hig-lg font-semibold">{{ $t("settings.title") }}</div>
+        <div class="px-4 text-hig-lg font-semibold">
+          {{ $t("settings.title") }}
+        </div>
         <div class="flex-1"></div>
         <button
           class="btn btn-sm btn-ghost gap-1 text-base-content/70 hover:text-error"

@@ -81,7 +81,7 @@
     <!-- Error 状态提示 -->
     <div
       v-if="ui.isError.value"
-      class="absolute inset-0 flex items-center justify-center bg-black/60 z-50"
+      class="absolute inset-0 flex items-center justify-center bg-black/60 z-modal"
     >
       <motion.div
         v-bind="errorMotion"

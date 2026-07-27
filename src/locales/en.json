@@ -21,7 +21,8 @@
     "clear": "Clear",
     "connected": "Connected",
     "disconnected": "Disconnected",
-    "back": "Back"
+    "back": "Back",
+    "menu": "Menu"
   },
   "nav": {
     "home": "Home",

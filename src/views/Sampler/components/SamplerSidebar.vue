@@ -133,7 +133,8 @@ onUnmounted(() => {
           <button
             :class="{
               active: selectedCategory === cat.id,
-              'bg-primary/10 text-primary font-semibold': selectedCategory === cat.id,
+              'bg-primary/10 text-primary font-semibold':
+                selectedCategory === cat.id,
             }"
             @click="emit('update:selectedCategory', cat.id)"
           >
@@ -156,7 +157,9 @@ onUnmounted(() => {
         <h3 class="text-hig-sm font-semibold text-base-content/70">
           {{ t("sampler.cacheSize") || "Cache Size" }}
         </h3>
-        <span class="text-hig-xl font-bold tabular">{{ formatBytes(cacheSize) }}</span>
+        <span class="text-hig-xl font-bold tabular">{{
+          formatBytes(cacheSize)
+        }}</span>
       </div>
       <button
         class="btn btn-sm btn-outline btn-error w-full"

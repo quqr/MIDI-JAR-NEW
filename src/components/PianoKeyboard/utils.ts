@@ -82,9 +82,12 @@ export function toKeyboardConfig(kb: KeyboardSettings): KeyboardConfig {
   const themeColors = getThemeColors(theme);
 
   // skin 始终为主题，使用主题色板
-  const whiteKeyColor = themeColors?.whiteKeyColor ?? kb.colors.white ?? "#FBF8F3";
-  const blackKeyColor = themeColors?.blackKeyColor ?? kb.colors.black ?? "#2B2020";
-  const pressedKeyColor = themeColors?.pressedKeyColor ?? kb.colors.played ?? "#FF5C5C";
+  const whiteKeyColor =
+    themeColors?.whiteKeyColor ?? kb.colors.white ?? "#FBF8F3";
+  const blackKeyColor =
+    themeColors?.blackKeyColor ?? kb.colors.black ?? "#2B2020";
+  const pressedKeyColor =
+    themeColors?.pressedKeyColor ?? kb.colors.played ?? "#FF5C5C";
   const keyBorderColor = themeColors?.keyBorderColor ?? "#EBE0D6";
   const separatorColor = themeColors?.separatorColor ?? "#FFC4B0";
 

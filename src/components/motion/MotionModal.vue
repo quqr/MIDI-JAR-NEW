@@ -47,7 +47,7 @@ const box = computed(() => resolve(modal));
 .motion-modal {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,7 +64,7 @@ const box = computed(() => resolve(modal));
 
 .motion-modal__box {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-sticky);
   width: 100%;
   max-width: 32rem;
   max-height: calc(100vh - 2rem);

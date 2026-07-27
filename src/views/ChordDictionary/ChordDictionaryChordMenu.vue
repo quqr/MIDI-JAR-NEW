@@ -40,7 +40,6 @@ interface Props {
   groupBy: ChordDictionarySettings["groupBy"];
   disabledChords: ChordDictionarySettings["disabled"];
   chroma: number | null;
-  filterChordsInKey: boolean;
   hideDisabled: boolean;
 }
 
@@ -58,11 +57,8 @@ const propsRefs = toRefs(props);
 const groups = computed(() => {
   return getChordGroups(
     propsRefs.groupBy.value,
-    propsRefs.keySignature.value,
-    propsRefs.chroma.value,
     propsRefs.disabledChords.value,
     propsRefs.hideDisabled.value,
-    propsRefs.filterChordsInKey.value,
   );
 });
 

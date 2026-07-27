@@ -262,11 +262,7 @@ export class NoteBlockRenderer {
         cfg.innerBlur,
         cfg.glowPeakBlur,
       );
-      innerAlpha = this.glowProgress(
-        pulseT,
-        innerA,
-        cfg.glowPeakOpacity / 100,
-      );
+      innerAlpha = this.glowProgress(pulseT, innerA, cfg.glowPeakOpacity / 100);
     } else {
       outerDistance = cfg.outerBlur;
       outerAlpha = outerA;

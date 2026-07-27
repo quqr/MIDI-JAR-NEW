@@ -486,10 +486,15 @@ export class FluidSolver {
         const e = (h & 0x7c00) >> 10;
         const f = h & 0x03ff;
         if (e === 0) return (s ? -1 : 1) * Math.pow(2, -14) * (f / 1024);
-        if (e === 0x1f) return f ? NaN : (s ? -Infinity : Infinity);
+        if (e === 0x1f) return f ? NaN : s ? -Infinity : Infinity;
         return (s ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / 1024);
       };
-      return { r: decode(buf[0]), g: decode(buf[1]), b: decode(buf[2]), a: decode(buf[3]) };
+      return {
+        r: decode(buf[0]),
+        g: decode(buf[1]),
+        b: decode(buf[2]),
+        a: decode(buf[3]),
+      };
     } catch {
       return { ...EMPTY_SAMPLE };
     }

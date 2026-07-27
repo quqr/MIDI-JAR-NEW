@@ -25,9 +25,7 @@
         :min="0"
         :max="5"
         :step="0.1"
-        @update:model-value="
-          emit('update', 'advancedBloomBloomScale', $event)
-        "
+        @update:model-value="emit('update', 'advancedBloomBloomScale', $event)"
       />
       <SettingsRange
         :model-value="settings.advancedBloomBlur"
@@ -62,7 +60,11 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { SettingsCollapse, SettingsToggle, SettingsRange } from "@/components/Settings";
+import {
+  SettingsCollapse,
+  SettingsToggle,
+  SettingsRange,
+} from "@/components/Settings";
 import type { EffectsConfig } from "../../types";
 
 defineProps<{
