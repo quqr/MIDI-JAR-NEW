@@ -7,3 +7,6 @@ src-tauri/target-check/
 .trae/
 .workbuddy/
 ./wayfinder
+/docs
+/设计稿_和弦显示
+/midi-jar-ui-refactor

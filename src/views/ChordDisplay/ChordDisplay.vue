@@ -1,115 +1,138 @@
 <template>
-  <div id="chordDisplay" class="relative h-full w-full flex flex-col gap-hig-3">
-    <div class="flex-1 rounded-hig-lg p-hig-3 relative">
-      <div class="flex flex-col md:flex-row h-full w-full gap-3">
+  <div id="chordDisplay" class="relative h-full w-full grid grid-rows-[2fr_1fr]">
+    <!-- ===== 上方显示区域 (grid: 2列桌面, 1列移动端) ===== -->
+    <div
+      class="bg-base-100 grid grid-cols-2"
+    >
+      <!-- 左侧：五线谱 -->
+      <div
+        v-if="displayNotation"
+        class="flex flex-col items-center justify-center"
+      >
+        <Notation
+          id="notation"
+          class="items-center justify-center"
+          :midiNotes="midiNotes"
+          :keySignature="keySignature"
+          :staffClef="staffClef"
+          :staffTranspose="staffTranspose"
+          :display="notationDisplay"
+          :layout="notationLayout"
+          :style="notationStyle"
+        />
+      </div>
+
+      <!-- 右侧：和弦信息 -->
+      <div class="flex flex-col">
+        <!-- 和弦名称 -->
         <div
-          v-if="displayNotation"
-          class="flex-1 min-w-0 flex items-center justify-center group relative"
+          v-if="displayChord"
+          id="chord"
+          class="flex flex-col flex-1 items-center justify-center text-center"
         >
-          <Notation
-            id="notation"
-            class="items-center justify-center"
-            :midiNotes="midiNotes"
-            :keySignature="keySignature"
-            :staffClef="staffClef"
-            :staffTranspose="staffTranspose"
-            :display="notationDisplay"
-            :layout="notationLayout"
-            :style="notationStyle"
+          <AnimatePresence mode="wait">
+            <motion.div
+              :key="chords[0]?.name ?? ''"
+              class="flex flex-col items-center justify-center"
+              :initial="{ opacity: 0, y: 6 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :exit="{ opacity: 0, y: -6 }"
+              :transition="{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }"
+            >
+              <ChordNameLink
+                :chord="chords[0]"
+                class="items-center justify-center"
+                :notation="chordNotation"
+                :highlightAlterations="highlightAlterations"
+                size="6xl"
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <!-- 和弦全名 -->
+        <div
+          v-if="displayName"
+          id="name"
+          class="flex-shrink-0 w-full flex items-center justify-center text-center text-base font-semibold"
+        >
+          {{ translatedChordName }}
+        </div>
+        <!-- 音程网格 -->
+        <div
+          v-if="displayIntervals"
+          id="intervals"
+          class="flex-shrink-0  w-full px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 pt-2"
+        >
+          <ChordIntervals
+            :intervals="chords[0]?.intervals ?? []"
+            :pitchClasses="pitchClasses"
+            :tonic="chords[0]?.tonic"
           />
         </div>
+      </div>
 
-        <div class="flex-1 grid grid-rows-[6fr_1fr_3fr]">
-          <div
-            v-if="displayChord"
-            id="chord"
-            class="w-full h-full flex items-center justify-center text-hig-3xl md:text-hig-4xl font-bold group relative"
-          >
-            <AnimatePresence>
-              <motion.div
-                :key="chords[0]?.name"
-                class="flex items-center justify-center"
-                :initial="{ opacity: 0, y: 8, scale: 0.98 }"
-                :animate="{ opacity: 1, y: 0, scale: 1 }"
-                :exit="{ opacity: 0, y: -8, scale: 0.98 }"
-                :transition="spring.gentle"
+      <!-- 浮动：备选和弦 + 声音开关 + 设置 -->
+      <div
+        class="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-sticky flex flex-col gap-2 items-end"
+      >
+        <div
+          v-if="displayAltChords && chords.length > 1"
+          class="bg-base-100/80 backdrop-blur-xl rounded-btn p-2 sm:p-3"
+          role="complementary"
+          :aria-label="t('chordDisplay.altChords')"
+        >
+          <p class="mb-2 text-xs font-medium text-base-content/70">
+            {{ t('chordDisplay.altChords') }}
+          </p>
+          <div class="flex flex-wrap gap-1.5 justify-end max-w-[180px] sm:max-w-[200px]">
+            <template v-for="(chord, index) in chords" :key="index">
+              <button
+                v-if="index > 0"
+                type="button"
+                class="btn btn-ghost btn-sm rounded-full"
               >
                 <ChordNameLink
-                  :chord="chords[0]"
+                  :chord="chord"
                   class="items-center justify-center"
                   :notation="chordNotation"
                   :highlightAlterations="highlightAlterations"
                 />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          <div
-            v-if="displayName"
-            id="name"
-            class="w-full h-full flex items-center justify-center text-center text-hig-lg font-semibold"
-          >
-            {{ chords[0]?.name }}
-          </div>
-          <div
-            v-if="displayIntervals"
-            id="intervals"
-            class="w-full h-full flex items-center justify-center group relative"
-          >
-            <ChordIntervals
-              :intervals="chords[0]?.intervals ?? []"
-              :pitchClasses="pitchClasses"
-              :tonic="chords[0]?.tonic"
-            />
+              </button>
+            </template>
           </div>
         </div>
-      </div>
 
-      <div
-        class="absolute top-2 right-2 z-sticky flex flex-col gap-hig-2 items-end"
-      >
+        <!-- 声音开关 -->
+        <div
+          class="bg-base-100/80 backdrop-blur-xl rounded-btn  px-3 py-2 flex items-center gap-2"
+          role="group"
+          :aria-label="t('chordDisplay.sound')"
+        >
+          <svg class="w-4 h-4 text-base-content" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path v-if="soundEnabled" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+          </svg>
+          <span class="text-xs text-base-content font-medium">{{ t('chordDisplay.sound') }}</span>
+          <input
+            type="checkbox"
+            class="toggle toggle-sm"
+            :checked="soundEnabled"
+            @change="toggleSound"
+            :aria-label="soundEnabled ? t('chordDisplay.soundOn') : t('chordDisplay.soundOff')"
+          />
+        </div>
+
         <SettingsButton
           :aria-label="t('chordDisplay.openSettings')"
           @click="settingsOpen = true"
         />
-        <!-- 声音开关 -->
-        <label
-          v-if="displayKeyboard"
-          class="flex items-center gap-1.5 cursor-pointer tooltip tooltip-left"
-          :data-tip="
-            samplerStore.soundEnabled
-              ? t('sampler.soundOn')
-              : t('sampler.soundOff')
-          "
-        >
-          <input
-            type="checkbox"
-            class="toggle toggle-primary toggle-sm"
-            :checked="samplerStore.soundEnabled"
-            @change="samplerStore.soundEnabled = !samplerStore.soundEnabled"
-          />
-          <Icon name="speaker" :size="14" aria-hidden="true" />
-        </label>
-        <div
-          v-if="displayAltChords"
-          class="glass flex flex-col gap-hig-2 items-end rounded-hig-lg p-hig-2"
-        >
-          <template v-for="(chord, index) in chords" :key="index">
-            <span v-if="index > 0" class="inline-flex">
-              <ChordNameLink
-                :chord="chord"
-                class="items-center justify-center text-hig-md"
-                :notation="chordNotation"
-                :highlightAlterations="highlightAlterations"
-              />
-            </span>
-          </template>
-        </div>
       </div>
     </div>
 
+    <!-- ===== 钢琴键盘 ===== -->
     <div
       v-if="displayKeyboard"
-      class="flex-shrink-0 rounded-hig-lg p-hig-2 group relative min-h-[150px] md:min-h-[200px]"
+      class="bg-base-100 w-full h-full"
     >
       <PianoKeyboard
         id="keyboard"
@@ -141,7 +164,7 @@ import { ChordNameLink } from "@/components/ChordNameLink/";
 import { ChordIntervals } from "@/components/ChordIntervals/";
 import { SettingsButton } from "@/components/SettingsButton/";
 import { SettingsDrawer } from "@/components/SettingsDrawer/";
-import { Icon } from "@/components/Icon/";
+
 import { useNotes } from "@/composables/";
 import { useSettingsStore } from "@/stores";
 import { useSamplerStore } from "@/stores/sampler";
@@ -151,7 +174,7 @@ import {
   mergeLayoutConfig,
   mergeStyleConfig,
 } from "@/components/Notation/utils";
-import { spring } from "@/utils/motion";
+import { defaultChordDisplaySettings } from "@/types";
 import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
 import type { StaffClef } from "@/components/Notation/types";
 
@@ -168,8 +191,10 @@ const props = defineProps<{
 const settingsStore = useSettingsStore();
 
 const moduleSettings = computed(() => {
-  return settingsStore.settings.chordDisplay.find(
-    (m) => m.id === props.moduleId,
+  return (
+    settingsStore.settings.chordDisplay.find(
+      (m) => m.id === props.moduleId,
+    ) ?? { ...defaultChordDisplaySettings, id: props.moduleId }
   );
 });
 
@@ -250,7 +275,33 @@ const displayAltChords = computed(
   () => moduleSettings.value?.displayAltChords ?? true,
 );
 const displayIntervals = computed(
-  () => moduleSettings.value?.displayIntervals ?? false,
+  () => moduleSettings.value?.displayIntervals ?? true,
 );
 const keyboard = computed(() => moduleSettings.value?.keyboard);
+
+const soundEnabled = computed(() => samplerStore.soundEnabled);
+
+function toggleSound() {
+  samplerStore.soundEnabled = !samplerStore.soundEnabled;
+}
+
+/** 翻译和弦全名（如 "C major seventh" → "C 大七和弦"） */
+const translatedChordName = computed(() => {
+  const name = chords.value[0]?.name;
+  if (!name) return '';
+  // 和弦名格式: "C major seventh" 或 "C major seventh flat five"
+  // 第一个空格前是根音，之后是和弦类型描述
+  const spaceIdx = name.indexOf(' ');
+  if (spaceIdx === -1) return name;
+  const tonic = name.slice(0, spaceIdx);
+  const quality = name.slice(spaceIdx + 1);
+  // 将空格和连字符替换为下划线以匹配 locale 键名
+  const qualityKey = quality.replace(/[\s-]/g, '_');
+  const translated = t(`chordDisplay.chordQualities.${qualityKey}`);
+  // 如果翻译返回的是原始字符串（语言包中无此条目），回退使用英文
+  if (translated === qualityKey || translated.startsWith('chordDisplay.chordQualities.')) {
+    return name;
+  }
+  return `${tonic} ${translated}`;
+});
 </script>

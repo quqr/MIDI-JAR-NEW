@@ -10,6 +10,7 @@
       :hideRoot="hideRoot"
       :highlightAlterations="highlightAlterations"
       :latinSharpsFlats="latinSharpsFlats"
+      :size="size"
     />
   </RouterLink>
 </template>
@@ -24,6 +25,7 @@ import type { ChordNameProps } from "@/components/ChordName/ChordName.vue";
 export interface ChordNameLinkProps extends Partial<ChordNameProps> {
   chord: Chord | null;
   dictionaryUrl?: string;
+  size?: 'xl' | '6xl';
 }
 
 const props = withDefaults(defineProps<ChordNameLinkProps>(), {
@@ -33,6 +35,7 @@ const props = withDefaults(defineProps<ChordNameLinkProps>(), {
   hideRoot: false,
   highlightAlterations: false,
   latinSharpsFlats: undefined,
+  size: 'xl',
 });
 
 const to = computed(() => {

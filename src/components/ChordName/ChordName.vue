@@ -5,12 +5,12 @@
     style="line-height: 1.2; vertical-align: baseline"
   >
     <!-- 根音 -->
-    <span class="font-bold text-xl">
+    <span :class="[sizeClass.root, 'font-bold']">
       {{ latinSharpsFlats ? tonicPart : formatSharpsFlats(tonicPart) }}
     </span>
 
     <!-- 质量 + 上标扩展 -->
-    <span class="text-lg font-bold italic" style="line-height: inherit">
+    <span :class="[sizeClass.quality, 'font-bold italic']" style="line-height: inherit">
       <span
         :class="{ 'rounded bg-error/20': highlightAlterations }"
         style="margin: 0 0.05em"
@@ -20,8 +20,7 @@
 
       <template v-for="(part, index) in restTokens" :key="`${part}_${index}`">
         <sup
-          class="text-sm italic"
-          :class="{ 'rounded bg-info/20': highlightAlterations }"
+          :class="[sizeClass.sup, 'italic', { 'rounded bg-info/20': highlightAlterations }]"
           style="margin: 0 0.05em; font-weight: inherit"
         >
           {{ latinSharpsFlats ? part : formatSharpsFlats(part) }}
@@ -32,7 +31,7 @@
     <!-- 低音（可选） -->
     <span
       v-if="!hideRoot && chord?.root"
-      class="text-sm"
+      :class="[sizeClass.bass]"
       style="line-height: inherit; opacity: 0.5; margin-left: 0.25em"
     >
       /{{ latinSharpsFlats ? chord.root : formatSharpsFlats(chord.root) }}
@@ -58,6 +57,7 @@ export interface ChordNameProps {
   hideRoot?: boolean;
   highlightAlterations?: boolean;
   latinSharpsFlats?: boolean;
+  size?: 'xl' | '6xl';
 }
 
 const props = withDefaults(defineProps<ChordNameProps>(), {
@@ -67,6 +67,17 @@ const props = withDefaults(defineProps<ChordNameProps>(), {
   highlightAlterations: false,
   latinSharpsFlats: undefined,
   chord: null,
+  size: 'xl',
+});
+
+type SizeClass = { root: string; quality: string; sup: string; bass: string };
+const FONT_SIZE_MAP: Record<string, SizeClass> = {
+  xl: { root: 'text-xl', quality: 'text-lg', sup: 'text-sm', bass: 'text-sm' },
+  '6xl': { root: 'text-6xl', quality: 'text-4xl', sup: 'text-2xl', bass: 'text-2xl' },
+};
+
+const sizeClass = computed<SizeClass>(() => {
+  return FONT_SIZE_MAP[props.size] ?? FONT_SIZE_MAP.xl;
 });
 
 const defaultNotation = ALIAS_NOTATION.short;

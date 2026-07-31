@@ -110,15 +110,32 @@ let renderer: KeyboardRenderer | null = null;
 let pixiApp: Application | null = null;
 let pixiContainer: Container | null = null;
 let resizeObserver: ResizeObserver | null = null;
+let themeObserver: MutationObserver | null = null;
 let rafId: number | null = null;
 let resizeRafId: number | null = null;
 /** sustainMode 下当前按住的音符 */
 const sustainedNotes = new Set<number>();
+/** 上一次渲染时的活跃音符快照，用于跳过无变化的重渲染 */
+let lastActiveSnapshot = "";
 
 // ── 高亮更新（经 RAF 去抖） ──
 
 function applyHighlights(): void {
   if (!renderer) return;
+
+  // 构建当前活跃音符快照，跳过无变化的重渲染
+  const current = [
+    ...props.played,
+    ...props.sustained,
+    ...props.midi,
+    ...(props.targets ?? []),
+    ...sustainedNotes,
+  ].sort((a, b) => a - b).join(",");
+  const chordKey = props.chord?.notes?.join(",") ?? "";
+  const snapshot = `${current}|${chordKey}`;
+  if (snapshot === lastActiveSnapshot) return;
+  lastActiveSnapshot = snapshot;
+
   renderer.clearAllHighlights();
 
   const highlight = (notes?: number[] | null) => {
@@ -172,7 +189,7 @@ function onPointerDown(e: PointerEvent): void {
 
   const target = e.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
-  const midi = renderer.xToMidi(e.clientX - rect.left);
+  const midi = renderer.xToMidi(e.clientX - rect.left, e.clientY - rect.top);
   if (midi === null) return;
 
   target.setPointerCapture(e.pointerId);
@@ -261,6 +278,17 @@ onMounted(async () => {
     });
   });
   resizeObserver.observe(containerRef.value);
+
+  // 监听 DaisyUI 主题切换（data-theme 属性变化），重新读取主题色
+  themeObserver = new MutationObserver(() => {
+    if (!renderer || !props.keyboard) return;
+    renderer.setKeyboardConfig(toKeyboardConfig(props.keyboard));
+    scheduleRender();
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme", "class"],
+  });
 });
 
 onUnmounted(() => {
@@ -268,6 +296,8 @@ onUnmounted(() => {
   if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
   resizeObserver?.disconnect();
   resizeObserver = null;
+  themeObserver?.disconnect();
+  themeObserver = null;
   renderer?.dispose();
   renderer = null;
   pixiApp?.destroy(true, { children: true });

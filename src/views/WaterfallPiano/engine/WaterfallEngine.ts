@@ -420,7 +420,7 @@ export class WaterfallEngine {
 
   private onPointerDown = (e: PointerEvent): void => {
     this.pointerDown = true;
-    const midi = this.keyboardRenderer.xToMidi(e.offsetX);
+    const midi = this.keyboardRenderer.xToMidi(e.offsetX, e.offsetY);
     if (midi !== null) {
       this.activePointerMidi = midi;
       this.triggerNoteOn(midi, DEFAULT_VELOCITY);
@@ -429,7 +429,7 @@ export class WaterfallEngine {
 
   private onPointerMove = (e: PointerEvent): void => {
     if (!this.pointerDown) return;
-    const midi = this.keyboardRenderer.xToMidi(e.offsetX);
+    const midi = this.keyboardRenderer.xToMidi(e.offsetX, e.offsetY);
     if (midi !== null && midi !== this.activePointerMidi) {
       if (this.activePointerMidi !== null) {
         this.triggerNoteOff(this.activePointerMidi);

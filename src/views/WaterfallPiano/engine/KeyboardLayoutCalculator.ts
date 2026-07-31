@@ -110,30 +110,43 @@ export class KeyboardLayoutCalculator {
   }
 
   /**
-   * 将水平像素坐标转换为对应的 MIDI 音符号，优先匹配黑键边界区域
+   * 将像素坐标转换为对应的 MIDI 音符号，优先匹配黑键边界区域。
+   * 当传入 y 坐标时，仅在 y 落在黑键高度范围内才命中黑键，
+   * 避免黑键下方的白键区域被错误拦截。
+   *
+   * @param x - 水平像素坐标
+   * @param layout - 键盘布局
+   * @param y - 可选的垂直像素坐标；未传入时保持旧行为（仅按 x 判断）
    */
-  static xToMidi(x: number, layout: KeyboardLayout): number | null {
+  static xToMidi(x: number, layout: KeyboardLayout, y?: number): number | null {
     if (layout.whiteKeys.length === 0) return null;
     const wkw = layout.whiteKeyWidth;
     let wi = Math.floor(x / wkw);
     wi = Math.max(0, Math.min(layout.whiteKeys.length - 1, wi));
     const whiteMidi = layout.whiteKeys[wi];
     const halfBlack = layout.blackKeyWidth / 2;
-    const rightBoundary = (wi + 1) * wkw;
-    if (
-      isBlackKey(whiteMidi + 1) &&
-      whiteMidi + 1 <= layout.to &&
-      Math.abs(x - rightBoundary) <= halfBlack
-    ) {
-      return whiteMidi + 1;
-    }
-    const leftBoundary = wi * wkw;
-    if (
-      isBlackKey(whiteMidi - 1) &&
-      whiteMidi - 1 >= layout.from &&
-      Math.abs(x - leftBoundary) <= halfBlack
-    ) {
-      return whiteMidi - 1;
+
+    // 当 y 已知且落在黑键下方时，直接返回白键，不做黑键边界检测
+    const yProvided = y !== undefined;
+    const yInBlackZone = !yProvided || y <= layout.blackKeyHeight;
+
+    if (yInBlackZone) {
+      const rightBoundary = (wi + 1) * wkw;
+      if (
+        isBlackKey(whiteMidi + 1) &&
+        whiteMidi + 1 <= layout.to &&
+        Math.abs(x - rightBoundary) <= halfBlack
+      ) {
+        return whiteMidi + 1;
+      }
+      const leftBoundary = wi * wkw;
+      if (
+        isBlackKey(whiteMidi - 1) &&
+        whiteMidi - 1 >= layout.from &&
+        Math.abs(x - leftBoundary) <= halfBlack
+      ) {
+        return whiteMidi - 1;
+      }
     }
     return whiteMidi;
   }

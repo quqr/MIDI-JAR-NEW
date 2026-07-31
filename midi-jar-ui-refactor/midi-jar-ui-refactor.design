@@ -37,7 +37,7 @@
       "version": 1,
       "createdAt": 1785124075998,
       "canvasData": {
-        "x": 1240,
+        "x": 1236,
         "y": 0,
         "group": 0
       },
@@ -137,7 +137,7 @@
     }
   ],
   "config": {
-    "autoLayout": true,
+    "autoLayout": false,
     "deviceType": "desktop",
     "projectName": "MIDI Jar UI 重构",
     "visualEditorEnabled": true

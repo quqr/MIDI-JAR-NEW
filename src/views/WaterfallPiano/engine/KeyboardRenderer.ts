@@ -43,10 +43,6 @@ export class KeyboardRenderer {
   private _cachedLayout: KeyboardLayout | null = null;
   private _midiToIndex = new Map<number, number>();
 
-  /** 静态层 Sprite（显示缓存到 RenderTexture 的键体/边框/标签） */
-  private _staticSprite: Sprite | null = null;
-  /** 静态层 RenderTexture 缓存 */
-  private _staticRT: RenderTexture | null = null;
   /** 静态缓存是否需要重建 */
   private _staticCacheDirty = true;
 
@@ -65,29 +61,123 @@ export class KeyboardRenderer {
   /** 黑键高亮层 Graphics */
   private _blackHighlightG: Graphics | null = null;
 
-  /** 动态高亮层 Graphics（按下的键）- 保持向后兼容 */
-  private _highlightGraphics: Graphics | null = null;
-
   // ============================================================================
   // 主题色板解析与颜色辅助
   // ============================================================================
 
   /**
+   * 读取 DaisyUI 主题的 CSS 变量并转换为十六进制色值。
+   * 尝试通过临时元素让浏览器解析为 rgb；若失败则直接读取 CSS 变量值并尝试解析 oklch 或 hsl。
+   * @returns 十六进制色值（如 "#5700e6"），读取失败时返回 null
+   */
+  private _readDaisyUiColor(varName: string): string | null {
+    if (typeof document === "undefined") return null;
+    // 方法1：通过临时元素让浏览器解析 CSS 变量为 rgb
+    const el = document.createElement("div");
+    el.style.color = `var(${varName})`;
+    el.style.display = "none";
+    document.body.appendChild(el);
+    const computed = getComputedStyle(el).color;
+    document.body.removeChild(el);
+    const rgbMatch = computed.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)/,
+    );
+    if (rgbMatch) {
+      const r = parseInt(rgbMatch[1]);
+      const g = parseInt(rgbMatch[2]);
+      const b = parseInt(rgbMatch[3]);
+      return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    }
+    // 方法2：直接读取 CSS 变量值，尝试解析 oklch()
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue(varName)
+      .trim();
+    const oklchMatch = raw.match(
+      /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/,
+    );
+    if (oklchMatch) {
+      return this._oklchToHex(
+        parseFloat(oklchMatch[1]),
+        parseFloat(oklchMatch[2]),
+        parseFloat(oklchMatch[3]),
+      );
+    }
+    // 方法3：尝试解析 hsl() 格式
+    const hslMatch = raw.match(
+      /hsl\(\s*([\d.]+)\s+([\d.]+)%?\s+([\d.]+)%?/,
+    );
+    if (hslMatch) {
+      return this._hslToHex(
+        parseFloat(hslMatch[1]),
+        parseFloat(hslMatch[2]),
+        parseFloat(hslMatch[3]),
+      );
+    }
+    return null;
+  }
+
+  /** 将 HSL 色值转换为十六进制（sRGB） */
+  private _hslToHex(h: number, s: number, l: number): string {
+    const sNorm = s / 100;
+    const lNorm = l / 100;
+    const a = sNorm * Math.min(lNorm, 1 - lNorm);
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      return lNorm - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    };
+    const clamp = (v: number) =>
+      Math.max(0, Math.min(255, Math.round(v * 255)));
+    return `#${clamp(f(0)).toString(16).padStart(2, "0")}${clamp(f(8)).toString(16).padStart(2, "0")}${clamp(f(4)).toString(16).padStart(2, "0")}`;
+  }
+
+  /** 将 OKLCH 色值转换为十六进制（sRGB 近似） */
+  private _oklchToHex(l: number, c: number, h: number): string {
+    // OKLCH → OKLab
+    const hRad = (h * Math.PI) / 180;
+    const a = c * Math.cos(hRad);
+    const b = c * Math.sin(hRad);
+    // OKLab → linear sRGB
+    const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = l - 0.0894841775 * a - 1.2914855480 * b;
+    const l3 = l_ * l_ * l_;
+    const m3 = m_ * m_ * m_;
+    const s3 = s_ * s_ * s_;
+    const r =
+      4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+    const g =
+      -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+    const b_ =
+      -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
+    const clamp = (v: number) =>
+      Math.max(0, Math.min(255, Math.round(v * 255)));
+    return `#${clamp(r).toString(16).padStart(2, "0")}${clamp(g).toString(16).padStart(2, "0")}${clamp(b_).toString(16).padStart(2, "0")}`;
+  }
+
+  /**
    * 解析当前配置的有效颜色集。
    * 若设置了 theme，使用主题色板覆盖各独立颜色字段；否则使用 kb 中的独立颜色。
+   * pressedKeyColor 始终被 DaisyUI 主题色 (--p) 覆盖，保证键盘高亮与全局主题一致。
    */
   private _resolveColors(kb: KeyboardConfig): PianoThemeColors {
+    // 优先读取 DaisyUI primary 色作为高亮色
+    const daisyPrimary = this._readDaisyUiColor("--p");
+
     const tc = getThemeColors(kb.theme);
     if (tc) {
-      return { ...tc };
+      return {
+        ...tc,
+        pressedKeyColor: daisyPrimary ?? tc.pressedKeyColor,
+        separatorColor: daisyPrimary ?? tc.separatorColor,
+      };
     }
     // 无主题时回退到独立颜色 + 默认渐变参数
     return {
       whiteKeyColor: kb.whiteKeyColor,
       blackKeyColor: kb.blackKeyColor,
-      pressedKeyColor: kb.pressedKeyColor,
+      pressedKeyColor: daisyPrimary ?? kb.pressedKeyColor,
       keyBorderColor: kb.keyBorderColor,
-      separatorColor: kb.separatorColor,
+      separatorColor: daisyPrimary ?? kb.separatorColor,
       labelColor: "#4a4a4a",
       blackLabelColor: "rgba(255, 255, 255, 0.9)",
       tonicDotColor: "#9ca3af",
@@ -255,21 +345,6 @@ export class KeyboardRenderer {
       container.addChild(this._blackHighlightG);
     }
 
-    // 保持向后兼容：旧的高亮层
-    if (!this._highlightGraphics) {
-      this._highlightGraphics = new Graphics();
-      this._highlightGraphics.label = "keyboard-highlights";
-      container.addChild(this._highlightGraphics);
-    }
-
-    // 旧的静态层（已弃用，但保持兼容）
-    if (!this._staticSprite) {
-      this._staticSprite = new Sprite();
-      this._staticSprite.label = "keyboard-static";
-      this._staticSprite.visible = false; // 隐藏旧层
-      container.addChild(this._staticSprite);
-    }
-
     this.applyRangeFromConfig();
   }
 
@@ -356,11 +431,12 @@ export class KeyboardRenderer {
   }
 
   /**
-   * 将水平像素坐标转换为对应的 MIDI 音符号
+   * 将像素坐标转换为对应的 MIDI 音符号。
+   * 传入 y 坐标可避免黑键下方的白键区域被错误拦截。
    */
-  xToMidi(x: number): number | null {
+  xToMidi(x: number, y?: number): number | null {
     const layout = this.getLayout();
-    return KeyboardLayoutCalculator.xToMidi(x, layout);
+    return KeyboardLayoutCalculator.xToMidi(x, layout, y);
   }
 
   highlightNote(midi: number): void {
@@ -754,20 +830,6 @@ export class KeyboardRenderer {
     if (this._blackHighlightG) {
       this._blackHighlightG.destroy();
       this._blackHighlightG = null;
-    }
-
-    // 销毁旧版资源（向后兼容）
-    if (this._staticRT) {
-      this._staticRT.destroy(true);
-      this._staticRT = null;
-    }
-    if (this._staticSprite) {
-      this._staticSprite.destroy();
-      this._staticSprite = null;
-    }
-    if (this._highlightGraphics) {
-      this._highlightGraphics.destroy();
-      this._highlightGraphics = null;
     }
 
     this.container = null;

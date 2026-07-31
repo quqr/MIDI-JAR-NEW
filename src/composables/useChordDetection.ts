@@ -26,7 +26,10 @@ function getChordInfo(
   if (tonic) {
     const tonicInKey = getNoteInKeySignature(tonic, keySignatureNotes);
     const rootInKey = getNoteInKeySignature(root, keySignatureNotes);
-    const c = Chord.getChord(type, tonicInKey);
+    // Use "M" (major) as default chord type when type is empty
+    // (e.g., Chord.detect returns "C" for C major)
+    const chordType = type || "M";
+    const c = Chord.getChord(chordType, tonicInKey);
     const rootInterval = Interval.distance(tonicInKey, rootInKey);
     const rootDegree = c.intervals.indexOf(rootInterval) + 1;
     return { ...c, symbol: chord, root, rootInterval, rootDegree };

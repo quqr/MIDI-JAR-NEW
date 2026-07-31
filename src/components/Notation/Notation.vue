@@ -68,6 +68,8 @@ const containerStyle = computed(() => ({
   backgroundColor: style.value.backgroundColor,
 }));
 
+const keySignatureKey = computed(() => JSON.stringify(props.keySignature));
+
 function renderNotation() {
   if (!renderer || !containerRef.value) return;
 
@@ -148,14 +150,7 @@ onMounted(() => {
 });
 
 watch(
-  [
-    notes,
-    () => props.staffClef,
-    () => JSON.stringify(props.keySignature),
-    display,
-    layout,
-    style,
-  ],
+  [notes, () => props.staffClef, keySignatureKey, display, layout, style],
   () => {
     requestAnimationFrame(renderNotation);
   },
