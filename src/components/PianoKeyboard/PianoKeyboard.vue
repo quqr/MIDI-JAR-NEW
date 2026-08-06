@@ -274,6 +274,10 @@ onMounted(async () => {
       // 同步 PixiJS 渲染器尺寸，确保渲染缓冲区与容器对齐
       pixiApp.renderer.resize(newW, newH);
       renderer.resize(newW, newH, d);
+      // 失效活跃音符快照：尺寸变化时即使音符未变也必须重渲染，
+      // 否则 applyHighlights 会因快照相同而早退，导致 renderer.render() 不被调用，
+      // 静态层（RenderTexture）不会按新尺寸重建，画布保持空白 → 键盘消失
+      lastActiveSnapshot = "";
       scheduleRender();
     });
   });
@@ -283,6 +287,9 @@ onMounted(async () => {
   themeObserver = new MutationObserver(() => {
     if (!renderer || !props.keyboard) return;
     renderer.setKeyboardConfig(toKeyboardConfig(props.keyboard));
+    // 主题变化同样需要失效快照：setKeyboardConfig 已将 _staticCacheDirty 置为 true，
+    // 但若活跃音符未变，applyHighlights 仍会早退跳过 render()
+    lastActiveSnapshot = "";
     scheduleRender();
   });
   themeObserver.observe(document.documentElement, {
@@ -300,7 +307,18 @@ onUnmounted(() => {
   themeObserver = null;
   renderer?.dispose();
   renderer = null;
-  pixiApp?.destroy(true, { children: true });
+  // pixiApp.destroy 可能触发 PixiJS v8 内部 TexturePool 崩溃（renderer resize 后
+  // CanvasTextPipe 的纹理池可能损坏）。包裹 try/catch 避免未捕获异常冒泡到 Vue。
+  // 注意：第一参数传 false（不释放全局资源）。
+  // TexturePool 是全局单例，和弦词典页面同时存在多个 PianoKeyboard 实例共享同一池。
+  // 若传 true 会触发 GlobalResourceRegistry.release() 把 _texturePool 清空但
+  // _poolKeyHash 保留，后续实例销毁 Text 时 returnTexture 查到 key 但池已空 → 崩溃。
+  try {
+    pixiApp?.destroy(false, { children: true });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn("[PianoKeyboard] pixiApp.destroy failed:", e);
+  }
   pixiApp = null;
   pixiContainer = null;
   sustainedNotes.clear();
@@ -328,6 +346,9 @@ watch(
   (kb) => {
     if (!renderer) return;
     renderer.setKeyboardConfig(toKeyboardConfig(kb));
+    // keyboard 配置变化（范围、可见性、颜色等）已将 _staticCacheDirty 置为 true，
+    // 同样需要失效快照，否则 applyHighlights 早退会跳过 render()
+    lastActiveSnapshot = "";
     scheduleRender();
   },
   // 父组件可能原地修改 keyboard 对象的嵌套字段而不换引用，因此需要 deep

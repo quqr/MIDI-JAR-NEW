@@ -1,362 +1,248 @@
-// ─── N-S 求解器核心：curl → vorticity → divergence → pressure → gradient → advection → splat ───
+// ─── N-S 求解器核心调度器：curl → vorticity → divergence → pressure → gradient → advection → splat ───
+// 重构后仅负责物理步骤编排；资源管理下沉 FluidResources，渲染管线下沉 FluidRenderer，
+// 诊断数据下沉 PerformanceTracker，纯数学工具下沉 FluidMath。
 // 参考 WebGL-Fluid-Simulation by PavelDoGreat (MIT)
 
 import type { GLExtensions } from "./GLContext";
-import { Program } from "./GLUtils";
-import {
-  type FBO,
-  type DoubleFBO,
-  createFBO,
-  createDoubleFBO,
-  resizeDoubleFBO,
-  getResolution,
-} from "./FramebufferManager";
+import type { FBO, DoubleFBO } from "./FramebufferManager";
 import type { FluidSimulationConfig } from "./FluidConfig";
-import type { SolverStepTimings, TextureSample } from "./diagnostics";
-import { EMPTY_TIMINGS, EMPTY_SAMPLE } from "./diagnostics";
+import type { SolverStepTimings, TextureSample, RGBColor } from "./types";
+import { FluidResources } from "./FluidResources";
+import { FluidRenderer } from "./FluidRenderer";
+import type { ShaderLibrary } from "./ShaderLibrary";
+import {
+  PerformanceTracker,
+  fluidPerformanceTracker,
+  sampleDyeCenter,
+} from "./FluidDiagnostics";
+import { generateColor, correctRadius } from "./FluidMath";
 
-export interface RGBColor {
-  r: number;
-  g: number;
-  b: number;
-}
+export type { RGBColor } from "./types";
 
 export class FluidSolver {
   private gl: WebGLRenderingContext;
   private ext: GLExtensions;
-  private blit: (target: FBO | null, clear?: boolean) => void;
   private config: FluidSimulationConfig;
-
-  private copyProgram: Program;
-  private clearProgram: Program;
-  private splatProgram: Program;
-  private advectionProgram: Program;
-  private divergenceProgram: Program;
-  private curlProgram: Program;
-  private vorticityProgram: Program;
-  private pressureProgram: Program;
-  private gradientSubtractProgram: Program;
-
-  // 仿真场（双缓冲 ping-pong）
-  private dye: DoubleFBO | null = null;
-  private velocity: DoubleFBO | null = null;
-  private divergence: FBO | null = null;
-  private curl: FBO | null = null;
-  private pressure: DoubleFBO | null = null;
-
-  // 深度诊断：上一次 step() 各子步骤耗时
-  private lastStepTimings: SolverStepTimings = { ...EMPTY_TIMINGS };
+  private shaders: ShaderLibrary;
+  private resources: FluidResources;
+  private renderer: FluidRenderer;
+  private tracker: PerformanceTracker;
 
   constructor(
     gl: WebGLRenderingContext,
     ext: GLExtensions,
     blit: (target: FBO | null, clear?: boolean) => void,
-    copyProgram: Program,
-    clearProgram: Program,
-    splatProgram: Program,
-    advectionProgram: Program,
-    divergenceProgram: Program,
-    curlProgram: Program,
-    vorticityProgram: Program,
-    pressureProgram: Program,
-    gradientSubtractProgram: Program,
+    shaders: ShaderLibrary,
     config: FluidSimulationConfig,
   ) {
     this.gl = gl;
     this.ext = ext;
-    this.blit = blit;
     this.config = config;
-    this.copyProgram = copyProgram;
-    this.clearProgram = clearProgram;
-    this.splatProgram = splatProgram;
-    this.advectionProgram = advectionProgram;
-    this.divergenceProgram = divergenceProgram;
-    this.curlProgram = curlProgram;
-    this.vorticityProgram = vorticityProgram;
-    this.pressureProgram = pressureProgram;
-    this.gradientSubtractProgram = gradientSubtractProgram;
+    this.shaders = shaders;
+    this.resources = new FluidResources(gl, ext, blit, shaders.copy, config);
+    this.renderer = new FluidRenderer(blit);
+    this.tracker = fluidPerformanceTracker;
   }
 
   initFramebuffers() {
-    const gl = this.gl;
-    const ext = this.ext;
-    const config = this.config;
+    this.resources.allocate();
+  }
 
-    const simRes = getResolution(gl, config.SIM_RESOLUTION);
-    const dyeRes = getResolution(gl, config.DYE_RESOLUTION);
+  resize() {
+    this.resources.resize();
+  }
 
-    const texType = ext.halfFloatTexType;
-    const rgba = ext.formatRGBA;
-    const rg = ext.formatRG;
-    const r = ext.formatR;
-    const filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+  destroy() {
+    this.resources.release();
+  }
 
-    if (!rgba || !rg || !r) {
-      throw new Error("Required WebGL texture formats not supported");
-    }
+  updateConfig(config: FluidSimulationConfig) {
+    this.config = config;
+    this.resources.updateConfig(config);
+  }
 
-    gl.disable(gl.BLEND);
+  getDyeDouble(): DoubleFBO | null {
+    return this.resources.dye;
+  }
 
-    if (this.dye == null) {
-      this.dye = createDoubleFBO(
-        gl,
-        ext,
-        dyeRes.width,
-        dyeRes.height,
-        rgba.internalFormat,
-        rgba.format,
-        texType,
-        filtering,
-      );
-    } else {
-      this.dye = resizeDoubleFBO(
-        gl,
-        ext,
-        this.dye,
-        dyeRes.width,
-        dyeRes.height,
-        rgba.internalFormat,
-        rgba.format,
-        texType,
-        filtering,
-        this.copyProgram,
-        this.blit,
-      );
-    }
+  /** 获取上一次 step() 各子步骤耗时 */
+  getLastStepTimings(): SolverStepTimings {
+    return this.tracker.getTimings();
+  }
 
-    if (this.velocity == null) {
-      this.velocity = createDoubleFBO(
-        gl,
-        ext,
-        simRes.width,
-        simRes.height,
-        rg.internalFormat,
-        rg.format,
-        texType,
-        filtering,
-      );
-    } else {
-      this.velocity = resizeDoubleFBO(
-        gl,
-        ext,
-        this.velocity,
-        simRes.width,
-        simRes.height,
-        rg.internalFormat,
-        rg.format,
-        texType,
-        filtering,
-        this.copyProgram,
-        this.blit,
-      );
-    }
-
-    this.divergence = createFBO(
-      gl,
-      ext,
-      simRes.width,
-      simRes.height,
-      r.internalFormat,
-      r.format,
-      texType,
-      gl.NEAREST,
-    );
-    this.curl = createFBO(
-      gl,
-      ext,
-      simRes.width,
-      simRes.height,
-      r.internalFormat,
-      r.format,
-      texType,
-      gl.NEAREST,
-    );
-    this.pressure = createDoubleFBO(
-      gl,
-      ext,
-      simRes.width,
-      simRes.height,
-      r.internalFormat,
-      r.format,
-      texType,
-      gl.NEAREST,
-    );
+  /** 采样 dye 纹理中心像素（用于诊断；非主流程，静默失败） */
+  sampleDyeCenter(): TextureSample {
+    return sampleDyeCenter(this.gl, this.resources.dye);
   }
 
   /** N-S 求解一步：所有 shader pass 串行执行 */
   step(dt: number) {
-    const gl = this.gl;
-    const config = this.config;
-    if (
-      !this.dye ||
-      !this.velocity ||
-      !this.divergence ||
-      !this.curl ||
-      !this.pressure
-    ) {
-      return;
-    }
+    if (!this.resources.ready()) return;
 
-    gl.disable(gl.BLEND);
+    this.gl.disable(this.gl.BLEND);
+    this.tracker.resetStep();
 
-    const stepStart = performance.now();
+    this.computeCurl();
+    this.applyVorticity(dt);
+    this.computeDivergence();
+    this.clearPressure();
+    this.solvePressure();
+    this.subtractGradient();
+    this.advectVelocity(dt);
+    this.advectDye();
 
-    // 1. curl
-    let t0 = performance.now();
-    this.curlProgram.bind();
-    gl.uniform2f(
-      this.curlProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
-    );
-    gl.uniform1i(
-      this.curlProgram.uniforms.uVelocity,
-      this.velocity.read.attach(0),
-    );
-    this.blit(this.curl);
-    this.lastStepTimings.curl = performance.now() - t0;
+    this.tracker.finishStep();
+  }
 
-    // 2. vorticity confinement
-    t0 = performance.now();
-    this.vorticityProgram.bind();
-    gl.uniform2f(
-      this.vorticityProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
-    );
-    gl.uniform1i(
-      this.vorticityProgram.uniforms.uVelocity,
-      this.velocity.read.attach(0),
-    );
-    gl.uniform1i(this.vorticityProgram.uniforms.uCurl, this.curl.attach(1));
-    gl.uniform1f(this.vorticityProgram.uniforms.curl, config.CURL);
-    gl.uniform1f(this.vorticityProgram.uniforms.dt, dt);
-    this.blit(this.velocity.write);
-    this.velocity.swap();
-    this.lastStepTimings.vorticity = performance.now() - t0;
+  // ─── step 子步骤：每个语义化方法对应一个物理阶段 ───
+  // 注：所有子方法由 step() 在 resources.ready() 通过后调用，
+  // 字段非空由该前置条件保证，故以非空断言访问。
 
-    // 3. divergence
-    t0 = performance.now();
-    this.divergenceProgram.bind();
-    gl.uniform2f(
-      this.divergenceProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
-    );
-    gl.uniform1i(
-      this.divergenceProgram.uniforms.uVelocity,
-      this.velocity.read.attach(0),
-    );
-    this.blit(this.divergence);
-    this.lastStepTimings.divergence = performance.now() - t0;
+  private computeCurl(): void {
+    const curl = this.resources.curl!;
+    const velocity = this.resources.velocity!;
+    const ms = this.renderer.executePass(this.shaders.curl, curl, (u) => {
+      this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
+    });
+    this.tracker.record("curl", ms);
+  }
 
-    // 4. clear pressure (衰减)
-    t0 = performance.now();
-    this.clearProgram.bind();
-    gl.uniform1i(
-      this.clearProgram.uniforms.uTexture,
-      this.pressure.read.attach(0),
+  private applyVorticity(dt: number): void {
+    const velocity = this.resources.velocity!;
+    const curl = this.resources.curl!;
+    const ms = this.renderer.executePass(
+      this.shaders.vorticity,
+      velocity.write,
+      (u) => {
+        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
+        this.gl.uniform1i(u.uCurl, curl.attach(1));
+        this.gl.uniform1f(u.curl, this.config.CURL);
+        this.gl.uniform1f(u.dt, dt);
+      },
     );
-    gl.uniform1f(this.clearProgram.uniforms.value, config.PRESSURE);
-    this.blit(this.pressure.write);
-    this.pressure.swap();
-    this.lastStepTimings.clearPressure = performance.now() - t0;
+    velocity.swap();
+    this.tracker.record("vorticity", ms);
+  }
 
-    // 5. pressure Jacobi 迭代
-    t0 = performance.now();
-    this.pressureProgram.bind();
-    gl.uniform2f(
-      this.pressureProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
+  private computeDivergence(): void {
+    const divergence = this.resources.divergence!;
+    const velocity = this.resources.velocity!;
+    const ms = this.renderer.executePass(
+      this.shaders.divergence,
+      divergence,
+      (u) => {
+        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
+      },
     );
-    gl.uniform1i(
-      this.pressureProgram.uniforms.uDivergence,
-      this.divergence.attach(0),
+    this.tracker.record("divergence", ms);
+  }
+
+  private clearPressure(): void {
+    const pressure = this.resources.pressure!;
+    const ms = this.renderer.executePass(
+      this.shaders.clear,
+      pressure.write,
+      (u) => {
+        this.gl.uniform1i(u.uTexture, pressure.read.attach(0));
+        this.gl.uniform1f(u.value, this.config.PRESSURE);
+      },
     );
-    for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-      gl.uniform1i(
-        this.pressureProgram.uniforms.uPressure,
-        this.pressure.read.attach(1),
+    pressure.swap();
+    this.tracker.record("clearPressure", ms);
+  }
+
+  /** pressure Jacobi 迭代：bind 一次 + N 次 blit+swap，不走 executePass */
+  private solvePressure(): void {
+    const pressure = this.resources.pressure!;
+    const divergence = this.resources.divergence!;
+    const velocity = this.resources.velocity!;
+    const t0 = performance.now();
+    this.renderer.bind(this.shaders.pressure);
+    this.gl.uniform2f(
+      this.shaders.pressure.uniforms.texelSize,
+      velocity.texelSizeX,
+      velocity.texelSizeY,
+    );
+    this.gl.uniform1i(
+      this.shaders.pressure.uniforms.uDivergence,
+      divergence.attach(0),
+    );
+    for (let i = 0; i < this.config.PRESSURE_ITERATIONS; i++) {
+      this.gl.uniform1i(
+        this.shaders.pressure.uniforms.uPressure,
+        pressure.read.attach(1),
       );
-      this.blit(this.pressure.write);
-      this.pressure.swap();
+      this.renderer.drawTo(pressure.write);
+      pressure.swap();
     }
-    this.lastStepTimings.pressure = performance.now() - t0;
+    this.tracker.record("pressure", performance.now() - t0);
+  }
 
-    // 6. gradient subtract
-    t0 = performance.now();
-    this.gradientSubtractProgram.bind();
-    gl.uniform2f(
-      this.gradientSubtractProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
+  private subtractGradient(): void {
+    const velocity = this.resources.velocity!;
+    const pressure = this.resources.pressure!;
+    const ms = this.renderer.executePass(
+      this.shaders.gradientSubtract,
+      velocity.write,
+      (u) => {
+        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform1i(u.uPressure, pressure.read.attach(0));
+        this.gl.uniform1i(u.uVelocity, velocity.read.attach(1));
+      },
     );
-    gl.uniform1i(
-      this.gradientSubtractProgram.uniforms.uPressure,
-      this.pressure.read.attach(0),
-    );
-    gl.uniform1i(
-      this.gradientSubtractProgram.uniforms.uVelocity,
-      this.velocity.read.attach(1),
-    );
-    this.blit(this.velocity.write);
-    this.velocity.swap();
-    this.lastStepTimings.gradientSubtract = performance.now() - t0;
+    velocity.swap();
+    this.tracker.record("gradientSubtract", ms);
+  }
 
-    // 7. advection (velocity)
-    t0 = performance.now();
-    this.advectionProgram.bind();
-    gl.uniform2f(
-      this.advectionProgram.uniforms.texelSize,
-      this.velocity.texelSizeX,
-      this.velocity.texelSizeY,
+  private advectVelocity(dt: number): void {
+    const velocity = this.resources.velocity!;
+    const ms = this.renderer.executePass(
+      this.shaders.advection,
+      velocity.write,
+      (u) => {
+        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        if (!this.ext.supportLinearFiltering) {
+          this.gl.uniform2f(
+            u.dyeTexelSize,
+            velocity.texelSizeX,
+            velocity.texelSizeY,
+          );
+        }
+        const velocityId = velocity.read.attach(0);
+        this.gl.uniform1i(u.uVelocity, velocityId);
+        this.gl.uniform1i(u.uSource, velocityId);
+        this.gl.uniform1f(u.dt, dt);
+        this.gl.uniform1f(u.dissipation, this.config.VELOCITY_DISSIPATION);
+      },
     );
-    if (!this.ext.supportLinearFiltering) {
-      gl.uniform2f(
-        this.advectionProgram.uniforms.dyeTexelSize,
-        this.velocity.texelSizeX,
-        this.velocity.texelSizeY,
-      );
-    }
-    const velocityId = this.velocity.read.attach(0);
-    gl.uniform1i(this.advectionProgram.uniforms.uVelocity, velocityId);
-    gl.uniform1i(this.advectionProgram.uniforms.uSource, velocityId);
-    gl.uniform1f(this.advectionProgram.uniforms.dt, dt);
-    gl.uniform1f(
-      this.advectionProgram.uniforms.dissipation,
-      config.VELOCITY_DISSIPATION,
-    );
-    this.blit(this.velocity.write);
-    this.velocity.swap();
-    this.lastStepTimings.advectVelocity = performance.now() - t0;
+    velocity.swap();
+    this.tracker.record("advectVelocity", ms);
+  }
 
-    // 8. advection (dye)
-    t0 = performance.now();
-    if (!this.ext.supportLinearFiltering) {
-      gl.uniform2f(
-        this.advectionProgram.uniforms.dyeTexelSize,
-        this.dye.texelSizeX,
-        this.dye.texelSizeY,
-      );
-    }
-    gl.uniform1i(
-      this.advectionProgram.uniforms.uVelocity,
-      this.velocity.read.attach(0),
+  /**
+   * advection program 的 dt uniform 由 advectVelocity 设置，
+   * WebGL program 状态在 useProgram 间持久，此处无需重复设置 dt。
+   */
+  private advectDye(): void {
+    const velocity = this.resources.velocity!;
+    const dye = this.resources.dye!;
+    const ms = this.renderer.executePass(
+      this.shaders.advection,
+      dye.write,
+      (u) => {
+        if (!this.ext.supportLinearFiltering) {
+          this.gl.uniform2f(u.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+        }
+        this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
+        this.gl.uniform1i(u.uSource, dye.read.attach(1));
+        this.gl.uniform1f(u.dissipation, this.config.DENSITY_DISSIPATION);
+      },
     );
-    gl.uniform1i(
-      this.advectionProgram.uniforms.uSource,
-      this.dye.read.attach(1),
-    );
-    gl.uniform1f(
-      this.advectionProgram.uniforms.dissipation,
-      config.DENSITY_DISSIPATION,
-    );
-    this.blit(this.dye.write);
-    this.dye.swap();
-    this.lastStepTimings.advectDye = performance.now() - t0;
-
-    this.lastStepTimings.total = performance.now() - stepStart;
+    dye.swap();
+    this.tracker.record("advectDye", ms);
   }
 
   /**
@@ -368,53 +254,36 @@ export class FluidSolver {
    * @param color 染料颜色
    */
   splat(x: number, y: number, dx: number, dy: number, color: RGBColor) {
-    const gl = this.gl;
-    const config = this.config;
-    // 检查 dye 和 velocity 双缓冲是否已初始化
-    if (!this.dye || !this.velocity) return;
+    const { velocity, dye } = this.resources;
+    if (!dye || !velocity) return;
 
     // 将输入坐标限制在 [0, 1] 范围内，防止越界
     x = Math.max(0, Math.min(1, x));
     y = Math.max(0, Math.min(1, y));
 
-    // 获取画布宽高比，用于校正 splat 半径（避免非正方形画布上的形变）
-    const aspectRatio = this.getCanvasAspectRatio();
-    // 计算 splat 半径，确保最小值避免除零错误
+    // 获取画布宽高比，校正 splat 半径（避免非正方形画布上的形变）
+    const aspectRatio = this.gl.drawingBufferWidth / this.gl.drawingBufferHeight;
     const radius = Math.max(
       10e-6,
-      correctRadius(config.SPLAT_RADIUS, aspectRatio),
+      correctRadius(this.config.SPLAT_RADIUS, aspectRatio),
     );
 
     // ========== 第一步：向速度场注入动量 ==========
-    // 绑定 splat shader 程序
-    this.splatProgram.bind();
-    // 设置目标纹理为速度场读缓冲区（纹理单元 0）
-    gl.uniform1i(
-      this.splatProgram.uniforms.uTarget,
-      this.velocity.read.attach(0),
-    );
-    // 传递画布宽高比，用于在 shader 中校正 splat 形状
-    gl.uniform1f(this.splatProgram.uniforms.aspectRatio, aspectRatio);
-    // 设置 splat 中心位置
-    gl.uniform2f(this.splatProgram.uniforms.point, x, y);
-    // 设置 splat 颜色（这里作为速度向量 dx, dy 传入，z 分量为 0）
-    gl.uniform3f(this.splatProgram.uniforms.color, dx, dy, 0.0);
-    // 设置 splat 影响半径
-    gl.uniform1f(this.splatProgram.uniforms.radius, radius);
-    // 执行渲染，输出到速度场写缓冲区
-    this.blit(this.velocity.write);
-    // 交换读写缓冲区，使新速度场成为当前状态
-    this.velocity.swap();
+    this.renderer.executePass(this.shaders.splat, velocity.write, (u) => {
+      this.gl.uniform1i(u.uTarget, velocity.read.attach(0));
+      this.gl.uniform1f(u.aspectRatio, aspectRatio);
+      this.gl.uniform2f(u.point, x, y);
+      this.gl.uniform3f(u.color, dx, dy, 0.0);
+      this.gl.uniform1f(u.radius, radius);
+    });
+    velocity.swap();
 
     // ========== 第二步：向染料场注入颜色 ==========
-    // 设置目标纹理为染料场读缓冲区（纹理单元 0）
-    gl.uniform1i(this.splatProgram.uniforms.uTarget, this.dye.read.attach(0));
-    // 设置染料颜色（RGB）
-    gl.uniform3f(this.splatProgram.uniforms.color, color.r, color.g, color.b);
-    // 执行渲染，输出到染料场写缓冲区
-    this.blit(this.dye.write);
-    // 交换读写缓冲区，使新染料场成为当前状态
-    this.dye.swap();
+    this.renderer.executePass(this.shaders.splat, dye.write, (u) => {
+      this.gl.uniform1i(u.uTarget, dye.read.attach(0));
+      this.gl.uniform3f(u.color, color.r, color.g, color.b);
+    });
+    dye.swap();
   }
 
   /** 随机注入多个 splat（启动时或调试时使用） */
@@ -431,139 +300,4 @@ export class FluidSolver {
       this.splat(x, y, dx, dy, color);
     }
   }
-
-  resize() {
-    this.initFramebuffers();
-  }
-
-  destroy() {
-    // 各 FBO 的纹理与帧缓冲通过 WebGL context 丢失自动释放，这里仅断引用
-    this.dye = null;
-    this.velocity = null;
-    this.divergence = null;
-    this.curl = null;
-    this.pressure = null;
-  }
-
-  updateConfig(config: FluidSimulationConfig) {
-    const needsRebuild =
-      config.SIM_RESOLUTION !== this.config.SIM_RESOLUTION ||
-      config.DYE_RESOLUTION !== this.config.DYE_RESOLUTION;
-    this.config = config;
-    if (needsRebuild) {
-      this.initFramebuffers();
-    }
-  }
-
-  getDye(): FBO | null {
-    return this.dye?.read ?? null;
-  }
-
-  getDyeDouble(): DoubleFBO | null {
-    return this.dye;
-  }
-
-  /** 获取上一次 step() 各子步骤耗时 */
-  getLastStepTimings(): SolverStepTimings {
-    return this.lastStepTimings;
-  }
-
-  /** 采样 dye 纹理中心像素（用于诊断；非主流程，静默失败） */
-  sampleDyeCenter(): TextureSample {
-    if (!this.dye) return { ...EMPTY_SAMPLE };
-    const gl = this.gl;
-    const wgl2 = gl as WebGL2RenderingContext;
-    const read = this.dye.read;
-    try {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, read.fbo);
-      gl.viewport(0, 0, read.width, read.height);
-      const px = Math.floor(read.width / 2);
-      const py = Math.floor(read.height / 2);
-      const buf = new Uint16Array(4);
-      wgl2.readPixels(px, py, 1, 1, wgl2.RGBA, wgl2.HALF_FLOAT, buf);
-      const decode = (h: number): number => {
-        const s = (h & 0x8000) >> 15;
-        const e = (h & 0x7c00) >> 10;
-        const f = h & 0x03ff;
-        if (e === 0) return (s ? -1 : 1) * Math.pow(2, -14) * (f / 1024);
-        if (e === 0x1f) return f ? NaN : s ? -Infinity : Infinity;
-        return (s ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / 1024);
-      };
-      return {
-        r: decode(buf[0]),
-        g: decode(buf[1]),
-        b: decode(buf[2]),
-        a: decode(buf[3]),
-      };
-    } catch {
-      return { ...EMPTY_SAMPLE };
-    }
-  }
-
-  getVelocity(): DoubleFBO | null {
-    return this.velocity;
-  }
-
-  private getCanvasAspectRatio(): number {
-    return this.gl.drawingBufferWidth / this.gl.drawingBufferHeight;
-  }
-}
-
-function correctRadius(radius: number, aspectRatio: number): number {
-  if (aspectRatio > 1) radius *= aspectRatio;
-  return radius;
-}
-
-/** 随机 HSV → RGB 颜色（参考原项目 generateColor） */
-export function generateColor(): RGBColor {
-  const c = HSVtoRGB(Math.random(), 1.0, 1.0);
-  c.r *= 0.15;
-  c.g *= 0.15;
-  c.b *= 0.15;
-  return c;
-}
-
-export function HSVtoRGB(h: number, s: number, v: number): RGBColor {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  const i = Math.floor(h * 6);
-  const f = h * 6 - i;
-  const p = v * (1 - s);
-  const q = v * (1 - f * s);
-  const t = v * (1 - (1 - f) * s);
-
-  switch (i % 6) {
-    case 0:
-      r = v;
-      g = t;
-      b = p;
-      break;
-    case 1:
-      r = q;
-      g = v;
-      b = p;
-      break;
-    case 2:
-      r = p;
-      g = v;
-      b = t;
-      break;
-    case 3:
-      r = p;
-      g = q;
-      b = v;
-      break;
-    case 4:
-      r = t;
-      g = p;
-      b = v;
-      break;
-    case 5:
-      r = v;
-      g = p;
-      b = q;
-      break;
-  }
-  return { r, g, b };
 }

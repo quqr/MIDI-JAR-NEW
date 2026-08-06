@@ -30,24 +30,18 @@
           id="chord"
           class="flex flex-col flex-1 items-center justify-center text-center"
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              :key="chords[0]?.name ?? ''"
-              class="flex flex-col items-center justify-center"
-              :initial="{ opacity: 0, y: 6 }"
-              :animate="{ opacity: 1, y: 0 }"
-              :exit="{ opacity: 0, y: -6 }"
-              :transition="{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }"
-            >
-              <ChordNameLink
-                :chord="chords[0]"
-                class="items-center justify-center"
-                :notation="chordNotation"
-                :highlightAlterations="highlightAlterations"
-                size="6xl"
-              />
-            </motion.div>
-          </AnimatePresence>
+          <div
+            :key="chords[0]?.name ?? ''"
+            class="flex flex-col items-center justify-center"
+          >
+            <ChordNameLink
+              :chord="chords[0]"
+              class="items-center justify-center"
+              :notation="chordNotation"
+              :highlightAlterations="highlightAlterations"
+              size="6xl"
+            />
+          </div>
         </div>
         <!-- 和弦全名 -->
         <div
@@ -157,7 +151,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { motion, AnimatePresence } from "motion-v";
 import { PianoKeyboard } from "@/components/PianoKeyboard";
 import { Notation } from "@/components/Notation/";
 import { ChordNameLink } from "@/components/ChordNameLink/";

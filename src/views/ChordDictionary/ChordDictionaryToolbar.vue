@@ -1,6 +1,6 @@
 <template>
   <div
-    class="chord-dictionary-toolbar flex flex-col gap-2 px-4 py-2 border-b border-base-300 glass flex-shrink-0"
+    class="chord-dictionary-toolbar flex flex-col gap-2 px-4 py-2 border-b border-base-300  flex-shrink-0"
   >
     <!-- Row 1: Search + controls -->
     <div class="flex items-center gap-2">

@@ -1,19 +1,14 @@
 import type { WaterfallPianoSettings } from "../types";
 import { Application, Container } from "pixi.js";
-import { AdvancedBloomFilter, BackdropBlurFilter } from "pixi-filters";
 import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
 import { PerformanceMonitor } from "./PerformanceMonitor";
-import { RenderLoop, type PhaseTimings } from "./RenderLoop";
-import { FluidSplatManager } from "./FluidSplatManager";
+import { RenderLoop, type PhaseTimings, type IRenderPipeline } from "./RenderLoop";
+import { InteractionController } from "./InteractionController";
+import { VisualEffectsManager } from "./VisualEffectsManager";
+import { calculateLayout } from "./LayoutCalculator";
 import type { ISoundEngine } from "../audio/ISoundEngine";
-import {
-  FluidSimulation,
-  resolveConfig,
-  type FluidSimulationConfig,
-  type IFluidSimulation,
-} from "@/engine/fluid";
 import { createLogger } from "@/utils/logger";
 import { waterfallPianoEvents } from "../events";
 
@@ -26,12 +21,12 @@ export interface WaterfallLayers {
   keyboard: Container;
 }
 
-const DEFAULT_VELOCITY = 90;
-
 /**
  * 瀑布钢琴主引擎，协调键盘渲染、音符方块系统、背景渲染、流体模拟与音频输出
+ *
+ * 实现 IRenderPipeline 接口以驱动 RenderLoop，渲染回调由 RenderLoop 通过接口调用。
  */
-export class WaterfallEngine {
+export class WaterfallEngine implements IRenderPipeline {
   private app: Application | null = null;
   private layers: WaterfallLayers | null = null;
   private settings: WaterfallPianoSettings | null = null;
@@ -39,45 +34,22 @@ export class WaterfallEngine {
   private noteBlockSystem = new NoteBlockSystem();
   private backgroundRenderer = new BackgroundRenderer();
   private perfMonitor = new PerformanceMonitor();
-  private fluid: IFluidSimulation | null = null;
-  /** 流体模拟专用 canvas（WebGL 独立 context，层叠在 PixiJS canvas 之下） */
-  private fluidCanvas: HTMLCanvasElement | null = null;
-  /** AdvancedBloomFilter 实例（持久化，应用到 waterfall 层） */
-  private advancedBloomFilter: AdvancedBloomFilter | null = null;
-  /** BackdropBlurFilter 实例（持久化，应用到 fluid 层以模糊 background 层） */
-  private backdropBlurFilter: BackdropBlurFilter | null = null;
   private soundEngine: ISoundEngine | null = null;
   private renderLoop: RenderLoop | null = null;
-  private splatManager = new FluidSplatManager({
-    keyboardRenderer: this.keyboardRenderer,
-    noteBlockSystem: this.noteBlockSystem,
-    getParticleConfig: () => (this.settings ? this.settings.particles : null),
-    getBackgroundConfig: () =>
-      this.settings ? this.settings.background : null,
-    getLayout: () => ({
-      width: this.width,
-      height: this.height,
-      keyboardHeight: this.keyboardHeight,
-    }),
-    hasCanvases: () => !!this.layers && !!this.app,
-  });
+  private interaction: InteractionController | null = null;
+  private visualEffects: VisualEffectsManager | null = null;
   private width = 0;
   private height = 0;
   private keyboardHeight = 0;
   private dpr = 1;
-  private pointerDown = false;
-  private activePointerMidi: number | null = null;
   /** 保存旧值的数值副本，用于检测设置变更（避免 deep watch 引用问题） */
   private prevKeyboardHeightRatio: number | null = null;
-  private prevFluidEnabled: boolean | null = null;
   public showFPS = true;
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
   /** 资源清理任务注册表（增强型 RAII 模式） */
   private cleanupTasks: Map<string, () => void | Promise<void>> = new Map();
   private disposed = false;
-  /** MIDI 模式暂停标志：为 true 时渲染循环跳过 fluid.update() 和所有 splat 调用 */
-  private fluidPaused = false;
 
   /**
    * 注册资源清理任务
@@ -123,51 +95,38 @@ export class WaterfallEngine {
       this.noteBlockSystem.onNoteEnd.add((args) =>
         this.onSynthesiaEnd(args.midi),
       );
-      if (fluidCanvas) {
-        this.fluidCanvas = fluidCanvas;
-      }
-      this.maybeInitFluid();
-      // 仅当流体在 bottom 层时跳过背景绘制（让流体穿透显示）
-      // top 层时背景正常绘制（流体在 PixiJS 之上，从流体的透明区域看到背景）
-      this.backgroundRenderer.setFluidActive(
-        settings.background.fluidEnabled &&
-          !!this.fluid &&
-          settings.background.fluidLayerPosition === "bottom",
-      );
-      this.applyEffects(settings);
+      this.visualEffects = new VisualEffectsManager({
+        keyboardRenderer: this.keyboardRenderer,
+        noteBlockSystem: this.noteBlockSystem,
+        getLayout: () => ({
+          width: this.width,
+          height: this.height,
+          keyboardHeight: this.keyboardHeight,
+        }),
+        onFluidActiveChange: (active) =>
+          this.backgroundRenderer.setFluidActive(active),
+      });
+      this.visualEffects.init(settings, fluidCanvas ?? null, layers);
       this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
-      this.prevFluidEnabled = settings.background.fluidEnabled;
-      this.bindPointerEvents();
-      this.renderLoop = new RenderLoop(
-        {
-          advancePlayback: () => this.frameCallback?.(),
-          renderBackground: (now) => this.backgroundRenderer.render(now),
-          updateNoteBlocks: (dtSec) => this.noteBlockSystem.update(dtSec),
-          renderNoteBlocks: () => this.noteBlockSystem.render(),
-          renderKeyboard: () => this.keyboardRenderer.render(),
-          displayFPS: (fps) => this.renderFPSOverlay(fps),
-          shouldUpdateFluid: () => !!this.fluid && !this.fluidPaused,
-          updateFluidAndSplats: () => this.updateFluidAndSplats(),
-          renderFrame: () => this.renderFrame(),
-          logPerformance: (now, total, timings, fps) =>
-            this.logFramePerf(now, total, timings, fps),
-        },
-        this.perfMonitor,
-      );
+      this.interaction = new InteractionController({
+        xToMidi: (x, y) => this.keyboardRenderer.xToMidi(x, y),
+        onNoteOn: (midi, velocity) => this.triggerNoteOn(midi, velocity),
+        onNoteOff: (midi) => this.triggerNoteOff(midi),
+      });
+      this.interaction.enable(app.canvas);
+      this.renderLoop = new RenderLoop(this, this.perfMonitor);
       this.renderLoop.start();
 
       // 注册清理任务
-      this.registerCleanup("pointerEvents", () => this.unbindPointerEvents());
       this.registerCleanup("noteBlockSystem", () =>
         this.noteBlockSystem.dispose(),
       );
       this.registerCleanup("backgroundRenderer", () =>
         this.backgroundRenderer.dispose(),
       );
-      this.registerCleanup("fluid", () => {
-        this.fluid?.destroy();
-        this.fluid = null;
-      });
+      this.registerCleanup("visualEffects", () =>
+        this.visualEffects?.dispose(),
+      );
       this.registerCleanup("keyboardHighlights", () =>
         this.keyboardRenderer.clearAllHighlights(),
       );
@@ -187,10 +146,10 @@ export class WaterfallEngine {
 
   /**
    * 更新流体模拟专用 canvas 引用
-   * 用于运行时流体 canvas 挂载/卸载后，让 engine 拿到最新的 canvas 引用
+   * 用于运行时流体 canvas 挂载/卸载后，让管理器拿到最新的 canvas 引用
    */
   setFluidCanvas(canvas: HTMLCanvasElement | null): void {
-    this.fluidCanvas = canvas;
+    this.visualEffects?.setFluidCanvas(canvas);
   }
 
   setSustain(enabled: boolean): void {
@@ -205,14 +164,11 @@ export class WaterfallEngine {
     // 用保存的数值副本检测变更（不依赖 watch 传递旧值，避免引用问题）
     const oldHeightRatio =
       this.prevKeyboardHeightRatio ?? settings.keyboard.heightRatio;
-    const oldFluidEnabled =
-      this.prevFluidEnabled ?? settings.background.fluidEnabled;
     this.settings = settings;
     // 传播键盘配置（圆角、黑键高度比、主题、颜色等）到渲染器
     this.keyboardRenderer.setKeyboardConfig(settings.keyboard);
     // 保存数值副本供下次比较
     this.prevKeyboardHeightRatio = settings.keyboard.heightRatio;
-    this.prevFluidEnabled = settings.background.fluidEnabled;
     // 键盘高度比例变化时需要重新布局
     if (
       settings.keyboard.heightRatio !== oldHeightRatio &&
@@ -225,92 +181,8 @@ export class WaterfallEngine {
     this.noteBlockSystem.setParticleConfig(settings.particles);
     this.noteBlockSystem.setAuraConfig(settings.aura);
     this.backgroundRenderer.setBackgroundConfig(settings.background);
-    if (settings.background.fluidEnabled && !oldFluidEnabled) {
-      this.maybeInitFluid();
-      this.backgroundRenderer.setFluidActive(
-        !!this.fluid && settings.background.fluidLayerPosition === "bottom",
-      );
-      // 流体开启后需要重新布局确保尺寸正确
-      if (this.width > 0 && this.height > 0) {
-        this.resize(this.width, this.height);
-      }
-    } else if (
-      !settings.background.fluidEnabled &&
-      oldFluidEnabled &&
-      this.fluid
-    ) {
-      this.fluid.destroy();
-      this.fluid = null;
-      this.backgroundRenderer.setFluidActive(false);
-    } else if (this.fluid && settings.background.fluidEnabled) {
-      this.fluid.updateConfig(this.buildFluidConfig());
-      // 流体层位置变化时同步背景跳过状态
-      this.backgroundRenderer.setFluidActive(
-        settings.background.fluidLayerPosition === "bottom",
-      );
-    }
-    this.applyEffects(settings);
-  }
-
-  /**
-   * 应用后期效果（AdvancedBloomFilter + BackdropBlurFilter）
-   *
-   * - AdvancedBloomFilter 应用到 waterfall 层：使音符方块/光晕产生泛光
-   * - BackdropBlurFilter 应用到 fluid 层（empty Container）：模糊其背后的 background 层
-   *
-   * 滤镜实例持久化，仅在启用/禁用状态切换时创建/销毁，参数变更原地更新。
-   */
-  private applyEffects(settings: WaterfallPianoSettings): void {
-    if (!this.layers) return;
-    const cfg = settings.effects;
-
-    // ── AdvancedBloomFilter（waterfall 层） ──
-    if (cfg.advancedBloomEnabled) {
-      if (!this.advancedBloomFilter) {
-        this.advancedBloomFilter = new AdvancedBloomFilter({
-          threshold: cfg.advancedBloomThreshold,
-          bloomScale: cfg.advancedBloomBloomScale,
-          blur: cfg.advancedBloomBlur,
-        });
-      } else {
-        this.advancedBloomFilter.threshold = cfg.advancedBloomThreshold;
-        this.advancedBloomFilter.bloomScale = cfg.advancedBloomBloomScale;
-        this.advancedBloomFilter.blur = cfg.advancedBloomBlur;
-      }
-      this.layers.waterfall.filters = this.composeWaterfallFilters(
-        this.advancedBloomFilter,
-      );
-    } else if (this.advancedBloomFilter) {
-      this.layers.waterfall.filters = this.composeWaterfallFilters(null);
-      this.advancedBloomFilter.destroy();
-      this.advancedBloomFilter = null;
-    }
-
-    // ── BackdropBlurFilter（fluid 层，模糊 background 层） ──
-    if (cfg.backdropBlurEnabled) {
-      if (!this.backdropBlurFilter) {
-        this.backdropBlurFilter = new BackdropBlurFilter({
-          strength: cfg.backdropBlurStrength,
-        });
-        this.layers.fluid.filters = [this.backdropBlurFilter];
-      } else {
-        this.backdropBlurFilter.strength = cfg.backdropBlurStrength;
-      }
-    } else if (this.backdropBlurFilter) {
-      this.layers.fluid.filters = null;
-      this.backdropBlurFilter.destroy();
-      this.backdropBlurFilter = null;
-    }
-  }
-
-  /**
-   * 组合 waterfall 层的 filters 数组（AdvancedBloomFilter 由本引擎管理，
-   * 其余由 NoteBlockRenderer 通过 setWaterfallFilterCompanion 注入）
-   */
-  private composeWaterfallFilters(
-    bloom: AdvancedBloomFilter | null,
-  ): Array<AdvancedBloomFilter> | null {
-    return bloom ? [bloom] : null;
+    // 视觉特效（流体开关、滤镜参数、splat 配置）统一由 VisualEffectsManager 处理
+    this.visualEffects?.updateConfig(settings);
   }
 
   /**
@@ -334,118 +206,30 @@ export class WaterfallEngine {
    * @param height - 画布总高度（CSS 像素）
    */
   resize(width: number, height: number): void {
-    this.width = width;
-    this.height = height;
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const kbRatio = this.settings?.keyboard.heightRatio ?? 0.3;
-    this.keyboardHeight = Math.max(80, Math.floor(height * kbRatio));
-    const waterfallHeight = height - this.keyboardHeight;
-    this.keyboardRenderer.resize(width, this.keyboardHeight, this.dpr);
+    const layout = calculateLayout(this.settings, width, height);
+    this.width = layout.width;
+    this.height = layout.height;
+    this.keyboardHeight = layout.keyboardHeight;
+    this.dpr = layout.dpr;
+    logger.debug(`[DEBUG-kbbug] engine.resize in=${width}x${height} → layout w=${layout.width} h=${layout.height} kbH=${layout.keyboardHeight} wfH=${layout.waterfallHeight} dpr=${layout.dpr}`);
+    this.keyboardRenderer.resize(
+      layout.width,
+      layout.keyboardHeight,
+      layout.dpr,
+    );
     this.noteBlockSystem.resize(
-      width,
-      waterfallHeight,
-      this.dpr,
+      layout.width,
+      layout.waterfallHeight,
+      layout.dpr,
       this.keyboardRenderer,
     );
-    this.backgroundRenderer.resize(width, height, this.dpr);
+    this.backgroundRenderer.resize(layout.width, layout.height, layout.dpr);
     // 通过 Container 定位各层（PixiJS 统一管理布局，无需手动 CSS）
     if (this.layers) {
-      this.layers.keyboard.y = waterfallHeight;
+      this.layers.keyboard.y = layout.waterfallHeight;
     }
-    if (this.fluid) {
-      this.fluid.resize();
-    }
+    this.visualEffects?.resize();
   }
-
-  /**
-   * 根据当前设置构建流体模拟配置
-   * @returns 流体模拟的部分配置对象
-   */
-  private buildFluidConfig(): Partial<FluidSimulationConfig> {
-    if (!this.settings) return {};
-    const bg = this.settings.background;
-    return resolveConfig(
-      bg.fluidQuality,
-      bg.fluidStyle,
-      bg.fluidAdvanced,
-      bg.fluidParams,
-    );
-  }
-
-  /**
-   * 在设置启用流体且尚未创建实例时，初始化 WebGL FluidSimulation 并启动
-   *
-   * WebGL 版本自带 canvas + GL context，渲染到独立的 canvas（由外部以 absolute
-   * 定位层叠在 PixiJS canvas 之下），不参与 PixiJS stage 渲染。
-   */
-  private maybeInitFluid(): void {
-    if (!this.settings) return;
-    if (!this.settings.background.fluidEnabled) return;
-    const config = this.buildFluidConfig();
-    if (this.fluid || (config.SIM_RESOLUTION ?? 0) <= 0) return;
-    const canvas = this.fluidCanvas;
-    if (!canvas) {
-      logger.warn("Fluid enabled but no fluid canvas provided");
-      return;
-    }
-    try {
-      this.fluid = new FluidSimulation(canvas, config);
-      this.fluid.start();
-    } catch (e) {
-      logger.error({ err: e }, "Fluid initialization failed");
-      this.fluid = null;
-    }
-  }
-
-  private bindPointerEvents(): void {
-    if (!this.app) return;
-    const canvas = this.app.canvas;
-    canvas.style.touchAction = "none";
-    canvas.addEventListener("pointerdown", this.onPointerDown);
-    canvas.addEventListener("pointermove", this.onPointerMove);
-    canvas.addEventListener("pointerup", this.onPointerUp);
-    canvas.addEventListener("pointercancel", this.onPointerUp);
-    canvas.addEventListener("pointerleave", this.onPointerUp);
-  }
-
-  private unbindPointerEvents(): void {
-    if (!this.app) return;
-    const canvas = this.app.canvas;
-    canvas.removeEventListener("pointerdown", this.onPointerDown);
-    canvas.removeEventListener("pointermove", this.onPointerMove);
-    canvas.removeEventListener("pointerup", this.onPointerUp);
-    canvas.removeEventListener("pointercancel", this.onPointerUp);
-    canvas.removeEventListener("pointerleave", this.onPointerUp);
-  }
-
-  private onPointerDown = (e: PointerEvent): void => {
-    this.pointerDown = true;
-    const midi = this.keyboardRenderer.xToMidi(e.offsetX, e.offsetY);
-    if (midi !== null) {
-      this.activePointerMidi = midi;
-      this.triggerNoteOn(midi, DEFAULT_VELOCITY);
-    }
-  };
-
-  private onPointerMove = (e: PointerEvent): void => {
-    if (!this.pointerDown) return;
-    const midi = this.keyboardRenderer.xToMidi(e.offsetX, e.offsetY);
-    if (midi !== null && midi !== this.activePointerMidi) {
-      if (this.activePointerMidi !== null) {
-        this.triggerNoteOff(this.activePointerMidi);
-      }
-      this.activePointerMidi = midi;
-      this.triggerNoteOn(midi, DEFAULT_VELOCITY);
-    }
-  };
-
-  private onPointerUp = (): void => {
-    this.pointerDown = false;
-    if (this.activePointerMidi !== null) {
-      this.triggerNoteOff(this.activePointerMidi);
-      this.activePointerMidi = null;
-    }
-  };
 
   /**
    * 触发音符发声：驱动音频、实时音符方块、键盘高亮、流体喷射及命中爆炸效果
@@ -459,12 +243,7 @@ export class WaterfallEngine {
       this.noteBlockSystem.playRealtimeNote(midi, velocity);
     }
     this.keyboardRenderer.highlightNote(midi);
-    if (this.fluid) {
-      this.splatManager.fluidSplat(this.fluid, midi, velocity);
-      if (this.settings.background.fluidParams.hitExplosion) {
-        this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
-      }
-    }
+    this.visualEffects?.triggerNoteSplat(midi, velocity);
     waterfallPianoEvents.onNoteOn.internalInvoke({ midi, velocity });
   }
 
@@ -488,12 +267,7 @@ export class WaterfallEngine {
       this.noteBlockSystem.playRealtimeNoteFromMidi(midi, velocity);
     }
     this.keyboardRenderer.highlightNote(midi);
-    if (this.fluid) {
-      this.splatManager.fluidSplat(this.fluid, midi, velocity);
-      if (this.settings?.background.fluidParams.hitExplosion) {
-        this.splatManager.hitExplosionSplat(this.fluid, midi, velocity);
-      }
-    }
+    this.visualEffects?.triggerNoteSplat(midi, velocity);
     waterfallPianoEvents.onNoteOn.internalInvoke({ midi, velocity });
   }
 
@@ -510,26 +284,57 @@ export class WaterfallEngine {
     waterfallPianoEvents.onNoteOff.internalInvoke({ midi });
   }
 
+  // ── IRenderPipeline 实现（由 RenderLoop 通过接口调用） ──
+
+  /** 推进播放器时间（委托给 frameCallback） */
+  advancePlayback(): void {
+    this.frameCallback?.();
+  }
+
+  /** 渲染背景 */
+  renderBackground(now: number): void {
+    this.backgroundRenderer.render(now);
+  }
+
+  /** 更新音符方块逻辑 */
+  updateNoteBlocks(dtSec: number): void {
+    this.noteBlockSystem.update(dtSec);
+  }
+
+  /** 渲染音符方块 */
+  renderNoteBlocks(): void {
+    this.noteBlockSystem.render();
+  }
+
+  /** 渲染键盘 */
+  renderKeyboard(): void {
+    this.keyboardRenderer.render();
+  }
+
   /** FPS 叠加层渲染（委托给 NoteBlockSystem） */
-  private renderFPSOverlay(fps: number): void {
+  displayFPS(fps: number): void {
     if (!this.showFPS) return;
     this.noteBlockSystem.renderFPS(fps);
   }
 
+  /** 判断当前帧是否应更新流体 */
+  shouldUpdateFluid(): boolean {
+    return this.visualEffects?.isFluidActive() ?? false;
+  }
+
+  /** 流体模拟更新 + 持续 splat */
+  updateFluidAndSplats(): void {
+    this.visualEffects?.update();
+  }
+
   /** 将场景图提交到 GPU 进行渲染 */
-  private renderFrame(): void {
+  renderFrame(): void {
     if (!this.app) return;
     this.app.renderer.render({ container: this.app.stage });
   }
 
-  /** 流体模拟更新 + 持续 splat（委托给 FluidSplatManager） */
-  private updateFluidAndSplats(): void {
-    if (!this.fluid) return;
-    this.splatManager.updateAndSplat(this.fluid);
-  }
-
   /** 性能日志输出（每秒由 RenderLoop 调用一次） */
-  private logFramePerf(
+  logPerformance(
     _now: number,
     totalMs: number,
     timings: PhaseTimings,
@@ -569,7 +374,7 @@ export class WaterfallEngine {
    * 从根源上消除暂停时的 GPU 开销和帧率下降。
    */
   setFluidPaused(paused: boolean): void {
-    this.fluidPaused = paused;
+    this.visualEffects?.setPaused(paused);
   }
 
   /**
@@ -578,12 +383,7 @@ export class WaterfallEngine {
    * 直到下次播放时 setFluidPaused(false) 才开始更新。
    */
   clearFluid(): void {
-    if (this.fluid) {
-      this.fluid.destroy();
-      this.fluid = null;
-      this.maybeInitFluid();
-      this.fluidPaused = true;
-    }
+    this.visualEffects?.clear();
   }
 
   getPerformanceFps(): number {
@@ -601,6 +401,10 @@ export class WaterfallEngine {
     // 停止并销毁渲染循环（detach ticker 回调）
     this.renderLoop?.destroy();
     this.renderLoop = null;
+
+    // 销毁交互控制器（解绑 Pointer 事件，清理已按住的音符）
+    this.interaction?.dispose();
+    this.interaction = null;
 
     // 执行所有注册的清理任务
     const results = await Promise.allSettled(

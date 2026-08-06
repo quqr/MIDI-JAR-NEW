@@ -1,5 +1,5 @@
 <template>
-  <motion.div v-bind="cardHover" class="h-full">
+  <div class="h-full">
     <RouterLink
       :to="to"
       class="module-card-link block h-full rounded-box group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -47,15 +47,13 @@
         </div>
       </div>
     </RouterLink>
-  </motion.div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
 import type { IconName } from "@/components/Icon/types";
-import { cardHover } from "@/utils/motion";
 
 defineProps<{
   to: string;

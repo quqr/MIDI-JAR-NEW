@@ -9,9 +9,6 @@ import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { useSettingsStore } from "@/stores/settings";
 import { Icon } from "@/components/Icon";
 import { PianoKeyboard } from "@/components/PianoKeyboard";
-import { motion } from "motion-v";
-import { cardHover } from "@/utils/motion";
-import { MotionStaggerList, MotionListItem } from "@/components/motion";
 // import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils"; // 已移除
 import { createLogger } from "@/utils/logger";
 
@@ -185,7 +182,7 @@ onUnmounted(() => {
     <!-- ═══ Main Body ═══ -->
     <div class="flex-1 flex min-h-0">
       <!-- ── Sidebar (左侧) ── -->
-      <div class="w-56 glass border-r border-base-300 flex flex-col shrink-0">
+      <div class="w-56  border-r border-base-300 flex flex-col shrink-0">
         <SamplerSidebar
           v-model:search-query="searchQuery"
           v-model:selected-category="selectedCategory"
@@ -203,11 +200,11 @@ onUnmounted(() => {
           </div>
 
           <!-- Grid -->
-          <MotionStaggerList
+          <div
             class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
           >
-            <MotionListItem v-for="inst in filteredInstruments" :key="inst.id">
-              <motion.div v-bind="cardHover" class="h-full group">
+            <div v-for="inst in filteredInstruments" :key="inst.id">
+              <div class="h-full group">
                 <div
                   :class="[
                     'card bg-base-100 border border-base-300 h-full cursor-pointer relative transition-[border-color,box-shadow] duration-hig-normal ease-hig-standard group-hover:border-primary/50 group-hover:shadow-[var(--shadow-hig-md)]',
@@ -304,9 +301,9 @@ onUnmounted(() => {
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            </MotionListItem>
-          </MotionStaggerList>
+              </div>
+            </div>
+          </div>
 
           <!-- Empty state -->
           <div
@@ -318,7 +315,7 @@ onUnmounted(() => {
         </div>
 
         <!-- ── Bottom: Piano Keyboard ── -->
-        <div class="glass border-t border-base-300 px-2 py-1 h-[120px]">
+        <div class=" border-t border-base-300 px-2 py-1 h-[120px]">
           <PianoKeyboard
             :keyboard="keyboardSettings"
             :played="[...activeNotes]"

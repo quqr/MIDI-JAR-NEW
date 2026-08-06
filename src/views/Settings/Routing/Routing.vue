@@ -63,12 +63,9 @@
     </div>
 
     <!-- 空状态 -->
-    <motion.div
+    <div
       v-if="inputs.length === 0 && outputs.length === 0"
       class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/70"
-      :initial="{ opacity: 0, y: 8 }"
-      :animate="{ opacity: 1, y: 0 }"
-      :transition="transition.fast"
     >
       <Icon name="alert-circle" :size="48" aria-hidden="true" />
       <div class="text-center">
@@ -83,7 +80,7 @@
         <Icon name="refresh" :size="16" aria-hidden="true" />
         {{ t("settings.routingSettings.refreshDevices") }}
       </button>
-    </motion.div>
+    </div>
 
     <!-- 矩阵视图 -->
     <div
@@ -198,14 +195,7 @@
       :class="['modal', { 'modal-open': showVirtualPortModal }]"
       @close="showVirtualPortModal = false"
     >
-      <motion.div
-        class="modal-box"
-        :initial="modalMotion.initial"
-        :animate="
-          showVirtualPortModal ? modalMotion.animate : modalMotion.initial
-        "
-        :transition="modalMotion.transition"
-      >
+      <div class="modal-box">
         <h3 class="font-bold text-hig-lg mb-4">
           {{ t("settings.routingSettings.addVirtualPort") }}
         </h3>
@@ -270,14 +260,14 @@
             {{ t("settings.routingSettings.createVirtualPort") }}
           </button>
         </div>
-      </motion.div>
+      </div>
       <div class="modal-backdrop" @click="showVirtualPortModal = false"></div>
     </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   onMounted as vueOnMounted,
@@ -291,8 +281,6 @@ import type { MidiRoute } from "@/stores/midiRouting";
 import Icon from "@/components/Icon/Icon.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import MidiFlowGraph from "./MidiFlowGraph.vue";
-import { motion } from "motion-v";
-import { useMotionPresets, modal, transition } from "@/utils/motion";
 
 const { t } = useI18n();
 const routingStore = useMidiRoutingStore();
@@ -305,9 +293,6 @@ const {
   createVirtualInput,
   createVirtualOutput,
 } = routingStore;
-
-const { resolve } = useMotionPresets();
-const modalMotion = computed(() => resolve(modal));
 
 const viewMode = ref<"matrix" | "flow">("matrix");
 const showClearConfirm = ref(false);

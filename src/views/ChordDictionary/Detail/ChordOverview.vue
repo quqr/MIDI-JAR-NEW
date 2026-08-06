@@ -40,8 +40,8 @@
     </section>
 
     <!-- Common chords by category -->
-    <MotionStaggerList class="w-full">
-      <MotionListItem
+    <div class="w-full">
+      <div
         v-for="category in commonChordCategories"
         :key="category.label"
         class="w-full mb-5 block"
@@ -70,8 +70,8 @@
             </span>
           </button>
         </div>
-      </MotionListItem>
-    </MotionStaggerList>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,7 +83,6 @@ import { Chord } from "tonal";
 import type { Chord as TChord } from "@tonaljs/chord";
 import Icon from "@/components/Icon/Icon.vue";
 import ChordName from "@/components/ChordName/ChordName.vue";
-import { MotionStaggerList, MotionListItem } from "@/components/motion";
 
 const { t } = useI18n();
 const router = useRouter();

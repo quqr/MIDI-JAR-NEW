@@ -16,6 +16,8 @@ export interface PianoThemeColors {
   blackKeyColor: string;
   /** 按下键高亮色（用于半透明叠加） */
   pressedKeyColor: string;
+  /** 按下键标签文字色（对应 DaisyUI --pc primary-content） */
+  pressedLabelColor: string;
   /** 键体边框色 */
   keyBorderColor: string;
   /** 命中分隔线颜色 */
@@ -55,12 +57,13 @@ export const PIANO_THEMES: Record<PianoTheme, PianoThemeColors> = {
     whiteKeyColor: "#FBF8F3",
     blackKeyColor: "#2B2020",
     pressedKeyColor: "#FF5C5C",
+    pressedLabelColor: "#FFFFFF",
     keyBorderColor: "#EBE0D6",
     separatorColor: "#FFC4B0",
     labelColor: "#6A5A52",
     blackLabelColor: "rgba(255, 232, 225, 0.88)",
     tonicDotColor: "#E8A598",
-    pressedOverlayAlpha: 0.7,
+    pressedOverlayAlpha: 1,
     whiteGradientLight: 0.018,
     whiteGradientDark: 0.035,
     blackGradientLight: 0.07,
@@ -72,12 +75,13 @@ export const PIANO_THEMES: Record<PianoTheme, PianoThemeColors> = {
     whiteKeyColor: "#F6F8FB",
     blackKeyColor: "#131428",
     pressedKeyColor: "#5B5EF5",
+    pressedLabelColor: "#FFFFFF",
     keyBorderColor: "#CFD5E4",
     separatorColor: "#A8B5FD",
     labelColor: "#46506A",
     blackLabelColor: "rgba(225, 232, 255, 0.9)",
     tonicDotColor: "#7C87F6",
-    pressedOverlayAlpha: 0.7,
+    pressedOverlayAlpha: 1,
     whiteGradientLight: 0.018,
     whiteGradientDark: 0.03,
     blackGradientLight: 0.08,
@@ -89,12 +93,13 @@ export const PIANO_THEMES: Record<PianoTheme, PianoThemeColors> = {
     whiteKeyColor: "#E9EBF4",
     blackKeyColor: "#08080F",
     pressedKeyColor: "#8B4FE8",
+    pressedLabelColor: "#FFFFFF",
     keyBorderColor: "#383A52",
     separatorColor: "#C6C8E4",
     labelColor: "#8A8AAA",
     blackLabelColor: "rgba(218, 224, 255, 0.85)",
     tonicDotColor: "#A88BFA",
-    pressedOverlayAlpha: 0.7,
+    pressedOverlayAlpha: 1,
     whiteGradientLight: 0.022,
     whiteGradientDark: 0.045,
     blackGradientLight: 0.09,

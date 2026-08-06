@@ -41,7 +41,7 @@
               </div>
             </div>
             <PianoKeyboard
-              class="flex-grow"
+              class="flex-grow min-h-[140px]"
               :played="getInversionMidi(index)"
               :midi="getInversionMidi(index)"
               :chord="getSlashChord(index)"

@@ -12,5 +12,6 @@ export {
   DEFAULT_CONFIG,
   resolveConfig,
 } from "./FluidConfig";
-export { HSVtoRGB } from "./FluidSolver";
+export { HSVtoRGB } from "./FluidMath";
+export type { RGBColor } from "./types";
 export type { IFluidSimulation } from "./IFluidSimulation";

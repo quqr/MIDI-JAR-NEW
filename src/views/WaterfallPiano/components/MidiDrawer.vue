@@ -1,192 +1,195 @@
 <template>
   <Teleport to="body">
-    <MotionDrawer
-      :is-open="modelValue"
-      side="right"
-      :width="320"
-      @close="close"
-    >
-      <div
-        class="flex flex-col flex-1 min-h-0"
-        role="dialog"
-        aria-modal="false"
-        :aria-label="t('WaterfallPiano.midiDrawer.title')"
+    <template v-if="modelValue">
+      <div class="drawer-overlay-fixed" @click="close"></div>
+      <aside
+        class="drawer-panel-fixed drawer-panel-right"
+        style="width: 320px"
       >
-        <!-- 标题栏 -->
         <div
-          class="flex-shrink-0 px-4 py-3 flex items-center justify-between border-b border-base-300"
+          class="flex flex-col flex-1 min-h-0"
+          role="dialog"
+          aria-modal="false"
+          :aria-label="t('WaterfallPiano.midiDrawer.title')"
         >
-          <h2 class="text-hig-lg font-bold">
-            {{ t("WaterfallPiano.midiDrawer.title") }}
-          </h2>
-          <button
-            class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom"
-            data-tip="关闭"
-            @click="close"
+          <!-- 标题栏 -->
+          <div
+            class="flex-shrink-0 px-4 py-3 flex items-center justify-between border-b border-base-300"
           >
-            <Icon name="x" :size="16" />
-          </button>
-        </div>
-
-        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-          <!-- 模式选择 -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold text-hig-sm">{{
-                t("WaterfallPiano.midiDrawer.mode")
-              }}</span>
-            </label>
-            <div class="join w-full">
-              <button
-                class="btn btn-xs join-item flex-1"
-                :class="mode === 'realtime' ? 'btn-primary' : 'btn-outline'"
-                @click="$emit('update:mode', 'realtime')"
-              >
-                {{ t("WaterfallPiano.midiDrawer.realtime") }}
-              </button>
-              <button
-                class="btn btn-xs join-item flex-1"
-                :class="mode === 'synthesia' ? 'btn-primary' : 'btn-outline'"
-                @click="$emit('update:mode', 'synthesia')"
-              >
-                {{ t("WaterfallPiano.midiDrawer.synthesia") }}
-              </button>
-            </div>
-          </div>
-
-          <!-- MIDI 文件加载 -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold text-hig-sm">{{
-                t("WaterfallPiano.midiDrawer.midiFile")
-              }}</span>
-            </label>
-            <label class="btn btn-sm btn-outline w-full">
-              <Icon name="upload" :size="14" />
-              {{ t("WaterfallPiano.midiDrawer.loadFile") }}
-              <input
-                type="file"
-                accept=".mid,.midi"
-                class="hidden"
-                @change="onFileSelect"
-              />
-            </label>
-            <div
-              v-if="fileName"
-              class="text-hig-xs mt-1 text-base-content/70 truncate"
+            <h2 class="text-hig-lg font-bold">
+              {{ t("WaterfallPiano.midiDrawer.title") }}
+            </h2>
+            <button
+              class="btn btn-sm btn-ghost btn-circle tooltip tooltip-bottom"
+              data-tip="关闭"
+              @click="close"
             >
-              {{ fileName }}
+              <Icon name="x" :size="16" />
+            </button>
+          </div>
+
+          <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+            <!-- 模式选择 -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-hig-sm">{{
+                  t("WaterfallPiano.midiDrawer.mode")
+                }}</span>
+              </label>
+              <div class="join w-full">
+                <button
+                  class="btn btn-xs join-item flex-1"
+                  :class="mode === 'realtime' ? 'btn-primary' : 'btn-outline'"
+                  @click="$emit('update:mode', 'realtime')"
+                >
+                  {{ t("WaterfallPiano.midiDrawer.realtime") }}
+                </button>
+                <button
+                  class="btn btn-xs join-item flex-1"
+                  :class="mode === 'synthesia' ? 'btn-primary' : 'btn-outline'"
+                  @click="$emit('update:mode', 'synthesia')"
+                >
+                  {{ t("WaterfallPiano.midiDrawer.synthesia") }}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <!-- 播放控制 -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold text-hig-sm">{{
-                t("WaterfallPiano.midiDrawer.playback")
-              }}</span>
-            </label>
-            <div class="flex gap-2">
-              <button
-                class="btn btn-sm btn-circle tooltip tooltip-bottom"
-                data-tip="播放"
-                :class="isPlaying && !isPaused ? 'btn-primary' : 'btn-ghost'"
-                :disabled="!hasContent || isPlaying"
-                @click="$emit('play')"
+            <!-- MIDI 文件加载 -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-hig-sm">{{
+                  t("WaterfallPiano.midiDrawer.midiFile")
+                }}</span>
+              </label>
+              <label class="btn btn-sm btn-outline w-full">
+                <Icon name="upload" :size="14" />
+                {{ t("WaterfallPiano.midiDrawer.loadFile") }}
+                <input
+                  type="file"
+                  accept=".mid,.midi"
+                  class="hidden"
+                  @change="onFileSelect"
+                />
+              </label>
+              <div
+                v-if="fileName"
+                class="text-hig-xs mt-1 text-base-content/70 truncate"
               >
-                <Icon name="play" :size="14" />
-              </button>
-              <button
-                class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
-                data-tip="暂停"
-                :disabled="!isPlaying"
-                @click="$emit('pause')"
-              >
-                <Icon name="pause" :size="14" />
-              </button>
-              <button
-                class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
-                data-tip="停止"
-                :disabled="!isPlaying && !isPaused"
-                @click="$emit('stop')"
-              >
-                <Icon name="stop" :size="14" />
-              </button>
-              <button
-                class="btn btn-sm btn-circle tooltip tooltip-bottom"
-                data-tip="录制"
-                :class="isRecording ? 'btn-error' : 'btn-ghost'"
-                @click="$emit('toggle-record')"
-              >
-                <Icon name="circle" :size="14" />
-              </button>
+                {{ fileName }}
+              </div>
             </div>
-          </div>
 
-          <!-- 播放速度 -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold text-hig-sm">速度</span>
-              <span class="label-text-alt tabular"
-                >{{ playbackSpeed.toFixed(1) }}x</span
-              >
-            </label>
-            <input
-              type="range"
-              min="0.25"
-              max="2"
-              step="0.05"
-              :value="playbackSpeed"
-              class="range range-xs range-primary"
-              @input="
-                $emit(
-                  'set-speed',
-                  parseFloat(($event.target as HTMLInputElement).value),
-                )
-              "
-            />
-          </div>
+            <!-- 播放控制 -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-hig-sm">{{
+                  t("WaterfallPiano.midiDrawer.playback")
+                }}</span>
+              </label>
+              <div class="flex gap-2">
+                <button
+                  class="btn btn-sm btn-circle tooltip tooltip-bottom"
+                  data-tip="播放"
+                  :class="isPlaying && !isPaused ? 'btn-primary' : 'btn-ghost'"
+                  :disabled="!hasContent || isPlaying"
+                  @click="$emit('play')"
+                >
+                  <Icon name="play" :size="14" />
+                </button>
+                <button
+                  class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
+                  data-tip="暂停"
+                  :disabled="!isPlaying"
+                  @click="$emit('pause')"
+                >
+                  <Icon name="pause" :size="14" />
+                </button>
+                <button
+                  class="btn btn-sm btn-circle btn-ghost tooltip tooltip-bottom"
+                  data-tip="停止"
+                  :disabled="!isPlaying && !isPaused"
+                  @click="$emit('stop')"
+                >
+                  <Icon name="stop" :size="14" />
+                </button>
+                <button
+                  class="btn btn-sm btn-circle tooltip tooltip-bottom"
+                  data-tip="录制"
+                  :class="isRecording ? 'btn-error' : 'btn-ghost'"
+                  @click="$emit('toggle-record')"
+                >
+                  <Icon name="circle" :size="14" />
+                </button>
+              </div>
+            </div>
 
-          <!-- 循环开关 -->
-          <div class="form-control">
-            <label class="label cursor-pointer">
-              <span class="label-text font-semibold text-hig-sm">循环</span>
+            <!-- 播放速度 -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-hig-sm">速度</span>
+                <span class="label-text-alt tabular"
+                  >{{ playbackSpeed.toFixed(1) }}x</span
+                >
+              </label>
               <input
-                type="checkbox"
-                :checked="loop"
-                class="toggle toggle-primary toggle-sm"
-                @change="$emit('toggle-loop')"
+                type="range"
+                min="0.25"
+                max="2"
+                step="0.05"
+                :value="playbackSpeed"
+                class="range range-xs range-primary"
+                @input="
+                  $emit(
+                    'set-speed',
+                    parseFloat(($event.target as HTMLInputElement).value),
+                  )
+                "
               />
-            </label>
-          </div>
+            </div>
 
-          <!-- 音轨选择 -->
-          <div v-if="tracks.length > 0" class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold text-hig-sm">音轨</span>
-            </label>
-            <div class="space-y-1 max-h-40 overflow-y-auto">
-              <label
-                v-for="track in tracks"
-                :key="track.index"
-                class="label cursor-pointer justify-start gap-2 py-1"
-              >
+            <!-- 循环开关 -->
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-semibold text-hig-sm">循环</span>
                 <input
                   type="checkbox"
-                  :checked="selectedTracks.includes(track.index)"
-                  class="checkbox checkbox-xs checkbox-primary"
-                  @change="onTrackToggle(track.index)"
+                  :checked="loop"
+                  class="toggle toggle-primary toggle-sm"
+                  @change="$emit('toggle-loop')"
                 />
-                <span class="label-text text-hig-xs">
-                  {{ track.name || `Track ${track.index + 1}` }}
-                  <span class="opacity-60">({{ track.noteCount }} notes)</span>
-                </span>
               </label>
+            </div>
+
+            <!-- 音轨选择 -->
+            <div v-if="tracks.length > 0" class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-hig-sm">音轨</span>
+              </label>
+              <div class="space-y-1 max-h-40 overflow-y-auto">
+                <label
+                  v-for="track in tracks"
+                  :key="track.index"
+                  class="label cursor-pointer justify-start gap-2 py-1"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="selectedTracks.includes(track.index)"
+                    class="checkbox checkbox-xs checkbox-primary"
+                    @change="onTrackToggle(track.index)"
+                  />
+                  <span class="label-text text-hig-xs">
+                    {{ track.name || `Track ${track.index + 1}` }}
+                    <span class="opacity-60"
+                      >({{ track.noteCount }} notes)</span
+                    >
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </MotionDrawer>
+      </aside>
+    </template>
   </Teleport>
 </template>
 
@@ -194,7 +197,6 @@
 import { watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
-import { MotionDrawer } from "@/components/motion";
 import type { MidiTrackInfo } from "../types";
 import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 
@@ -283,3 +285,30 @@ onUnmounted(() => {
   window.removeEventListener("keydown", onEsc);
 });
 </script>
+
+<style scoped>
+.drawer-overlay-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.drawer-panel-fixed {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: color-mix(in oklch, var(--color-base-100) 80%, transparent);
+  box-shadow: var(--shadow-hig-xl);
+}
+
+.drawer-panel-right {
+  right: 0;
+  border-left: 1px solid
+    color-mix(in oklch, var(--color-base-content) 8%, transparent);
+}
+</style>

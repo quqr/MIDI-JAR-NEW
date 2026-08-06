@@ -5,12 +5,9 @@
       :chord-name="chordName ?? undefined"
     />
 
-    <motion.div
+    <div
       v-else
       :key="chordName"
-      :initial="preset.initial"
-      :animate="preset.animate"
-      :transition="preset.transition"
       class="flex flex-col items-center w-full"
     >
       <!-- Core: Chord name + toggle -->
@@ -122,7 +119,7 @@
 
       <!-- Exploratory: Simplified & Extended -->
       <ChordRelated />
-    </motion.div>
+    </div>
   </div>
 </template>
 
@@ -130,8 +127,6 @@
 import ChordName from "@/components/ChordName/ChordName.vue";
 import { PianoKeyboard } from "@/components/PianoKeyboard";
 import Icon from "@/components/Icon/Icon.vue";
-import { motion } from "motion-v";
-import { useMotionPresets, pageFade } from "@/utils/motion";
 import EmptyChordDetail from "./EmptyChordDetail.vue";
 import ChordIntervalsTable from "./components/ChordIntervalsTable.vue";
 import ChordNotesDisplay from "./components/ChordNotesDisplay.vue";
@@ -160,9 +155,6 @@ const {
   stopChord,
   soundEnabled,
 } = useChordDetail();
-
-const { resolve } = useMotionPresets();
-const preset = resolve(pageFade);
 
 defineExpose({ detailRef });
 </script>

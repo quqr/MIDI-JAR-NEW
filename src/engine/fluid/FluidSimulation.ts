@@ -11,6 +11,7 @@ import {
 } from "./GLUtils";
 import type { FBO } from "./FramebufferManager";
 import { FluidSolver } from "./FluidSolver";
+import type { ShaderLibrary } from "./ShaderLibrary";
 import { BloomPass } from "./BloomPass";
 import { SunraysPass } from "./SunraysPass";
 import { DisplayPass } from "./DisplayPass";
@@ -133,19 +134,23 @@ export class FluidSimulation implements IFluidSimulation {
       gradientSubtractShader,
     );
 
+    const shaderLibrary: ShaderLibrary = {
+      copy: copyProgram,
+      clear: clearProgram,
+      splat: splatProgram,
+      advection: advectionProgram,
+      divergence: divergenceProgram,
+      curl: curlProgram,
+      vorticity: vorticityProgram,
+      pressure: pressureProgram,
+      gradientSubtract: gradientSubtractProgram,
+    };
+
     this.solver = new FluidSolver(
       gl,
       ext,
       this.blit,
-      copyProgram,
-      clearProgram,
-      splatProgram,
-      advectionProgram,
-      divergenceProgram,
-      curlProgram,
-      vorticityProgram,
-      pressureProgram,
-      gradientSubtractProgram,
+      shaderLibrary,
       this.config,
     );
 

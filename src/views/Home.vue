@@ -2,12 +2,10 @@
   <div>
     <main>
       <section class="space-y-4 p-6">
-        <MotionStaggerList
-          once
-          once-key="home-modules"
+        <div
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr"
         >
-          <MotionListItem
+          <div
             v-for="module in settingsStore.settings.chordDisplay"
             :key="`chord-display/${module.id}`"
           >
@@ -18,8 +16,8 @@
               :description="$t('home.moduleDescriptions.chordDisplay')"
               icon="mdi-piano"
             />
-          </MotionListItem>
-          <MotionListItem>
+          </div>
+          <div>
             <ModuleCard
               to="/chord-dictionary"
               settings-to="/settings/chord-dictionary"
@@ -27,8 +25,8 @@
               :description="$t('home.moduleDescriptions.chordDictionary')"
               icon="mdi-book-open-page-variant"
             />
-          </MotionListItem>
-          <MotionListItem>
+          </div>
+          <div>
             <ModuleCard
               to="/waterfall-piano"
               settings-to="/settings/waterfall-piano"
@@ -36,16 +34,16 @@
               :description="$t('home.moduleDescriptions.WaterfallPiano')"
               icon="mdi-piano"
             />
-          </MotionListItem>
-          <MotionListItem>
+          </div>
+          <div>
             <ModuleCard
               to="/sampler"
               :title="$t('nav.Sampler')"
               :description="$t('home.moduleDescriptions.Sampler')"
               icon="mdi-music-note"
             />
-          </MotionListItem>
-          <MotionListItem>
+          </div>
+          <div>
             <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
@@ -53,8 +51,8 @@
               :description="$t('home.moduleDescriptions.routing')"
               icon="mdi-swap-horizontal"
             />
-          </MotionListItem>
-          <MotionListItem>
+          </div>
+          <div>
             <ModuleCard
               to="/settings/debug"
               settings-to="/settings/debug"
@@ -62,8 +60,8 @@
               :description="$t('home.moduleDescriptions.debugger')"
               icon="mdi-bug"
             />
-          </MotionListItem>
-        </MotionStaggerList>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -72,7 +70,6 @@
 <script setup lang="ts">
 import { useSettingsStore } from "@/stores";
 import ModuleCard from "./components/ModuleCard.vue";
-import { MotionStaggerList, MotionListItem } from "@/components/motion";
 
 const settingsStore = useSettingsStore();
 </script>

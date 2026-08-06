@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
     <div
-      class="glass flex items-center border-b px-2 py-1 gap-hig-2 flex-wrap flex-shrink-0 text-hig-sm"
+      class=" flex items-center border-b px-2 py-1 gap-hig-2 flex-wrap flex-shrink-0 text-hig-sm"
       role="toolbar"
       :aria-label="t('settings.debugger')"
     >

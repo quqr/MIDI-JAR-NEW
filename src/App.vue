@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { RouterView } from "vue-router";
-import { MotionConfig } from "motion-v";
 import AppNavbar from "@/views/Layout/AppNavbar.vue";
 import CustomCursor from "@/components/CustomCursor.vue";
 import { useBrowserSupport } from "@/composables/useBrowserSupport";
@@ -17,34 +16,29 @@ function dismissMidiWarning() {
 </script>
 
 <template>
-  <MotionConfig
-    :transition="{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }"
-    reduced-motion="user"
+  <CustomCursor />
+  <div
+    v-if="!inTauri && showMidiWarning && midiWarningVisible"
+    class="midi-warning"
+    role="alert"
   >
-    <CustomCursor />
-    <div
-      v-if="!inTauri && showMidiWarning && midiWarningVisible"
-      class="midi-warning"
-      role="alert"
+    <span class="midi-warning__accent" aria-hidden="true"></span>
+    <span class="midi-warning__text"
+      >当前浏览器不支持 Web MIDI API，请使用 Chrome 或 Edge 以获得完整 MIDI
+      体验</span
     >
-      <span class="midi-warning__accent" aria-hidden="true"></span>
-      <span class="midi-warning__text"
-        >当前浏览器不支持 Web MIDI API，请使用 Chrome 或 Edge 以获得完整 MIDI
-        体验</span
-      >
-      <button
-        class="btn btn-ghost btn-xs midi-warning__close"
-        aria-label="关闭"
-        @click="dismissMidiWarning"
-      >
-        ✕
-      </button>
-    </div>
-    <div class="grid grid-rows-[auto_1fr_auto] h-screen w-screen bg-base-100">
-      <AppNavbar />
-      <RouterView />
-    </div>
-  </MotionConfig>
+    <button
+      class="btn btn-ghost btn-xs midi-warning__close"
+      aria-label="关闭"
+      @click="dismissMidiWarning"
+    >
+      ✕
+    </button>
+  </div>
+  <div class="grid grid-rows-[auto_1fr_auto] h-screen w-screen bg-base-100">
+    <AppNavbar />
+    <RouterView />
+  </div>
 </template>
 
 <style scoped>

@@ -17,55 +17,53 @@
     />
 
     <div class="flex flex-1 min-h-0 overflow-hidden relative">
-      <!-- Mobile/Tablet drawer: chord type list（MotionDrawer 统一动效） -->
+      <!-- Mobile/Tablet drawer: chord type list -->
       <div class="xl:hidden">
-        <MotionDrawer
-          :is-open="drawerOpen"
-          side="left"
-          :width="288"
-          @close="drawerOpen = false"
-        >
+        <template v-if="drawerOpen">
           <div
-            class="flex items-center justify-between px-4 h-12 border-b border-base-200 flex-shrink-0"
+            class="drawer-overlay-fixed"
+            @click="drawerOpen = false"
+          ></div>
+          <aside
+            class="drawer-panel-fixed drawer-panel-left"
+            style="width: 288px"
           >
-            <span class="text-hig-sm font-semibold text-base-content/70">
-              {{ t("chordDictionary.chordTypesNavigation") }}
-            </span>
-            <button
-              class="btn btn-sm btn-ghost btn-square"
-              :aria-label="t('common.close')"
-              @click="drawerOpen = false"
+            <div
+              class="flex items-center justify-between px-4 h-12 border-b border-base-200 flex-shrink-0"
             >
-              <Icon name="x" :size="16" aria-hidden="true" />
-            </button>
-          </div>
-          <div class="flex-1 min-h-0 overflow-y-auto">
-            <ChordDictionaryChordMenu
-              v-bind="chordMenuProps"
-              @select="handleChordTypeChangeDrawer"
-            />
-          </div>
-        </MotionDrawer>
+              <span class="text-hig-sm font-semibold text-base-content/70">
+                {{ t("chordDictionary.chordTypesNavigation") }}
+              </span>
+              <button
+                class="btn btn-sm btn-ghost btn-square"
+                :aria-label="t('common.close')"
+                @click="drawerOpen = false"
+              >
+                <Icon name="x" :size="16" aria-hidden="true" />
+              </button>
+            </div>
+            <div class="flex-1 min-h-0 overflow-y-auto">
+              <ChordDictionaryChordMenu
+                v-bind="chordMenuProps"
+                @select="handleChordTypeChangeDrawer"
+              />
+            </div>
+          </aside>
+        </template>
       </div>
 
       <!-- Tablet (sm-xl): collapsible sidebar -->
-      <AnimatePresence>
-        <motion.aside
-          v-if="sidebarVisible"
-          :initial="sidebar.initial"
-          :animate="sidebar.animate"
-          :exit="sidebar.exit"
-          :transition="sidebar.transition"
-          class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-300 glass"
-        >
-          <div class="min-h-0 w-full overflow-y-auto">
-            <ChordDictionaryChordMenu
-              v-bind="chordMenuProps"
-              @select="handleChordTypeChange"
-            />
-          </div>
-        </motion.aside>
-      </AnimatePresence>
+      <aside
+        v-if="sidebarVisible"
+        class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-300 "
+      >
+        <div class="min-h-0 w-full overflow-y-auto">
+          <ChordDictionaryChordMenu
+            v-bind="chordMenuProps"
+            @select="handleChordTypeChange"
+          />
+        </div>
+      </aside>
 
       <!-- Desktop (xl+): fixed two-column layout -->
       <div
@@ -74,7 +72,7 @@
       >
         <!-- Left: Chord type list -->
         <div
-          class="min-h-0 overflow-y-auto min-w-full border-r border-base-300 glass"
+          class="min-h-0 overflow-y-auto min-w-full border-r border-base-300 "
         >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"
@@ -101,14 +99,11 @@ import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Chord, Note } from "tonal";
-import { motion, AnimatePresence } from "motion-v";
 
 import { useSettingsStore } from "@/stores/settings";
 import useNotes from "@/composables/useNotes";
 import { NOTE_NAMES, getNoteInKeySignature } from "@/helpers";
 import Icon from "@/components/Icon/Icon.vue";
-import { MotionDrawer } from "@/components/motion";
-import { useMotionPresets, sidebarCollapse } from "@/utils/motion";
 import ChordDictionaryModuleProvider from "./ChordDictionaryModuleProvider.vue";
 import ChordDictionaryToolbar from "./ChordDictionaryToolbar.vue";
 import ChordDictionaryChordMenu from "./ChordDictionaryChordMenu.vue";
@@ -125,7 +120,6 @@ const { t } = useI18n();
 const settingsStore = useSettingsStore();
 const router = useRouter();
 const route = useRoute();
-const { resolve } = useMotionPresets();
 
 const {
   chords,
@@ -183,8 +177,6 @@ const chordMenuProps = computed(() => ({
   disabledChords: settingsStore.settings.chordDictionary.disabled,
   hideDisabled: settingsStore.settings.chordDictionary.hideDisabled,
 }));
-
-const sidebar = computed(() => resolve(sidebarCollapse));
 
 function navigateToChord(tonic: string | null, type: string | null) {
   if (!tonic || type === null) {
@@ -245,3 +237,30 @@ onUnmounted(() => {
   tabletMql?.removeEventListener("change", handleTabletChange);
 });
 </script>
+
+<style scoped>
+.drawer-overlay-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.drawer-panel-fixed {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: color-mix(in oklch, var(--color-base-100) 80%, transparent);
+  box-shadow: var(--shadow-hig-xl);
+}
+
+.drawer-panel-left {
+  left: 0;
+  border-right: 1px solid
+    color-mix(in oklch, var(--color-base-content) 8%, transparent);
+}
+</style>

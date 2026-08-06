@@ -83,8 +83,7 @@
       v-if="ui.isError.value"
       class="absolute inset-0 flex items-center justify-center bg-black/60 z-modal"
     >
-      <motion.div
-        v-bind="errorMotion"
+      <div
         class="card bg-base-100 border border-base-300 max-w-md text-center"
         style="box-shadow: var(--shadow-hig-xl)"
       >
@@ -102,17 +101,15 @@
             {{ t("common.retry") || "重试" }}
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { motion } from "motion-v";
 import Icon from "@/components/Icon/Icon.vue";
-import { useMotionPresets, modal } from "@/utils/motion";
 import WaterfallCanvas from "./components/WaterfallCanvas.vue";
 import MidiDrawer from "./components/MidiDrawer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
@@ -125,10 +122,6 @@ import type { PlaybackStrategy } from "./strategies/modeStrategies";
 
 const { t } = useI18n();
 const store = useWaterfallPianoStore();
-
-// ── 动效预设（错误弹窗缩放入场，遵循 prefers-reduced-motion） ──
-const { resolve } = useMotionPresets();
-const errorMotion = computed(() => resolve(modal));
 
 // ── 状态机：所有播放状态转换的唯一真相源 ──
 const stateMachine = new PlayerStateMachine();

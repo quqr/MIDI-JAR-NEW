@@ -11,34 +11,37 @@ export interface PhaseTimings {
   fluid: number;
 }
 
-/** 渲染循环各阶段回调 */
-export interface RenderLoopCallbacks {
+/** 渲染管线接口 — 主引擎实现此接口以驱动 RenderLoop */
+export interface IRenderPipeline {
   /** 推进播放器时间 */
-  advancePlayback: () => void;
+  advancePlayback(): void;
   /** 渲染背景 */
-  renderBackground: (now: number) => void;
+  renderBackground(now: number): void;
   /** 更新音符方块逻辑 */
-  updateNoteBlocks: (dtSec: number) => void;
+  updateNoteBlocks(dtSec: number): void;
   /** 渲染音符方块 */
-  renderNoteBlocks: () => void;
+  renderNoteBlocks(): void;
   /** 渲染键盘 */
-  renderKeyboard: () => void;
+  renderKeyboard(): void;
   /** 显示 FPS 叠加层 */
-  displayFPS: (fps: number) => void;
+  displayFPS(fps: number): void;
   /** 判断当前帧是否应更新流体（由调用方检查 fluid 实例与暂停状态） */
-  shouldUpdateFluid: () => boolean;
+  shouldUpdateFluid(): boolean;
   /** 流体模拟更新 + 持续 splat 应用 */
-  updateFluidAndSplats: () => void;
+  updateFluidAndSplats(): void;
   /** 将场景图提交到 GPU（调用 app.renderer.render） */
-  renderFrame: () => void;
+  renderFrame(): void;
   /** 性能日志输出 */
-  logPerformance: (
+  logPerformance(
     now: number,
     totalMs: number,
     timings: PhaseTimings,
     fps: number,
-  ) => void;
+  ): void;
 }
+
+/** @deprecated 使用 IRenderPipeline */
+export type RenderLoopCallbacks = IRenderPipeline;
 
 /**
  * 基于 PixiJS Ticker 的渲染循环，管理帧调度与优先级。
@@ -51,9 +54,9 @@ export class RenderLoop {
   private lastPerfLog = 0;
   private readonly FLUID_SKIP_FRAMES = 1; // 每隔1帧更新流体，即30fps
   private perfMonitor: PerformanceMonitor;
-  private callbacks: RenderLoopCallbacks;
+  private callbacks: IRenderPipeline;
 
-  constructor(callbacks: RenderLoopCallbacks, perfMonitor: PerformanceMonitor) {
+  constructor(callbacks: IRenderPipeline, perfMonitor: PerformanceMonitor) {
     this.callbacks = callbacks;
     this.perfMonitor = perfMonitor;
 

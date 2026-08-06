@@ -7,7 +7,7 @@
       class="drawer-toggle"
     />
     <div class="drawer-content flex flex-col min-h-0">
-      <div class="navbar w-full flex-none glass">
+      <div class="navbar w-full flex-none">
         <label
           for="settings-drawer"
           :aria-label="t('common.openSidebar')"
@@ -37,9 +37,7 @@
         </button>
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto flex flex-col">
-        <MotionPageTransition :route-key="route.path">
-          <RouterView />
-        </MotionPageTransition>
+        <RouterView />
       </div>
     </div>
     <div class="drawer-side is-drawer-close:overflow-visible">
@@ -49,7 +47,7 @@
         :aria-label="t('common.closeMenu')"
       ></label>
       <div
-        class="flex min-h-full flex-col glass is-drawer-close:w-14 is-drawer-open:w-64"
+        class="flex min-h-full flex-col  is-drawer-close:w-14 is-drawer-open:w-64"
       >
         <!-- 分组导航 -->
         <ul
@@ -65,7 +63,7 @@
             </li>
             <li v-for="item in getItemsForGroup(group)" :key="item.to">
               <RouterLink :to="item.to" custom v-slot="{ href, navigate }">
-                <motion.a
+                <a
                   :href="href"
                   class="rounded-hig-md text-hig-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
                   :class="
@@ -73,9 +71,6 @@
                       ? 'active bg-primary/10 text-primary font-semibold'
                       : 'text-base-content/70 hover:bg-base-300'
                   "
-                  :whileHover="isActive(item.to) ? {} : { x: 2 }"
-                  :whilePress="{ scale: 0.97 }"
-                  :transition="spring.soft"
                   :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
                   :aria-current="isActive(item.to) ? 'page' : undefined"
                   @click="navigate"
@@ -84,7 +79,7 @@
                   <span class="is-drawer-close:hidden">{{
                     t(item.labelKey)
                   }}</span>
-                </motion.a>
+                </a>
               </RouterLink>
             </li>
           </template>
@@ -126,9 +121,6 @@ import { navItems, groupOrder, groupLabels } from "./constants";
 import type { SettingsGroup } from "./constants";
 import { useI18n } from "vue-i18n";
 import { useRoute, RouterLink } from "vue-router";
-import { motion } from "motion-v";
-import { MotionPageTransition } from "@/components/motion";
-import { spring } from "@/utils/motion";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
 import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";

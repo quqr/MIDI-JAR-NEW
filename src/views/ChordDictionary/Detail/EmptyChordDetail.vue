@@ -1,10 +1,5 @@
 <template>
-  <motion.div
-    class="flex flex-col items-center justify-center h-full py-16"
-    :initial="preset.initial"
-    :animate="preset.animate"
-    :transition="preset.transition"
-  >
+  <div class="flex flex-col items-center justify-center h-full py-16">
     <div
       class="card bg-base-100 border border-base-300 max-w-md p-8 text-center"
       style="box-shadow: var(--shadow-hig-md)"
@@ -44,13 +39,11 @@
         </div>
       </div>
     </div>
-  </motion.div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { motion } from "motion-v";
-import { useMotionPresets, pageFade } from "@/utils/motion";
 import Icon from "@/components/Icon/Icon.vue";
 
 interface Props {
@@ -60,6 +53,4 @@ interface Props {
 defineProps<Props>();
 
 const { t } = useI18n();
-const { resolve } = useMotionPresets();
-const preset = resolve(pageFade);
 </script>

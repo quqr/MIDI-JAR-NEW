@@ -89,16 +89,20 @@ vi.mock("smplr", () => ({
 }));
 
 // Mock Tone.js
-vi.mock("tone", () => ({
-  start: vi.fn(() => Promise.resolve()),
-  context: {
-    rawContext: {
-      createOscillator: vi.fn(),
-      createGain: vi.fn(),
-      destination: {},
-    },
-  },
-}));
+// AudioContextService 使用 Tone.getContext().rawContext，需提供 getContext 函数；
+// 同时保留 context.rawContext 以兼容其他直接读取 Tone.context 的代码。
+vi.mock("tone", () => {
+  const rawContext = {
+    createOscillator: vi.fn(),
+    createGain: vi.fn(),
+    destination: {},
+  };
+  return {
+    start: vi.fn(() => Promise.resolve()),
+    context: { rawContext },
+    getContext: vi.fn(() => ({ rawContext })),
+  };
+});
 
 describe("useSamplerService", () => {
   beforeEach(() => {
