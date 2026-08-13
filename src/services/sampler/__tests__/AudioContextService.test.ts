@@ -23,18 +23,16 @@ type MockScheduler = {
 };
 type MockCacheStorage = { fetch: ReturnType<typeof vi.fn> };
 
-const mockSampleLoader = vi.fn(
-  (..._args: unknown[]): MockLoader => ({ load: vi.fn() }),
-);
-const mockScheduler = vi.fn(
-  (..._args: unknown[]): MockScheduler => ({
-    schedule: vi.fn(),
-    stop: vi.fn(),
-  }),
-);
-const mockCacheStorage = vi.fn(
-  (..._args: unknown[]): MockCacheStorage => ({ fetch: vi.fn() }),
-);
+const mockSampleLoader = vi.fn((..._args: unknown[]): MockLoader => ({
+  load: vi.fn(),
+}));
+const mockScheduler = vi.fn((..._args: unknown[]): MockScheduler => ({
+  schedule: vi.fn(),
+  stop: vi.fn(),
+}));
+const mockCacheStorage = vi.fn((..._args: unknown[]): MockCacheStorage => ({
+  fetch: vi.fn(),
+}));
 
 vi.mock("smplr", () => ({
   SampleLoader: (...args: unknown[]) => mockSampleLoader(...args),

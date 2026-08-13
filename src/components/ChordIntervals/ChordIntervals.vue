@@ -1,17 +1,31 @@
 <template>
   <div class="w-full">
     <div class="grid grid-cols-6 gap-1.5" role="list" :aria-label="ariaLabel">
-      <div v-for="(label, index) in BASE_LABELS" :key="label" class="interval-cell" role="listitem">
-        <div class="card" :class="activeAsMap[index] || targetAsMap[index] ?
-         'bg-info ' :
-          'bg-base-200 '">
-
+      <div
+        v-for="(label, index) in BASE_LABELS"
+        :key="label"
+        class="interval-cell"
+        role="listitem"
+      >
+        <div
+          class="card"
+          :class="
+            activeAsMap[index] || targetAsMap[index]
+              ? 'bg-info '
+              : 'bg-base-200 '
+          "
+        >
           <div class="card-body">
-
-            <div class="text-center font-bold "  :class="activeAsMap[index] || targetAsMap[index] ? 
-            ' text-info-content' :
-             'text-base-content'">{{
-              label }} </div>
+            <div
+              class="text-center font-bold"
+              :class="
+                activeAsMap[index] || targetAsMap[index]
+                  ? ' text-info-content'
+                  : 'text-base-content'
+              "
+            >
+              {{ label }}
+            </div>
           </div>
         </div>
       </div>
@@ -22,7 +36,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { INTERVALS, BASE_LABELS, isIncludedAs, getPlayedIntervals } from "./utils";
+import {
+  INTERVALS,
+  BASE_LABELS,
+  isIncludedAs,
+  getPlayedIntervals,
+} from "./utils";
 
 export interface ChordIntervalsProps {
   className?: string;
@@ -59,8 +78,9 @@ const activeFromPitchClasses = computed(() => {
 });
 
 const activeAsMap = computed(() =>
-  INTERVALS.BASE.map((_, index) =>
-    activeFromIntervals.value[index] || activeFromPitchClasses.value[index],
+  INTERVALS.BASE.map(
+    (_, index) =>
+      activeFromIntervals.value[index] || activeFromPitchClasses.value[index],
   ),
 );
 

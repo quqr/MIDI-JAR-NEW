@@ -20,10 +20,7 @@
       <!-- Mobile/Tablet drawer: chord type list -->
       <div class="xl:hidden">
         <template v-if="drawerOpen">
-          <div
-            class="drawer-overlay-fixed"
-            @click="drawerOpen = false"
-          ></div>
+          <div class="drawer-overlay-fixed" @click="drawerOpen = false"></div>
           <aside
             class="drawer-panel-fixed drawer-panel-left"
             style="width: 288px"
@@ -55,7 +52,7 @@
       <!-- Tablet (sm-xl): collapsible sidebar -->
       <aside
         v-if="sidebarVisible"
-        class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-300 "
+        class="hidden sm:flex xl:hidden flex-shrink-0 overflow-hidden border-r border-base-300"
       >
         <div class="min-h-0 w-full overflow-y-auto">
           <ChordDictionaryChordMenu
@@ -72,7 +69,7 @@
       >
         <!-- Left: Chord type list -->
         <div
-          class="min-h-0 overflow-y-auto min-w-full border-r border-base-300 "
+          class="min-h-0 overflow-y-auto min-w-full border-r border-base-300"
         >
           <ChordDictionaryChordMenu
             v-bind="chordMenuProps"

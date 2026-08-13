@@ -2,10 +2,7 @@
   <Teleport to="body">
     <template v-if="modelValue">
       <div class="drawer-overlay-fixed" @click="close"></div>
-      <aside
-        class="drawer-panel-fixed drawer-panel-right"
-        style="width: 384px"
-      >
+      <aside class="drawer-panel-fixed drawer-panel-right" style="width: 384px">
         <div
           class="flex flex-col flex-1 min-h-0"
           role="dialog"

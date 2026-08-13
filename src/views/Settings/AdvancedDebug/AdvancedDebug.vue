@@ -1,6 +1,5 @@
 <template>
   <SettingsSection>
-
     <!-- ═══ 配置区 ═══ -->
     <div class="grid grid-cols-1 gap-hig-4 m-4">
       <!-- 搜索无结果提示 -->

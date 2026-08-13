@@ -5,11 +5,7 @@
       :chord-name="chordName ?? undefined"
     />
 
-    <div
-      v-else
-      :key="chordName"
-      class="flex flex-col items-center w-full"
-    >
+    <div v-else :key="chordName" class="flex flex-col items-center w-full">
       <!-- Core: Chord name + toggle -->
       <h1
         class="flex justify-center items-center border-b border-base-200 mb-1 py-2 w-full flex-wrap gap-3"

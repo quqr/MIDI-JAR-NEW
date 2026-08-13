@@ -245,7 +245,9 @@ export class KeyboardRenderer {
     if (this.activeNotes.has(midi)) return;
     this.activeNotes.add(midi);
     this._highlightDirty = true;
-    logger.debug(`[DEBUG-kbbug] highlightNote midi=${midi} → _highlightDirty=true _staticCacheDirty=${this._staticCacheDirty} _cachedColors=${!!this._cachedColors}`);
+    logger.debug(
+      `[DEBUG-kbbug] highlightNote midi=${midi} → _highlightDirty=true _staticCacheDirty=${this._staticCacheDirty} _cachedColors=${!!this._cachedColors}`,
+    );
   }
 
   clearHighlight(midi: number): void {
@@ -273,7 +275,9 @@ export class KeyboardRenderer {
 
   render(): void {
     if (!this.container || !this.renderer || !this.config) {
-      logger.warn(`[DEBUG-kbbug] render SKIP missing: container=${!!this.container} renderer=${!!this.renderer} config=${!!this.config}`);
+      logger.warn(
+        `[DEBUG-kbbug] render SKIP missing: container=${!!this.container} renderer=${!!this.renderer} config=${!!this.config}`,
+      );
       return;
     }
     const kb = this.config;
@@ -282,7 +286,9 @@ export class KeyboardRenderer {
     // 入口日志：每次 render 都记录脏标记状态（确认 render 在被调用）
     // 帧计数器使每条日志唯一，避免 Chrome 折叠相同日志导致误判
     this._frameCount++;
-    logger.debug(`[DEBUG-kbbug] render ENTER #${this._frameCount} sD=${this._staticCacheDirty} hD=${this._highlightDirty} cc=${!!this._cachedColors} vis=${kb.visible} w=${this.width} h=${this.height}`);
+    logger.debug(
+      `[DEBUG-kbbug] render ENTER #${this._frameCount} sD=${this._staticCacheDirty} hD=${this._highlightDirty} cc=${!!this._cachedColors} vis=${kb.visible} w=${this.width} h=${this.height}`,
+    );
 
     if (!kb.visible) {
       this.layerManager.setVisible(false);
@@ -310,7 +316,9 @@ export class KeyboardRenderer {
         midiToX: (m) => this.midiToX(m),
         effectiveLabel: this._getEffectiveLabel(kb),
       };
-      logger.debug(`[DEBUG-kbbug] render REBUILD static w=${this.width} h=${this.height} from=${this.from} to=${this.to} whiteKeys=${layout.whiteKeys.length}`);
+      logger.debug(
+        `[DEBUG-kbbug] render REBUILD static w=${this.width} h=${this.height} from=${this.from} to=${this.to} whiteKeys=${layout.whiteKeys.length}`,
+      );
       this.layerManager.rebuildStaticLayer("white", (c) =>
         KeyGraphicsFactory.drawWhiteKeyLayer(c, ctx),
       );
@@ -318,7 +326,9 @@ export class KeyboardRenderer {
         KeyGraphicsFactory.drawBlackKeyLayer(c, ctx),
       );
       this._staticCacheDirty = false;
-      logger.debug(`[DEBUG-kbbug] render after REBUILD spriteState=${this.layerManager.getDebugSpriteState()}`);
+      logger.debug(
+        `[DEBUG-kbbug] render after REBUILD spriteState=${this.layerManager.getDebugSpriteState()}`,
+      );
     }
 
     // 确保静态层可见
@@ -326,12 +336,18 @@ export class KeyboardRenderer {
 
     // ── 绘制动态高亮层（仅在脏标记时重绘，减少 GPU 指令提交） ──
     if (this._highlightDirty && this._cachedColors) {
-      logger.debug(`[DEBUG-kbbug] render HIGHLIGHT dirty activeNotes=${this.activeNotes.size}`);
+      logger.debug(
+        `[DEBUG-kbbug] render HIGHLIGHT dirty activeNotes=${this.activeNotes.size}`,
+      );
       this.renderHighlightLayer(layout, kb, this._cachedColors);
       this._highlightDirty = false;
-      logger.debug(`[DEBUG-kbbug] render after HIGHLIGHT spriteState=${this.layerManager.getDebugSpriteState()}`);
+      logger.debug(
+        `[DEBUG-kbbug] render after HIGHLIGHT spriteState=${this.layerManager.getDebugSpriteState()}`,
+      );
     } else if (this._highlightDirty && !this._cachedColors) {
-      logger.warn(`[DEBUG-kbbug] render HIGHLIGHT SKIP: _highlightDirty=true but _cachedColors=null`);
+      logger.warn(
+        `[DEBUG-kbbug] render HIGHLIGHT SKIP: _highlightDirty=true but _cachedColors=null`,
+      );
     }
   }
 

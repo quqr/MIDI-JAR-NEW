@@ -49,24 +49,55 @@ pre {
 
 /* ===== Interval Enter Animation ===== */
 @keyframes interval-enter {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .interval-cell {
-  animation: interval-enter var(--duration-panel, 250ms) var(--ease-hig, cubic-bezier(0.32, 0.72, 0, 1)) both;
+  animation: interval-enter var(--duration-panel, 250ms)
+    var(--ease-hig, cubic-bezier(0.32, 0.72, 0, 1)) both;
 }
-.interval-cell:nth-child(1)  { animation-delay: 0ms; }
-.interval-cell:nth-child(2)  { animation-delay: 50ms; }
-.interval-cell:nth-child(3)  { animation-delay: 100ms; }
-.interval-cell:nth-child(4)  { animation-delay: 150ms; }
-.interval-cell:nth-child(5)  { animation-delay: 200ms; }
-.interval-cell:nth-child(6)  { animation-delay: 250ms; }
-.interval-cell:nth-child(7)  { animation-delay: 300ms; }
-.interval-cell:nth-child(8)  { animation-delay: 350ms; }
-.interval-cell:nth-child(9)  { animation-delay: 400ms; }
-.interval-cell:nth-child(10) { animation-delay: 450ms; }
-.interval-cell:nth-child(11) { animation-delay: 500ms; }
-.interval-cell:nth-child(12) { animation-delay: 550ms; }
+.interval-cell:nth-child(1) {
+  animation-delay: 0ms;
+}
+.interval-cell:nth-child(2) {
+  animation-delay: 50ms;
+}
+.interval-cell:nth-child(3) {
+  animation-delay: 100ms;
+}
+.interval-cell:nth-child(4) {
+  animation-delay: 150ms;
+}
+.interval-cell:nth-child(5) {
+  animation-delay: 200ms;
+}
+.interval-cell:nth-child(6) {
+  animation-delay: 250ms;
+}
+.interval-cell:nth-child(7) {
+  animation-delay: 300ms;
+}
+.interval-cell:nth-child(8) {
+  animation-delay: 350ms;
+}
+.interval-cell:nth-child(9) {
+  animation-delay: 400ms;
+}
+.interval-cell:nth-child(10) {
+  animation-delay: 450ms;
+}
+.interval-cell:nth-child(11) {
+  animation-delay: 500ms;
+}
+.interval-cell:nth-child(12) {
+  animation-delay: 550ms;
+}
 
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {

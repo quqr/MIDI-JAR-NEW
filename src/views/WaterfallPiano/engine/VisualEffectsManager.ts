@@ -112,15 +112,15 @@ export class VisualEffectsManager {
    */
   updateConfig(settings: WaterfallPianoSettings): void {
     const oldFluidEnabled =
-      this.settings?.background.fluidEnabled ?? settings.background.fluidEnabled;
+      this.settings?.background.fluidEnabled ??
+      settings.background.fluidEnabled;
     this.settings = settings;
 
     if (settings.background.fluidEnabled && !oldFluidEnabled) {
       // 流体从 OFF → ON
       this.maybeInitFluid();
       this.deps.onFluidActiveChange(
-        !!this.fluid &&
-          settings.background.fluidLayerPosition === "bottom",
+        !!this.fluid && settings.background.fluidLayerPosition === "bottom",
       );
       // 流体开启后调用 fluid.resize() 确保尺寸正确
       if (this.fluid) {
@@ -323,10 +323,7 @@ export class VisualEffectsManager {
   /**
    * 在命中线位置发射流体 splat，颜色取自音符色或单一色相配置
    */
-  private fluidSplat(
-    midi: number,
-    velocity = DEFAULT_SPLAT_VELOCITY,
-  ): void {
+  private fluidSplat(midi: number, velocity = DEFAULT_SPLAT_VELOCITY): void {
     if (!this.layers) return;
     const { keyboardRenderer } = this.deps;
     const { width, height, keyboardHeight } = this.deps.getLayout();
@@ -390,10 +387,7 @@ export class VisualEffectsManager {
   }
 
   /** hitExplosion: 在命中线位置（音符X + 命中线Y）触发集中爆发 */
-  private hitExplosionSplat(
-    midi: number,
-    _velocity: number,
-  ): void {
+  private hitExplosionSplat(midi: number, _velocity: number): void {
     const pCfg = this.settings?.particles ?? null;
     const bCfg = this.settings?.background ?? null;
     if (!pCfg || !bCfg || !this.fluid) return;

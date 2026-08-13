@@ -135,13 +135,17 @@ export class KeyboardLayerManager {
     draw: (container: Container) => void,
   ): void {
     if (!this.renderer) {
-      logger.warn(`[DEBUG-kbbug] rebuildStaticLayer(${type}) ABORT: no renderer`);
+      logger.warn(
+        `[DEBUG-kbbug] rebuildStaticLayer(${type}) ABORT: no renderer`,
+      );
       return;
     }
 
     const rtW = Math.max(1, Math.ceil(this.width));
     const rtH = Math.max(1, Math.ceil(this.height));
-    logger.debug(`[DEBUG-kbbug] rebuildStaticLayer(${type}) start rtW=${rtW} rtH=${rtH} dpr=${this.dpr}`);
+    logger.debug(
+      `[DEBUG-kbbug] rebuildStaticLayer(${type}) start rtW=${rtW} rtH=${rtH} dpr=${this.dpr}`,
+    );
 
     const rt = RenderTexture.create({
       width: rtW,
@@ -156,7 +160,8 @@ export class KeyboardLayerManager {
 
     // 原子性：保存旧 RT → 赋值新 RT → 销毁旧 RT
     const oldRt = type === "white" ? this._whiteKeyRT : this._blackKeyRT;
-    const sprite = type === "white" ? this._whiteKeySprite : this._blackKeySprite;
+    const sprite =
+      type === "white" ? this._whiteKeySprite : this._blackKeySprite;
 
     if (type === "white") {
       this._whiteKeyRT = rt;
@@ -166,9 +171,13 @@ export class KeyboardLayerManager {
 
     if (sprite) {
       sprite.texture = rt;
-      logger.debug(`[DEBUG-kbbug] rebuildStaticLayer(${type}) OK sprite.texture updated, oldRt=${oldRt ? "destroy" : "none"}`);
+      logger.debug(
+        `[DEBUG-kbbug] rebuildStaticLayer(${type}) OK sprite.texture updated, oldRt=${oldRt ? "destroy" : "none"}`,
+      );
     } else {
-      logger.warn(`[DEBUG-kbbug] rebuildStaticLayer(${type}) sprite NULL — texture not assigned!`);
+      logger.warn(
+        `[DEBUG-kbbug] rebuildStaticLayer(${type}) sprite NULL — texture not assigned!`,
+      );
     }
     if (oldRt) oldRt.destroy(true);
   }

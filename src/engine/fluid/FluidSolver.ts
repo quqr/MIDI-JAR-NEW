@@ -115,7 +115,11 @@ export class FluidSolver {
       this.shaders.vorticity,
       velocity.write,
       (u) => {
-        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform2f(
+          u.texelSize,
+          velocity.texelSizeX,
+          velocity.texelSizeY,
+        );
         this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
         this.gl.uniform1i(u.uCurl, curl.attach(1));
         this.gl.uniform1f(u.curl, this.config.CURL);
@@ -133,7 +137,11 @@ export class FluidSolver {
       this.shaders.divergence,
       divergence,
       (u) => {
-        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform2f(
+          u.texelSize,
+          velocity.texelSizeX,
+          velocity.texelSizeY,
+        );
         this.gl.uniform1i(u.uVelocity, velocity.read.attach(0));
       },
     );
@@ -188,7 +196,11 @@ export class FluidSolver {
       this.shaders.gradientSubtract,
       velocity.write,
       (u) => {
-        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform2f(
+          u.texelSize,
+          velocity.texelSizeX,
+          velocity.texelSizeY,
+        );
         this.gl.uniform1i(u.uPressure, pressure.read.attach(0));
         this.gl.uniform1i(u.uVelocity, velocity.read.attach(1));
       },
@@ -203,7 +215,11 @@ export class FluidSolver {
       this.shaders.advection,
       velocity.write,
       (u) => {
-        this.gl.uniform2f(u.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+        this.gl.uniform2f(
+          u.texelSize,
+          velocity.texelSizeX,
+          velocity.texelSizeY,
+        );
         if (!this.ext.supportLinearFiltering) {
           this.gl.uniform2f(
             u.dyeTexelSize,
@@ -262,7 +278,8 @@ export class FluidSolver {
     y = Math.max(0, Math.min(1, y));
 
     // 获取画布宽高比，校正 splat 半径（避免非正方形画布上的形变）
-    const aspectRatio = this.gl.drawingBufferWidth / this.gl.drawingBufferHeight;
+    const aspectRatio =
+      this.gl.drawingBufferWidth / this.gl.drawingBufferHeight;
     const radius = Math.max(
       10e-6,
       correctRadius(this.config.SPLAT_RADIUS, aspectRatio),

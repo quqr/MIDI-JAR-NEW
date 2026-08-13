@@ -47,7 +47,7 @@
         :aria-label="t('common.closeMenu')"
       ></label>
       <div
-        class="flex min-h-full flex-col  is-drawer-close:w-14 is-drawer-open:w-64"
+        class="flex min-h-full flex-col is-drawer-close:w-14 is-drawer-open:w-64"
       >
         <!-- 分组导航 -->
         <ul
