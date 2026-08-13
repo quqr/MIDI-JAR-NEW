@@ -12,7 +12,18 @@ export const INTERVALS = {
  * 用于 UI 展示，匹配设计稿中的 1, b2, 2, b3, 3, 4, #4, 5, b6, 6, b7, 7。
  */
 export const BASE_LABELS = [
-  "1", "b2", "2", "b3", "3", "4", "#4", "5", "b6", "6", "b7", "7",
+  "1",
+  "b2",
+  "2",
+  "b3",
+  "3",
+  "4",
+  "#4",
+  "5",
+  "b6",
+  "6",
+  "b7",
+  "7",
 ] as const;
 
 export function isIncludedAs(

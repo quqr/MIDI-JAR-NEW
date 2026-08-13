@@ -182,7 +182,7 @@ onUnmounted(() => {
     <!-- ═══ Main Body ═══ -->
     <div class="flex-1 flex min-h-0">
       <!-- ── Sidebar (左侧) ── -->
-      <div class="w-56  border-r border-base-300 flex flex-col shrink-0">
+      <div class="w-56 border-r border-base-300 flex flex-col shrink-0">
         <SamplerSidebar
           v-model:search-query="searchQuery"
           v-model:selected-category="selectedCategory"
@@ -315,7 +315,7 @@ onUnmounted(() => {
         </div>
 
         <!-- ── Bottom: Piano Keyboard ── -->
-        <div class=" border-t border-base-300 px-2 py-1 h-[120px]">
+        <div class="border-t border-base-300 px-2 py-1 h-[120px]">
           <PianoKeyboard
             :keyboard="keyboardSettings"
             :played="[...activeNotes]"

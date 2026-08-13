@@ -5,9 +5,7 @@ import type { Program, UniformMap } from "./GLUtils";
 import type { FBO } from "./FramebufferManager";
 
 export class FluidRenderer {
-  constructor(
-    private blit: (target: FBO | null, clear?: boolean) => void,
-  ) {}
+  constructor(private blit: (target: FBO | null, clear?: boolean) => void) {}
 
   /**
    * 执行单次渲染 pass：绑定 program → 调用 uniformSetter 上传 uniform → blit 到 target。

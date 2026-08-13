@@ -1,9 +1,10 @@
 <template>
-  <div id="chordDisplay" class="relative h-full w-full grid grid-rows-[2fr_1fr]">
+  <div
+    id="chordDisplay"
+    class="relative h-full w-full grid grid-rows-[2fr_1fr]"
+  >
     <!-- ===== 上方显示区域 (grid: 2列桌面, 1列移动端) ===== -->
-    <div
-      class="bg-base-100 grid grid-cols-2"
-    >
+    <div class="bg-base-100 grid grid-cols-2">
       <!-- 左侧：五线谱 -->
       <div
         v-if="displayNotation"
@@ -55,7 +56,7 @@
         <div
           v-if="displayIntervals"
           id="intervals"
-          class="flex-shrink-0  w-full px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 pt-2"
+          class="flex-shrink-0 w-full px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 pt-2"
         >
           <ChordIntervals
             :intervals="chords[0]?.intervals ?? []"
@@ -76,9 +77,11 @@
           :aria-label="t('chordDisplay.altChords')"
         >
           <p class="mb-2 text-xs font-medium text-base-content/70">
-            {{ t('chordDisplay.altChords') }}
+            {{ t("chordDisplay.altChords") }}
           </p>
-          <div class="flex flex-wrap gap-1.5 justify-end max-w-[180px] sm:max-w-[200px]">
+          <div
+            class="flex flex-wrap gap-1.5 justify-end max-w-[180px] sm:max-w-[200px]"
+          >
             <template v-for="(chord, index) in chords" :key="index">
               <button
                 v-if="index > 0"
@@ -98,21 +101,38 @@
 
         <!-- 声音开关 -->
         <div
-          class="bg-base-100/80 backdrop-blur-xl rounded-btn  px-3 py-2 flex items-center gap-2"
+          class="bg-base-100/80 backdrop-blur-xl rounded-btn px-3 py-2 flex items-center gap-2"
           role="group"
           :aria-label="t('chordDisplay.sound')"
         >
-          <svg class="w-4 h-4 text-base-content" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            class="w-4 h-4 text-base-content"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-            <path v-if="soundEnabled" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path
+              v-if="soundEnabled"
+              d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+            />
           </svg>
-          <span class="text-xs text-base-content font-medium">{{ t('chordDisplay.sound') }}</span>
+          <span class="text-xs text-base-content font-medium">{{
+            t("chordDisplay.sound")
+          }}</span>
           <input
             type="checkbox"
             class="toggle toggle-sm"
             :checked="soundEnabled"
             @change="toggleSound"
-            :aria-label="soundEnabled ? t('chordDisplay.soundOn') : t('chordDisplay.soundOff')"
+            :aria-label="
+              soundEnabled
+                ? t('chordDisplay.soundOn')
+                : t('chordDisplay.soundOff')
+            "
           />
         </div>
 
@@ -124,10 +144,7 @@
     </div>
 
     <!-- ===== 钢琴键盘 ===== -->
-    <div
-      v-if="displayKeyboard"
-      class="bg-base-100 w-full h-full"
-    >
+    <div v-if="displayKeyboard" class="bg-base-100 w-full h-full">
       <PianoKeyboard
         id="keyboard"
         class="w-full h-full"
@@ -281,18 +298,21 @@ function toggleSound() {
 /** 翻译和弦全名（如 "C major seventh" → "C 大七和弦"） */
 const translatedChordName = computed(() => {
   const name = chords.value[0]?.name;
-  if (!name) return '';
+  if (!name) return "";
   // 和弦名格式: "C major seventh" 或 "C major seventh flat five"
   // 第一个空格前是根音，之后是和弦类型描述
-  const spaceIdx = name.indexOf(' ');
+  const spaceIdx = name.indexOf(" ");
   if (spaceIdx === -1) return name;
   const tonic = name.slice(0, spaceIdx);
   const quality = name.slice(spaceIdx + 1);
   // 将空格和连字符替换为下划线以匹配 locale 键名
-  const qualityKey = quality.replace(/[\s-]/g, '_');
+  const qualityKey = quality.replace(/[\s-]/g, "_");
   const translated = t(`chordDisplay.chordQualities.${qualityKey}`);
   // 如果翻译返回的是原始字符串（语言包中无此条目），回退使用英文
-  if (translated === qualityKey || translated.startsWith('chordDisplay.chordQualities.')) {
+  if (
+    translated === qualityKey ||
+    translated.startsWith("chordDisplay.chordQualities.")
+  ) {
     return name;
   }
   return `${tonic} ${translated}`;

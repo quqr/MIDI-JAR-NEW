@@ -44,12 +44,9 @@ describe("runWithConcurrency", () => {
   it("should preserve result order regardless of completion order", async () => {
     // 后启动的任务更短，应先完成，但结果数组顺序不变
     const tasks = [
-      () =>
-        new Promise<number>((r) => setTimeout(() => r(0), 30)),
-      () =>
-        new Promise<number>((r) => setTimeout(() => r(1), 5)),
-      () =>
-        new Promise<number>((r) => setTimeout(() => r(2), 20)),
+      () => new Promise<number>((r) => setTimeout(() => r(0), 30)),
+      () => new Promise<number>((r) => setTimeout(() => r(1), 5)),
+      () => new Promise<number>((r) => setTimeout(() => r(2), 20)),
     ];
 
     const result = await runWithConcurrency(tasks, 1);
@@ -59,9 +56,7 @@ describe("runWithConcurrency", () => {
 
   it("should never exceed the concurrency limit in-flight", async () => {
     const log: Array<{ id: number; phase: "start" | "end" }> = [];
-    const tasks = Array.from({ length: 10 }, (_, i) =>
-      makeTask(i, log, 10),
-    );
+    const tasks = Array.from({ length: 10 }, (_, i) => makeTask(i, log, 10));
 
     await runWithConcurrency(tasks, 3);
 
@@ -89,12 +84,8 @@ describe("runWithConcurrency", () => {
     expect(result).toEqual([0, 1, 2]);
     // 串行：每个任务 end 后下一个才 start
     for (let i = 0; i < tasks.length; i++) {
-      const startIdx = log.findIndex(
-        (e) => e.id === i && e.phase === "start",
-      );
-      const endIdx = log.findIndex(
-        (e) => e.id === i && e.phase === "end",
-      );
+      const startIdx = log.findIndex((e) => e.id === i && e.phase === "start");
+      const endIdx = log.findIndex((e) => e.id === i && e.phase === "end");
       const nextStartIdx = log.findIndex(
         (e) => e.id === i + 1 && e.phase === "start",
       );

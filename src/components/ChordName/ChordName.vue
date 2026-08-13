@@ -10,7 +10,10 @@
     </span>
 
     <!-- 质量 + 上标扩展 -->
-    <span :class="[sizeClass.quality, 'font-bold italic']" style="line-height: inherit">
+    <span
+      :class="[sizeClass.quality, 'font-bold italic']"
+      style="line-height: inherit"
+    >
       <span
         :class="{ 'rounded bg-error/20': highlightAlterations }"
         style="margin: 0 0.05em"
@@ -20,7 +23,11 @@
 
       <template v-for="(part, index) in restTokens" :key="`${part}_${index}`">
         <sup
-          :class="[sizeClass.sup, 'italic', { 'rounded bg-info/20': highlightAlterations }]"
+          :class="[
+            sizeClass.sup,
+            'italic',
+            { 'rounded bg-info/20': highlightAlterations },
+          ]"
           style="margin: 0 0.05em; font-weight: inherit"
         >
           {{ latinSharpsFlats ? part : formatSharpsFlats(part) }}
@@ -57,7 +64,7 @@ export interface ChordNameProps {
   hideRoot?: boolean;
   highlightAlterations?: boolean;
   latinSharpsFlats?: boolean;
-  size?: 'xl' | '6xl';
+  size?: "xl" | "6xl";
 }
 
 const props = withDefaults(defineProps<ChordNameProps>(), {
@@ -67,13 +74,18 @@ const props = withDefaults(defineProps<ChordNameProps>(), {
   highlightAlterations: false,
   latinSharpsFlats: undefined,
   chord: null,
-  size: 'xl',
+  size: "xl",
 });
 
 type SizeClass = { root: string; quality: string; sup: string; bass: string };
 const FONT_SIZE_MAP: Record<string, SizeClass> = {
-  xl: { root: 'text-xl', quality: 'text-lg', sup: 'text-sm', bass: 'text-sm' },
-  '6xl': { root: 'text-6xl', quality: 'text-4xl', sup: 'text-2xl', bass: 'text-2xl' },
+  xl: { root: "text-xl", quality: "text-lg", sup: "text-sm", bass: "text-sm" },
+  "6xl": {
+    root: "text-6xl",
+    quality: "text-4xl",
+    sup: "text-2xl",
+    bass: "text-2xl",
+  },
 };
 
 const sizeClass = computed<SizeClass>(() => {

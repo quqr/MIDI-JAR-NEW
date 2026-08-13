@@ -4,7 +4,11 @@ import { KeyboardRenderer } from "./KeyboardRenderer";
 import { NoteBlockSystem, type NoteBlockMode } from "./NoteBlockSystem";
 import { BackgroundRenderer } from "./BackgroundRenderer";
 import { PerformanceMonitor } from "./PerformanceMonitor";
-import { RenderLoop, type PhaseTimings, type IRenderPipeline } from "./RenderLoop";
+import {
+  RenderLoop,
+  type PhaseTimings,
+  type IRenderPipeline,
+} from "./RenderLoop";
 import { InteractionController } from "./InteractionController";
 import { VisualEffectsManager } from "./VisualEffectsManager";
 import { calculateLayout } from "./LayoutCalculator";
@@ -211,7 +215,9 @@ export class WaterfallEngine implements IRenderPipeline {
     this.height = layout.height;
     this.keyboardHeight = layout.keyboardHeight;
     this.dpr = layout.dpr;
-    logger.debug(`[DEBUG-kbbug] engine.resize in=${width}x${height} → layout w=${layout.width} h=${layout.height} kbH=${layout.keyboardHeight} wfH=${layout.waterfallHeight} dpr=${layout.dpr}`);
+    logger.debug(
+      `[DEBUG-kbbug] engine.resize in=${width}x${height} → layout w=${layout.width} h=${layout.height} kbH=${layout.keyboardHeight} wfH=${layout.waterfallHeight} dpr=${layout.dpr}`,
+    );
     this.keyboardRenderer.resize(
       layout.width,
       layout.keyboardHeight,

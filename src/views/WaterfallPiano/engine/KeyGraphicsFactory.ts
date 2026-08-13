@@ -245,8 +245,11 @@ export class KeyGraphicsFactory {
     // ── 白键标签 ──
     const effectiveLabel = ctx.effectiveLabel;
     if (effectiveLabel) {
-      const { fontSize, letterSpacing, y: labelY } =
-        KeyGraphicsFactory.whiteLabelMetrics(layout);
+      const {
+        fontSize,
+        letterSpacing,
+        y: labelY,
+      } = KeyGraphicsFactory.whiteLabelMetrics(layout);
 
       for (let i = 0; i < layout.whiteKeys.length; i++) {
         const midi = layout.whiteKeys[i];
@@ -317,8 +320,11 @@ export class KeyGraphicsFactory {
     // ── 黑键标签 ──
     const effectiveLabel = ctx.effectiveLabel;
     if (effectiveLabel) {
-      const { fontSize, letterSpacing, y: labelY } =
-        KeyGraphicsFactory.blackLabelMetrics(layout);
+      const {
+        fontSize,
+        letterSpacing,
+        y: labelY,
+      } = KeyGraphicsFactory.blackLabelMetrics(layout);
 
       for (let m = from; m <= to; m++) {
         if (!isBlackKey(m)) continue;
@@ -391,10 +397,7 @@ export class KeyGraphicsFactory {
 
       // 3. 标签覆写（primary-content 色，覆盖静态层标签以保证可读性）
       if (effectiveLabel && whiteMetrics) {
-        const label = KeyboardLayoutCalculator.labelFor(
-          midi,
-          effectiveLabel,
-        );
+        const label = KeyboardLayoutCalculator.labelFor(midi, effectiveLabel);
         if (label) {
           texts.push(
             KeyGraphicsFactory.createLabelText(
@@ -462,10 +465,7 @@ export class KeyGraphicsFactory {
 
       // 3. 标签覆写（primary-content 色）
       if (effectiveLabel && blackMetrics) {
-        const label = KeyboardLayoutCalculator.labelFor(
-          m,
-          effectiveLabel,
-        );
+        const label = KeyboardLayoutCalculator.labelFor(m, effectiveLabel);
         if (label) {
           texts.push(
             KeyGraphicsFactory.createLabelText(

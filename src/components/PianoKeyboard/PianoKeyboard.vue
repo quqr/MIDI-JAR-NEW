@@ -130,7 +130,9 @@ function applyHighlights(): void {
     ...props.midi,
     ...(props.targets ?? []),
     ...sustainedNotes,
-  ].sort((a, b) => a - b).join(",");
+  ]
+    .sort((a, b) => a - b)
+    .join(",");
   const chordKey = props.chord?.notes?.join(",") ?? "";
   const snapshot = `${current}|${chordKey}`;
   if (snapshot === lastActiveSnapshot) return;

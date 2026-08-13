@@ -174,8 +174,7 @@ export function hslToHex(h: number, s: number, l: number): string {
     const k = (n + h / 30) % 12;
     return lNorm - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
   };
-  const clamp = (v: number) =>
-    Math.max(0, Math.min(255, Math.round(v * 255)));
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
   return `#${clamp(f(0)).toString(16).padStart(2, "0")}${clamp(f(8)).toString(16).padStart(2, "0")}${clamp(f(4)).toString(16).padStart(2, "0")}`;
 }
 
@@ -201,8 +200,7 @@ export function oklchToHex(l: number, c: number, h: number): string {
   const r = 4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
   const g = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
   const b_ = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3;
-  const clamp = (v: number) =>
-    Math.max(0, Math.min(255, Math.round(v * 255)));
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
   return `#${clamp(r).toString(16).padStart(2, "0")}${clamp(g).toString(16).padStart(2, "0")}${clamp(b_).toString(16).padStart(2, "0")}`;
 }
 
