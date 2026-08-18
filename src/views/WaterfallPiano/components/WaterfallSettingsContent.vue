@@ -1,6 +1,6 @@
 <template>
   <SettingsSection :show-reset="true" :on-reset="() => store.resetSettings()">
-    <div class="grid grid-cols-1 gap-hig-4 m-4">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <ParticlesSection
         :settings="settings.particles"
         @update="(key, value) => store.updateSetting('particles', key, value)"

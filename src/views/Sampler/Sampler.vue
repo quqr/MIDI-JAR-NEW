@@ -9,7 +9,7 @@ import { useInstrumentCache } from "@/composables/useInstrumentCache";
 import { useSettingsStore } from "@/stores/settings";
 import { Icon } from "@/components/Icon";
 import { PianoKeyboard } from "@/components/PianoKeyboard";
-// import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils"; // 已移除
+import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils";
 import { createLogger } from "@/utils/logger";
 
 import SamplerSidebar from "./components/SamplerSidebar.vue";
@@ -46,8 +46,10 @@ const filteredInstruments = computed(() => {
   return result;
 });
 
-// 暂时使用默认键盘设置
-const keyboardSettings = computed(() => undefined);
+// 全局默认键盘：由"钢琴设置"页（settings.piano）驱动
+const keyboardSettings = computed(() =>
+  createKeyboardSettingsFromPiano(settingsStore.settings.piano),
+);
 
 // --- Methods ---
 async function selectInstrument(info: InstrumentInfo) {
@@ -196,7 +198,7 @@ onUnmounted(() => {
           <!-- Error message -->
           <div v-if="samplerStore.error" class="alert alert-error mb-4">
             <Icon name="alert-circle" :size="16" aria-hidden="true" />
-            <span class="text-hig-sm">{{ samplerStore.error }}</span>
+            <span class="text-sm">{{ samplerStore.error }}</span>
           </div>
 
           <!-- Grid -->
@@ -207,7 +209,7 @@ onUnmounted(() => {
               <div class="h-full group">
                 <div
                   :class="[
-                    'card bg-base-100 border border-base-300 h-full cursor-pointer relative transition-[border-color,box-shadow] duration-hig-normal ease-hig-standard group-hover:border-primary/50 group-hover:shadow-[var(--shadow-hig-md)]',
+                    'card bg-base-100 border border-base-300 h-full cursor-pointer relative   duration-200 ease-out group-hover:border-primary/50 group-hover:shadow-md',
                     samplerStore.currentInstrumentId === inst.id &&
                       'ring-2 ring-primary',
                     samplerStore.instruments[inst.id]?.error &&
@@ -218,7 +220,7 @@ onUnmounted(() => {
                   <div class="card-body p-3">
                     <!-- 试听按钮 (右上角) -->
                     <button
-                      class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-hig-fast z-sticky"
+                      class="btn btn-xs btn-circle btn-ghost absolute top-2 right-2 opacity-0 group-hover:opacity-100 duration-150 z-sticky"
                       :class="{
                         'btn-active':
                           isPlayingScale &&
@@ -239,7 +241,7 @@ onUnmounted(() => {
                       />
                     </button>
 
-                    <h4 class="text-hig-sm font-medium leading-tight pr-6">
+                    <h4 class="text-sm font-medium leading-tight pr-6">
                       {{ inst.name }}
                     </h4>
 
@@ -270,7 +272,7 @@ onUnmounted(() => {
 
                     <!-- 状态标识 -->
                     <div v-else class="flex items-center justify-between mt-1">
-                      <span class="text-hig-xs text-base-content/70">{{
+                      <span class="text-xs text-base-content/70">{{
                         inst.category
                       }}</span>
                       <!-- 已缓存标识 -->
@@ -280,13 +282,11 @@ onUnmounted(() => {
                       >
                         <span class="badge badge-success badge-xs gap-1">
                           <Icon name="check" :size="10" aria-hidden="true" />
-                          <span class="text-hig-xs">Cached</span>
+                          <span class="text-xs">Cached</span>
                         </span>
                         <!-- 缓存大小 + 清除按钮 -->
                         <template v-if="instrumentCacheSizes[inst.id] > 0">
-                          <span
-                            class="text-hig-xs text-base-content/70 tabular"
-                          >
+                          <span class="text-xs text-base-content/70 tabular">
                             {{ formatBytes(instrumentCacheSizes[inst.id]) }}
                           </span>
                           <button
@@ -308,7 +308,7 @@ onUnmounted(() => {
           <!-- Empty state -->
           <div
             v-if="filteredInstruments.length === 0"
-            class="text-center py-12 text-base-content/70 text-hig-sm"
+            class="text-center py-12 text-base-content/70 text-sm"
           >
             {{ t("sampler.noInstrumentsFound") }}
           </div>

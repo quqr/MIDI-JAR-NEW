@@ -1,15 +1,12 @@
 <template>
-  <div class="form-control w-full py-2.5">
-    <label v-if="label" :for="inputId" class="label pb-1">
-      <span class="label-text text-sm">{{ label }}</span>
-    </label>
+  <fieldset class="fieldset w-full py-2.5">
+    <legend v-if="label" class="fieldset-legend pb-1 text-sm">
+      {{ label }}
+    </legend>
     <input
       :id="inputId"
       type="text"
-      :class="[
-        'input input-bordered input-sm w-full rounded-lg',
-        { 'input-error': error },
-      ]"
+      :class="['input input-sm w-full rounded-lg', { 'input-error': error }]"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -18,13 +15,13 @@
         $emit('update:modelValue', ($event.target as HTMLInputElement).value)
       "
     />
-    <label v-if="error && errorMessage" class="label">
-      <span class="label-text-alt text-error">{{ errorMessage }}</span>
-    </label>
-    <label v-else-if="description" class="label">
-      <span class="label-text-alt text-base-content/70">{{ description }}</span>
-    </label>
-  </div>
+    <span v-if="error && errorMessage" class="label text-error">{{
+      errorMessage
+    }}</span>
+    <span v-else-if="description" class="label text-base-content/70">{{
+      description
+    }}</span>
+  </fieldset>
 </template>
 
 <script setup lang="ts">

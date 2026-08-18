@@ -27,6 +27,10 @@ function loadSettings(): Settings {
     if (merged.general?.language === ("zh-CN" as unknown)) {
       merged.general.language = "zh";
     }
+    // 迁移：移除已被 anime.js 取代的 transitionDuration 字段
+    if ("transitionDuration" in merged.cursor) {
+      delete (merged.cursor as Record<string, unknown>).transitionDuration;
+    }
     return merged;
   }
   return { ...defaultSettings };

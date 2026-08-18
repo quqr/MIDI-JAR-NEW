@@ -1,8 +1,11 @@
 <template>
   <Teleport to="body">
     <template v-if="modelValue">
-      <div class="drawer-overlay-fixed" @click="close"></div>
-      <aside class="drawer-panel-fixed drawer-panel-right" style="width: 320px">
+      <div class="fixed inset-0 z-overlay bg-black/40" @click="close"></div>
+      <aside
+        class="fixed top-0 bottom-0 right-0 z-drawer flex flex-col overflow-hidden bg-base-100/80 shadow-xl border-l border-base-content/10"
+        style="width: 320px"
+      >
         <div
           class="flex flex-col flex-1 min-h-0"
           role="dialog"
@@ -13,7 +16,7 @@
           <div
             class="flex-shrink-0 px-4 py-3 flex items-center justify-between border-b border-base-300"
           >
-            <h2 class="text-hig-lg font-bold">
+            <h2 class="text-lg font-bold">
               {{ t("WaterfallPiano.midiDrawer.title") }}
             </h2>
             <button
@@ -27,9 +30,9 @@
 
           <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
             <!-- 模式选择 -->
-            <div class="form-control">
+            <div class="fieldset">
               <label class="label">
-                <span class="label-text font-semibold text-hig-sm">{{
+                <span class="fieldset-legend font-semibold text-sm">{{
                   t("WaterfallPiano.midiDrawer.mode")
                 }}</span>
               </label>
@@ -52,9 +55,9 @@
             </div>
 
             <!-- MIDI 文件加载 -->
-            <div class="form-control">
+            <div class="fieldset">
               <label class="label">
-                <span class="label-text font-semibold text-hig-sm">{{
+                <span class="fieldset-legend font-semibold text-sm">{{
                   t("WaterfallPiano.midiDrawer.midiFile")
                 }}</span>
               </label>
@@ -70,16 +73,16 @@
               </label>
               <div
                 v-if="fileName"
-                class="text-hig-xs mt-1 text-base-content/70 truncate"
+                class="text-xs mt-1 text-base-content/70 truncate"
               >
                 {{ fileName }}
               </div>
             </div>
 
             <!-- 播放控制 -->
-            <div class="form-control">
+            <div class="fieldset">
               <label class="label">
-                <span class="label-text font-semibold text-hig-sm">{{
+                <span class="fieldset-legend font-semibold text-sm">{{
                   t("WaterfallPiano.midiDrawer.playback")
                 }}</span>
               </label>
@@ -121,10 +124,10 @@
             </div>
 
             <!-- 播放速度 -->
-            <div class="form-control">
+            <div class="fieldset">
               <label class="label">
-                <span class="label-text font-semibold text-hig-sm">速度</span>
-                <span class="label-text-alt tabular"
+                <span class="fieldset-legend font-semibold text-sm">速度</span>
+                <span class="label tabular"
                   >{{ playbackSpeed.toFixed(1) }}x</span
                 >
               </label>
@@ -145,22 +148,19 @@
             </div>
 
             <!-- 循环开关 -->
-            <div class="form-control">
-              <label class="label cursor-pointer">
-                <span class="label-text font-semibold text-hig-sm">循环</span>
-                <input
-                  type="checkbox"
-                  :checked="loop"
-                  class="toggle toggle-primary toggle-sm"
-                  @change="$emit('toggle-loop')"
-                />
-              </label>
-            </div>
+            <SettingRow title="循环">
+              <input
+                type="checkbox"
+                :checked="loop"
+                class="toggle toggle-primary toggle-sm"
+                @change="$emit('toggle-loop')"
+              />
+            </SettingRow>
 
             <!-- 音轨选择 -->
-            <div v-if="tracks.length > 0" class="form-control">
+            <div v-if="tracks.length > 0" class="fieldset">
               <label class="label">
-                <span class="label-text font-semibold text-hig-sm">音轨</span>
+                <span class="fieldset-legend font-semibold text-sm">音轨</span>
               </label>
               <div class="space-y-1 max-h-40 overflow-y-auto">
                 <label
@@ -174,7 +174,7 @@
                     class="checkbox checkbox-xs checkbox-primary"
                     @change="onTrackToggle(track.index)"
                   />
-                  <span class="label-text text-hig-xs">
+                  <span class="fieldset-legend text-xs">
                     {{ track.name || `Track ${track.index + 1}` }}
                     <span class="opacity-60"
                       >({{ track.noteCount }} notes)</span
@@ -194,6 +194,7 @@
 import { watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
+import SettingRow from "@/components/common/SettingRow.vue";
 import type { MidiTrackInfo } from "../types";
 import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 
@@ -282,30 +283,3 @@ onUnmounted(() => {
   window.removeEventListener("keydown", onEsc);
 });
 </script>
-
-<style scoped>
-.drawer-overlay-fixed {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  background-color: rgb(0 0 0 / 0.4);
-}
-
-.drawer-panel-fixed {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  z-index: var(--z-drawer);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: color-mix(in oklch, var(--color-base-100) 80%, transparent);
-  box-shadow: var(--shadow-hig-xl);
-}
-
-.drawer-panel-right {
-  right: 0;
-  border-left: 1px solid
-    color-mix(in oklch, var(--color-base-content) 8%, transparent);
-}
-</style>

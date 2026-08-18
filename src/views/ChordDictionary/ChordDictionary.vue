@@ -20,15 +20,18 @@
       <!-- Mobile/Tablet drawer: chord type list -->
       <div class="xl:hidden">
         <template v-if="drawerOpen">
-          <div class="drawer-overlay-fixed" @click="drawerOpen = false"></div>
+          <div
+            class="fixed inset-0 z-overlay bg-black/40"
+            @click="drawerOpen = false"
+          ></div>
           <aside
-            class="drawer-panel-fixed drawer-panel-left"
+            class="fixed top-0 bottom-0 left-0 z-drawer flex flex-col overflow-hidden bg-base-100/80 shadow-xl border-r border-base-content/10"
             style="width: 288px"
           >
             <div
               class="flex items-center justify-between px-4 h-12 border-b border-base-200 flex-shrink-0"
             >
-              <span class="text-hig-sm font-semibold text-base-content/70">
+              <span class="text-sm font-semibold text-base-content/70">
                 {{ t("chordDictionary.chordTypesNavigation") }}
               </span>
               <button
@@ -234,30 +237,3 @@ onUnmounted(() => {
   tabletMql?.removeEventListener("change", handleTabletChange);
 });
 </script>
-
-<style scoped>
-.drawer-overlay-fixed {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  background-color: rgb(0 0 0 / 0.4);
-}
-
-.drawer-panel-fixed {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  z-index: var(--z-drawer);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: color-mix(in oklch, var(--color-base-100) 80%, transparent);
-  box-shadow: var(--shadow-hig-xl);
-}
-
-.drawer-panel-left {
-  left: 0;
-  border-right: 1px solid
-    color-mix(in oklch, var(--color-base-content) 8%, transparent);
-}
-</style>

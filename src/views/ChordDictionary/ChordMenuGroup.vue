@@ -10,15 +10,11 @@
       tabindex="0"
       :aria-expanded="isOpen"
       :class="[
-        'flex items-center px-3 py-1.5 rounded-hig-md cursor-pointer text-hig-sm font-semibold text-base-content/70 hover:bg-base-200/70 list-none marker:content-[\'\'] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-full transition-colors duration-hig-fast',
+        'flex items-center px-3 py-1.5 rounded-lg cursor-pointer text-sm font-semibold text-base-content/70 hover:bg-base-200/70 list-none marker:content-[\'\'] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-full   duration-150',
         bgClass,
       ]"
     >
-      <Icon
-        name="angle-right"
-        class="w-3 h-3 mr-2 transition-transform duration-hig-normal ease-[cubic-bezier(0.2,0.8,0.2,1)] group-open:rotate-90"
-        :size="12"
-      />
+      <Icon name="angle-right" class="w-3 h-3 mr-2 duration-200" :size="12" />
       {{ group.label }}
     </summary>
     <ul class="ml-4" role="group">

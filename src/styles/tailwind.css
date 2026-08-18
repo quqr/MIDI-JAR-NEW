@@ -1,28 +1,11 @@
 @import "tailwindcss";
-@plugin "daisyui/index.js" {
+@plugin "daisyui" {
   themes:
     light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro,
     cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel,
     fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid,
     lemonade, night, coffee, winter, dim, nord, sunset, caramellatte, abyss,
     silk;
-}
-/* 等宽字体用于数字/状态显示 */
-.font-mono,
-code,
-kbd,
-samp,
-pre {
-  font-family: var(--font-mono);
-}
-
-:root {
-  /* 标准缓动曲线 - 引用 hig-tokens 单一真相源*/
-  --ease-hig: var(--ease-hig-standard);
-  /* 时长规范 - 引用 hig-tokens 单一真相源 */
-  --duration-micro: var(--hig-duration-fast); /* 微交互 */
-  --duration-panel: var(--hig-duration-normal); /* 面板 */
-  --duration-page: var(--hig-duration-slow); /* 页面转场 */
 }
 
 /* z-index 规范 - 全局层级语义（从底到顶）：
@@ -45,63 +28,4 @@ pre {
   --z-index-modal: 60;
   --z-index-toast: 70;
   --z-index-cursor: 9999;
-}
-
-/* ===== Interval Enter Animation ===== */
-@keyframes interval-enter {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.interval-cell {
-  animation: interval-enter var(--duration-panel, 250ms)
-    var(--ease-hig, cubic-bezier(0.32, 0.72, 0, 1)) both;
-}
-.interval-cell:nth-child(1) {
-  animation-delay: 0ms;
-}
-.interval-cell:nth-child(2) {
-  animation-delay: 50ms;
-}
-.interval-cell:nth-child(3) {
-  animation-delay: 100ms;
-}
-.interval-cell:nth-child(4) {
-  animation-delay: 150ms;
-}
-.interval-cell:nth-child(5) {
-  animation-delay: 200ms;
-}
-.interval-cell:nth-child(6) {
-  animation-delay: 250ms;
-}
-.interval-cell:nth-child(7) {
-  animation-delay: 300ms;
-}
-.interval-cell:nth-child(8) {
-  animation-delay: 350ms;
-}
-.interval-cell:nth-child(9) {
-  animation-delay: 400ms;
-}
-.interval-cell:nth-child(10) {
-  animation-delay: 450ms;
-}
-.interval-cell:nth-child(11) {
-  animation-delay: 500ms;
-}
-.interval-cell:nth-child(12) {
-  animation-delay: 550ms;
-}
-
-/* ===== Reduced Motion ===== */
-@media (prefers-reduced-motion: reduce) {
-  .interval-cell {
-    animation: none;
-  }
 }

@@ -307,8 +307,13 @@
         "multiply": "Multiply",
         "screen": "Screen"
       },
-      "transitionDuration": "Transition Duration",
-      "transitionDurationHint": "Animation duration for cursor transitions in milliseconds"
+      "animationSettings": "Animation",
+      "followDuration": "Follow Duration",
+      "followDurationHint": "Smoothing duration for the inner cursor following the mouse in ms; lower is snappier",
+      "hoverDuration": "Hover Morph Duration",
+      "hoverDurationHint": "Duration of the outer ring morphing onto element outlines in ms; higher is smoother",
+      "pulseScale": "Click Pulse Strength",
+      "pulseScaleHint": "Scale the cursor shrinks to on press (0.2-1); smaller means a stronger pulse"
     },
     "generalSettings": {
       "language": "Language",
@@ -520,7 +525,6 @@
       }
     },
     "debuggerSettings": {
-      "midiClock": "MIDI Clock",
       "clearMessages": "Clear messages",
       "autoScroll": "Auto Scroll",
       "messageLog": "MIDI message log"

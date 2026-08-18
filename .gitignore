@@ -4,6 +4,7 @@ dist/
 public/modal-synth-processor.js
 src-tauri/target/
 src-tauri/target-check/
+src-tauri/dev-server-port
 .trae/
 .workbuddy/
 ./wayfinder

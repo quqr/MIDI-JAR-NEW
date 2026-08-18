@@ -1,26 +1,24 @@
 <template>
   <div class="drawer-outlet relative h-full w-full">
-    <Transition name="drawer">
+    <div
+      v-if="isOpen"
+      class="fixed top-0 right-0 z-drawer h-full w-80 bg-base-100 shadow-xl border-l border-base-200 overflow-hidden"
+    >
       <div
-        v-if="isOpen"
-        class="fixed top-0 right-0 z-drawer h-full w-80 bg-base-100 shadow-xl border-l border-base-200 overflow-hidden"
+        class="flex items-center justify-end px-3 py-2 border-b border-base-200"
       >
-        <div
-          class="flex items-center justify-end px-3 py-2 border-b border-base-200"
+        <button
+          class="btn btn-sm btn-ghost btn-circle hover:bg-base-200 tooltip tooltip-bottom"
+          :data-tip="t('common.close')"
+          @click="handleClose"
         >
-          <button
-            class="btn btn-sm btn-ghost btn-circle transition-colors hover:bg-base-200 tooltip tooltip-bottom"
-            :data-tip="t('common.close')"
-            @click="handleClose"
-          >
-            <Icon name="x" :size="16" />
-          </button>
-        </div>
-        <div class="overflow-auto" style="height: calc(100% - 41px)">
-          <RouterView />
-        </div>
+          <Icon name="x" :size="16" />
+        </button>
       </div>
-    </Transition>
+      <div class="overflow-auto h-[calc(100%-41px)]">
+        <RouterView />
+      </div>
+    </div>
 
     <div class="h-full w-full">
       <RouterView />

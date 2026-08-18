@@ -76,7 +76,9 @@ export type CursorSettings = {
   hoverRingColorSource: "custom" | "theme";
   hoverRingColor: string;
   blendMode: "normal" | "exclusion" | "difference" | "multiply" | "screen";
-  transitionDuration: number;
+  followDuration: number;
+  hoverDuration: number;
+  pulseScale: number;
   hoverMode: "cover" | "border" | "none";
 };
 

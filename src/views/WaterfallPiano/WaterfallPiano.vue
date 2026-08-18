@@ -12,7 +12,7 @@
         class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-none"
       >
         <div
-          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-hig-lg border border-white/10 px-1 py-1"
+          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-xl border border-white/10 px-1 py-1"
         >
           <button
             class="btn btn-sm btn-circle btn-ghost text-white hover:bg-white/20 tooltip tooltip-bottom"
@@ -22,14 +22,12 @@
           >
             <Icon name="arrow-left" :size="18" aria-hidden="true" />
           </button>
-          <span
-            class="text-white/80 font-semibold drop-shadow text-hig-base pr-2"
-          >
+          <span class="text-white/80 font-semibold drop-shadow text-base pr-2">
             {{ t("WaterfallPiano.title") }}
           </span>
         </div>
         <div
-          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-hig-lg border border-white/10 px-1 py-1"
+          class="flex items-center gap-1 pointer-events-auto bg-black/20 backdrop-blur-md rounded-xl border border-white/10 px-1 py-1"
         >
           <button
             class="btn btn-sm btn-circle btn-ghost text-white tooltip tooltip-bottom"
@@ -84,17 +82,16 @@
       class="absolute inset-0 flex items-center justify-center bg-black/60 z-modal"
     >
       <div
-        class="card bg-base-100 border border-base-300 max-w-md text-center"
-        style="box-shadow: var(--shadow-hig-xl)"
+        class="card bg-base-100 border border-base-300 shadow-xl max-w-md text-center"
       >
         <div class="card-body p-6 items-center">
           <div class="text-error mb-4">
             <Icon name="alert-circle" :size="48" aria-hidden="true" />
           </div>
-          <h3 class="text-hig-lg font-bold text-base-content mb-2">
+          <h3 class="text-lg font-bold text-base-content mb-2">
             {{ t("WaterfallPiano.errors.playbackFailed") || "播放失败" }}
           </h3>
-          <p class="text-hig-sm text-base-content/70 mb-4">
+          <p class="text-sm text-base-content/70 mb-4">
             {{ ui.errorMessage.value }}
           </p>
           <button class="btn btn-primary btn-sm" @click="ui.onRetry">

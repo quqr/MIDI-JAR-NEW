@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="flex flex-col items-center p-4 max-w-[var(--hig-container-max)] mx-auto"
-  >
+  <div class="flex flex-col items-center p-4 max-w-[1200px] mx-auto">
     <!-- Header -->
     <div class="text-center mb-6">
       <Icon
@@ -9,10 +7,10 @@
         class="size-12 mx-auto text-primary/60 mb-3"
         :size="48"
       />
-      <h2 class="text-hig-xl font-semibold mb-1">
+      <h2 class="text-xl font-semibold mb-1">
         {{ t("chordDictionary.emptyTitle") }}
       </h2>
-      <p class="text-hig-sm text-base-content/70">
+      <p class="text-sm text-base-content/70">
         {{ t("chordDictionary.emptyHelp") }}
       </p>
     </div>
@@ -20,7 +18,7 @@
     <!-- Recent chords -->
     <section v-if="recentChords.length" class="w-full mb-6">
       <h3
-        class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2 flex items-center gap-2"
+        class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2 flex items-center gap-2"
       >
         <Icon name="clock" :size="14" />
         {{ t("chordDictionary.previousChords") }}
@@ -47,7 +45,7 @@
         class="w-full mb-5 block"
       >
         <h3
-          class="text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2"
+          class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2"
         >
           {{ category.label }}
         </h3>
@@ -60,11 +58,11 @@
             class="chord-card btn btn-sm bg-base-200/50 hover:bg-base-200 border border-base-300 justify-start gap-2 font-normal normal-case"
             @click="goToChord(entry.name)"
           >
-            <span class="truncate font-medium text-hig-sm">{{
+            <span class="truncate font-medium text-sm">{{
               entry.display
             }}</span>
             <span
-              class="text-hig-2xs text-base-content/70 font-mono ml-auto whitespace-nowrap"
+              class="text-[10px] text-base-content/70 font-mono ml-auto whitespace-nowrap"
             >
               {{ entry.intervals }}
             </span>

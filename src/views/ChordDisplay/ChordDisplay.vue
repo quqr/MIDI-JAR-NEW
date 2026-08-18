@@ -186,6 +186,7 @@ import {
 } from "@/components/Notation/utils";
 import { defaultChordDisplaySettings } from "@/types";
 import ChordDisplayModuleSettings from "@/views/Settings/ChordDisplaySettings/ChordDisplayModuleSettings.vue";
+import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils";
 import type { StaffClef } from "@/components/Notation/types";
 
 const { t } = useI18n();
@@ -287,7 +288,12 @@ const displayAltChords = computed(
 const displayIntervals = computed(
   () => moduleSettings.value?.displayIntervals ?? true,
 );
-const keyboard = computed(() => moduleSettings.value?.keyboard);
+// 模块级键盘优先；未指定时回退到"钢琴设置"页驱动的全局默认键盘
+const keyboard = computed(
+  () =>
+    moduleSettings.value?.keyboard ??
+    createKeyboardSettingsFromPiano(settingsStore.settings.piano),
+);
 
 const soundEnabled = computed(() => samplerStore.soundEnabled);
 

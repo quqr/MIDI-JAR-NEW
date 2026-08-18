@@ -8,10 +8,10 @@
     @update:open="$emit('update:open', $event)"
   >
     <div class="py-2.5">
-      <div class="text-hig-sm font-medium mb-1">
+      <div class="text-sm font-medium mb-1">
         {{ t("advancedDebug.waterfall.midiFile.selectedTracks") }}
       </div>
-      <div class="text-hig-xs text-base-content/70 mb-2">
+      <div class="text-xs text-base-content/70 mb-2">
         {{ t("advancedDebug.waterfall.midiFile.selectedTracksHint") }}
       </div>
       <div v-if="midiFile.selectedTracks.length" class="flex flex-wrap gap-1">
@@ -22,12 +22,12 @@
           >{{ track }}</span
         >
       </div>
-      <div v-else class="text-hig-xs text-base-content/70">
+      <div v-else class="text-xs text-base-content/70">
         {{ t("advancedDebug.waterfall.midiFile.noTracks") }}
       </div>
     </div>
     <div class="py-2.5">
-      <div class="text-hig-sm font-medium mb-2">
+      <div class="text-sm font-medium mb-2">
         {{ t("advancedDebug.waterfall.midiFile.trackColors") }}
       </div>
       <div class="space-y-1">

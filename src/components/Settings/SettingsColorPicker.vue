@@ -11,7 +11,7 @@
     </div>
     <input
       type="color"
-      class="w-10 h-8 rounded cursor-pointer border border-base-300 flex-shrink-0 ml-4 transition-colors hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-100 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="w-10 h-8 rounded cursor-pointer border border-base-300 flex-shrink-0 ml-4 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-100 disabled:opacity-50 disabled:cursor-not-allowed"
       :value="modelValue"
       :disabled="disabled"
       :aria-labelledby="colorLabelId"

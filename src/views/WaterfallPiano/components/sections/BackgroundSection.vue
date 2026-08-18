@@ -2,7 +2,7 @@
   <SettingsCollapse
     :title="t('WaterfallPiano.background')"
     icon="image"
-    :default-open="false"
+    :default-open="true"
   >
     <SettingsColorPicker
       :model-value="settings.solidColor"

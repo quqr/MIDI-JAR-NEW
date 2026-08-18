@@ -87,7 +87,7 @@
         <!-- Filter toggles -->
         <div class="hidden md:flex items-center gap-3 ml-1">
           <label
-            class="flex items-center gap-1.5 cursor-pointer text-hig-xs text-base-content/70 whitespace-nowrap"
+            class="flex items-center gap-1.5 cursor-pointer text-xs text-base-content/70 whitespace-nowrap"
           >
             <input
               type="checkbox"
@@ -158,7 +158,7 @@
         :key="note"
         role="tab"
         :aria-selected="selectedChroma === getChroma(note)"
-        class="btn btn-xs sm:btn-sm px-0 min-h-0 h-7 sm:h-8 text-hig-xs font-medium transition-colors"
+        class="btn btn-xs sm:btn-sm px-0 min-h-0 h-7 sm:h-8 text-xs font-medium"
         :class="
           selectedChroma === getChroma(note)
             ? 'btn-primary'

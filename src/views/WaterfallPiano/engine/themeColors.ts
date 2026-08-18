@@ -134,7 +134,7 @@ export function getDaisyUIColor(colorName: DaisyUIColorName): string {
     const color = computedStyle.getPropertyValue(cssVar).trim();
     if (!color) return getDefaultColor(colorName);
     return cssColorToHex(color);
-  } catch (error) {
+  } catch {
     return getDefaultColor(colorName);
   }
 }

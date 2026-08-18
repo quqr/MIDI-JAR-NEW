@@ -1,13 +1,13 @@
 <template>
-  <div class="form-control w-full py-2.5">
-    <label v-if="label" class="label pb-1">
-      <span class="label-text text-sm">{{ label }}</span>
-    </label>
+  <fieldset class="fieldset w-full py-2.5">
+    <legend v-if="label" class="fieldset-legend pb-1 text-sm">
+      {{ label }}
+    </legend>
     <div class="space-y-2">
       <label
         v-for="option in options"
         :key="String(option.value)"
-        class="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-base-200 transition-colors"
+        class="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-base-200"
       >
         <input
           type="radio"
@@ -23,10 +23,10 @@
         </span>
       </label>
     </div>
-    <label v-if="description" class="label">
-      <span class="label-text-alt text-base-content/70">{{ description }}</span>
-    </label>
-  </div>
+    <span v-if="description" class="label text-base-content/70">{{
+      description
+    }}</span>
+  </fieldset>
 </template>
 
 <script setup lang="ts">

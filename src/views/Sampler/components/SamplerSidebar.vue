@@ -34,10 +34,9 @@ const categories = computed(() => [
 import { batchDownloadInstruments } from "@/composables/useSamplerService";
 async function batchDownloadInstrumentsFunction() {
   // 批量下载所有音色
-  const result = await batchDownloadInstruments(
+  await batchDownloadInstruments(
     samplerStore.gmInstrumentCatalog.map((inst) => inst.id),
   );
-  console.log(result);
 }
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -92,7 +91,7 @@ onUnmounted(() => {
     <div class="flex-1 overflow-y-auto p-4">
       <!-- 刷新按钮 -->
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-hig-sm font-semibold text-base-content/70">
+        <h2 class="text-sm font-semibold text-base-content/70">
           {{ t("sampler.categories") }}
         </h2>
         <button
@@ -112,12 +111,12 @@ onUnmounted(() => {
       </div>
 
       <!-- 搜索框 -->
-      <div class="form-control mb-4">
+      <div class="fieldset mb-4">
         <input
           :value="searchQuery"
           type="text"
           :placeholder="t('sampler.searchInstruments')"
-          class="input input-bordered input-sm w-full"
+          class="input input input-sm w-full"
           @input="
             emit(
               'update:searchQuery',
@@ -128,7 +127,7 @@ onUnmounted(() => {
       </div>
 
       <!-- 分类列表 -->
-      <ul class="menu menu-sm rounded-hig-md">
+      <ul class="menu menu-sm rounded-lg">
         <li v-for="cat in categories" :key="cat.id">
           <button
             :class="{
@@ -154,10 +153,10 @@ onUnmounted(() => {
     <!-- 底部：缓存管理区域 -->
     <div class="flex flex-col border-t border-base-300 p-4 gap-3">
       <div class="flex items-baseline justify-between">
-        <h3 class="text-hig-sm font-semibold text-base-content/70">
+        <h3 class="text-sm font-semibold text-base-content/70">
           {{ t("sampler.cacheSize") || "Cache Size" }}
         </h3>
-        <span class="text-hig-xl font-bold tabular">{{
+        <span class="text-xl font-bold tabular">{{
           formatBytes(cacheSize)
         }}</span>
       </div>

@@ -6,7 +6,7 @@
         v-for="option in themeColors"
         :key="option.value"
         type="button"
-        class="group relative w-full aspect-square rounded-lg border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary"
+        class="group relative w-full aspect-square rounded-lg border-2 hover: focus:outline-none focus:ring-2 focus:ring-primary"
         :class="
           modelValue === option.value
             ? 'border-primary ring-2 ring-primary/30'

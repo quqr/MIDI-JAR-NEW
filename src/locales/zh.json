@@ -307,8 +307,13 @@
         "multiply": "正片叠底",
         "screen": "滤色"
       },
-      "transitionDuration": "过渡时长",
-      "transitionDurationHint": "光标过渡动画的时长（毫秒）"
+      "animationSettings": "动画设置",
+      "followDuration": "跟随时长",
+      "followDurationHint": "内圈光标跟随鼠标的平滑时长（毫秒），越小越跟手",
+      "hoverDuration": "悬停形变时长",
+      "hoverDurationHint": "外圈光标吸附到元素轮廓的形变时长（毫秒），越大越柔顺",
+      "pulseScale": "点击脉冲强度",
+      "pulseScaleHint": "按下时光标收缩到的比例（0.2-1），数值越小脉冲越明显"
     },
     "generalSettings": {
       "language": "语言",
@@ -520,7 +525,6 @@
       }
     },
     "debuggerSettings": {
-      "midiClock": "MIDI时钟",
       "clearMessages": "清除消息",
       "autoScroll": "自动滚动",
       "messageLog": "MIDI 消息日志"

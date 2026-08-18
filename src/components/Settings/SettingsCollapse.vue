@@ -1,6 +1,6 @@
 <template>
   <div
-    class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-hig-lg mb-3"
+    class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-xl mb-3"
     :class="{ 'collapse-open': isOpen }"
     :data-section-id="sectionId"
   >

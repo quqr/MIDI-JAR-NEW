@@ -1,8 +1,8 @@
 <template>
-  <div class="form-control">
+  <div>
     <select
       v-model="keySignature"
-      class="select select-bordered select-sm max-w-xs"
+      class="select select-sm max-w-xs"
       :aria-label="t('settings.notationSettings.key')"
     >
       <option

@@ -410,6 +410,41 @@ pub fn run() {
                 let _ = window.set_decorations(false);
             }
 
+            // 开发模式下，若 Vite 因端口被占用而自动切换到其他端口，
+            // 读取 src-tauri/dev-server-port 并把主窗口重定向到真实端口。
+            // 该文件由 Vite 的 write-resolved-dev-port 插件在 server listening
+            // 后写入，可能晚于本 setup 钩子执行，因此用一个后台线程轮询，
+            // 既避免读到上一次运行的旧值，也避免阻塞窗口创建。
+            #[cfg(debug_assertions)]
+            {
+                // tauri.conf.json 中的 devUrl 端口，作为“未切换”基准。
+                const CONFIGURED_PORT: u16 = 5173;
+
+                if let Ok(cwd) = std::env::current_dir() {
+                    let port_path = cwd.join("src-tauri").join("dev-server-port");
+                    let win = window.clone();
+                    std::thread::spawn(move || {
+                        // 最多轮询 10 秒（100 * 100ms）
+                        for _ in 0..100 {
+                            if let Ok(s) = fs::read_to_string(&port_path) {
+                                if let Ok(port) = s.trim().parse::<u16>() {
+                                    // 仅在 Vite 实际切换到非默认端口时才重定向
+                                    if port != CONFIGURED_PORT {
+                                        if let Ok(url) = tauri::Url::parse(
+                                            &format!("http://localhost:{port}"),
+                                        ) {
+                                            let _ = win.navigate(url);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            std::thread::sleep(std::time::Duration::from_millis(100));
+                        }
+                    });
+                }
+            }
+
             let app_handle_clone = app_handle.clone();
             let window_clone = window.clone();
             window.on_window_event(move |event| {

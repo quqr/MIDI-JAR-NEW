@@ -2,7 +2,7 @@
   <div class="flex flex-row items-center gap-1">
     <input
       type="text"
-      class="input input-bordered input-sm w-16 font-mono text-center"
+      class="input input-sm w-16 font-mono text-center"
       :value="modelValue"
       @input="handleChange(($event.target as HTMLInputElement).value)"
       @keydown="handleKeyPress"

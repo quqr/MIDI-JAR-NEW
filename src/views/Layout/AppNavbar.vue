@@ -1,34 +1,49 @@
 <template>
-  <div class="app-navbar" :class="{ 'app-navbar--mac': isMac }">
-    <div v-if="isMac" class="app-navbar__mac-spacer"></div>
+  <div
+    class="flex items-center h-10 min-h-10 px-2 gap-1 bg-base-200/70 backdrop-blur-xl border-b border-base-content/10 select-none"
+    :class="{ 'ps-0': isMac }"
+  >
+    <div
+      v-if="isMac"
+      style="-webkit-app-region: drag"
+      class="w-[78px] shrink-0"
+    ></div>
 
-    <div class="app-navbar__breadcrumb">
+    <div
+      class="min-w-0 flex items-center overflow-hidden"
+      style="-webkit-app-region: no-drag"
+    >
       <AppBreadcrumb />
     </div>
 
-    <div v-if="inTauri" class="app-navbar__drag-region">
-      <div
-        class="app-navbar__drag-area"
-        data-tauri-drag-region
-        @dblclick="handleDragAreaDblClick"
-      ></div>
-    </div>
+    <div
+      v-if="inTauri"
+      class="flex-1 min-w-10 self-stretch"
+      style="-webkit-app-region: drag"
+      @dblclick="handleDragAreaDblClick"
+    ></div>
+
     <QuickChangeKeyToolbar />
 
     <!-- 延迟状态圆点（常驻） -->
     <div
-      class="app-navbar__status"
+      class="flex items-center justify-center w-6 h-6 shrink-0"
+      style="-webkit-app-region: no-drag"
       :title="latencyTooltip"
       role="status"
       :aria-label="latencyAriaLabel"
     >
-      <span class="latency-dot" :class="latencyClass"></span>
+      <StateDot :status="latencyStatus" :aria-label="latencyAriaLabel" />
     </div>
 
-    <div class="app-navbar__actions">
+    <div
+      class="flex items-center gap-0.5 shrink-0"
+      style="-webkit-app-region: no-drag"
+    >
       <RouterLink
         to="/settings"
-        class="app-navbar__action-btn"
+        class="btn btn-ghost btn-square btn-sm"
+        style="-webkit-app-region: no-drag"
         :title="$t('settings.title')"
         :aria-label="$t('settings.title')"
       >
@@ -37,9 +52,14 @@
 
       <ThemeSwitcher />
 
-      <div v-if="!isMac && inTauri" class="app-navbar__window-controls">
+      <div
+        v-if="!isMac && inTauri"
+        class="flex items-center ml-1"
+        style="-webkit-app-region: no-drag"
+      >
         <button
-          class="win-ctrl-btn"
+          class="btn btn-ghost btn-square btn-sm"
+          style="-webkit-app-region: no-drag"
           @click="handleMinimize"
           :title="$t('layout.minimize')"
         >
@@ -56,7 +76,8 @@
           </svg>
         </button>
         <button
-          class="win-ctrl-btn"
+          class="btn btn-ghost btn-square btn-sm"
+          style="-webkit-app-region: no-drag"
           @click="handleMaximize"
           :title="isMaximized ? $t('layout.unmaximize') : $t('layout.maximize')"
         >
@@ -102,7 +123,8 @@
           </svg>
         </button>
         <button
-          class="win-ctrl-btn win-ctrl-btn--close"
+          class="btn btn-ghost btn-square btn-sm hover:bg-error hover:text-error-content"
+          style="-webkit-app-region: no-drag"
           @click="handleClose"
           :title="$t('common.close')"
         >
@@ -140,7 +162,6 @@
       <li v-for="item in navItems" :key="item.path">
         <RouterLink
           :to="item.path"
-          class="flex items-center gap-2 transition-all duration-hig-fast"
           :class="[
             isActive(item.path)
               ? 'btn btn-primary'
@@ -164,6 +185,7 @@ import { useRoute, RouterLink } from "vue-router";
 import AppBreadcrumb from "./AppBreadcrumb.vue";
 import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 import Icon from "@/components/Icon/Icon.vue";
+import StateDot from "@/components/common/StateDot.vue";
 import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
@@ -183,10 +205,10 @@ const isMac = ref(false);
 const { currentLatency } = useMidiLatency();
 
 // 延迟状态分类：<10ms 绿，10-30ms 黄，>30ms 红
-const latencyClass = computed(() => {
-  if (currentLatency.value < 10) return "latency-dot--good";
-  if (currentLatency.value < 30) return "latency-dot--warn";
-  return "latency-dot--bad";
+const latencyStatus = computed<"success" | "warning" | "error">(() => {
+  if (currentLatency.value < 10) return "success";
+  if (currentLatency.value < 30) return "warning";
+  return "error";
 });
 
 const latencyTooltip = computed(() =>
@@ -260,212 +282,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.app-navbar {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  min-height: 40px;
-  padding: 0 8px;
-  gap: 4px;
-  user-select: none;
-  -webkit-user-select: none;
-  background-color: color-mix(in oklch, var(--color-base-200) 70%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid
-    color-mix(in oklch, var(--color-base-content) 8%, transparent);
-}
-
-.app-navbar--mac {
-  padding-left: 0;
-}
-
-.app-navbar__mac-spacer {
-  width: 78px;
-  flex-shrink: 0;
-  -webkit-app-region: drag;
-}
-
-.app-navbar__breadcrumb {
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  -webkit-app-region: no-drag;
-}
-
-.app-navbar__drag-region {
-  flex: 1;
-  min-width: 40px;
-  align-self: stretch;
-  -webkit-app-region: drag;
-}
-
-.app-navbar__drag-area {
-  width: 100%;
-  height: 100%;
-}
-
-.app-navbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  -webkit-app-region: no-drag;
-}
-
-.app-navbar__action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-hig-md);
-  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
-  transition:
-    background-color var(--hig-duration-fast) var(--ease-hig-standard),
-    color var(--hig-duration-fast) var(--ease-hig-standard);
-}
-
-.app-navbar__action-btn:hover {
-  background-color: color-mix(
-    in oklch,
-    var(--color-base-content) 8%,
-    transparent
-  );
-  color: var(--color-base-content);
-}
-
-.app-navbar__action-icon {
-  width: 1.2em;
-  height: 1.2em;
-}
-
-/* 状态指示器（延迟圆点 + 录制/播放脉冲） */
-.app-navbar__status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  -webkit-app-region: no-drag;
-}
-
-.latency-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background-color 0.3s ease;
-}
-
-.latency-dot--good {
-  background-color: var(--hig-success);
-  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-success) 50%, transparent);
-}
-
-.latency-dot--warn {
-  background-color: var(--hig-warning);
-  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-warning) 50%, transparent);
-}
-
-.latency-dot--bad {
-  background-color: var(--hig-error);
-  box-shadow: 0 0 4px color-mix(in oklch, var(--hig-error) 50%, transparent);
-}
-
-.status-pulse {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  animation: status-pulse 1.5s ease-in-out infinite;
-}
-
-.status-pulse--record {
-  background-color: var(--hig-error);
-  box-shadow: 0 0 6px color-mix(in oklch, var(--hig-error) 60%, transparent);
-}
-
-.status-pulse--play {
-  background-color: var(--hig-info);
-  box-shadow: 0 0 6px color-mix(in oklch, var(--hig-info) 60%, transparent);
-}
-
-@keyframes status-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .status-pulse {
-    animation: none;
-  }
-}
-
-.app-navbar__window-controls {
-  display: flex;
-  align-items: center;
-  margin-left: 4px;
-  -webkit-app-region: no-drag;
-}
-
-.win-ctrl-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
-  cursor: pointer;
-  transition:
-    background-color var(--hig-duration-fast) var(--ease-hig-standard),
-    color var(--hig-duration-fast) var(--ease-hig-standard);
-  border-radius: var(--radius-hig-sm);
-}
-
-.win-ctrl-btn:hover {
-  background-color: color-mix(
-    in oklch,
-    var(--color-base-content) 8%,
-    transparent
-  );
-  color: var(--color-base-content);
-}
-
-.win-ctrl-btn--close:hover {
-  background-color: var(--color-error);
-  color: var(--color-error-content);
-}
-
-@media (max-width: 768px) {
-  .app-navbar {
-    height: 36px;
-    min-height: 36px;
-    padding: 0 4px;
-  }
-
-  .app-navbar__action-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .win-ctrl-btn {
-    width: 32px;
-    height: 28px;
-  }
-
-  .app-navbar__mac-spacer {
-    width: 68px;
-  }
-}
-</style>
