@@ -1,13 +1,13 @@
 <template>
   <SettingsSection>
-    <div class="grid grid-cols-1 gap-hig-4 m-4">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.notationSettings.title')"
         icon="music-note"
         :default-open="true"
       >
         <div class="flex items-center justify-between py-2.5">
-          <span class="text-hig-sm">{{
+          <span class="text-sm">{{
             t("settings.notationSettings.keySignature")
           }}</span>
           <InputNote

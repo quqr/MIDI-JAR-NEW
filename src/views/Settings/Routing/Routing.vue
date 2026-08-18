@@ -3,15 +3,12 @@
     <!-- 工具栏 -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div class="flex items-center gap-2">
-        <button
-          class="btn btn-sm btn-outline text-hig-sm"
-          @click="handleRefresh"
-        >
+        <button class="btn btn-sm btn-outline text-sm" @click="handleRefresh">
           <Icon name="refresh" :size="16" aria-hidden="true" />
           {{ t("settings.routingSettings.refreshDevices") }}
         </button>
         <button
-          class="btn btn-sm btn-outline text-hig-sm"
+          class="btn btn-sm btn-outline text-sm"
           :disabled="!virtualPortSupported"
           :title="
             !virtualPortSupported
@@ -24,7 +21,7 @@
           {{ t("settings.routingSettings.addVirtualPort") }}
         </button>
         <button
-          class="btn btn-sm btn-error btn-outline text-hig-sm"
+          class="btn btn-sm btn-error btn-outline text-sm"
           :aria-label="t('settings.routingSettings.clearAll')"
           @click="handleClearAndRefresh"
         >
@@ -35,12 +32,12 @@
 
       <!-- 视图切换（segmented control） -->
       <div
-        class="flex items-center gap-1 p-1 rounded-hig-md bg-base-200/50"
+        class="flex items-center gap-1 p-1 rounded-lg bg-base-200/50"
         role="tablist"
         :aria-label="t('settings.routingSettings.viewMode')"
       >
         <button
-          class="btn btn-sm text-hig-sm"
+          class="btn btn-sm text-sm"
           :class="viewMode === 'matrix' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'matrix'"
@@ -50,7 +47,7 @@
           {{ t("settings.routingSettings.matrixView") }}
         </button>
         <button
-          class="btn btn-sm text-hig-sm"
+          class="btn btn-sm text-sm"
           :class="viewMode === 'flow' ? 'btn-primary' : 'btn-ghost'"
           role="tab"
           :aria-selected="viewMode === 'flow'"
@@ -69,14 +66,14 @@
     >
       <Icon name="alert-circle" :size="48" aria-hidden="true" />
       <div class="text-center">
-        <p class="text-hig-lg font-medium">
+        <p class="text-lg font-medium">
           {{ t("settings.routingSettings.noDevicesTitle") }}
         </p>
-        <p class="text-hig-sm mt-1">
+        <p class="text-sm mt-1">
           {{ t("settings.routingSettings.noDevicesDesc") }}
         </p>
       </div>
-      <button class="btn btn-primary btn-sm text-hig-sm" @click="handleRefresh">
+      <button class="btn btn-primary btn-sm text-sm" @click="handleRefresh">
         <Icon name="refresh" :size="16" aria-hidden="true" />
         {{ t("settings.routingSettings.refreshDevices") }}
       </button>
@@ -94,7 +91,7 @@
               class="sticky left-0 top-0 z-sticky bg-base-200/80 backdrop-blur-md"
             >
               <span
-                class="text-hig-xs font-semibold uppercase tracking-wider text-base-content/70"
+                class="text-xs font-semibold uppercase tracking-wider text-base-content/70"
               >
                 {{ t("settings.routingSettings.inputOutput") }}
               </span>
@@ -117,7 +114,7 @@
                   "
                 ></span>
                 <span
-                  class="text-hig-xs font-semibold truncate"
+                  class="text-xs font-semibold truncate"
                   :title="output.name"
                 >
                   {{ output.name }}
@@ -139,7 +136,7 @@
                       : $t('common.disconnected')
                   "
                 ></span>
-                <span class="text-hig-sm truncate" :title="input.name">
+                <span class="text-sm truncate" :title="input.name">
                   {{ input.name }}
                 </span>
               </div>
@@ -168,7 +165,7 @@
     </div>
 
     <!-- 流程图视图（高级模式） -->
-    <div v-else class="flex-1 h-0 p-4 rounded-hig-lg">
+    <div v-else class="flex-1 h-0 p-4 rounded-xl">
       <MidiFlowGraph
         :inputs="inputs"
         :outputs="outputs"
@@ -196,27 +193,27 @@
       @close="showVirtualPortModal = false"
     >
       <div class="modal-box">
-        <h3 class="font-bold text-hig-lg mb-4">
+        <h3 class="font-bold text-lg mb-4">
           {{ t("settings.routingSettings.addVirtualPort") }}
         </h3>
-        <div class="form-control w-full mb-4">
+        <div class="fieldset w-full mb-4">
           <label class="label">
-            <span class="label-text text-hig-sm">{{
+            <span class="fieldset-legend text-sm">{{
               t("settings.routingSettings.virtualPortName")
             }}</span>
           </label>
           <input
             v-model="virtualPortName"
             type="text"
-            class="input input-bordered w-full"
+            class="input input w-full"
             :placeholder="
               t('settings.routingSettings.virtualPortNamePlaceholder')
             "
           />
         </div>
-        <div class="form-control w-full mb-4">
+        <div class="fieldset w-full mb-4">
           <label class="label">
-            <span class="label-text text-hig-sm">{{
+            <span class="fieldset-legend text-sm">{{
               t("settings.routingSettings.virtualPortType")
             }}</span>
           </label>
@@ -228,7 +225,7 @@
                 value="input"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text text-hig-sm">{{
+              <span class="fieldset-legend text-sm">{{
                 t("settings.routingSettings.virtualInput")
               }}</span>
             </label>
@@ -239,7 +236,7 @@
                 value="output"
                 class="radio radio-sm radio-primary"
               />
-              <span class="label-text text-hig-sm">{{
+              <span class="fieldset-legend text-sm">{{
                 t("settings.routingSettings.virtualOutput")
               }}</span>
             </label>
@@ -247,13 +244,13 @@
         </div>
         <div class="modal-action">
           <button
-            class="btn btn-ghost btn-sm text-hig-sm"
+            class="btn btn-ghost btn-sm text-sm"
             @click="showVirtualPortModal = false"
           >
             {{ t("common.cancel") }}
           </button>
           <button
-            class="btn btn-primary btn-sm text-hig-sm"
+            class="btn btn-primary btn-sm text-sm"
             :disabled="!virtualPortName.trim()"
             @click="handleCreateVirtualPort"
           >

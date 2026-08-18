@@ -2,7 +2,7 @@
   <SettingsCollapse
     :title="t('WaterfallPiano.fluidAdvancedParams')"
     icon="droplet"
-    :default-open="false"
+    :default-open="true"
   >
     <SettingsRange
       :model-value="fluidParams.splatRadius ?? 0.0001"
@@ -64,7 +64,7 @@
     <!-- 随机扰动：每个发射点独立控制 -->
     <div class="divider my-2" />
     <p
-      class="text-hig-xs font-medium uppercase tracking-wide text-base-content/70 mb-1"
+      class="text-xs font-medium uppercase tracking-wide text-base-content/70 mb-1"
     >
       {{ t("WaterfallPiano.perturbation") }}
     </p>

@@ -11,7 +11,7 @@
         ref="inputRef"
         v-model="search"
         type="text"
-        class="input input-sm input-bordered w-48 pl-8 pr-8 focus:w-64 transition-all duration-hig-fast"
+        class="input input-sm input w-48 pl-8 pr-8 focus:w-64 duration-150"
         :placeholder="t('chordDictionary.searchChord')"
         :aria-label="t('chordDictionary.searchChord')"
         @focus="menuOpen = true"
@@ -60,7 +60,7 @@
             />
             <li
               v-if="!searchResults.length"
-              class="text-base-content/70 text-hig-sm px-3 py-2"
+              class="text-base-content/70 text-sm px-3 py-2"
             >
               {{ t("chordDictionary.noChordsFound") }}
             </li>
@@ -77,7 +77,7 @@
             />
             <li
               v-if="!previousChords.length"
-              class="text-base-content/70 text-hig-sm px-3 py-2"
+              class="text-base-content/70 text-sm px-3 py-2"
             >
               {{ t("chordDictionary.noChordsInHistory") }}
             </li>
@@ -101,7 +101,7 @@
       class="absolute top-full left-0 z-dropdown mt-1 card bg-base-100 shadow-xl w-72"
     >
       <div class="card-body p-3 pb-2">
-        <div class="form-control w-full">
+        <div class="fieldset w-full">
           <div class="relative">
             <Icon
               name="search"
@@ -111,7 +111,7 @@
             <input
               v-model="search"
               type="text"
-              class="input input-bordered input-sm w-full pl-9"
+              class="input input input-sm w-full pl-9"
               :placeholder="t('chordDictionary.typeChord')"
               :aria-label="t('chordDictionary.typeChord')"
               @keydown.escape="menuOpen = false"
@@ -154,7 +154,7 @@
           />
           <li
             v-if="!searchResults.length"
-            class="text-base-content/70 text-hig-sm px-3 py-2"
+            class="text-base-content/70 text-sm px-3 py-2"
           >
             {{ t("chordDictionary.noChordsFound") }}
           </li>
@@ -171,7 +171,7 @@
           />
           <li
             v-if="!previousChords.length"
-            class="text-base-content/70 text-hig-sm px-3 py-2"
+            class="text-base-content/70 text-sm px-3 py-2"
           >
             {{ t("chordDictionary.noChordsInHistory") }}
           </li>

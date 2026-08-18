@@ -15,7 +15,7 @@
         >
           <Icon name="menu" :size="20" aria-hidden="true" />
         </label>
-        <div class="px-4 text-hig-lg font-semibold">
+        <div class="px-4 text-lg font-semibold">
           {{ $t("settings.title") }}
         </div>
         <div class="flex-1"></div>
@@ -57,7 +57,7 @@
           <template v-for="group in groupOrder" :key="group">
             <li
               v-if="getItemsForGroup(group).length > 0"
-              class="menu-title is-drawer-close:hidden text-hig-xs font-semibold uppercase tracking-wider text-base-content/70 px-4 pt-3 pb-1"
+              class="menu-title is-drawer-close:hidden text-xs font-semibold uppercase tracking-wider text-base-content/70 px-4 pt-3 pb-1"
             >
               {{ t(groupLabels[group]) }}
             </li>
@@ -65,7 +65,7 @@
               <RouterLink :to="item.to" custom v-slot="{ href, navigate }">
                 <a
                   :href="href"
-                  class="rounded-hig-md text-hig-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                  class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
                   :class="
                     isActive(item.to)
                       ? 'active bg-primary/10 text-primary font-semibold'
@@ -93,10 +93,10 @@
       aria-labelledby="reset-dialog-title"
     >
       <div class="modal-box">
-        <h3 id="reset-dialog-title" class="text-hig-lg font-bold">
+        <h3 id="reset-dialog-title" class="text-lg font-bold">
           {{ t("settings.resetConfirmTitle") }}
         </h3>
-        <p class="py-4 text-hig-sm text-base-content/70">
+        <p class="py-4 text-sm text-base-content/70">
           {{ resetConfirmMessage }}
         </p>
         <div class="modal-action">

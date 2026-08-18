@@ -13,13 +13,13 @@
         <ChordName
           :chord="chord"
           :class="[
-            'text-hig-4xl flex-grow-0 flex-shrink-0 justify-center font-bold leading-tight',
+            'text-4xl flex-grow-0 flex-shrink-0 justify-center font-bold leading-tight',
             { 'opacity-50': isDisabled },
           ]"
         />
         <label
           v-if="!disableUpdate"
-          class="flex items-center gap-2 cursor-pointer text-hig-sm"
+          class="flex items-center gap-2 cursor-pointer text-sm"
         >
           <input
             type="checkbox"
@@ -32,7 +32,7 @@
       </h1>
 
       <div
-        class="text-center text-hig-lg font-normal leading-tight text-base-content/70 mb-3"
+        class="text-center text-lg font-normal leading-tight text-base-content/70 mb-3"
       >
         {{ chord.name }}
       </div>
@@ -40,7 +40,7 @@
       <!-- 和弦播放控制 -->
       <div class="flex items-center gap-3 mb-3">
         <!-- 声音开关 -->
-        <label class="flex items-center gap-1.5 cursor-pointer text-hig-sm">
+        <label class="flex items-center gap-1.5 cursor-pointer text-sm">
           <input
             type="checkbox"
             class="toggle toggle-primary toggle-sm"
@@ -88,7 +88,7 @@
 
       <!-- Core: Piano keyboard -->
       <PianoKeyboard
-        class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-hig-lg border border-base-300"
+        class="w-full my-4 p-3 sm:p-4 bg-base-200 rounded-xl border border-base-300"
         style="height: 140px"
         :targets="midi"
         :played="playedMidiNotes"

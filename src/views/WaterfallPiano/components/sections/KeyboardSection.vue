@@ -2,7 +2,7 @@
   <SettingsCollapse
     :title="t('WaterfallPiano.keyboard')"
     icon="piano"
-    :default-open="false"
+    :default-open="true"
   >
     <SettingsToggle
       :model-value="settings.visible"

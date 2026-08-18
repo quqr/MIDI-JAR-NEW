@@ -1,6 +1,6 @@
 <template>
   <SettingsSection>
-    <div class="grid grid-cols-1 gap-hig-4 m-4">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.generalSettings.language')"
         icon="translate"
@@ -19,7 +19,7 @@
         icon="palette"
         :default-open="true"
       >
-        <p class="text-hig-sm text-base-content/70 mb-4">
+        <p class="text-sm text-base-content/70 mb-4">
           {{ t("settings.generalSettings.themeHint") }}
         </p>
         <ThemePicker />

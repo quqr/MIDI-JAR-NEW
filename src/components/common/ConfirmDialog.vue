@@ -1,39 +1,33 @@
 <template>
-  <Transition name="modal">
-    <dialog
-      v-if="modelValue"
-      ref="dialogRef"
-      open
-      class="modal modal-open"
-      :aria-labelledby="titleId"
-      @click.self="onCancel"
-    >
-      <div class="modal-box">
-        <h3 :id="titleId" class="font-bold text-lg">{{ title }}</h3>
-        <p class="py-4 text-base-content/80">{{ message }}</p>
-        <div class="modal-action">
-          <button
-            class="btn btn-sm"
-            :aria-label="cancelLabel"
-            @click="onCancel"
-          >
-            {{ cancelLabel }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="variant === 'error' ? 'btn-error' : 'btn-primary'"
-            :aria-label="confirmLabel"
-            @click="onConfirm"
-          >
-            {{ confirmLabel }}
-          </button>
-        </div>
+  <dialog
+    v-if="modelValue"
+    ref="dialogRef"
+    open
+    class="modal modal-open"
+    :aria-labelledby="titleId"
+    @click.self="onCancel"
+  >
+    <div class="modal-box">
+      <h3 :id="titleId" class="font-bold text-lg">{{ title }}</h3>
+      <p class="py-4 text-base-content/80">{{ message }}</p>
+      <div class="modal-action">
+        <button class="btn btn-sm" :aria-label="cancelLabel" @click="onCancel">
+          {{ cancelLabel }}
+        </button>
+        <button
+          class="btn btn-sm"
+          :class="variant === 'error' ? 'btn-error' : 'btn-primary'"
+          :aria-label="confirmLabel"
+          @click="onConfirm"
+        >
+          {{ confirmLabel }}
+        </button>
       </div>
-      <form method="dialog" class="modal-backdrop">
-        <button @click="onCancel">close</button>
-      </form>
-    </dialog>
-  </Transition>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button @click="onCancel">close</button>
+    </form>
+  </dialog>
 </template>
 
 <script setup lang="ts">
@@ -86,14 +80,3 @@ function onCancel() {
   emit("update:modelValue", false);
 }
 </script>
-
-<style scoped>
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>

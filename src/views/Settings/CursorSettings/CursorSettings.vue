@@ -1,6 +1,6 @@
 <template>
   <SettingsSection>
-    <div class="grid grid-cols-1 gap-hig-4 m-4">
+    <div class="grid grid-cols-1 gap-4 m-4">
       <SettingsCollapse
         :title="t('settings.cursorSettings.general')"
         icon="cursor"
@@ -146,6 +146,46 @@
       </SettingsCollapse>
 
       <SettingsCollapse
+        :title="t('settings.cursorSettings.animationSettings')"
+        icon="sparkles"
+        :default-open="true"
+      >
+        <SettingsRange
+          :model-value="settingsStore.settings.cursor.followDuration"
+          :label="t('settings.cursorSettings.followDuration')"
+          :description="t('settings.cursorSettings.followDurationHint')"
+          :min="0"
+          :max="500"
+          :step="10"
+          @update:model-value="
+            settingsStore.updateSetting('cursor.followDuration', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settingsStore.settings.cursor.hoverDuration"
+          :label="t('settings.cursorSettings.hoverDuration')"
+          :description="t('settings.cursorSettings.hoverDurationHint')"
+          :min="0"
+          :max="800"
+          :step="10"
+          @update:model-value="
+            settingsStore.updateSetting('cursor.hoverDuration', $event)
+          "
+        />
+        <SettingsRange
+          :model-value="settingsStore.settings.cursor.pulseScale"
+          :label="t('settings.cursorSettings.pulseScale')"
+          :description="t('settings.cursorSettings.pulseScaleHint')"
+          :min="0.2"
+          :max="1"
+          :step="0.05"
+          @update:model-value="
+            settingsStore.updateSetting('cursor.pulseScale', $event)
+          "
+        />
+      </SettingsCollapse>
+
+      <SettingsCollapse
         :title="t('settings.cursorSettings.advancedSettings')"
         icon="cog"
         :default-open="true"
@@ -157,17 +197,6 @@
           :description="t('settings.cursorSettings.blendModeHint')"
           @update:model-value="
             settingsStore.updateSetting('cursor.blendMode', $event)
-          "
-        />
-        <SettingsRange
-          :model-value="settingsStore.settings.cursor.transitionDuration"
-          :label="t('settings.cursorSettings.transitionDuration')"
-          :description="t('settings.cursorSettings.transitionDurationHint')"
-          :min="0"
-          :max="500"
-          :step="10"
-          @update:model-value="
-            settingsStore.updateSetting('cursor.transitionDuration', $event)
           "
         />
       </SettingsCollapse>

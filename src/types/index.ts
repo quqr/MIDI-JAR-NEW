@@ -137,7 +137,9 @@ export type CursorSettings = {
   hoverRingColorSource: "custom" | "theme";
   hoverRingColor: string;
   blendMode: "normal" | "exclusion" | "difference" | "multiply" | "screen";
-  transitionDuration: number;
+  followDuration: number;
+  hoverDuration: number;
+  pulseScale: number;
   hoverMode: "cover" | "border" | "none";
 };
 
@@ -247,7 +249,9 @@ export const defaultCursorSettings: CursorSettings = {
   hoverRingColorSource: "theme",
   hoverRingColor: "primary",
   blendMode: "exclusion",
-  transitionDuration: 100,
+  followDuration: 120,
+  hoverDuration: 300,
+  pulseScale: 0.6,
   hoverMode: "border",
 };
 

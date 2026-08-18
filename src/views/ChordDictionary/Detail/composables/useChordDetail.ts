@@ -33,8 +33,7 @@ import type {
   StaffClef,
   NotationDisplayConfig,
 } from "@/components/Notation/types";
-// 注意：钢琴相关工具函数暂时未使用，保留注释以备将来使用
-// import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils";
+import { createKeyboardSettingsFromPiano } from "@/utils/pianoUtils";
 import type { KeyboardSettings } from "@/types/settings";
 
 const NOTATION_LABELS = ["long", "short", "symbol"];
@@ -160,34 +159,10 @@ export function useChordDetail() {
     getChordDegrees(chord.value!, pitchClasses),
   );
 
-  // 暂时使用默认键盘设置，待后续恢复键盘设置功能
-  const defaultKeyboardSettings: KeyboardSettings = {
-    skin: "coral",
-    from: "C3",
-    to: "C5",
-    label: "pitchClass",
-    keyName: "note",
-    keyInfo: "none",
-    fadeOutDuration: 0,
-    textOpacity: 1,
-    displaySustained: true,
-    wrap: false,
-    sizes: {
-      radius: 0,
-      height: 0,
-      ratio: 0,
-      bevel: false,
-    },
-    colors: {
-      white: null,
-      black: null,
-      played: null,
-      wrapped: null,
-      sustained: null,
-    },
-  };
-
-  const keyboardSettings = computed(() => defaultKeyboardSettings);
+  // 全局默认键盘：由"钢琴设置"页（settings.piano）驱动，作为各模块的默认键盘基础
+  const keyboardSettings = computed(() =>
+    createKeyboardSettingsFromPiano(settingsStore.settings.piano),
+  );
 
   // ... 其他代码继续 ...
 

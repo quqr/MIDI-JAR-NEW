@@ -2,7 +2,11 @@
   <div class="flex flex-col items-center justify-center h-full py-16">
     <div
       class="card bg-base-100 border border-base-300 max-w-md p-8 text-center"
-      style="box-shadow: var(--shadow-hig-md)"
+      style="
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+      "
     >
       <div class="mb-6">
         <Icon
@@ -11,10 +15,10 @@
           :size="64"
         />
       </div>
-      <h3 class="text-hig-lg font-semibold mb-2" v-if="!chordName">
+      <h3 class="text-lg font-semibold mb-2" v-if="!chordName">
         {{ t("chordDictionary.emptyTitle") }}
       </h3>
-      <p class="text-base-content/70 mb-4 text-hig-base">
+      <p class="text-base-content/70 mb-4 text-base">
         {{
           chordName
             ? t("chordDictionary.cannotFindChord", { chordName })
@@ -23,7 +27,7 @@
       </p>
       <div
         v-if="!chordName"
-        class="flex flex-col gap-2 text-hig-sm text-base-content/70"
+        class="flex flex-col gap-2 text-sm text-base-content/70"
       >
         <div class="flex items-center gap-2">
           <span class="badge badge-sm">1</span>

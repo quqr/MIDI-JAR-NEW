@@ -45,7 +45,7 @@
     />
 
     <!-- 合成器参数 -->
-    <div class="divider text-hig-xs text-base-content/70">
+    <div class="divider text-xs text-base-content/70">
       {{ t("advancedDebug.sound.synthParams") }}
     </div>
 
@@ -73,7 +73,7 @@
     />
 
     <!-- 包络参数 -->
-    <div class="divider text-hig-xs text-base-content/70">
+    <div class="divider text-xs text-base-content/70">
       {{ t("advancedDebug.sound.envelope") }}
     </div>
 
@@ -115,7 +115,7 @@
     />
 
     <!-- 调制包络参数 -->
-    <div class="divider text-hig-xs text-base-content/70">
+    <div class="divider text-xs text-base-content/70">
       {{ t("advancedDebug.sound.modEnvelope") }}
     </div>
 

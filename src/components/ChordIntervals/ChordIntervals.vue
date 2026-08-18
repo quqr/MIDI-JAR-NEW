@@ -1,12 +1,7 @@
 <template>
   <div class="w-full">
     <div class="grid grid-cols-6 gap-1.5" role="list" :aria-label="ariaLabel">
-      <div
-        v-for="(label, index) in BASE_LABELS"
-        :key="label"
-        class="interval-cell"
-        role="listitem"
-      >
+      <div v-for="(label, index) in BASE_LABELS" :key="label" role="listitem">
         <div
           class="card"
           :class="

@@ -1,11 +1,5 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
-function debugLog(...args: unknown[]) {
-  if (import.meta.env.DEV) {
-    console.log(...args);
-  }
-}
-
 /**
  * MIDI 消息事件，封装单条 MIDI 消息及其元信息
  */
@@ -103,9 +97,6 @@ export class InternalMidiMessages extends MidiMessageManager {
     this.initializing = true;
 
     if (typeof window === "undefined" || !window.tauriAPI?.midi) {
-      debugLog(
-        `MidiMessageManager: tauriAPI not available for '${this.namespace}'`,
-      );
       this.initializing = false;
       return;
     }
@@ -128,11 +119,8 @@ export class InternalMidiMessages extends MidiMessageManager {
 
       this.offListener = unlisten;
       this.initialized = true;
-    } catch (error) {
-      debugLog(
-        `MidiMessageManager: failed to register listener for '${this.namespace}'`,
-        error,
-      );
+    } catch {
+      // 注册失败时静默退出，不阻断其他功能
     } finally {
       this.pendingUnlisten = null;
       this.initializing = false;

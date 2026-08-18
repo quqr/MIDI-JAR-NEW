@@ -2,7 +2,7 @@
   <li
     role="treeitem"
     tabindex="0"
-    class="px-3 py-1.5 rounded-hig-md cursor-pointer text-hig-sm transition-colors duration-hig-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-full cursor-interactive"
+    class="px-3 py-1.5 rounded-lg cursor-pointer text-sm duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-full cursor-interactive"
     :class="{
       'bg-primary/10 text-primary font-semibold':
         selected === item.chordType.aliases[0],

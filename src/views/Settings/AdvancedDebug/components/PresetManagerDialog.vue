@@ -6,7 +6,7 @@
   >
     <div class="modal-box max-w-2xl">
       <header class="flex items-center justify-between mb-4">
-        <h3 class="text-hig-lg font-semibold flex items-center gap-2">
+        <h3 class="text-lg font-semibold flex items-center gap-2">
           <Icon name="bookmark" :size="20" class="text-primary" />
           {{ t("advancedDebug.presets.title") }}
         </h3>
@@ -20,21 +20,21 @@
       </header>
 
       <!-- 错误提示 -->
-      <div v-if="error" class="alert alert-error alert-sm mb-4 py-2">
+      <div v-if="error" class="alert alert-error alert mb-4 py-2">
         <Icon name="alert-circle" :size="16" class="stroke-current" />
-        <span class="text-hig-sm">{{ error }}</span>
+        <span class="text-sm">{{ error }}</span>
       </div>
 
       <!-- 保存当前配置 -->
       <section class="mb-5">
-        <h4 class="text-hig-sm font-semibold mb-2 text-base-content/70">
+        <h4 class="text-sm font-semibold mb-2 text-base-content/70">
           {{ t("advancedDebug.presets.saveCurrent") }}
         </h4>
         <div class="flex gap-2">
           <input
             v-model="newName"
             type="text"
-            class="input input-bordered input-sm flex-1"
+            class="input input input-sm flex-1"
             :placeholder="t('advancedDebug.presets.namePlaceholder')"
             :aria-label="t('advancedDebug.presets.namePlaceholder')"
             @keydown.enter="handleSave"
@@ -53,7 +53,7 @@
       <!-- 预设列表 -->
       <section class="mb-5">
         <div class="flex items-center justify-between mb-2">
-          <h4 class="text-hig-sm font-semibold text-base-content/70">
+          <h4 class="text-sm font-semibold text-base-content/70">
             {{ t("advancedDebug.presets.list") }}
             <span class="badge badge-sm badge-ghost ml-1">
               {{ presets.length }}
@@ -94,21 +94,21 @@
             :size="32"
             class="mx-auto mb-2 opacity-50"
           />
-          <p class="text-hig-sm">{{ t("advancedDebug.presets.empty") }}</p>
+          <p class="text-sm">{{ t("advancedDebug.presets.empty") }}</p>
         </div>
 
         <ul v-else class="space-y-2 max-h-72 overflow-y-auto pr-1">
           <li
             v-for="preset in presets"
             :key="preset.name"
-            class="flex items-center gap-2 p-2 rounded-hig-md hover:bg-base-200/60 group"
+            class="flex items-center gap-2 p-2 rounded-lg hover:bg-base-200/60 group"
           >
             <div class="flex-1 min-w-0">
               <div v-if="renamingName === preset.name" class="flex gap-1">
                 <input
                   v-model="renameValue"
                   type="text"
-                  class="input input-bordered input-xs flex-1"
+                  class="input input input-xs flex-1"
                   @keydown.enter="confirmRename(preset.name)"
                   @keydown.esc="cancelRename"
                 />
@@ -126,10 +126,10 @@
                 </button>
               </div>
               <template v-else>
-                <div class="text-hig-sm font-medium truncate">
+                <div class="text-sm font-medium truncate">
                   {{ preset.name }}
                 </div>
-                <div class="text-hig-xs text-base-content/70">
+                <div class="text-xs text-base-content/70">
                   {{ formatDate(preset.createdAt) }}
                   <span v-if="preset.description" class="ml-2">
                     · {{ preset.description }}
@@ -139,7 +139,7 @@
             </div>
             <div
               v-if="renamingName !== preset.name"
-              class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="flex gap-1 opacity-0 group-hover:opacity-100"
             >
               <button
                 class="btn btn-xs btn-primary"

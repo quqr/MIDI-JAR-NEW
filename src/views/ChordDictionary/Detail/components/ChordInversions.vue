@@ -1,8 +1,8 @@
 <template>
   <div v-if="chord" class="w-full mb-4">
-    <details class="collapse collapse-arrow bg-base-200 rounded-hig-lg">
+    <details class="collapse collapse-arrow bg-base-200 rounded-xl" open>
       <summary
-        class="collapse-title text-hig-xs font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
+        class="collapse-title text-xs font-semibold text-base-content/70 uppercase tracking-wide min-h-0 py-2"
       >
         {{ t("chordDictionary.inversions") }}
       </summary>
@@ -10,21 +10,21 @@
         <template v-for="(_, index) in chord.intervals" :key="index">
           <div
             v-if="index > 0"
-            class="flex flex-row items-center flex-wrap w-full gap-3 p-3 mb-2 bg-base-200 rounded-hig-lg"
+            class="flex flex-row items-center flex-wrap w-full gap-3 p-3 mb-2 bg-base-200 rounded-xl"
           >
             <div class="flex-basis-[200px] flex-grow-0">
               <ChordName
                 :chord="getSlashChord(index)"
-                class="text-hig-2xl font-semibold"
+                class="text-2xl font-semibold"
               />
-              <div class="text-hig-xs italic text-base-content/70">
+              <div class="text-xs italic text-base-content/70">
                 {{
                   t("chordDictionary.inversionOn", {
                     interval: getInterval(index),
                   })
                 }}
               </div>
-              <div v-if="getAltChord(index)" class="text-hig-xs mt-2">
+              <div v-if="getAltChord(index)" class="text-xs mt-2">
                 {{ t("chordDictionary.seeAlso") }}
                 <a
                   href="#"

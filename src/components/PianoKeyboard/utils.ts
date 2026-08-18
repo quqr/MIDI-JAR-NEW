@@ -68,8 +68,11 @@ export function getCanvasDpr(): number {
 /**
  * 将应用层 KeyboardSettings 转换为渲染器需要的 KeyboardConfig。
  *
- * skin 始终为主题预设（coral/indigo/midnight），使用主题色板填充各颜色字段，
- * 并设置 theme 字段让渲染器应用主题专属的渐变参数。
+ * skin 为主题预设（coral/indigo/midnight），决定渲染器的渐变质感；
+ * 白/黑/按下键颜色优先取 KeyboardSettings.colors.* 中的显式值，
+ * 当 colors.* 为 null 时回退到主题色板。因此：
+ *   - useThemeColors=true 时把 colors.* 置 null → 走主题色板；
+ *   - useThemeColors=false 时填入自定义色 → 应用自定义色（仍带主题渐变）。
  * 用户的 keyCornerRadius 设置始终被尊重，不会被主题覆盖。
  *
  * KeyboardSettings 中以下字段在当前 Canvas 键盘渲染器中没有对应概念，属预期丢弃：
@@ -81,13 +84,14 @@ export function toKeyboardConfig(kb: KeyboardSettings): KeyboardConfig {
   const theme = kb.skin;
   const themeColors = getThemeColors(theme);
 
-  // skin 始终为主题，使用主题色板
+  // 显式自定义颜色优先于主题色板（useThemeColors=false 时 colors.* 为实际值，
+  // useThemeColors=true 时 colors.* 为 null，自动回退到主题色板）。
   const whiteKeyColor =
-    themeColors?.whiteKeyColor ?? kb.colors.white ?? "#FBF8F3";
+    kb.colors.white ?? themeColors?.whiteKeyColor ?? "#FBF8F3";
   const blackKeyColor =
-    themeColors?.blackKeyColor ?? kb.colors.black ?? "#2B2020";
+    kb.colors.black ?? themeColors?.blackKeyColor ?? "#2B2020";
   const pressedKeyColor =
-    themeColors?.pressedKeyColor ?? kb.colors.played ?? "#FF5C5C";
+    kb.colors.played ?? themeColors?.pressedKeyColor ?? "#FF5C5C";
   const keyBorderColor = themeColors?.keyBorderColor ?? "#EBE0D6";
   const separatorColor = themeColors?.separatorColor ?? "#FFC4B0";
 

@@ -1,33 +1,25 @@
 <template>
-  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-    <ol class="breadcrumb-nav__list">
-      <li
-        v-for="(crumb, index) in allCrumbs"
-        :key="crumb.to + index"
-        class="breadcrumb-nav__item"
-        :class="{ 'breadcrumb-nav__item--active': crumb.active }"
-      >
-        <span
-          v-if="index > 0"
-          class="breadcrumb-nav__separator"
-          aria-hidden="true"
-        >
-          <Icon name="angle-right" :size="12" />
-        </span>
+  <nav class="breadcrumbs text-sm max-w-full" aria-label="Breadcrumb">
+    <ul class="max-w-full">
+      <li v-for="(crumb, index) in allCrumbs" :key="crumb.to + index">
         <RouterLink
           v-if="!crumb.active"
           :to="crumb.to"
-          class="breadcrumb-nav__link"
+          class="flex items-center gap-1 max-w-[180px]"
         >
           <Icon v-if="crumb.icon" :name="mapMdiToIcon(crumb.icon)" :size="14" />
-          <span class="breadcrumb-nav__text">{{ crumb.title }}</span>
+          <span class="truncate">{{ crumb.title }}</span>
         </RouterLink>
-        <span v-else class="breadcrumb-nav__current" aria-current="page">
+        <span
+          v-else
+          class="flex items-center gap-1 max-w-[200px]"
+          aria-current="page"
+        >
           <Icon v-if="crumb.icon" :name="mapMdiToIcon(crumb.icon)" :size="14" />
-          <span class="breadcrumb-nav__text">{{ crumb.title }}</span>
+          <span class="truncate">{{ crumb.title }}</span>
         </span>
       </li>
-    </ol>
+    </ul>
   </nav>
 </template>
 
@@ -138,142 +130,3 @@ function resolveFullPath(
   return path || "/";
 }
 </script>
-
-<style scoped>
-.breadcrumb-nav {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.breadcrumb-nav__list {
-  display: flex;
-  align-items: center;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 2px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.breadcrumb-nav__item {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  flex-shrink: 0;
-}
-
-.breadcrumb-nav__item:last-child {
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-.breadcrumb-nav__separator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in oklch, var(--color-base-content) 30%, transparent);
-  margin: 0 2px;
-  flex-shrink: 0;
-}
-
-.breadcrumb-nav__link {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-hig-sm);
-  font-size: 0.8125rem;
-  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
-  text-decoration: none;
-  white-space: nowrap;
-  transition:
-    background-color var(--hig-duration-fast) var(--ease-hig-standard),
-    color var(--hig-duration-fast) var(--ease-hig-standard);
-  min-width: 0;
-}
-
-.breadcrumb-nav__link:hover {
-  background-color: color-mix(
-    in oklch,
-    var(--color-base-content) 8%,
-    transparent
-  );
-  color: var(--color-base-content);
-}
-
-.breadcrumb-nav__current {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-hig-sm);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-primary);
-  background-color: color-mix(in oklch, var(--color-primary) 10%, transparent);
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.breadcrumb-nav__icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-.breadcrumb-nav__text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.breadcrumb-nav__item:not(:last-child) .breadcrumb-nav__text {
-  max-width: 120px;
-}
-
-.breadcrumb-nav__item:last-child .breadcrumb-nav__text {
-  max-width: 200px;
-}
-
-@media (max-width: 768px) {
-  .breadcrumb-nav__item:not(:last-child) .breadcrumb-nav__text {
-    max-width: 60px;
-  }
-
-  .breadcrumb-nav__item:last-child .breadcrumb-nav__text {
-    max-width: 120px;
-  }
-
-  .breadcrumb-nav__link,
-  .breadcrumb-nav__current {
-    padding: 3px 6px;
-    font-size: 0.75rem;
-  }
-
-  .breadcrumb-nav__separator {
-    margin: 0 1px;
-  }
-
-  .breadcrumb-nav__icon {
-    width: 12px;
-    height: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .breadcrumb-nav__item:not(:first-child):not(:last-child) {
-    display: none;
-  }
-
-  .breadcrumb-nav__item:not(:last-child) .breadcrumb-nav__text {
-    max-width: 40px;
-  }
-
-  .breadcrumb-nav__item:last-child .breadcrumb-nav__text {
-    max-width: 80px;
-  }
-}
-</style>

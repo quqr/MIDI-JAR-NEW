@@ -2,7 +2,7 @@
   <SettingsCollapse
     :title="t('WaterfallPiano.effects')"
     icon="filter"
-    :default-open="false"
+    :default-open="true"
   >
     <!-- AdvancedBloomFilter：应用到瀑布流层 -->
     <SettingsToggle
