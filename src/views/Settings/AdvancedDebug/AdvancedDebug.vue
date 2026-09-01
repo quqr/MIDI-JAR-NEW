@@ -34,9 +34,7 @@
         v-model:open="sectionOpen.waterfallFluid"
         section-id="waterfall-fluid"
         :search-query="searchQuery"
-        :fluid-advanced="waterfallSettings.background.fluidAdvanced"
         :fluid-params="fluidParams"
-        @update-bg="updateWaterfallBg"
         @update-fluid-param="updateFluidParam"
       />
 
@@ -46,7 +44,6 @@
         section-id="waterfall-keyboard"
         :search-query="searchQuery"
         :keyboard="waterfallSettings.keyboard"
-        :flow-direction-options="flowDirectionOptions"
         @update-kb="updateWaterfallKb"
       />
 
@@ -56,19 +53,7 @@
         section-id="waterfall-midi-file"
         :search-query="searchQuery"
         :midi-file="waterfallSettings.midiFile"
-        @update-track-color="updateTrackColor"
         @update-midi-file="updateWaterfallMidiFile"
-      />
-
-      <!-- ═══ 分类3：瀑布流 - 音频引擎高级参数 ═══ -->
-      <WaterfallSoundSection
-        v-model:open="sectionOpen.waterfallSound"
-        section-id="waterfall-sound"
-        :search-query="searchQuery"
-        :sound-settings="soundSettings"
-        :oscillator-type-options="oscillatorTypeOptions"
-        @update-sound="updateSound"
-        @update-envelope="updateEnvelope"
       />
 
       <!-- ═══ 分类4：缓存管理 ═══ -->
@@ -121,7 +106,6 @@ import NotationStyleSection from "./sections/NotationStyleSection.vue";
 import WaterfallFluidSection from "./sections/WaterfallFluidSection.vue";
 import WaterfallKeyboardSection from "./sections/WaterfallKeyboardSection.vue";
 import WaterfallMidiFileSection from "./sections/WaterfallMidiFileSection.vue";
-import WaterfallSoundSection from "./sections/WaterfallSoundSection.vue";
 import CacheManagementSection from "./sections/CacheManagementSection.vue";
 import PresetManagerDialog from "./components/PresetManagerDialog.vue";
 import { useAdvancedDebugPresets } from "./composables/useAdvancedDebugPresets";
@@ -139,7 +123,6 @@ const sectionOpen = reactive({
   waterfallFluid: true,
   waterfallKeyboard: true,
   waterfallMidiFile: true,
-  waterfallSound: true,
   cacheManagement: true,
 });
 
@@ -235,11 +218,7 @@ const fluidParams = computed<Required<FluidAdvancedParams>>(() => ({
       ?.sustainedSplatPerturbation ?? {},
 }));
 
-function updateWaterfallBg(key: string, value: unknown) {
-  waterfallStore.updateSetting("background", key as never, value);
-}
-
-function updateFluidParam(key: keyof FluidAdvancedParams, value: unknown) {
+function updateFluidParam(key: string, value: unknown) {
   const current = { ...waterfallSettings.value.background.fluidParams };
   (current as Record<string, unknown>)[key] = value;
   waterfallStore.updateSetting("background", "fluidParams", current);
@@ -252,41 +231,6 @@ function updateWaterfallKb(key: string, value: unknown) {
 function updateWaterfallMidiFile(key: string, value: unknown) {
   waterfallStore.updateSetting("midiFile", key as never, value);
 }
-
-function updateTrackColor(index: number, color: string | null) {
-  const colors = [...waterfallSettings.value.midiFile.trackColors];
-  colors[index] = color ?? "#000000";
-  waterfallStore.updateSetting("midiFile", "trackColors", colors);
-}
-
-const flowDirectionOptions = computed(() => [
-  { value: "up", label: t("advancedDebug.waterfall.keyboard.flowUp") },
-  { value: "down", label: t("advancedDebug.waterfall.keyboard.flowDown") },
-]);
-
-// ─── SoundEngine ───
-const soundSettings = computed(() => waterfallSettings.value.sound);
-
-function updateSound(key: string, value: unknown) {
-  waterfallStore.updateSetting("sound", key as never, value);
-}
-
-function updateEnvelope(
-  envType: "envelope" | "modulationEnvelope",
-  key: string,
-  value: number,
-) {
-  const current = { ...soundSettings.value[envType] };
-  current[key as keyof typeof current] = value;
-  waterfallStore.updateSetting("sound", envType as never, current);
-}
-
-const oscillatorTypeOptions = computed(() => [
-  { value: "triangle", label: t("advancedDebug.sound.oscTypes.triangle") },
-  { value: "sine", label: t("advancedDebug.sound.oscTypes.sine") },
-  { value: "square", label: t("advancedDebug.sound.oscTypes.square") },
-  { value: "sawtooth", label: t("advancedDebug.sound.oscTypes.sawtooth") },
-]);
 
 // ─── 预设管理 ───
 const presetDialogOpen = ref(false);

@@ -1,22 +1,14 @@
 {
   "file": "file",
-  "welcome": "Welcome to vue-i18n",
   "common": {
     "cancel": "Cancel",
     "add": "Add",
-    "delete": "Delete",
-    "resetToDefaults": "Reset to Defaults",
-    "resetAllToDefaults": "Reset All to Defaults",
     "resetSuccess": "Settings reset to defaults successfully",
     "settings": "Settings",
     "close": "Close",
     "closeMenu": "Close menu",
     "openSidebar": "Open sidebar",
-    "error": "error",
-    "overlay": "overlay",
     "learn": "Learn",
-    "decrement": "decrement",
-    "increment": "increment",
     "name": "Name",
     "clear": "Clear",
     "connected": "Connected",
@@ -25,8 +17,6 @@
   },
   "nav": {
     "home": "Home",
-    "midiTools": "MIDI Tools",
-    "midiDescription": "Explore powerful MIDI tools",
     "chordDisplay": "Chord Display",
     "chordDisplayWithId": "Chord Display ({moduleId})",
     "chordDictionary": "Chord Dictionary",
@@ -34,19 +24,11 @@
     "tuner": "Tuner",
     "routing": "Routing",
     "debugger": "Debugger",
-    "advancedDebug": "Advanced Debug",
     "WaterfallPiano": "Waterfall Piano",
-    "Sampler": "Sampler"
+    "Sampler": "Sampler",
+    "scoreScroll": "Score Scroll"
   },
   "home": {
-    "coreFeatures": "Core Features",
-    "tools": "Tools",
-    "chordDisplayPreview": "Chord Display preview",
-    "chordQuizPreview": "Chord Quiz preview",
-    "circleOfFifthsPreview": "Circle of Fifths preview",
-    "chordDictionaryPreview": "Chord Dictionary preview",
-    "settingsPreview": "Settings preview",
-    "debuggerPreview": "Debugger preview",
     "moduleDescriptions": {
       "chordDisplay": "Visualize chords in real-time as you play",
       "chordDictionary": "Look up chord structures and voicings",
@@ -55,7 +37,8 @@
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
       "Sampler": "Sampler instruments — load and play various sound libraries",
       "chordQuiz": "Test your chord recognition with randomly generated chords",
-      "tuner": "Real-time pitch detection to tune your instrument precisely"
+      "tuner": "Real-time pitch detection to tune your instrument precisely",
+      "scoreScroll": "MusicXML score scrolling playback with note hit effects"
     }
   },
   "tuner": {
@@ -100,38 +83,61 @@
       "generic": "Unable to access audio input device"
     }
   },
+  "scoreScroll": {
+    "title": "Score Scroll",
+    "source": {
+      "title": "Sources",
+      "musicxml": "MusicXML Score",
+      "musicxmlHint": "Supports .musicxml / .xml (exported from MuseScore / Sibelius). Playback tempo comes from the score's tempo marks",
+      "load": "Import",
+      "clear": "Clear",
+      "loaded": "Loaded: {name}",
+      "parseError": "Failed to parse file, please check the format"
+    },
+    "transport": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "barlines": "Barlines",
+      "measures": "Measures",
+      "timeSig": "Time Sig",
+      "keySig": "Key Sig",
+      "bar": "Bar"
+    },
+    "effects": {
+      "title": "Particles & Effects",
+      "driftInDistance": "Drift-in Distance",
+      "scatterRange": "Scatter Range",
+      "fragmentDelay": "Fragment Delay",
+      "highlightRange": "Highlight Range",
+      "highlightIntensity": "Highlight Intensity",
+      "highlightSize": "Highlight Size",
+      "scanlinePosition": "Scanline Position",
+      "snapPosition": "Snap Position"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "musicFont": "Music Font",
+      "background": "Background",
+      "backgroundTheme": "Theme",
+      "backgroundPaper": "Paper",
+      "backgroundBlack": "Black",
+      "backgroundGradient": "Gradient"
+    }
+  },
   "layout": {
-    "midiJar": "MIDI Jar",
-    "updateAvailable": "Update available",
-    "updateMessage": "A new version of MIDI Jar (v{version}) is available. Since this app is not signed, auto-update cannot install it automatically.",
-    "goToReleasePage": "Go to release page",
-    "alwaysOnTop": "Always on Top",
-    "quitApp": "Quit App",
     "minimize": "Minimize",
     "unmaximize": "Unmaximize",
     "maximize": "Maximize",
     "averageRoutingLatency": "average routing latency",
     "highestRoutingLatency": "highest routing latency",
-    "unpin": "Unpin",
     "latencyTooltip": "MIDI latency: {ms} ms",
     "latencyAriaLabel": "Current MIDI latency {ms} milliseconds"
   },
-  "topBar": {
-    "noMidiDevices": "No MIDI devices detected",
-    "midiInput": "Input",
-    "midiOutput": "Output"
-  },
-  "pianoKeyboard": {
-    "ariaLabel": "Piano keyboard visualization"
-  },
   "chordDisplay": {
-    "also": "Also:",
     "openSettings": "Open chord display settings",
     "settings": "Chord Display Settings",
     "altChords": "Alternative Chords",
-    "notation": "Staff",
-    "keyboard": "Keyboard",
-    "clickToPlay": "Click keys to play",
     "sound": "Sound",
     "soundOn": "Sound is on",
     "soundOff": "Sound is off",
@@ -227,7 +233,6 @@
     "replay": "Replay",
     "correctAnswer": "Correct answer",
     "score": "Score",
-    "accuracy": "Accuracy",
     "bestStreak": "Best Streak",
     "avgTime": "Avg Time",
     "streak": "Streak",
@@ -236,7 +241,6 @@
     "unanswered": "Unanswered",
     "correct": "Correct",
     "wrong": "Wrong",
-    "progress": "Progress {current}/{total}",
     "sessionDone": "Round Complete",
     "again": "Play Again",
     "redo": "Redo Same Set",
@@ -247,16 +251,13 @@
     "label": "Twelve semitone intervals"
   },
   "chordDictionary": {
-    "inKey": " (In Key)",
     "group": "Group",
     "filter": "Filter",
     "hideDisabledChords": "Hide disabled chords",
-    "onlyChordsInKey": "Only chords in key",
     "detect": "Detect",
     "play": "Play",
     "openDictionarySettings": "Open dictionary settings",
     "settings": "Chord Dictionary Settings",
-    "chordDictionarySettings": "Chord Dictionary Settings",
     "chordTypesNavigation": "Chord Types Navigation",
     "chromaNavigation": "Chroma Navigation",
     "searchChord": "Search Chord",
@@ -265,7 +266,6 @@
     "previousChords": "previous chords",
     "noChordsFound": "No chords found",
     "noChordsInHistory": "No chords in history",
-    "fuzzy": "fuzzy",
     "disableEnableChord": "Disable/enable chord",
     "intervals": "Intervals",
     "notation": "Notation",
@@ -283,9 +283,6 @@
     "preferredNotation": "Preferred notation",
     "defaultNotation": "Default notation",
     "cannotFindChord": "Cannot find a chord named {chordName}",
-    "clearSelected": "Clear selected",
-    "singleNoteHint": "1 note selected, please continue selecting",
-    "unrecognizedChord": "Unrecognized chord combination",
     "emptyHelp": "Search a chord, select a chroma and chord type in left menu, or use the Detect mode to automatically browse the played chord",
     "emptyTitle": "Welcome to Chord Dictionary",
     "emptyHint1": "Select chord types in the left panel to browse",
@@ -295,32 +292,10 @@
       "noGroup": "No Group",
       "byQuality": "By Quality",
       "byIntervals": "By Intervals"
-    },
-    "qualityGroups": {
-      "major": "Major",
-      "minor": "Minor",
-      "dominant": "Dominant",
-      "minorMajor": "Minor/Major",
-      "suspended": "Suspended / No 3rd",
-      "diminished": "Diminished",
-      "augmented": "Augmented"
-    },
-    "intervalGroups": {
-      "no3rdSuspended": "No 3rd / Suspended",
-      "minor3rd": "Minor 3rd",
-      "major3rd": "Major 3rd",
-      "no5th": "No 5th",
-      "perfect5th": "Perfect 5th",
-      "diminished5th": "Diminished 5th",
-      "augmented5th": "Augmented 5th",
-      "no7th": "No 7th",
-      "minor7th": "Minor 7th",
-      "major7th": "Major 7th"
     }
   },
   "notation": {
     "key": "Key: {tonic}",
-    "semitone": "st",
     "ariaLabel": "Music notation"
   },
   "settings": {
@@ -342,8 +317,6 @@
     "resetConfirm": "Reset",
     "resetCurrentConfirmMessage": "Are you sure you want to reset {section} settings to defaults?",
     "resetAllConfirmMessage": "Are you sure you want to reset ALL settings to defaults? This cannot be undone.",
-    "searchPlaceholder": "Search settings...",
-    "noSearchResults": "No matching settings found",
     "groups": {
       "general": "General",
       "display": "Display",
@@ -423,8 +396,7 @@
       "language": "Language",
       "languageHint": "Choose the application language",
       "theme": "Theme",
-      "themeHint": "Choose the application theme",
-      "toggleTheme": "Toggle theme"
+      "themeHint": "Choose the application theme"
     },
     "routingSettings": {
       "refreshDevices": "Refresh devices",
@@ -468,10 +440,8 @@
       "showKeySignatureTextHint": "Display key signature name text above the staff",
       "showBarlines": "Show Barlines",
       "showBarlinesHint": "Display barlines at the beginning and end of the staff",
-      "showNoteNames": "Show Note Names",
-      "showNoteNamesHint": "Display note names below the notes",
-      "showStaffLines": "Show Staff Lines",
-      "showStaffLinesHint": "Display the five lines of the staff",
+      "filterClef": "Filter Notes by Clef",
+      "filterClefHint": "When off, single-staff renders all notes; when on, only notes matching the clef are rendered",
       "layoutOptions": "Layout Options",
       "paddingTop": "Padding Top",
       "paddingTopHint": "Top padding of the notation",
@@ -491,6 +461,12 @@
       "noteWidthHint": "Width allocated for notes",
       "maxScale": "Max Scale",
       "maxScaleHint": "Maximum scale factor for notation rendering",
+      "keySignatureWidthPerAlteration": "Key Signature Width Factor",
+      "keySignatureWidthPerAlterationHint": "Width allocated per accidental (pixels)",
+      "noteStartXOffset": "Note Start X Offset",
+      "noteStartXOffsetHint": "Horizontal offset of notes relative to the clef (pixels)",
+      "minScaleRatio": "Min Scale Ratio",
+      "minScaleRatioHint": "Lower bound of scale relative to container width (0-1)",
       "styleOptions": "Style Options",
       "backgroundColor": "Background Color",
       "backgroundColorHint": "Background color of the notation area",
@@ -498,10 +474,10 @@
       "staffLineColorHint": "Color of the staff lines",
       "noteColor": "Note Color",
       "noteColorHint": "Color of the notes",
-      "noteHighlightColor": "Note Highlight Color",
-      "noteHighlightColorHint": "Highlight color for active notes (leave empty for no highlight)",
       "fontSize": "Font Size",
       "fontSizeHint": "Font size for note names and text labels",
+      "noteDuration": "Note Duration",
+      "noteDurationHint": "VexFlow duration string: 1=whole, 2=half, 4=quarter, 8=eighth",
       "keySignatures": {
         "C": "C major / A minor",
         "G": "G major / E minor (1♯)",
@@ -522,22 +498,32 @@
       "interactive": "Interactive",
       "interactiveHint": "DETECT: midi input will browse played chord, PLAY: midi input will be displayed",
       "groupChords": "Group chords",
-      "noGroup": "No Group",
-      "noGroupHint": "A single list with all chords",
-      "byQuality": "By Quality",
-      "byQualityHint": "Simple groups of chord quality (Major, Minor, ...)",
-      "byInterval": "By Interval",
-      "byIntervalHint": "Hierarchical groups of intervals",
       "hideDisabledChords": "Hide disabled chords",
       "filterChordsInKey": "Filter chords in key",
       "filterChordsInKeyHint": "Only chords that are in the current key signature will be displayed",
       "disabledChords": "Disabled chords",
-      "seeInDictionary": "see in dictionary",
       "noDisabledChords": "No disabled Chords",
       "preferredNotation": "Preferred notation",
       "defaultNotation": "Default notation",
       "defaultNotationHint": "Choose the preferred notation chords are displayed in by default",
-      "noPreferredAliases": "No preferred aliases"
+      "noPreferredAliases": "No preferred aliases",
+      "interactiveOptions": {
+        "detect": "Detect",
+        "play": "Play"
+      },
+      "groupByOptions": {
+        "none": "No Group",
+        "noneHint": "A single list with all chords",
+        "quality": "By Quality",
+        "qualityHint": "Simple groups of chord quality (Major, Minor, ...)",
+        "intervals": "By Interval",
+        "intervalsHint": "Hierarchical groups of intervals"
+      },
+      "defaultNotationOptions": {
+        "long": "Long format (min, maj, dom, aug, dim...)",
+        "short": "Short format (m, M, aug, dim...)",
+        "symbol": "Symbols (-, Δ, +, °...)"
+      }
     },
     "chordDisplaySettings": {
       "chords": "Chords",
@@ -567,42 +553,23 @@
       "noteStartHint": "First note of keyboard",
       "noteEnd": "Note End",
       "noteEndHint": "Last note of keyboard",
-      "wrapKeyboard": "Wrap Keyboard",
-      "wrapKeyboardHint": "Map notes outside of keyboard to closest octave",
-      "displaySustainedNotes": "Display Sustained Notes",
-      "displaySustainedNotesHint": "Display notes still sustained (if use sustain is enabled)",
       "keyNames": "Key Names",
       "keyNamesHint": "Choose what names to display on keys",
-      "playedKeyInfo": "Played Key Info",
-      "playedKeyInfoHint": "Choose what played info to display on keys",
       "playedKeyLabel": "Played Key Label",
       "playedKeyLabelHint": "Choose what played info to display above keys",
-      "fadeOutDuration": "Fade out duration",
-      "fadeOutDurationHint": "Played keys will fade out when released",
       "keyboardSkin": "Keyboard Skin",
       "skin": "Skin",
       "skinHint": "Choose the appearance of the keyboard",
-      "textOpacity": "Text Opacity",
-      "textOpacityHint": "Factor of the black keys width",
-      "keyHeight": "Key Height",
-      "keyHeightHint": "Factor of the black keys width",
-      "blackKeyRatio": "Black Key Ratio",
-      "blackKeyRatioHint": "Percentage of white keys height",
       "keyBorderRadius": "Key Border Radius",
-      "keyBevel": "Key Bevel",
-      "keyBevelHint": "Adds a bevel gradient to keys",
       "keyboardColors": "Keyboard Colors",
       "blackKeys": "Black Keys",
       "whiteKeys": "White Keys",
       "playedKeys": "Played Keys",
-      "wrappedKeys": "Wrapped Keys",
-      "sustainedKeys": "Sustained Keys",
       "newModule": "New module",
       "chordDisplayList": "Chord display list",
       "addSession": "Add session",
       "cannotBeEmpty": "Cannot be empty",
       "alreadyExists": "Already exists",
-      "fieldsContainErrors": "One or more fields contains errors",
       "skinOptions": {
         "coral": "Coral",
         "indigo": "Indigo",
@@ -613,12 +580,6 @@
         "octave": "Only C",
         "pitchClass": "Pitch Class",
         "note": "Note"
-      },
-      "keyInfoOptions": {
-        "none": "None",
-        "tonic": "Tonic Dot",
-        "interval": "Chord Intervals",
-        "tonicAndInterval": "Tonic Dot + Intervals"
       },
       "labelOptions": {
         "none": "None",
@@ -645,99 +606,71 @@
       "to": "To",
       "labels": "Labels",
       "labelMode": "Label Mode",
-      "labelNone": "None",
-      "labelPitchClass": "Pitch Class",
-      "labelNote": "Note",
-      "labelChordNote": "Chord Note",
-      "labelInterval": "Interval",
       "keyNameMode": "Key Name Mode",
-      "keyNameNone": "None",
-      "keyNameOctave": "Octave",
-      "keyNamePitchClass": "Pitch Class",
-      "keyNameNote": "Note",
       "showNoteNames": "Show Note Names",
       "colors": "Colors",
       "useThemeColors": "Use Theme Colors",
-      "gradientIntensity": "Gradient Intensity",
       "whiteKeyColor": "White Key Color",
       "blackKeyColor": "Black Key Color",
       "pressedKeyColor": "Pressed Key Color",
       "appearance": "Appearance",
-      "keyCornerRadius": "Key Corner Radius"
+      "keyCornerRadius": "Key Corner Radius",
+      "labelOptions": {
+        "none": "None",
+        "pitchClass": "Pitch Class",
+        "note": "Note",
+        "chordNote": "Chord Note",
+        "interval": "Interval"
+      },
+      "keyNameOptions": {
+        "none": "None",
+        "octave": "Octave",
+        "pitchClass": "Pitch Class",
+        "note": "Note"
+      }
     }
-  },
-  "overlay": {
-    "midiJar": "MIDI Jar",
-    "midiJarOverlay": "MIDI Jar Overlay",
-    "description": "You can use this local website as a BrowserSource in OBS to integrate MIDI Jar as an overlay, or load it on another device to use MIDI Jar remotely. Settings can be edited directly through the main application."
-  },
-  "mainMenu": {
-    "midiJar": "MIDI Jar",
-    "aboutMidiJar": "About MIDI Jar",
-    "preferences": "Preferences",
-    "general": "General",
-    "routing": "Routing",
-    "debugger": "Debugger",
-    "server": "Server",
-    "services": "Services",
-    "hideMidiJar": "Hide MIDI Jar",
-    "hideOthers": "Hide Others",
-    "showAll": "Show All",
-    "close": "Close",
-    "quit": "Quit",
-    "window": "Window",
-    "minimize": "Minimize",
-    "toggleFullScreen": "Toggle Full Screen",
-    "toggleAlwaysOnTop": "Toggle Always On Top",
-    "bringAllToFront": "Bring All to Front",
-    "help": "Help",
-    "credits": "Credits",
-    "licenses": "Licenses",
-    "reportBug": "Report Bug",
-    "openApp": "Open App"
   },
   "WaterfallPiano": {
     "title": "Waterfall Piano",
     "settings": "Waterfall Piano Settings",
-    "mode": {
-      "realtime": "Realtime",
-      "synthesia": "Synthesia"
-    },
     "particles": "Note Particles",
     "background": "Background",
     "keyboard": "Keyboard",
     "midiFile": "MIDI File",
-    "aura": "Aura",
+    "aura": "Aura Effect",
     "auraEnabled": "Enable Aura",
     "auraStyle": "Aura Style",
-    "auraStyleNone": "None",
-    "auraStyleGlow": "Glow",
-    "auraStyleRainbow": "Rainbow",
-    "auraStyleDual": "Dual",
-    "auraStyleCustom": "Custom",
+    "auraStyleOptions": {
+      "none": "None",
+      "glow": "Glow",
+      "rainbow": "Rainbow",
+      "dual": "Dual",
+      "custom": "Custom"
+    },
     "auraTarget": "Apply To",
-    "auraTargetTriggered": "Triggered Notes",
-    "auraTargetAll": "All Notes",
-    "auraTargetOff": "Off",
+    "auraTargetOptions": {
+      "triggered": "Triggered Notes",
+      "all": "All Notes",
+      "off": "Off"
+    },
+    "auraGroups": {
+      "area": "Area",
+      "glowLayers": "Glow Layers",
+      "animation": "Animation",
+      "glowSettings": "Glow Settings",
+      "colors": "Colors"
+    },
     "auraPadding": "Glow Range",
     "auraInnerBlur": "Inner Blur",
     "auraInnerOpacity": "Inner Brightness",
     "auraOuterBlur": "Outer Blur",
     "auraOuterOpacity": "Outer Brightness",
     "auraDuration": "Rotation Period (s)",
-    "auraRotationRange": "Rotation Range (deg)",
-    "auraBeamAngle": "Beam Start Angle (deg)",
-    "auraBeamWidth": "Beam Width (deg)",
-    "auraGlowExtent": "Glow Extent (%)",
     "auraGlowPeakOpacity": "Glow Peak Brightness (%)",
     "auraGlowPeakBlur": "Glow Peak Blur (px)",
     "auraGlowAfterPeakOpacity": "Outer Peak Brightness (%)",
     "auraGlowAfterPeakBlur": "Outer Peak Blur (px)",
-    "auraRainbowMargin": "Rainbow Margin (%)",
-    "auraDualOffRatio": "Off Ratio (%)",
-    "auraDualOnRatio": "On Ratio (%)",
     "auraPrimaryColor": "Primary Color",
-    "auraBackgroundColor": "Background Color",
     "colorScheme": "Color Scheme",
     "speed": "Speed",
     "lookAhead": "Lead Time",
@@ -745,25 +678,36 @@
     "cornerRadius": "Corner Radius",
     "hitExplosionRadius": "Explosion Size",
     "hitLine": "Hit Line",
-    "customColors": "Custom Colors",
     "low": "Low",
     "mid": "Mid",
     "high": "High",
-    "backgroundType": "Background Type",
     "solidColor": "Solid Color",
-    "gradient": "Gradient",
-    "preset": "Preset",
-    "image": "Image",
-    "stars": "Stars",
-    "presetTheme": "Preset Theme",
     "fluidEnabled": "Enable Fluid",
     "fluidQuality": "Fluid Quality",
     "fluidStyle": "Fluid Style",
-    "fluidAdvanced": "Advanced",
-    "fluidAdvancedParams": "Fluid Advanced",
+    "fluidStyleOptions": {
+      "gentle": "Gentle",
+      "standard": "Standard",
+      "turbulent": "Turbulent"
+    },
+    "fluidAdvancedParams": "Fluid Advanced Params",
     "fluidLayerPosition": "Fluid Layer Position",
-    "fluidLayerPositionTop": "Top (above waterfall)",
-    "fluidLayerPositionBottom": "Bottom (above background)",
+    "fluidLayerPositionOptions": {
+      "top": "Top (above waterfall)",
+      "bottom": "Bottom (above background)"
+    },
+    "keyRangeOptions": {
+      "49": "49",
+      "61": "61",
+      "88": "88",
+      "custom": "Custom"
+    },
+    "keyLabelOptions": {
+      "none": "None",
+      "note": "Note",
+      "pitchClass": "Pitch Class",
+      "octave": "Octave"
+    },
     "effects": "Post Effects",
     "advancedBloomEnabled": "Enable Advanced Bloom",
     "advancedBloomThreshold": "Bloom Threshold",
@@ -803,22 +747,15 @@
     "loop": "Loop",
     "showNoteNames": "Show Note Names",
     "playbackSpeed": "Playback Speed",
-    "tracks": "Tracks",
-    "record": "Record",
-    "stop": "Stop",
     "play": "Play",
-    "pause": "Pause",
-    "resume": "Resume",
-    "loadMidi": "Load MIDI",
-    "noRecording": "No Recording",
-    "recording": "Recording",
     "scheme": {
       "pitch": "Pitch",
       "hands": "Hands",
       "rainbow": "Rainbow",
       "warm": "Warm",
       "cool": "Cool",
-      "neon": "Neon"
+      "neon": "Neon",
+      "custom": "Custom Colors"
     },
     "midiDrawer": {
       "title": "MIDI",
@@ -833,14 +770,6 @@
     }
   },
   "advancedDebug": {
-    "toolbar": {
-      "searchPlaceholder": "Search parameters...",
-      "expandAll": "Expand All",
-      "collapseAll": "Collapse All",
-      "presets": "Presets",
-      "resetAll": "Reset All",
-      "noResults": "No matching parameters found"
-    },
     "presets": {
       "title": "Preset Manager",
       "saveCurrent": "Save current configuration as preset",
@@ -860,13 +789,10 @@
     "notation": {
       "display": {
         "title": "Notation - Display",
-        "clef": "Clef",
-        "keySignature": "Key Signature",
-        "keySignatureText": "Key Signature Text",
-        "barlines": "Barlines",
-        "timeSignature": "Time Signature",
-        "noteNames": "Note Names",
-        "staffLines": "Staff Lines",
+        "showClef": "Show Clef",
+        "showKeySignature": "Show Key Signature",
+        "showKeySignatureText": "Show Key Signature Text",
+        "showBarlines": "Show Barlines",
         "filterClef": "Filter Notes by Clef",
         "filterClefHint": "Off: render all notes on single staff. On: only render notes matching the clef"
       },
@@ -894,7 +820,6 @@
         "backgroundColor": "Background Color",
         "staffLineColor": "Staff Line Color",
         "noteColor": "Note Color",
-        "noteHighlightColor": "Note Highlight Color",
         "fontSize": "Font Size",
         "noteDuration": "Note Duration",
         "noteDurationHint": "VexFlow duration string: 1=whole, 2=half, 4=quarter, 8=eighth"
@@ -903,8 +828,6 @@
     "waterfall": {
       "fluid": {
         "title": "Fluid Advanced",
-        "fluidAdvanced": "Fluid Advanced Mode",
-        "fluidAdvancedHint": "Enable to adjust fluid simulation details",
         "simResolution": "Simulation Resolution",
         "splatRadius": "Splat Radius",
         "splatColorHue": "Splat Color Hue",
@@ -925,57 +848,18 @@
         "customTo": "Custom End Note",
         "keyBorderWidth": "Key Border Width",
         "keyBorderColor": "Key Border Color",
-        "gapBlur": "Gap Blur",
         "separatorColor": "Separator Color",
         "separatorThickness": "Separator Thickness",
-        "staffVisible": "Show Staff",
-        "synthesiaFlowDirection": "Synthesia Flow Direction",
-        "flowUp": "Up",
-        "flowDown": "Down",
         "defaultVelocity": "Default Velocity",
         "defaultVelocityHint": "Velocity used when playing via computer keyboard (0-127)"
       },
       "midiFile": {
         "title": "MIDI File Advanced",
-        "selectedTracks": "Selected Tracks",
-        "selectedTracksHint": "Currently playing track indices",
-        "noTracks": "No tracks selected",
-        "trackColors": "Track Colors",
-        "trackColorN": "Track {n} Color",
         "rightHandTrackIdx": "Right Hand Track Index",
         "rightHandTrackIdxHint": "Track index inferred as right hand",
         "leftHandTrackIdx": "Left Hand Track Index",
         "leftHandTrackIdxHint": "Track index inferred as left hand"
       }
-    },
-    "sound": {
-      "title": "Sound Engine Advanced",
-      "volume": "Volume",
-      "reverbAmount": "Reverb Wet",
-      "reverbAmountHint": "0=dry, 1=full reverb",
-      "reverbDecay": "Reverb Decay (s)",
-      "sustain": "Sustain Pedal",
-      "velocitySensitivity": "Velocity Sensitivity",
-      "synthParams": "Synthesizer Parameters",
-      "harmonicity": "Harmonicity",
-      "modulationIndex": "Modulation Index",
-      "oscillatorType": "Oscillator Type",
-      "oscTypes": {
-        "triangle": "Triangle",
-        "sine": "Sine",
-        "square": "Square",
-        "sawtooth": "Sawtooth"
-      },
-      "envelope": "Envelope",
-      "attack": "Attack",
-      "decay": "Decay",
-      "sustainLevel": "Sustain Level",
-      "release": "Release",
-      "modEnvelope": "Modulation Envelope",
-      "modAttack": "Mod Attack",
-      "modDecay": "Mod Decay",
-      "modSustain": "Mod Sustain",
-      "modRelease": "Mod Release"
     }
   },
   "sampler": {
@@ -984,21 +868,10 @@
     "noInstrumentsFound": "No instruments found",
     "cacheSize": "Cache size",
     "clearCache": "Clear cache",
-    "cacheCleared": "Cache cleared",
-    "soundOn": "Sound On",
-    "soundOff": "Sound Off",
-    "playChord": "Play Chord",
     "blockChord": "Block Chord",
     "arpeggiatedChord": "Arpeggiated Chord",
-    "chordPlayMode": "Chord Play Mode",
     "preview": "Preview",
-    "stop": "Stop",
     "clearInstrumentCache": "Clear Cache",
-    "categories": "Categories",
-    "refresh": "Refresh",
-    "loading": "Loading...",
-    "loaded": "Loaded",
-    "cached": "Cached",
-    "error": "Error"
+    "categories": "Categories"
   }
 }

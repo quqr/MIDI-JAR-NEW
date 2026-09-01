@@ -72,7 +72,13 @@ const handleSave = () => {
 defineExpose({
   handleSaveError(err: unknown) {
     if (err instanceof FieldError) {
-      errors.value = err.fields;
+      // FieldError 携带 i18n key（如 cannotBeEmpty），在展示层翻译
+      errors.value = Object.fromEntries(
+        Object.entries(err.fields).map(([field, key]) => [
+          field,
+          t(`settings.chordDisplaySettings.${key}`),
+        ]),
+      );
     }
   },
 });

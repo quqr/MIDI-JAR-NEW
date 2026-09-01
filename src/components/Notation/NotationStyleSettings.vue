@@ -1,72 +1,32 @@
 <template>
-  <SettingsCollapse
-    :title="t('settings.notationSettings.styleOptions')"
-    icon="palette"
-    :default-open="true"
-  >
-    <SettingsColorPicker
-      :model-value="mergedStyle.backgroundColor"
-      :label="t('settings.notationSettings.backgroundColor')"
-      :description="t('settings.notationSettings.backgroundColorHint')"
-      @update:model-value="update('backgroundColor', $event)"
-    />
-    <SettingsColorPicker
-      :model-value="mergedStyle.staffLineColor"
-      :label="t('settings.notationSettings.staffLineColor')"
-      :description="t('settings.notationSettings.staffLineColorHint')"
-      @update:model-value="update('staffLineColor', $event)"
-    />
-    <SettingsColorPicker
-      :model-value="mergedStyle.noteColor"
-      :label="t('settings.notationSettings.noteColor')"
-      :description="t('settings.notationSettings.noteColorHint')"
-      @update:model-value="update('noteColor', $event)"
-    />
-    <SettingsColorPicker
-      :model-value="mergedStyle.noteHighlightColor"
-      :label="t('settings.notationSettings.noteHighlightColor')"
-      :description="t('settings.notationSettings.noteHighlightColorHint')"
-      @update:model-value="update('noteHighlightColor', $event)"
-    />
-    <SettingsRange
-      :model-value="mergedStyle.fontSize"
-      :label="t('settings.notationSettings.fontSize')"
-      :description="t('settings.notationSettings.fontSizeHint')"
-      :min="6"
-      :max="20"
-      :step="1"
-      @update:model-value="update('fontSize', $event)"
-    />
-  </SettingsCollapse>
+  <NotationFieldGroup
+    group="style"
+    :model-value="mergedStyle"
+    @update="update"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
-import {
-  SettingsCollapse,
-  SettingsRange,
-  SettingsColorPicker,
-} from "@/components/Settings";
+import NotationFieldGroup from "./NotationFieldGroup.vue";
 import { mergeStyleConfig } from "./utils";
 import type { NotationStyleConfig } from "./types";
 
-const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
 const mergedStyle = computed(() =>
   mergeStyleConfig(settingsStore.settings.notation.style),
 );
 
-/** 可在设置面板编辑的扁平样式键（不含嵌套的 layoutDimensions） */
-type EditableStyleKey = keyof Omit<NotationStyleConfig, "layoutDimensions">;
-
-function update(key: EditableStyleKey, value: string | number | null) {
+function update(key: string, value: boolean | number | string | null) {
   const current: Partial<NotationStyleConfig> = {
     ...settingsStore.settings.notation.style,
   };
-  (current as Record<string, string | number | null>)[key] = value;
+  (current as Record<string, string | number | null>)[key] = value as
+    | string
+    | number
+    | null;
   settingsStore.updateSetting("notation.style", current);
 }
 </script>

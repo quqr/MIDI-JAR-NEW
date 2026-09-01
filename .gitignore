@@ -11,3 +11,5 @@ src-tauri/dev-server-port
 /docs
 /设计稿_和弦显示
 /midi-jar-ui-refactor
+/.tmp
+/plans

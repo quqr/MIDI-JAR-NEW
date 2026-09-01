@@ -1,4 +1,3 @@
-import type { MidiRoute } from "./midi";
 import type {
   NotationDisplayConfig,
   NotationLayoutConfig,
@@ -161,12 +160,10 @@ export type PianoSettings = {
   showNoteNames: boolean;
   // 主题集成相关设置
   useThemeColors: boolean; // 是否使用主题颜色（替代硬编码颜色）
-  gradientIntensity: number; // 渐变强度（0-0.5）
 };
 
 export type Settings = {
   general: GeneralSettings;
-  midiRoutes: MidiRoute[];
   cursor: CursorSettings;
   chordDisplay: ChordDisplaySettings[];
   chordDictionary: ChordDictionarySettings;
@@ -198,23 +195,13 @@ export const defaultChordDisplaySettings: ChordDisplaySettings = {
     to: "C5",
     label: "pitchClass",
     keyName: "note",
-    keyInfo: "tonicAndInterval",
-    fadeOutDuration: 0,
-    textOpacity: 0.5,
-    displaySustained: true,
-    wrap: false,
     sizes: {
       radius: 0.4,
-      height: 6,
-      ratio: 0.6,
-      bevel: true,
     },
     colors: {
       white: "#FBF8F3",
       black: "#2B2020",
       played: "#FF5C5C",
-      wrapped: "#1d367b",
-      sustained: "#808080",
     },
   },
 };
@@ -271,12 +258,10 @@ export const defaultPianoSettings: PianoSettings = {
   keyCornerRadius: 0.4,
   showNoteNames: false,
   useThemeColors: true, // 默认使用主题颜色
-  gradientIntensity: 0.15, // 默认渐变强度
 };
 
 export const defaultSettings: Settings = {
   general: defaultGeneralSettings,
-  midiRoutes: [],
   cursor: defaultCursorSettings,
   chordDisplay: [defaultChordDisplaySettings],
   chordDictionary: defaultChordDictionarySettings,

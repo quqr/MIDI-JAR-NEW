@@ -101,7 +101,6 @@ function mockSoundEngine(): ISoundEngine {
     setVelocitySensitivity: vi.fn(),
     init: vi.fn(),
     dispose: vi.fn(),
-    updateConfig: vi.fn(),
   } as unknown as ISoundEngine;
 }
 

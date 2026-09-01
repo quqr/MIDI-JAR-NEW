@@ -115,10 +115,9 @@ export function getCanvasDpr(): number {
  *   - useThemeColors=false 时填入自定义色 → 应用自定义色（仍带主题渐变）。
  * 用户的 keyCornerRadius 设置始终被尊重，不会被主题覆盖。
  *
- * KeyboardSettings 中以下字段在当前 Canvas 键盘渲染器中没有对应概念，属预期丢弃：
- *   - keyInfo / wrap / displaySustained / fadeOutDuration / textOpacity
- *   - sizes.height / sizes.ratio / sizes.bevel
- *   - colors.sustained / colors.wrapped（渲染器只有 pressedKeyColor）
+ * KeyboardSettings 中无对应渲染概念的字段已随死设置清理移除
+ * （keyInfo/wrap/displaySustained/fadeOutDuration/textOpacity、
+ * sizes.height/ratio/bevel、colors.wrapped/sustained）。
  */
 export function toKeyboardConfig(kb: KeyboardSettings): KeyboardConfig {
   const theme = kb.skin;
@@ -152,12 +151,9 @@ export function toKeyboardConfig(kb: KeyboardSettings): KeyboardConfig {
     heightRatio: 0.3,
     keyBorderWidth: 1,
     keyBorderColor,
-    gapBlur: 6,
     separatorEnabled: true,
     separatorColor,
     separatorThickness: 2,
-    staffVisible: false,
-    synthesiaFlowDirection: "down",
     defaultVelocity: 90,
   };
 }

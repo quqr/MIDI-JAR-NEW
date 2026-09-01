@@ -23,6 +23,12 @@
     >
       <Icon name="plus" size="16" />
     </button>
+    <ChordDisplayAddModal
+      ref="addModal"
+      :open="addModalOpen"
+      @cancel="addModalOpen = false"
+      @save="handleSave"
+    />
   </div>
 </template>
 
@@ -32,12 +38,15 @@ import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "@/stores/settings";
 import Icon from "@/components/Icon/Icon.vue";
+import ChordDisplayAddModal from "./ChordDisplayAddModal.vue";
+import { addModule } from "./utils";
 
 const { t } = useI18n();
 const route = useRoute();
 const settingsStore = useSettingsStore();
 
 const addModalOpen = ref(false);
+const addModal = ref<InstanceType<typeof ChordDisplayAddModal>>();
 
 const moduleIds = computed(() =>
   settingsStore.settings.chordDisplay.map((m) => m.id),
@@ -45,4 +54,16 @@ const moduleIds = computed(() =>
 const currentRoute = computed(
   () => `/settings/chords/${route.params.moduleId}`,
 );
+
+function handleSave(name: string) {
+  try {
+    settingsStore.settings.chordDisplay = addModule(
+      name,
+      settingsStore.settings.chordDisplay,
+    );
+    addModalOpen.value = false;
+  } catch (err) {
+    addModal.value?.handleSaveError(err);
+  }
+}
 </script>

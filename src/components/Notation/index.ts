@@ -1,4 +1,5 @@
 export { default as Notation } from "./Notation.vue";
+export { default as NotationFieldGroup } from "./NotationFieldGroup.vue";
 export type {
   NotationProps,
   NotationDisplayConfig,
@@ -7,6 +8,15 @@ export type {
   LayoutDimensions,
   StaffClef,
 } from "./types";
+export {
+  notationDisplayFieldSchema,
+  notationLayoutFieldSchema,
+  notationStyleFieldSchema,
+  notationFieldSchemas,
+  notationGroupTitleKeys,
+} from "./settingsSchema";
+export type { NotationGroupKey, NotationFieldSchema } from "./settingsSchema";
+export type { SettingsFieldControl } from "@/components/Settings/schema";
 export {
   getTransposedNotes,
   getVoice,

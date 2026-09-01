@@ -63,13 +63,9 @@ describe("chordNotesToMidi — hint 优先匹配", () => {
     const NARROW_FROM = 60; // C4
     const NARROW_TO = 72; // C5
     // "E" 应回退到范围内第一个 E（E4=64），而非越界的 52
-    expect(chordNotesToMidi(["E"], NARROW_FROM, NARROW_TO, [52])).toEqual([
-      64,
-    ]);
+    expect(chordNotesToMidi(["E"], NARROW_FROM, NARROW_TO, [52])).toEqual([64]);
     // "A" 应回退到 A4=69
-    expect(chordNotesToMidi(["A"], NARROW_FROM, NARROW_TO, [57])).toEqual([
-      69,
-    ]);
+    expect(chordNotesToMidi(["A"], NARROW_FROM, NARROW_TO, [57])).toEqual([69]);
   });
 
   it("双升/双降记法的音名按音级数字匹配，不再被静默丢弃", () => {
@@ -86,4 +82,3 @@ describe("chordNotesToMidi — hint 优先匹配", () => {
     expect(chordNotesToMidi(["", "X", "A"], 48, 83)).toEqual([57]);
   });
 });
-

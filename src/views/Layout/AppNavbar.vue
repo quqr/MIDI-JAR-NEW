@@ -224,6 +224,7 @@ const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
   { path: "/chord-quiz", label: "nav.chordQuiz", icon: "quiz" },
   { path: "/tuner", label: "nav.tuner", icon: "tuner" },
+  { path: "/score-scroll", label: "nav.scoreScroll", icon: "file-music" },
 ];
 
 const isActive = (path: string) => {

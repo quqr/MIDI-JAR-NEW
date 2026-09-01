@@ -7,9 +7,6 @@ export type NotationDisplayConfig = {
   keySignature: boolean;
   keySignatureText: boolean;
   barlines: boolean;
-  timeSignature: boolean;
-  noteNames: boolean;
-  staffLines: boolean;
   /**
    * 单谱表渲染时是否按谱号过滤音符。
    * false = 渲染所有音符（单谱表显示完整音域），
@@ -46,18 +43,12 @@ export type NotationStyleConfig = {
   backgroundColor: string;
   staffLineColor: string;
   noteColor: string;
-  /**
-   * 音符高亮颜色（用于实时触发的高亮态）。
-   * 历史缺失字段：NotationStyleSection 已引用但类型未定义。
-   */
-  noteHighlightColor: string;
   fontSize: number;
   /**
    * VexFlow 音符时值字符串（"1"=全音符, "2"=二分音符, "4"=四分音符, "8"=八分音符等）。
    * 历史硬编码默认值："1"（utils.ts L72）
    */
   noteDuration: string;
-  layoutDimensions?: LayoutDimensions;
 };
 
 export type NotationProps = {
@@ -91,9 +82,6 @@ export const defaultDisplayConfig: NotationDisplayConfig = {
   keySignature: true,
   keySignatureText: true,
   barlines: false,
-  timeSignature: false,
-  noteNames: false,
-  staffLines: true,
   filterClef: false,
 };
 
@@ -116,7 +104,6 @@ export const defaultStyleConfig: NotationStyleConfig = {
   backgroundColor: "transparent",
   staffLineColor: "#000000",
   noteColor: "#000000",
-  noteHighlightColor: "#ff0000",
   fontSize: 10,
   noteDuration: "1",
 };

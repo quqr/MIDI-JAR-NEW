@@ -124,9 +124,7 @@
                 :key="range"
                 type="button"
                 class="btn btn-sm join-item w-16"
-                :class="
-                  keyboardRange === range ? 'btn-primary' : 'btn-ghost'
-                "
+                :class="keyboardRange === range ? 'btn-primary' : 'btn-ghost'"
                 :aria-pressed="keyboardRange === range"
                 @click="keyboardRange = range"
               >
@@ -216,9 +214,7 @@
               <span class="text-sm text-base-content/60">
                 {{ $t("quiz.avgTime") }}
               </span>
-              <span class="font-bold tabular-nums">
-                {{ avgTime }}ms
-              </span>
+              <span class="font-bold tabular-nums"> {{ avgTime }}ms </span>
             </div>
           </div>
         </div>
@@ -283,9 +279,7 @@
           <span class="badge badge-soft badge-sm whitespace-nowrap">
             {{ $t(`quiz.mode.${currentQuestion.mode}`) }}
           </span>
-          <span
-            class="text-sm font-semibold tabular-nums whitespace-nowrap"
-          >
+          <span class="text-sm font-semibold tabular-nums whitespace-nowrap">
             {{ questionIndex + 1 }} / {{ totalCount }}
           </span>
           <progress

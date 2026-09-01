@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.tuner", icon: "tuner" },
       },
       {
+        path: "score-scroll",
+        name: "score-scroll",
+        component: () => import("@/views/ScoreScroll/ScoreScroll.vue"),
+        meta: { title: "nav.scoreScroll", icon: "file-music" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },

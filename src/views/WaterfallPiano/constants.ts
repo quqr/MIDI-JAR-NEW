@@ -17,12 +17,10 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     },
   },
   background: {
-    type: "solid",
     solidColor: "#1a1a2e",
     fluidEnabled: true,
     fluidQuality: "medium",
     fluidStyle: "standard",
-    fluidAdvanced: false,
     fluidParams: {
       hitExplosion: true,
       blockCoverage: false,
@@ -45,54 +43,17 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     keyCornerRadius: 4,
     keyBorderWidth: 1,
     keyBorderColor: "#EBE0D6",
-    gapBlur: 6,
     separatorEnabled: true,
     separatorColor: "#FFC4B0",
     separatorThickness: 2,
-    staffVisible: false,
-    synthesiaFlowDirection: "down",
     showNoteNames: false,
     defaultVelocity: 90,
   },
   midiFile: {
     playbackSpeed: 1,
-    selectedTracks: [],
-    trackColors: [
-      "#6366f1",
-      "#ec4899",
-      "#14b8a6",
-      "#f59e0b",
-      "#8b5cf6",
-      "#06b6d4",
-      "#ef4444",
-      "#22c55e",
-    ],
     loop: false,
-    showNoteNames: false,
     rightHandTrackIdx: 0,
     leftHandTrackIdx: 1,
-  },
-  sound: {
-    volume: 0.8,
-    reverbAmount: 0.3,
-    reverbDecay: 2,
-    sustain: false,
-    velocitySensitivity: true,
-    harmonicity: 2,
-    modulationIndex: 10,
-    oscillatorType: "triangle",
-    envelope: {
-      attack: 0.002,
-      decay: 0.3,
-      sustain: 0.3,
-      release: 1.0,
-    },
-    modulationEnvelope: {
-      attack: 0.005,
-      decay: 0.5,
-      sustain: 0.2,
-      release: 0.5,
-    },
   },
   aura: {
     enabled: false,
@@ -107,21 +68,11 @@ export const defaultWaterfallSettings: WaterfallPianoSettings = {
     outerOpacity: 30,
     // 第 3 层：动画
     duration: 6,
-    rotationRange: 360,
-    // 第 4 层：光束形状
-    beamAngle: 225,
-    beamWidth: 135,
-    // 第 5 层：Glow 专属
-    glowExtent: 90,
+    // 第 4 层：Glow 专属
     glowPeakOpacity: 100,
     glowPeakBlur: 12,
     glowAfterPeakOpacity: 60,
     glowAfterPeakBlur: 24,
-    // 第 5 层：Rainbow 专属
-    rainbowMargin: 10,
-    // 第 5 层：Dual 专属
-    dualOffRatio: 40,
-    dualOnRatio: 50,
   },
   effects: {
     advancedBloomEnabled: false,

@@ -4,23 +4,13 @@ export type KeyboardSettings = {
   to: string;
   label: "none" | "pitchClass" | "note" | "chordNote" | "interval";
   keyName: "none" | "octave" | "pitchClass" | "note";
-  keyInfo: "none" | "tonic" | "interval" | "tonicAndInterval";
-  fadeOutDuration: number;
-  textOpacity: number;
-  displaySustained: boolean;
-  wrap: boolean;
   sizes: {
     radius: number;
-    height: number;
-    ratio: number;
-    bevel: boolean;
   };
   colors: {
     white: string | null;
     black: string | null;
     played: string | null;
-    wrapped: string | null;
-    sustained: string | null;
   };
 };
 

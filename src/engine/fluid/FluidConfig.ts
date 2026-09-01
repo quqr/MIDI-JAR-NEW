@@ -165,7 +165,6 @@ export const DEFAULT_CONFIG: FluidSimulationConfig = {
 export function resolveConfig(
   quality: FluidQuality,
   style: FluidStyle,
-  _advanced: boolean,
   overrides: FluidAdvancedParams,
 ): FluidSimulationConfig {
   const base = { ...DEFAULT_CONFIG };

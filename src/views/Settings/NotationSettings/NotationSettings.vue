@@ -48,48 +48,11 @@
         />
       </SettingsCollapse>
 
-      <SettingsCollapse
-        :title="t('settings.notationSettings.displayOptions')"
-        icon="eye"
-        :default-open="true"
-      >
-        <SettingsToggle
-          :model-value="displayConfig.clef"
-          :label="t('settings.notationSettings.showClef')"
-          :description="t('settings.notationSettings.showClefHint')"
-          @update:model-value="updateDisplay('clef', $event)"
-        />
-        <SettingsToggle
-          :model-value="displayConfig.keySignature"
-          :label="t('settings.notationSettings.showKeySignature')"
-          :description="t('settings.notationSettings.showKeySignatureHint')"
-          @update:model-value="updateDisplay('keySignature', $event)"
-        />
-        <SettingsToggle
-          :model-value="displayConfig.keySignatureText"
-          :label="t('settings.notationSettings.showKeySignatureText')"
-          :description="t('settings.notationSettings.showKeySignatureTextHint')"
-          @update:model-value="updateDisplay('keySignatureText', $event)"
-        />
-        <SettingsToggle
-          :model-value="displayConfig.barlines"
-          :label="t('settings.notationSettings.showBarlines')"
-          :description="t('settings.notationSettings.showBarlinesHint')"
-          @update:model-value="updateDisplay('barlines', $event)"
-        />
-        <SettingsToggle
-          :model-value="displayConfig.noteNames"
-          :label="t('settings.notationSettings.showNoteNames')"
-          :description="t('settings.notationSettings.showNoteNamesHint')"
-          @update:model-value="updateDisplay('noteNames', $event)"
-        />
-        <SettingsToggle
-          :model-value="displayConfig.staffLines"
-          :label="t('settings.notationSettings.showStaffLines')"
-          :description="t('settings.notationSettings.showStaffLinesHint')"
-          @update:model-value="updateDisplay('staffLines', $event)"
-        />
-      </SettingsCollapse>
+      <NotationFieldGroup
+        group="display"
+        :model-value="displayConfig"
+        @update="updateDisplay"
+      />
 
       <NotationLayoutSettings />
 
@@ -106,11 +69,11 @@ import { InputNote } from "@/components/InputNote/";
 import {
   SettingsCollapse,
   SettingsSelect,
-  SettingsToggle,
   SettingsRange,
   SettingsSection,
 } from "@/components/Settings";
 import { mergeDisplayConfig } from "@/components/Notation/utils";
+import NotationFieldGroup from "@/components/Notation/NotationFieldGroup.vue";
 import NotationLayoutSettings from "@/components/Notation/NotationLayoutSettings.vue";
 import NotationStyleSettings from "@/components/Notation/NotationStyleSettings.vue";
 
@@ -132,11 +95,11 @@ const displayConfig = computed(() =>
   mergeDisplayConfig(settingsStore.settings.notation.display),
 );
 
-function updateDisplay(key: string, value: boolean) {
+function updateDisplay(key: string, value: boolean | number | string | null) {
   const current: Record<string, boolean> = {
     ...settingsStore.settings.notation.display,
   };
-  current[key] = value;
+  current[key] = value as boolean;
   settingsStore.updateSetting("notation.display", current);
 }
 </script>

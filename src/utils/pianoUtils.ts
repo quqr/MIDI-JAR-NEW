@@ -15,9 +15,6 @@ import type { KeyboardSettings } from "@/types/settings";
  * - useThemeColors === true        → skin 取主题基底（coral），colors.* 置 null 让主题色板生效
  * - useThemeColors === false       → skin 仍取 coral 基底以保持渐变质感，
  *                                    colors.white/black/played 使用 PianoSettings 的自定义颜色
- *
- * 注：PianoSettings.gradientIntensity 暂无 KeyboardSettings 对应字段，
- * 渲染器渐变由 theme 决定，故该字段目前不参与映射（保持向后兼容）。
  */
 export function createKeyboardSettingsFromPiano(
   piano: PianoSettings,
@@ -29,13 +26,11 @@ export function createKeyboardSettingsFromPiano(
   const skin: KeyboardSettings["skin"] = "coral";
 
   const colors: KeyboardSettings["colors"] = piano.useThemeColors
-    ? { white: null, black: null, played: null, wrapped: null, sustained: null }
+    ? { white: null, black: null, played: null }
     : {
         white: piano.whiteKeyColor,
         black: piano.blackKeyColor,
         played: piano.pressedKeyColor,
-        wrapped: null,
-        sustained: null,
       };
 
   return {
@@ -44,16 +39,8 @@ export function createKeyboardSettingsFromPiano(
     to: piano.to,
     label,
     keyName: piano.keyName,
-    keyInfo: "none",
-    fadeOutDuration: 0,
-    textOpacity: 1,
-    displaySustained: true,
-    wrap: false,
     sizes: {
       radius: piano.keyCornerRadius,
-      height: 0,
-      ratio: 0,
-      bevel: false,
     },
     colors,
   };

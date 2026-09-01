@@ -4,11 +4,24 @@ import { getCurrentLocale } from "@/utils/utils";
 import zh from "@/locales/zh.json";
 import en from "@/locales/en.json";
 
+/** 读取用户持久化的语言偏好（settings store 落盘的 midi-jar-settings） */
+function getStoredLocale(): "en" | "zh" | undefined {
+  try {
+    const raw = localStorage.getItem("midi-jar-settings");
+    if (!raw) return undefined;
+    const language = (JSON.parse(raw) as { general?: { language?: unknown } })
+      .general?.language;
+    return language === "en" || language === "zh" ? language : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export default createI18n({
   // 是否启用 Vue I18n 的传统模式。当设置为 false 时，将使用 Vue 3 的 Composition API，这是 Vue I18n 的推荐做法。默认值为 false
   legacy: false,
-  // 指定当前的语言环境 (默认使用中文语言)
-  locale: getCurrentLocale(),
+  // 指定当前的语言环境：优先用户持久化偏好，其次浏览器语言
+  locale: getStoredLocale() ?? getCurrentLocale(),
   // 备用的语言环境，当无法在当前语言环境下找到相应的翻译时会使用该备用语言环境
   fallbackLocale: "en",
   // 是否将 Vue I18n 的实例注入到全局 Vue 实例中。设置为 true 后，在所有的 Vue 组件中都可以通过 this.$i18n 访问到 Vue I18n 的实例

@@ -13,8 +13,6 @@ import type {
   RecordedNote,
   FluidAdvancedParams,
   BackgroundConfig,
-  SoundEngineUserConfig,
-  SynthEnvelopeConfig,
 } from "../types";
 
 /** 深合并一个配置段：默认值 + 用户存储值 */
@@ -113,42 +111,24 @@ function loadSettings(): WaterfallPianoSettings {
     return deepClone(defaultWaterfallSettings);
   }
 
-  const stored = loadFromStorage<
-    Partial<WaterfallPianoSettings> & {
-      background?: Partial<BackgroundConfig> & {
-        type?: string;
-        fluidResolution?: number;
-      };
-      audio?: unknown;
-      physicalPiano?: unknown;
-    }
-  >({
+  const stored = loadFromStorage<Partial<WaterfallPianoSettings>>({
     key: STORAGE_KEY,
     defaultValue: {},
   });
 
   if (Object.keys(stored).length > 0) {
-    const storedBg = stored.background as Record<string, unknown> | undefined;
-    let fluidEnabled = storedBg?.fluidEnabled as boolean | undefined;
-    let bgType = storedBg?.type as string | undefined;
-    if (bgType === "fluid") {
-      bgType = "preset";
-      fluidEnabled = true;
-    }
-
     const background: BackgroundConfig = {
       ...defaultWaterfallSettings.background,
-      ...storedBg,
-      type:
-        (bgType as BackgroundConfig["type"]) ??
-        defaultWaterfallSettings.background.type,
-      fluidEnabled:
-        fluidEnabled ?? defaultWaterfallSettings.background.fluidEnabled,
+      ...stored.background,
       fluidParams: migrateFluidParams(
-        storedBg?.fluidParams as Record<string, unknown> | undefined,
+        stored.background?.fluidParams as Record<string, unknown> | undefined,
       ),
     };
-    delete (background as unknown as Record<string, unknown>).fluidResolution;
+    // 清理历史版本的遗留字段
+    const legacyBg = background as unknown as Record<string, unknown>;
+    delete legacyBg.type;
+    delete legacyBg.fluidAdvanced;
+    delete legacyBg.fluidResolution;
 
     return {
       particles: mergeSection(
@@ -164,23 +144,6 @@ function loadSettings(): WaterfallPianoSettings {
         defaultWaterfallSettings.midiFile,
         stored.midiFile,
       ),
-      sound: {
-        ...mergeSection(
-          defaultWaterfallSettings.sound,
-          stored.sound as Partial<SoundEngineUserConfig> | undefined,
-        ),
-        envelope: mergeSection(
-          defaultWaterfallSettings.sound.envelope,
-          (stored.sound as Record<string, unknown> | undefined)?.envelope as
-            | Partial<SynthEnvelopeConfig>
-            | undefined,
-        ),
-        modulationEnvelope: mergeSection(
-          defaultWaterfallSettings.sound.modulationEnvelope,
-          (stored.sound as Record<string, unknown> | undefined)
-            ?.modulationEnvelope as Partial<SynthEnvelopeConfig> | undefined,
-        ),
-      },
       aura: mergeSection(defaultWaterfallSettings.aura, stored.aura),
       effects: mergeSection(defaultWaterfallSettings.effects, stored.effects),
     };

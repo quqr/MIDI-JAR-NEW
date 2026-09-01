@@ -1,14 +1,11 @@
 import { useSamplerStore } from "@/stores/sampler";
 import { useSamplerService } from "@/composables/useSamplerService";
-import type { SoundEngineUserConfig } from "../types";
 import type { ISoundEngine } from "./ISoundEngine";
 
 /**
  * 采样器音源引擎适配器 — 将 WaterfallEngine 的音频接口委托给全局 SamplerService。
  *
- * 实现与 SoundEngine（FMSynth）相同的 ISoundEngine 接口，使 WaterfallPiano
- * 可无缝切换到采样器音源，无需修改引擎代码。
- *
+ * 音频参数（音色/混响/音量等）由采样器设置页与 useSamplerService 统一管理。
  * 当采样器未加载乐器或全局声音关闭时，所有操作静默忽略。
  */
 export class SamplerSoundEngine implements ISoundEngine {
@@ -22,7 +19,7 @@ export class SamplerSoundEngine implements ISoundEngine {
    * 初始化（空操作）— 采样器的 AudioContext 由 useSamplerService 管理，
    * 通过 ensureInitialized() 懒启动，无需外部传入配置。
    */
-  async init(_config?: Partial<SoundEngineUserConfig>): Promise<void> {
+  async init(): Promise<void> {
     this.initialized = true;
   }
 
@@ -98,11 +95,6 @@ export class SamplerSoundEngine implements ISoundEngine {
   }
 
   // ─── 以下方法为接口兼容而保留，采样器模式下无实际作用 ───
-
-  /** 更新运行时参数（采样器模式忽略） */
-  updateConfig(_config: SoundEngineUserConfig): void {
-    // no-op: 采样器参数由 useSamplerService 管理
-  }
 
   /** 设置音量（采样器模式忽略） */
   setVolume(_v: number): void {

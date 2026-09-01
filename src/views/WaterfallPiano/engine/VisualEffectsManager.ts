@@ -225,7 +225,6 @@ export class VisualEffectsManager {
     return resolveConfig(
       bg.fluidQuality,
       bg.fluidStyle,
-      bg.fluidAdvanced,
       bg.fluidParams,
     );
   }

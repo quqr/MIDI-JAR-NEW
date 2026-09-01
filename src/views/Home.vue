@@ -61,6 +61,14 @@
           </div>
           <div>
             <ModuleCard
+              to="/score-scroll"
+              :title="$t('nav.scoreScroll')"
+              :description="$t('home.moduleDescriptions.scoreScroll')"
+              icon="mdi-music-note-eighth"
+            />
+          </div>
+          <div>
+            <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
               :title="$t('nav.routing')"
