@@ -144,7 +144,7 @@ onUnmounted(() => {
   >
     <svg
       viewBox="0 0 200 118"
-      class="w-full max-w-sm"
+      class="w-full max-w-md"
       :class="active ? 'opacity-100' : 'opacity-60'"
     >
       <!-- 刻度线 -->

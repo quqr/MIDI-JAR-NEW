@@ -92,9 +92,11 @@ onUnmounted(() => {
 
 <template>
   <div class="h-full overflow-y-auto">
-    <div class="max-w-2xl mx-auto px-4 py-6 sm:px-6 flex flex-col gap-6">
-      <!-- ===== 标题行 ===== -->
-      <header ref="headerRef" class="flex items-center gap-3">
+    <div
+      class="w-full max-w-6xl mx-auto px-4 py-5 sm:px-6 flex flex-col gap-4 sm:gap-5"
+    >
+      <!-- ===== 标题行：标题 + 状态 + 启停 ===== -->
+      <header ref="headerRef" class="flex flex-wrap items-center gap-3">
         <div
           class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"
         >
@@ -108,60 +110,12 @@ onUnmounted(() => {
             {{ $t("tuner.subtitle") }}
           </p>
         </div>
-        <div class="ml-auto">
+        <div class="ml-auto flex items-center gap-3">
           <InputStatus
             :status="detector.status.value"
             :error-key="detector.errorKey.value"
             @retry="startDetection"
           />
-        </div>
-      </header>
-
-      <!-- ===== 音高指示器 ===== -->
-      <section
-        ref="indicatorRef"
-        class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5"
-      >
-        <PitchIndicator :cents="display?.cents ?? null" :active="isListening" />
-      </section>
-
-      <!-- ===== 音频仪表 ===== -->
-      <section
-        ref="meterRef"
-        class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5"
-      >
-        <AudioMeter
-          :analyser="detector.analyserNode.value"
-          :active="isListening"
-        />
-      </section>
-
-      <!-- ===== 音高信息 ===== -->
-      <section ref="panelRef">
-        <PitchInfoPanel
-          :note-name="display?.name ?? null"
-          :freq="display?.freq ?? null"
-          :cents="display?.cents ?? null"
-          :active="isListening"
-        />
-      </section>
-
-      <!-- ===== 控制区 ===== -->
-      <section
-        ref="controlsRef"
-        class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5 flex flex-col gap-4"
-      >
-        <ReferenceToneControls
-          :a4-frequency="a4Frequency"
-          @update:a4-frequency="a4Frequency = $event"
-        />
-
-        <div
-          class="flex items-center justify-between border-t border-base-content/10 pt-4"
-        >
-          <p class="text-xs text-base-content/50">
-            {{ $t("tuner.hint") }}
-          </p>
           <button
             type="button"
             class="btn btn-primary btn-sm"
@@ -173,6 +127,54 @@ onUnmounted(() => {
             {{ isListening ? $t("tuner.stop") : $t("tuner.start") }}
           </button>
         </div>
+      </header>
+
+      <!-- ===== 同行：音高指示器（左） + 音频仪表（右） ===== -->
+      <div class="grid gap-4 lg:grid-cols-5">
+        <section
+          ref="indicatorRef"
+          class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5 lg:col-span-3 flex flex-col justify-center"
+        >
+          <PitchIndicator
+            :cents="display?.cents ?? null"
+            :active="isListening"
+          />
+        </section>
+
+        <section
+          ref="meterRef"
+          class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5 lg:col-span-2"
+        >
+          <AudioMeter
+            :analyser="detector.analyserNode.value"
+            :active="isListening"
+          />
+        </section>
+      </div>
+
+      <!-- ===== 音高信息 ===== -->
+      <section ref="panelRef">
+        <PitchInfoPanel
+          :note-name="display?.name ?? null"
+          :freq="display?.freq ?? null"
+          :cents="display?.cents ?? null"
+          :active="isListening"
+        />
+      </section>
+
+      <!-- ===== 基准音控制区 ===== -->
+      <section
+        ref="controlsRef"
+        class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5 flex flex-col gap-3"
+      >
+        <ReferenceToneControls
+          :a4-frequency="a4Frequency"
+          @update:a4-frequency="a4Frequency = $event"
+        />
+
+        <p class="text-xs text-base-content/50">
+          {{ $t("tuner.hint") }}
+        </p>
       </section>
     </div>
   </div>

@@ -260,7 +260,7 @@ onUnmounted(() => {
         {{ $t("tuner.meter.clip") }}
       </span>
     </div>
-    <div ref="wrapperRef" class="h-28 w-full">
+    <div ref="wrapperRef" class="h-28 sm:h-32 lg:h-40 w-full">
       <canvas
         ref="canvasRef"
         class="h-full w-full"
