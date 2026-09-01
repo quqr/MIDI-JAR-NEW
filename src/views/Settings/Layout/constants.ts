@@ -34,6 +34,12 @@ export const navItems: GroupedNavItem[] = [
     group: "general",
   },
   {
+    icon: "plugin",
+    to: "/settings/vst",
+    labelKey: "settings.vst",
+    group: "general",
+  },
+  {
     icon: "cursor",
     to: "/settings/cursor",
     labelKey: "settings.cursor",

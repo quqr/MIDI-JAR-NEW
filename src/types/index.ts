@@ -7,6 +7,7 @@ import type {
 import { getCurrentLocale } from "@/utils/utils";
 
 export type { MidiRoute } from "./midi";
+export * from "./chordQuiz";
 export interface MessageEventData {
   type: string;
   data?: any;

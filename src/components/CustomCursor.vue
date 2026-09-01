@@ -261,7 +261,10 @@ watch(
 
 // 动画时长变化：createAnimatable 的 duration 在创建时固定，需重建实例套用新值
 watch(
-  () => [cursorSettings.value.followDuration, cursorSettings.value.hoverDuration],
+  () => [
+    cursorSettings.value.followDuration,
+    cursorSettings.value.hoverDuration,
+  ],
   () => {
     if (innerAnim) {
       innerAnim.revert();

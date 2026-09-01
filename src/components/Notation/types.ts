@@ -57,6 +57,7 @@ export type NotationStyleConfig = {
    * 历史硬编码默认值："1"（utils.ts L72）
    */
   noteDuration: string;
+  layoutDimensions?: LayoutDimensions;
 };
 
 export type NotationProps = {

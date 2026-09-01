@@ -163,11 +163,6 @@ class EventDispatcher<TArgs> extends Delegate<TArgs> {
 export class Event<TArgs = void> {
   private readonly _dispatcher = new EventDispatcher<TArgs>();
 
-  constructor() {
-    // 将内部触发方法挂载到 internalInvoke
-    (this._dispatcher as any).invoke = this._dispatcher.invoke;
-  }
-
   /** 内部触发方法：仅类内部应调用 */
   public internalInvoke(args: TArgs): void {
     this._dispatcher.invoke(args);

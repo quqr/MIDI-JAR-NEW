@@ -190,13 +190,13 @@ const notationStyle = computed<NotationStyleConfig>(() =>
 );
 
 function updateNotationStyle(
-  key: keyof NotationStyleConfig,
+  key: keyof Omit<NotationStyleConfig, "layoutDimensions">,
   value: string | number | null,
 ) {
-  const current: Record<string, string | number | null> = {
+  const current: Partial<NotationStyleConfig> = {
     ...settingsStore.settings.notation.style,
   };
-  current[key] = value;
+  (current as Record<string, string | number | null>)[key] = value;
   settingsStore.updateSetting("notation.style", current);
 }
 

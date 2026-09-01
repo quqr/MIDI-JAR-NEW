@@ -15,3 +15,4 @@ export { useSamplerService } from "./useSamplerService";
 export { useScalePlayer } from "./useScalePlayer";
 export type { ScalePlayerOptions } from "./useScalePlayer";
 export { useInstrumentCache } from "./useInstrumentCache";
+export { useChordQuiz } from "./useChordQuiz";

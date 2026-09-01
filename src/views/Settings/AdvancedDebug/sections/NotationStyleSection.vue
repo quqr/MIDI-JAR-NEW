@@ -72,7 +72,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (
     e: "update",
-    key: keyof NotationStyleConfig,
+    key: keyof Omit<NotationStyleConfig, "layoutDimensions">,
     value: string | number | null,
   ): void;
   (e: "update:open", value: boolean): void;

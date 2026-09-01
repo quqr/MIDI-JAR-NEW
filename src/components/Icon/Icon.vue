@@ -151,6 +151,11 @@ const iconPath = computed((): string => {
     gamepad:
       "M6 12h4M8 10v4M15 11h.01M18 14h.01M22 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM2 12a5 5 0 1 1 10 0 5 5 0 0 1-10 0z",
     cross: "M18 6L6 18M6 6l12 12",
+    "file-text":
+      "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6M16 13H8M16 17H8M10 9H8",
+    plugin:
+      "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71",
+    tuner: "M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3",
     "music-note":
       "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z",
     palette:
@@ -164,8 +169,6 @@ const iconPath = computed((): string => {
     filter: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
     "chevrons-up": "M17 11l5-5-5-5M7 11l-5-5 5-5M7 13l5 5 5-5",
     "chevrons-down": "M7 13l5 5 5-5M7 6l5 5 5-5M17 19l5-5-5-5M7 6l-5 5 5 5",
-    "file-text":
-      "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6M16 13H8M16 17H8M10 9H8",
     list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
   };
   return paths[props.name] || paths.home;

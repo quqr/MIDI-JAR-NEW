@@ -182,12 +182,17 @@ export class KeyboardLayoutCalculator {
   }
 
   /**
-   * 根据宽度决定是否应使用窄屏范围
+   * 根据宽度决定是否应使用窄屏范围。
+   * custom 范围代表调用方显式指定的音域（如和弦测验的键盘音域档位），
+   * 属用户明确意图，不受窄屏断点回退覆盖。
    */
   static rangeForWidth(
     width: number,
     config: KeyboardConfig,
   ): { from: number; to: number } {
+    if (config.range === "custom") {
+      return KeyboardLayoutCalculator.rangeFromConfig(config);
+    }
     if (width < NARROW_BREAKPOINT) {
       return { from: NARROW_RANGE.from, to: NARROW_RANGE.to };
     }

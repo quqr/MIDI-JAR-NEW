@@ -70,6 +70,7 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-book-open-page-variant": "book",
   "mdi-swap-horizontal": "swap",
   "mdi-bug": "bug",
+  "mdi-tune-vertical": "tuner",
 };
 
 function mapMdiToIcon(mdiName: string): IconName {

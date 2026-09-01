@@ -50,6 +50,7 @@ import {
   SettingsColorPicker,
 } from "@/components/Settings";
 import { mergeStyleConfig } from "./utils";
+import type { NotationStyleConfig } from "./types";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
@@ -58,11 +59,14 @@ const mergedStyle = computed(() =>
   mergeStyleConfig(settingsStore.settings.notation.style),
 );
 
-function update(key: string, value: string | number | null) {
-  const current: Record<string, string | number | null> = {
+/** 可在设置面板编辑的扁平样式键（不含嵌套的 layoutDimensions） */
+type EditableStyleKey = keyof Omit<NotationStyleConfig, "layoutDimensions">;
+
+function update(key: EditableStyleKey, value: string | number | null) {
+  const current: Partial<NotationStyleConfig> = {
     ...settingsStore.settings.notation.style,
   };
-  current[key] = value;
+  (current as Record<string, string | number | null>)[key] = value;
   settingsStore.updateSetting("notation.style", current);
 }
 </script>

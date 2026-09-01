@@ -45,6 +45,22 @@
           </div>
           <div>
             <ModuleCard
+              to="/chord-quiz"
+              :title="$t('nav.chordQuiz')"
+              :description="$t('home.moduleDescriptions.chordQuiz')"
+              icon="mdi-help-circle"
+            />
+          </div>
+          <div>
+            <ModuleCard
+              to="/tuner"
+              :title="$t('nav.tuner')"
+              :description="$t('home.moduleDescriptions.tuner')"
+              icon="mdi-tune-vertical"
+            />
+          </div>
+          <div>
+            <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
               :title="$t('nav.routing')"

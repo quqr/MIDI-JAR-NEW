@@ -1,3 +1,5 @@
+//! MIDI 子系统：设备发现/刷新、路由连线、虚拟端口与 [`MidiManager`] 对外 API。
+
 mod device_manager;
 mod input_device;
 mod internal_output;
@@ -7,11 +9,10 @@ mod wire;
 
 pub use input_device::ApiMidiInput;
 pub use output_device::ApiMidiOutput;
-pub use route::MidiRoute;
+pub use route::{MidiRoute, MidiRouteRaw};
 pub use wire::ApiMidiWire;
 
 use log::debug;
-use crate::MidiRouteRaw;
 use device_manager::MidiDeviceManager as InnerManager;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
@@ -47,34 +48,39 @@ impl MidiManager {
                     break;
                 }
 
-                {
+                // 锁内：仅刷新设备并在检测到变化时生成快照，缩短持锁时间
+                let snapshot = {
                     let mut mgr = manager_clone.lock().unwrap();
-                    let changed = mgr.refresh();
-                    if changed {
-                        debug!("refresh loop: device change detected");
-                        let inputs: Vec<ApiMidiInput> = mgr.get_inputs();
-                        let outputs: Vec<ApiMidiOutput> = mgr.get_outputs();
-                        debug!("refresh loop: {} inputs, {} outputs", inputs.len(), outputs.len());
-                        for inp in &inputs {
-                            debug!("  input: '{}' connected={} opened={}", inp.name, inp.connected, inp.opened);
-                        }
-                        for out in &outputs {
-                            debug!("  output: '{}' type='{}' connected={}", out.name, out.output_type, out.connected);
-                        }
-                        let _ = app_handle_clone.emit("midi:inputs", &inputs);
-                        let _ = app_handle_clone.emit("midi:outputs", &outputs);
+                    mgr.refresh().then(|| (mgr.get_inputs(), mgr.get_outputs()))
+                };
+                if let Some((inputs, outputs)) = snapshot {
+                    debug!("refresh loop: device change detected");
+                    debug!("refresh loop: {} inputs, {} outputs", inputs.len(), outputs.len());
+                    for inp in &inputs {
+                        debug!("  input: '{}' connected={} opened={}", inp.name, inp.connected, inp.opened);
+                    }
+                    for out in &outputs {
+                        debug!("  output: '{}' type='{}' connected={}", out.name, out.output_type, out.connected);
+                    }
 
-                        let pending_routes = routes_shared_clone.lock().unwrap().clone();
-                        if !pending_routes.is_empty() {
-                            debug!("refresh loop: re-applying {} routes", pending_routes.len());
+                    // emit 移至锁外执行，避免阻塞其他线程访问设备管理器
+                    let _ = app_handle_clone.emit("midi:inputs", &inputs);
+                    let _ = app_handle_clone.emit("midi:outputs", &outputs);
+
+                    let pending_routes = routes_shared_clone.lock().unwrap().clone();
+                    if !pending_routes.is_empty() {
+                        debug!("refresh loop: re-applying {} routes", pending_routes.len());
+                        // 短暂持锁完成路由重连，随后立即释放
+                        let wires = {
+                            let mut mgr = manager_clone.lock().unwrap();
                             mgr.route_midi(&pending_routes, &app_handle_clone);
-                            let wires = mgr.get_wires();
-                            debug!("refresh loop: emitting {} wires after reconnect", wires.len());
-                            for w in &wires {
-                                debug!("  wire: '{}' -> '{}' connected={}", w.route.input, w.route.output, w.connected);
-                            }
-                            let _ = app_handle_clone.emit("midi:wires", &wires);
+                            mgr.get_wires()
+                        };
+                        debug!("refresh loop: emitting {} wires after reconnect", wires.len());
+                        for w in &wires {
+                            debug!("  wire: '{}' -> '{}' connected={}", w.route.input, w.route.output, w.connected);
                         }
+                        let _ = app_handle_clone.emit("midi:wires", &wires);
                     }
                 }
 
@@ -132,7 +138,7 @@ impl MidiManager {
         self.apply_routes(app_handle);
     }
 
-    pub fn sync_routes(&mut self, app_handle: &AppHandle, raw_routes: Vec<crate::MidiRouteRaw>) {
+    pub fn sync_routes(&mut self, app_handle: &AppHandle, raw_routes: Vec<MidiRouteRaw>) {
         debug!("sync_routes: received {} routes", raw_routes.len());
         for (i, raw) in raw_routes.iter().enumerate() {
             debug!("  route[{}]: input='{}' output='{}' type='{}' enabled={}",

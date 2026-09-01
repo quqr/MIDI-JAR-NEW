@@ -30,6 +30,8 @@
     "chordDisplay": "Chord Display",
     "chordDisplayWithId": "Chord Display ({moduleId})",
     "chordDictionary": "Chord Dictionary",
+    "chordQuiz": "Chord Quiz",
+    "tuner": "Tuner",
     "routing": "Routing",
     "debugger": "Debugger",
     "advancedDebug": "Advanced Debug",
@@ -51,7 +53,43 @@
       "routing": "Route MIDI messages between devices",
       "debugger": "Monitor and debug MIDI messages",
       "WaterfallPiano": "Waterfall-style piano performance and visualization",
-      "Sampler": "Sampler instruments — load and play various sound libraries"
+      "Sampler": "Sampler instruments — load and play various sound libraries",
+      "chordQuiz": "Test your chord recognition with randomly generated chords",
+      "tuner": "Real-time pitch detection to tune your instrument precisely"
+    },
+    "tuner": {
+      "subtitle": "Real-time pitch detection and tuning reference",
+      "start": "Start Listening",
+      "stop": "Stop Listening",
+      "hint": "Play a single note into the microphone — the needle shows cents deviation",
+      "indicator": {
+        "ariaLabel": "Pitch indicator showing current cents deviation"
+      },
+      "info": {
+        "note": "Note",
+        "noteDesc": "Scientific pitch notation",
+        "frequency": "Frequency",
+        "frequencyDesc": "Detected fundamental",
+        "cents": "Cents",
+        "centsDesc": "Deviation from nearest note"
+      },
+      "reference": {
+        "title": "Reference A4",
+        "sliderAria": "Reference tone frequency slider",
+        "inputAria": "Reference tone frequency input",
+        "reset": "Reset to 440"
+      },
+      "status": {
+        "idle": "Not started",
+        "starting": "Starting…",
+        "listening": "Listening",
+        "error": "Start failed",
+        "retry": "Retry"
+      },
+      "errors": {
+        "permission": "Microphone permission denied — allow access in system settings",
+        "generic": "Unable to access audio input device"
+      }
     }
   },
   "layout": {
@@ -138,6 +176,64 @@
       "major_seventh_sharp_fifth": "major seventh sharp fifth",
       "minor_seventh_sharp_fifth": "minor seventh sharp fifth"
     }
+  },
+  "quiz": {
+    "subtitle": "Randomized chord recognition drill",
+    "difficultyLabel": "Difficulty",
+    "modeLabel": "Mode",
+    "displayLabel": "Display",
+    "countLabel": "Questions",
+    "keyboardRange": {
+      "label": "Keyboard Range",
+      "hint": "Adjustable anytime",
+      "narrow": "Narrow (13 keys)",
+      "medium": "Medium (25 keys)",
+      "wide": "Wide (36 keys)",
+      "narrowShort": "Narrow",
+      "mediumShort": "Med",
+      "wideShort": "Wide"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "intermediate": "Intermediate",
+      "expert": "Expert"
+    },
+    "mode": {
+      "visual": "Visual",
+      "scrambled": "Scrambled",
+      "aural": "Aural",
+      "mix": "Mix"
+    },
+    "display": {
+      "keyboard": "Keyboard",
+      "notation": "Staff",
+      "both": "Both",
+      "auto": "Auto"
+    },
+    "start": "Start Quiz",
+    "next": "Next",
+    "prev": "Previous",
+    "showResult": "Show Result",
+    "startHint": "Click \"Start Quiz\" to begin a chord recognition round",
+    "play": "Play",
+    "replay": "Replay",
+    "correctAnswer": "Correct answer",
+    "score": "Score",
+    "accuracy": "Accuracy",
+    "bestStreak": "Best Streak",
+    "avgTime": "Avg Time",
+    "streak": "Streak",
+    "perQuestion": "per question",
+    "perQuestionResult": "Per-question results",
+    "unanswered": "Unanswered",
+    "correct": "Correct",
+    "wrong": "Wrong",
+    "progress": "Progress {current}/{total}",
+    "sessionDone": "Round Complete",
+    "again": "Play Again",
+    "redo": "Redo Same Set",
+    "backHome": "Back Home",
+    "soundUnavailable": "No instrument loaded or sound is off, cannot play"
   },
   "chordIntervals": {
     "label": "Twelve semitone intervals"

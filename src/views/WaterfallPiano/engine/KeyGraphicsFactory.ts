@@ -18,7 +18,7 @@ import {
   KeyboardLayoutCalculator,
   isBlackKey,
 } from "./KeyboardLayoutCalculator";
-import { midiToNoteName } from "../constants";
+import { midiToNoteName, midiToPitchClass } from "../constants";
 import type { PianoThemeColors } from "../config/pianoThemes";
 import {
   hexToRgba,
@@ -147,6 +147,8 @@ export class KeyGraphicsFactory {
    * @param letterSpacing - 字间距
    * @param x - 水平居中位置
    * @param y - 底部基线位置
+   * @param maxWidth - 允许的最大文本宽度；文本超宽时水平压缩（scale.x），
+   *   避免窄键（如宽音域下 9.66px 黑键）的相邻标签互相粘连溢出
    */
   static createLabelText(
     text: string,
@@ -155,6 +157,7 @@ export class KeyGraphicsFactory {
     letterSpacing: number,
     x: number,
     y: number,
+    maxWidth?: number,
   ): Text {
     const txt = new Text({
       text,
@@ -166,6 +169,9 @@ export class KeyGraphicsFactory {
         letterSpacing,
       },
     });
+    if (maxWidth !== undefined && txt.width > maxWidth && txt.width > 0) {
+      txt.scale.x = maxWidth / txt.width;
+    }
     txt.x = x;
     txt.y = y;
     txt.anchor.set(0.5, 1);
@@ -188,6 +194,23 @@ export class KeyGraphicsFactory {
       letterSpacing: 0.3,
       y: layout.blackKeyHeight - 6,
     };
+  }
+
+  /**
+   * 窄键标签降级：键宽放不下完整 "C#3"（note 模式 3 字符）时，
+   * 退化为不带八度的音级名（"C#"），配合 maxWidth 压缩保证任何键宽下可读。
+   */
+  static fitLabelForWidth(
+    midi: number,
+    mode: KeyboardConfig["keyLabel"],
+    keyWidth: number,
+  ): string | null {
+    const label = KeyboardLayoutCalculator.labelFor(midi, mode);
+    if (!label) return null;
+    if (mode === "note" && keyWidth < 22) {
+      return midiToPitchClass(midi);
+    }
+    return label;
   }
 
   // ============================================================================
@@ -265,6 +288,7 @@ export class KeyGraphicsFactory {
             letterSpacing,
             x,
             labelY,
+            layout.whiteKeyWidth * 0.86,
           ),
         );
 
@@ -328,7 +352,11 @@ export class KeyGraphicsFactory {
 
       for (let m = from; m <= to; m++) {
         if (!isBlackKey(m)) continue;
-        const label = KeyboardLayoutCalculator.labelFor(m, effectiveLabel);
+        const label = KeyGraphicsFactory.fitLabelForWidth(
+          m,
+          effectiveLabel,
+          layout.blackKeyWidth,
+        );
         if (!label) continue;
         const bx = midiToX(m);
 
@@ -340,6 +368,7 @@ export class KeyGraphicsFactory {
             letterSpacing,
             bx,
             labelY,
+            layout.blackKeyWidth * 0.86,
           ),
         );
       }
@@ -397,7 +426,11 @@ export class KeyGraphicsFactory {
 
       // 3. 标签覆写（primary-content 色，覆盖静态层标签以保证可读性）
       if (effectiveLabel && whiteMetrics) {
-        const label = KeyboardLayoutCalculator.labelFor(midi, effectiveLabel);
+        const label = KeyGraphicsFactory.fitLabelForWidth(
+          midi,
+          effectiveLabel,
+          w,
+        );
         if (label) {
           texts.push(
             KeyGraphicsFactory.createLabelText(
@@ -407,6 +440,7 @@ export class KeyGraphicsFactory {
               whiteMetrics.letterSpacing,
               x + w / 2,
               whiteMetrics.y,
+              w * 0.86,
             ),
           );
         }
@@ -465,7 +499,11 @@ export class KeyGraphicsFactory {
 
       // 3. 标签覆写（primary-content 色）
       if (effectiveLabel && blackMetrics) {
-        const label = KeyboardLayoutCalculator.labelFor(m, effectiveLabel);
+        const label = KeyGraphicsFactory.fitLabelForWidth(
+          m,
+          effectiveLabel,
+          bw,
+        );
         if (label) {
           texts.push(
             KeyGraphicsFactory.createLabelText(
@@ -475,6 +513,7 @@ export class KeyGraphicsFactory {
               blackMetrics.letterSpacing,
               cx,
               blackMetrics.y,
+              bw * 0.86,
             ),
           );
         }

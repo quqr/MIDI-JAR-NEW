@@ -90,4 +90,6 @@ export type IconName =
   | "chevrons-up"
   | "chevrons-down"
   | "file-text"
+  | "plugin"
+  | "tuner"
   | "list";

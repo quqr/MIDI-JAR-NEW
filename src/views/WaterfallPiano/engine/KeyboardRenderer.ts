@@ -140,12 +140,15 @@ export class KeyboardRenderer {
     this.applyRangeFromConfig();
   }
 
-  /** 更新键盘配置并标记静态缓存为脏 */
+  /**
+   * 更新键盘配置并重建布局缓存。
+   * 注意：from/to 变化后必须调用 invalidateLayout() 失效 _cachedLayout，
+   * 否则 render() 会继续用旧音域的布局绘制，切换音域将毫无视觉效果。
+   */
   setKeyboardConfig(kb: KeyboardConfig): void {
     this.config = kb;
-    this._staticCacheDirty = true;
-    this._highlightDirty = true;
     this.applyRangeFromConfig();
+    this.invalidateLayout();
   }
 
   /** 根据键盘配置中的范围设置更新 MIDI 范围 */

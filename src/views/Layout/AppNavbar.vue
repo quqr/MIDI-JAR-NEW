@@ -222,6 +222,8 @@ const latencyAriaLabel = computed(() =>
 const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/home", label: "nav.home", icon: "home" },
   { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
+  { path: "/chord-quiz", label: "nav.chordQuiz", icon: "quiz" },
+  { path: "/tuner", label: "nav.tuner", icon: "tuner" },
 ];
 
 const isActive = (path: string) => {

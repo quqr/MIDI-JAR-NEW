@@ -1,6 +1,8 @@
+//! 日志桥接：把 `log` 宏输出同时转发到控制台（带颜色）与前端 Debugger 页面。
+
 use log::{Level, LevelFilter, Metadata, Record};
 use std::io::Write;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 use tauri::{AppHandle, Emitter};
 
 /// Tauri log sink - 将 Rust 日志同时输出到控制台和前端
@@ -123,10 +125,9 @@ impl log::Log for LoggerWrapper {
 }
 
 /// 全局 logger 实例
-static LOGGER: once_cell::sync::Lazy<LoggerWrapper> =
-    once_cell::sync::Lazy::new(|| LoggerWrapper {
-        inner: Mutex::new(TauriLogSink::new()),
-    });
+static LOGGER: LazyLock<LoggerWrapper> = LazyLock::new(|| LoggerWrapper {
+    inner: Mutex::new(TauriLogSink::new()),
+});
 
 /// 初始化 Tauri log sink
 ///

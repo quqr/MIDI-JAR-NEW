@@ -1,3 +1,5 @@
+//! MIDI 输入设备模型：内部设备状态 + 前端 DTO（[`ApiMidiInput`]）。
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

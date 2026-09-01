@@ -56,6 +56,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.Sampler", icon: "piano" },
       },
       {
+        path: "chord-quiz",
+        name: "chord-quiz",
+        component: () => import("@/views/ChordQuiz/ChordQuiz.vue"),
+        meta: { title: "nav.chordQuiz", icon: "quiz" },
+      },
+      {
+        path: "tuner",
+        name: "tuner",
+        component: () => import("@/views/Tuner/Tuner.vue"),
+        meta: { title: "nav.tuner", icon: "tuner" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },

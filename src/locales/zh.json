@@ -30,6 +30,8 @@
     "chordDisplay": "和弦显示",
     "chordDisplayWithId": "和弦显示 ({moduleId})",
     "chordDictionary": "和弦词典",
+    "chordQuiz": "和弦测验",
+    "tuner": "调音器",
     "routing": "路由",
     "debugger": "调试器",
     "advancedDebug": "高级调试",
@@ -51,7 +53,43 @@
       "routing": "在设备之间路由MIDI消息",
       "debugger": "监控和调试MIDI消息",
       "WaterfallPiano": "瀑布流式钢琴演奏与可视化",
-      "Sampler": "采样器音源 — 加载和演奏各种音色"
+      "Sampler": "采样器音源 — 加载和演奏各种音色",
+      "chordQuiz": "系统随机出和弦，考验您的和弦识别能力",
+      "tuner": "实时音高检测，精准调校您的乐器"
+    },
+    "tuner": {
+      "subtitle": "实时音高检测与调音参考",
+      "start": "开始监听",
+      "stop": "停止监听",
+      "hint": "对着麦克风演奏单音，指针指向音分偏差",
+      "indicator": {
+        "ariaLabel": "音高指示器，显示当前音分偏差"
+      },
+      "info": {
+        "note": "音名",
+        "noteDesc": "国际音名记法",
+        "frequency": "频率",
+        "frequencyDesc": "检测到的基频",
+        "cents": "音分",
+        "centsDesc": "相对最近音级的偏差"
+      },
+      "reference": {
+        "title": "基准音 A4",
+        "sliderAria": "基准音频率滑块",
+        "inputAria": "基准音频率输入",
+        "reset": "恢复默认 440"
+      },
+      "status": {
+        "idle": "未开始",
+        "starting": "正在启动…",
+        "listening": "正在监听",
+        "error": "启动失败",
+        "retry": "重试"
+      },
+      "errors": {
+        "permission": "麦克风权限被拒绝，请在系统设置中允许访问",
+        "generic": "无法访问音频输入设备"
+      }
     }
   },
   "layout": {
@@ -138,6 +176,64 @@
       "major_seventh_sharp_fifth": "大七升五和弦",
       "minor_seventh_sharp_fifth": "小七升五和弦"
     }
+  },
+  "quiz": {
+    "subtitle": "随机出题 · 和弦识别训练",
+    "difficultyLabel": "难度",
+    "modeLabel": "模式",
+    "displayLabel": "展示方式",
+    "countLabel": "题数",
+    "keyboardRange": {
+      "label": "键盘音域",
+      "hint": "答题中可随时调整",
+      "narrow": "窄（13 键）",
+      "medium": "中（25 键）",
+      "wide": "宽（36 键）",
+      "narrowShort": "窄",
+      "mediumShort": "中",
+      "wideShort": "宽"
+    },
+    "difficulty": {
+      "easy": "入门",
+      "intermediate": "进阶",
+      "expert": "专家"
+    },
+    "mode": {
+      "visual": "视觉",
+      "scrambled": "音符乱序",
+      "aural": "听觉",
+      "mix": "混合"
+    },
+    "display": {
+      "keyboard": "键盘",
+      "notation": "五线谱",
+      "both": "两者",
+      "auto": "自动"
+    },
+    "start": "开始答题",
+    "next": "下一题",
+    "prev": "上一题",
+    "showResult": "查看成绩",
+    "startHint": "点击「开始答题」进行一轮和弦识别测验",
+    "play": "播放",
+    "replay": "重播",
+    "correctAnswer": "正确答案",
+    "score": "得分",
+    "accuracy": "正确率",
+    "bestStreak": "最佳连击",
+    "avgTime": "平均用时",
+    "streak": "连击",
+    "perQuestion": "每题用时",
+    "perQuestionResult": "逐题作答结果",
+    "unanswered": "未答",
+    "correct": "答对",
+    "wrong": "答错",
+    "progress": "进度 {current}/{total}",
+    "sessionDone": "本轮完成",
+    "again": "再来一轮",
+    "redo": "重做同题",
+    "backHome": "回首页",
+    "soundUnavailable": "音色未就绪或声音已关闭，无法播放"
   },
   "chordIntervals": {
     "label": "十二半音音程"
