@@ -66,6 +66,14 @@
     "indicator": {
       "ariaLabel": "Pitch indicator showing current cents deviation"
     },
+    "meter": {
+      "title": "Audio Meter",
+      "clip": "CLIP",
+      "level": "Level",
+      "lowFreq": "40Hz",
+      "highFreq": "8kHz",
+      "ariaLabel": "Audio spectrum meter and level"
+    },
     "info": {
       "note": "Note",
       "noteDesc": "Scientific pitch notation",

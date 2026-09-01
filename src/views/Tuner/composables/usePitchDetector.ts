@@ -2,8 +2,15 @@
  * 音高检测 composable — 麦克风采集 + McLeod Pitch Method
  *
  * 管线：getUserMedia → 复用 Tone.js AudioContext → AnalyserNode(4096) →
- * 40ms 循环取时域数据 → @audio/pitch-mcleod → clarity 门限 →
- * 最近 3 帧频率中值滤波 → 音名切换迟滞（连续 3 帧一致才切换）。
+ * 40ms 循环取时域数据 → @audio/pitch-mcleod → clarity 双门限迟滞 →
+ * 最近 5 帧频率中值滤波 → 音名切换迟滞（连续 3 帧一致才切换）。
+ *
+ * 稳定性设计（修复"读数瞬间消失/回中再弹出"）：
+ * - clarity 双门限：进入检测需 ≥ CLARITY_ENTER，保持检测只需 ≥ CLARITY_KEEP，
+ *   避免置信度在单一阈值附近徘徊时读数反复出现/消失；
+ * - 丢失宽限：单帧未检出不清空读数，连续 MAX_MISSED_FRAMES 帧丢失才判定
+ *   信号结束，消除指针回中→弹出的跳变；
+ * - 中值窗口 5 帧，抑制野值。
  *
  * 延迟预算：窗口 ≈85ms(48kHz) + 循环 40ms ≈ 125ms < 200ms。
  * 低频覆盖：A0=27.5Hz 周期 ≈1745 样本@48kHz < 2048（NSDF 半窗）✓
@@ -22,10 +29,14 @@ const logger = createLogger("usePitchDetector");
 const DETECT_INTERVAL_MS = 40;
 /** 分析窗口样本数（NSDF 半窗 = 2048，可检测最低 ≈23Hz@48kHz） */
 const WINDOW_SIZE = 4096;
-/** McLeod clarity 门限，低于视为未检出 */
-const CLARITY_THRESHOLD = 0.9;
+/** clarity 进入门限：从"未检出"进入"已检出"所需置信度 */
+const CLARITY_ENTER = 0.85;
+/** clarity 保持门限：已检出后低于此值才算信号丢失（低于进入门限，防边界抖动） */
+const CLARITY_KEEP = 0.72;
+/** 连续未检出多少帧后才判定信号结束（40ms/帧 → 4 帧 ≈160ms 宽限） */
+const MAX_MISSED_FRAMES = 4;
 /** 中值滤波窗口大小 */
-const MEDIAN_WINDOW = 3;
+const MEDIAN_WINDOW = 5;
 /** 音名切换所需连续一致帧数（迟滞） */
 const NOTE_HYSTERESIS_FRAMES = 3;
 
@@ -40,8 +51,10 @@ export function usePitchDetector() {
   const status = ref<TunerStatus>("idle");
   /** 发生错误时的 i18n key（tuner.errors.*），无错误为空串 */
   const errorKey = ref<string>("");
-  /** 最近一次有效读数（音级已含迟滞），无信号时为 null */
+  /** 最近一次有效读数（音级已含迟滞），信号结束后为 null */
   const reading = shallowRef<PitchReading | null>(null);
+  /** AnalyserNode 实例，供音频仪表组件读取频谱/电平；未启动时为 null */
+  const analyserNode = shallowRef<AnalyserNode | null>(null);
 
   let stream: MediaStream | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
@@ -55,9 +68,23 @@ export function usePitchDetector() {
   let stableMidi: number | null = null;
   let candidateMidi: number | null = null;
   let candidateCount = 0;
+  // 是否处于"已检出"状态（clarity 双门限迟滞）
+  let detected = false;
+  // 连续未检出帧计数（丢失宽限）
+  let missedFrames = 0;
 
   function isListening(): boolean {
     return timer !== null;
+  }
+
+  function resetTracking(): void {
+    freqHistory = [];
+    stableMidi = null;
+    candidateMidi = null;
+    candidateCount = 0;
+    detected = false;
+    missedFrames = 0;
+    reading.value = null;
   }
 
   function handleFrame(): void {
@@ -66,12 +93,26 @@ export function usePitchDetector() {
 
     const fs = analyser.context.sampleRate;
     const result: PitchResult | null = mcleod(frameBuffer, { fs });
-    if (!result || result.clarity < CLARITY_THRESHOLD) {
-      // 信号丢失：清空历史，保留 stableMidi 以便快速恢复
+
+    // clarity 双门限迟滞：未检出状态需达到 ENTER 才算信号到来；
+    // 已检出状态跌破 KEEP 才开始计丢失。
+    if (!result || result.clarity < (detected ? CLARITY_KEEP : CLARITY_ENTER)) {
+      missedFrames += 1;
+      if (detected && missedFrames < MAX_MISSED_FRAMES) {
+        // 宽限期：保持上一次读数，避免指针回中再弹出的跳变
+        return;
+      }
+      // 信号真正结束
+      detected = false;
+      missedFrames = 0;
       freqHistory = [];
       reading.value = null;
       return;
     }
+
+    // 信号恢复：清零丢失计数；freqHistory 保留（跨宽限期快速重锁）
+    missedFrames = 0;
+    detected = true;
 
     // 中值滤波
     freqHistory.push(result.freq);
@@ -130,15 +171,12 @@ export function usePitchDetector() {
       source = ctx.createMediaStreamSource(stream);
       analyser = ctx.createAnalyser();
       analyser.fftSize = WINDOW_SIZE;
+      analyser.smoothingTimeConstant = 0.75;
       source.connect(analyser);
       frameBuffer = new Float32Array(analyser.fftSize);
+      analyserNode.value = analyser;
 
-      // 重置平滑/迟滞状态
-      freqHistory = [];
-      stableMidi = null;
-      candidateMidi = null;
-      candidateCount = 0;
-      reading.value = null;
+      resetTracking();
 
       timer = setInterval(handleFrame, DETECT_INTERVAL_MS);
       status.value = "listening";
@@ -162,6 +200,7 @@ export function usePitchDetector() {
     source?.disconnect();
     source = null;
     analyser = null;
+    analyserNode.value = null;
     frameBuffer = null;
     for (const track of stream?.getTracks() ?? []) track.stop();
     stream = null;
@@ -170,14 +209,12 @@ export function usePitchDetector() {
   function stop(): void {
     if (!isListening() && status.value === "idle") return;
     cleanupNodes();
-    reading.value = null;
-    freqHistory = [];
-    stableMidi = null;
+    resetTracking();
     status.value = "idle";
     logger.info("音高检测已停止");
   }
 
   onUnmounted(stop);
 
-  return { status, errorKey, reading, start, stop };
+  return { status, errorKey, reading, analyserNode, start, stop };
 }

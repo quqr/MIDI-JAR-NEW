@@ -66,6 +66,14 @@
     "indicator": {
       "ariaLabel": "音高指示器，显示当前音分偏差"
     },
+    "meter": {
+      "title": "音频仪表",
+      "clip": "削波",
+      "level": "电平",
+      "lowFreq": "40Hz",
+      "highFreq": "8kHz",
+      "ariaLabel": "音频频谱仪表与音量电平"
+    },
     "info": {
       "note": "音名",
       "noteDesc": "国际音名记法",

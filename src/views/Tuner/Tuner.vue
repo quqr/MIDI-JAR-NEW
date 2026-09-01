@@ -15,6 +15,7 @@ import PitchIndicator from "./components/PitchIndicator.vue";
 import PitchInfoPanel from "./components/PitchInfoPanel.vue";
 import ReferenceToneControls from "./components/ReferenceToneControls.vue";
 import InputStatus from "./components/InputStatus.vue";
+import AudioMeter from "./components/AudioMeter.vue";
 
 // ── 状态 ──
 const a4Frequency = ref<number>(A4_DEFAULT);
@@ -49,6 +50,7 @@ function toggleDetection(): void {
 // ── 进入动画（animejs v4 timeline） ──
 const headerRef = ref<HTMLElement>();
 const indicatorRef = ref<HTMLElement>();
+const meterRef = ref<HTMLElement>();
 const panelRef = ref<HTMLElement>();
 const controlsRef = ref<HTMLElement>();
 let introAnims: { revert: () => void }[] = [];
@@ -61,6 +63,7 @@ onMounted(() => {
   const sections = [
     headerRef.value,
     indicatorRef.value,
+    meterRef.value,
     panelRef.value,
     controlsRef.value,
   ].filter((el): el is HTMLElement => !!el);
@@ -120,6 +123,17 @@ onUnmounted(() => {
         class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5"
       >
         <PitchIndicator :cents="display?.cents ?? null" :active="isListening" />
+      </section>
+
+      <!-- ===== 音频仪表 ===== -->
+      <section
+        ref="meterRef"
+        class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5"
+      >
+        <AudioMeter
+          :analyser="detector.analyserNode.value"
+          :active="isListening"
+        />
       </section>
 
       <!-- ===== 音高信息 ===== -->
