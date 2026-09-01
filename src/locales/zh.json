@@ -56,40 +56,40 @@
       "Sampler": "采样器音源 — 加载和演奏各种音色",
       "chordQuiz": "系统随机出和弦，考验您的和弦识别能力",
       "tuner": "实时音高检测，精准调校您的乐器"
+    }
+  },
+  "tuner": {
+    "subtitle": "实时音高检测与调音参考",
+    "start": "开始监听",
+    "stop": "停止监听",
+    "hint": "对着麦克风演奏单音，指针指向音分偏差",
+    "indicator": {
+      "ariaLabel": "音高指示器，显示当前音分偏差"
     },
-    "tuner": {
-      "subtitle": "实时音高检测与调音参考",
-      "start": "开始监听",
-      "stop": "停止监听",
-      "hint": "对着麦克风演奏单音，指针指向音分偏差",
-      "indicator": {
-        "ariaLabel": "音高指示器，显示当前音分偏差"
-      },
-      "info": {
-        "note": "音名",
-        "noteDesc": "国际音名记法",
-        "frequency": "频率",
-        "frequencyDesc": "检测到的基频",
-        "cents": "音分",
-        "centsDesc": "相对最近音级的偏差"
-      },
-      "reference": {
-        "title": "基准音 A4",
-        "sliderAria": "基准音频率滑块",
-        "inputAria": "基准音频率输入",
-        "reset": "恢复默认 440"
-      },
-      "status": {
-        "idle": "未开始",
-        "starting": "正在启动…",
-        "listening": "正在监听",
-        "error": "启动失败",
-        "retry": "重试"
-      },
-      "errors": {
-        "permission": "麦克风权限被拒绝，请在系统设置中允许访问",
-        "generic": "无法访问音频输入设备"
-      }
+    "info": {
+      "note": "音名",
+      "noteDesc": "国际音名记法",
+      "frequency": "频率",
+      "frequencyDesc": "检测到的基频",
+      "cents": "音分",
+      "centsDesc": "相对最近音级的偏差"
+    },
+    "reference": {
+      "title": "基准音 A4",
+      "sliderAria": "基准音频率滑块",
+      "inputAria": "基准音频率输入",
+      "reset": "恢复默认 440"
+    },
+    "status": {
+      "idle": "未开始",
+      "starting": "正在启动…",
+      "listening": "正在监听",
+      "error": "启动失败",
+      "retry": "重试"
+    },
+    "errors": {
+      "permission": "麦克风权限被拒绝，请在系统设置中允许访问",
+      "generic": "无法访问音频输入设备"
     }
   },
   "layout": {

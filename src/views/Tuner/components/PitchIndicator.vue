@@ -190,16 +190,22 @@ onUnmounted(() => {
       />
 
       <!-- 中央命中圆点（音准时脉冲） -->
+      <!-- transform-box: fill-box 使 scale 以圆自身中心为原点 -->
       <circle
         ref="inTuneDot"
         :cx="CX"
         :cy="CY - RADIUS"
         r="4"
+        style="transform-box: fill-box; transform-origin: center"
         :class="isExact ? 'fill-success' : 'fill-base-content/20'"
       />
 
-      <!-- 指针 -->
-      <g ref="needleGroup" :transform="`rotate(0 ${CX} ${CY})`">
+      <!-- 指针：transform-origin 固定为表盘轴心 (CX, CY)，
+           避免 CSS transform 默认绕 viewBox 中心旋转 -->
+      <g
+        ref="needleGroup"
+        style="transform-box: view-box; transform-origin: 100px 100px"
+      >
         <line
           :x1="CX"
           :y1="CY"

@@ -56,40 +56,40 @@
       "Sampler": "Sampler instruments — load and play various sound libraries",
       "chordQuiz": "Test your chord recognition with randomly generated chords",
       "tuner": "Real-time pitch detection to tune your instrument precisely"
+    }
+  },
+  "tuner": {
+    "subtitle": "Real-time pitch detection and tuning reference",
+    "start": "Start Listening",
+    "stop": "Stop Listening",
+    "hint": "Play a single note into the microphone — the needle shows cents deviation",
+    "indicator": {
+      "ariaLabel": "Pitch indicator showing current cents deviation"
     },
-    "tuner": {
-      "subtitle": "Real-time pitch detection and tuning reference",
-      "start": "Start Listening",
-      "stop": "Stop Listening",
-      "hint": "Play a single note into the microphone — the needle shows cents deviation",
-      "indicator": {
-        "ariaLabel": "Pitch indicator showing current cents deviation"
-      },
-      "info": {
-        "note": "Note",
-        "noteDesc": "Scientific pitch notation",
-        "frequency": "Frequency",
-        "frequencyDesc": "Detected fundamental",
-        "cents": "Cents",
-        "centsDesc": "Deviation from nearest note"
-      },
-      "reference": {
-        "title": "Reference A4",
-        "sliderAria": "Reference tone frequency slider",
-        "inputAria": "Reference tone frequency input",
-        "reset": "Reset to 440"
-      },
-      "status": {
-        "idle": "Not started",
-        "starting": "Starting…",
-        "listening": "Listening",
-        "error": "Start failed",
-        "retry": "Retry"
-      },
-      "errors": {
-        "permission": "Microphone permission denied — allow access in system settings",
-        "generic": "Unable to access audio input device"
-      }
+    "info": {
+      "note": "Note",
+      "noteDesc": "Scientific pitch notation",
+      "frequency": "Frequency",
+      "frequencyDesc": "Detected fundamental",
+      "cents": "Cents",
+      "centsDesc": "Deviation from nearest note"
+    },
+    "reference": {
+      "title": "Reference A4",
+      "sliderAria": "Reference tone frequency slider",
+      "inputAria": "Reference tone frequency input",
+      "reset": "Reset to 440"
+    },
+    "status": {
+      "idle": "Not started",
+      "starting": "Starting…",
+      "listening": "Listening",
+      "error": "Start failed",
+      "retry": "Retry"
+    },
+    "errors": {
+      "permission": "Microphone permission denied — allow access in system settings",
+      "generic": "Unable to access audio input device"
     }
   },
   "layout": {
