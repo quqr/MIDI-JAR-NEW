@@ -222,11 +222,7 @@ export class VisualEffectsManager {
   private buildFluidConfig(): Partial<FluidSimulationConfig> {
     if (!this.settings) return {};
     const bg = this.settings.background;
-    return resolveConfig(
-      bg.fluidQuality,
-      bg.fluidStyle,
-      bg.fluidParams,
-    );
+    return resolveConfig(bg.fluidQuality, bg.fluidStyle, bg.fluidParams);
   }
 
   /**

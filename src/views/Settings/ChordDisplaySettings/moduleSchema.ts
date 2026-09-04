@@ -74,7 +74,11 @@ export const moduleGroups: readonly SettingsGroupSchema[] = [
     fields: [
       { key: "keyboard.colors.black", control: "color", labelKey: "blackKeys" },
       { key: "keyboard.colors.white", control: "color", labelKey: "whiteKeys" },
-      { key: "keyboard.colors.played", control: "color", labelKey: "playedKeys" },
+      {
+        key: "keyboard.colors.played",
+        control: "color",
+        labelKey: "playedKeys",
+      },
     ],
   },
 ];
