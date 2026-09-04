@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { RouterView } from "vue-router";
 import AppNavbar from "@/views/Layout/AppNavbar.vue";
 import CustomCursor from "@/components/CustomCursor.vue";
+import FpsOverlay from "@/components/common/FpsOverlay.vue";
 import { useBrowserSupport } from "@/composables/useBrowserSupport";
 import { isTauri } from "@/utils/tauri";
 
@@ -17,6 +18,7 @@ function dismissMidiWarning() {
 
 <template>
   <CustomCursor />
+  <FpsOverlay />
   <div
     v-if="!inTauri && showMidiWarning && midiWarningVisible"
     class="alert alert-warning m-2"

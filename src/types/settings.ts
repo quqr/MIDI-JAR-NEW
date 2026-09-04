@@ -74,6 +74,8 @@ export type CursorSettings = {
 
 export type GeneralSettings = {
   language: "en" | "zh";
+  /** 全局帧率悬浮显示（界面左上角，所有页面生效） */
+  showFps: boolean;
 };
 
 export type Settings = {

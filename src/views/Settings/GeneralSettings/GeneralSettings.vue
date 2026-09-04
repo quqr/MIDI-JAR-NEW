@@ -54,6 +54,10 @@ const generalGroup: SettingsGroupSchema = {
         { label: "简体中文", value: "zh" },
       ],
     },
+    {
+      key: "showFps",
+      control: "toggle",
+    },
   ],
 };
 
