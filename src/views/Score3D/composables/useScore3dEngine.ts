@@ -1,177 +1,124 @@
-import { onUnmounted, ref, shallowRef } from "vue";
-import { Midi } from "@tonejs/midi";
-import { buildTempoMap } from "@/views/ScoreScroll/utils/beatMap";
-import { MidiFilePlayer } from "@/views/WaterfallPiano/midi/MidiFilePlayer";
-import { SamplerSoundEngine } from "@/views/WaterfallPiano/audio/SamplerSoundEngine";
+import { onUnmounted, ref, shallowRef, type Ref } from "vue";
+import type { ScoreMusicFont } from "@/views/ScoreScroll/types";
+import { useOsmd } from "@/views/ScoreScroll/composables/useOsmd";
+import {
+  useScoreSync,
+  type ScoreSyncViewport,
+} from "@/views/ScoreScroll/composables/useScoreSync";
 import { Score3dEngine } from "../engine/Score3dEngine";
 import { TrailStrategy } from "../engine/TrailStrategy";
 import { layoutTrail } from "../engine/layoutTrail";
-import { toScore3dNotes } from "../engine/noteMapper";
 import {
+  buildScoreTempoMap,
+  buildTrackInfo,
+  toScore3dNotesFromScore,
+} from "../engine/scoreModel";
+import {
+  DEFAULT_ANCHOR_WINDOW,
+  DEFAULT_CAMERA_OFFSET,
   DEFAULT_ENVELOPE_PARAMS,
   DEFAULT_GLOW_PARAMS,
   DEFAULT_LAYOUT_OPTIONS,
 } from "../constants";
-import type { Score3dPlaybackState, TrackInfo } from "../types";
+import type { TrackInfo } from "../types";
+
+/** OSMD 渲染字体（三维场景不显示谱面，仅取数据，字体不影响取值） */
+const OSMD_FONT: ScoreMusicFont = "bravura";
 
 /**
  * 三维乐谱引擎生命周期与播放状态管理 composable。
  *
- * - 数据：@tonejs/midi 解析 → noteMapper → layoutTrail → TrailStrategy
- * - 时间轴/音频：复用 MidiFilePlayer + SamplerSoundEngine（与 ScoreScroll 同款接线）
- * - 分组键：非空轨 ≤ 1 时回退 channel 分组（格式 0 单轨文件）
+ * 数据源为 MusicXML 自驱动（不依赖配对 MIDI）：
+ * - 载入：useOsmd 解析 MusicXML → 音符 / 小节 / 速度标记
+ * - 时间轴：useScoreSync 用小节速度标记构建 tempo map，音符时值驱动发声
+ * - 渲染：scoreModel → layoutTrail → TrailStrategy
  */
-export function useScore3dEngine() {
+export function useScore3dEngine(container: Ref<HTMLElement | undefined>) {
   const engineRef = shallowRef<Score3dEngine | null>(null);
-  const state = ref<Score3dPlaybackState>("idle");
-  const currentTime = ref(0);
-  const duration = ref(0);
   const trackInfos = ref<TrackInfo[]>([]);
   const loaded = ref(false);
-  const loading = ref(false);
-
-  let player: MidiFilePlayer | null = null;
-  let soundEngine: SamplerSoundEngine | null = null;
+  const error = ref<string | null>(null);
   const visibleTracks = ref<Set<number>>(new Set());
+
+  const { loadScore, loading } = useOsmd(container);
+
+  // 三维场景无二维滚动视口，传空视口；useScoreSync 内相关分支已做空值保护
+  const viewport = ref<ScoreSyncViewport | null>(null);
+  const scanlinePosition = ref(50);
+  const {
+    playbackState: state,
+    currentTime,
+    duration,
+    play,
+    pause,
+    stop,
+    seek,
+    setScoreData,
+  } = useScoreSync({ viewport, scanlinePosition });
 
   function onEngineReady(engine: Score3dEngine): void {
     engineRef.value = engine;
-    engine.frameCallback = () => {
-      if (state.value === "playing" && player) {
-        const t = player.getCurrentTime();
-        currentTime.value = t;
-        return t;
-      }
-      return currentTime.value;
-    };
+    // 每帧取播放时刻：由 useScoreSync 的 RAF 循环驱动
+    engine.frameCallback = () => currentTime.value;
   }
 
   async function load(file: File): Promise<void> {
     const engine = engineRef.value;
     if (!engine || loading.value) return;
-    loading.value = true;
+    error.value = null;
     try {
       const buffer = await file.arrayBuffer();
-      const midi = new Midi(buffer);
+      // null = 期间发生了新的加载/清空（会话被取代），静默忽略
+      const result = await loadScore(buffer, OSMD_FONT);
+      if (!result) return;
 
-      const nonEmptyCount = midi.tracks.filter((t) => t.notes.length > 0).length;
-      const groupBy = nonEmptyCount <= 1 ? "channel" : "track";
-      const tempoMap = buildTempoMap(
-        midi.header.tempos.map((t) => ({
-          ticks: t.ticks,
-          bpm: t.bpm,
-          time: t.time,
-        })),
-        midi.header.ppq,
-      );
-      const input = midi.tracks.map((t) => ({
-        channel: t.channel,
-        notes: t.notes,
-      }));
-      const { notes, tracks: infos, duration: total } = toScore3dNotes(input, {
-        groupBy,
-        tempoMap,
-      });
-      const trailTracks = layoutTrail(notes, DEFAULT_LAYOUT_OPTIONS);
+      const tempoMap = buildScoreTempoMap(result.tempoMarks, result.defaultBpm);
+      const notes = toScore3dNotesFromScore(result.notes, tempoMap);
+      const tracks = layoutTrail(notes, DEFAULT_LAYOUT_OPTIONS);
 
       engine.setStrategy(
-        new TrailStrategy(trailTracks, notes, {
+        new TrailStrategy(tracks, notes, {
           layout: DEFAULT_LAYOUT_OPTIONS,
           glow: DEFAULT_GLOW_PARAMS,
           envelope: DEFAULT_ENVELOPE_PARAMS,
-          anchorWindow: 0.15,
-          cameraOffset: { x: -6, y: 4, z: 10 },
+          anchorWindow: DEFAULT_ANCHOR_WINDOW,
+          cameraOffset: DEFAULT_CAMERA_OFFSET,
         }),
       );
-      engine.frameCallback = () => {
-        if (state.value === "playing" && player) {
-          const t = player.getCurrentTime();
-          currentTime.value = t;
-          return t;
-        }
-        return currentTime.value;
-      };
+      engine.frameCallback = () => currentTime.value;
 
-      trackInfos.value = infos;
-      visibleTracks.value = new Set(infos.map((i) => i.trackIndex));
-      for (const info of infos) engine.setTrackVisible(info.trackIndex, true);
+      // 播放时间轴（音符时值 + 小节速度）+ 采样器发声
+      setScoreData({
+        notes: result.notes,
+        systems: result.systems,
+        measures: result.measures,
+        tempoMarks: result.tempoMarks,
+        defaultBpm: result.defaultBpm,
+      });
 
-      // 播放器（时间轴 + 音频）
-      stop();
-      if (!soundEngine) {
-        soundEngine = new SamplerSoundEngine();
-        void soundEngine.init();
+      trackInfos.value = buildTrackInfo(notes);
+      visibleTracks.value = new Set(trackInfos.value.map((i) => i.trackIndex));
+      for (const info of trackInfos.value) {
+        engine.setTrackVisible(info.trackIndex, true);
       }
-      player = new MidiFilePlayer();
-      player.callbacks = {
-        onNoteOn: (m, v) => void soundEngine?.noteOn(m, v),
-        onNoteOff: (m) => soundEngine?.noteOff(m),
-        onProgress: (cur, dur) => {
-          currentTime.value = cur;
-          duration.value = dur;
-        },
-        onPlaybackEnd: () => {
-          state.value = "idle";
-        },
-      };
-      await player.loadFile(file);
-      duration.value = player.getDuration();
 
-      currentTime.value = 0;
-      state.value = "idle";
       loaded.value = true;
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  function play(): void {
-    if (!player || !loaded.value) return;
-    if (state.value !== "playing") {
-      player.startPlayback();
-      state.value = "playing";
-    }
-  }
-
-  function pause(): void {
-    if (state.value !== "playing") return;
-    player?.pausePlayback();
-    state.value = "paused";
-  }
-
-  function stop(): void {
-    player?.stopPlayback();
-    state.value = "idle";
-    currentTime.value = 0;
-  }
-
-  function seek(time: number): void {
-    if (!player || !loaded.value) return;
-    const clamped = Math.min(Math.max(0, time), duration.value);
-    player.seekTo(clamped);
-    currentTime.value = clamped;
-    if (state.value === "playing") {
-      // seek 后保持播放：EventScheduler 游标已由 seekTo 重置
-      player.startPlayback();
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      loaded.value = false;
     }
   }
 
   function setTrackVisible(trackIndex: number, visible: boolean): void {
-    if (visible) {
-      visibleTracks.value.add(trackIndex);
-    } else {
-      visibleTracks.value.delete(trackIndex);
-    }
+    if (visible) visibleTracks.value.add(trackIndex);
+    else visibleTracks.value.delete(trackIndex);
     // 触发 Set 的响应式更新
     visibleTracks.value = new Set(visibleTracks.value);
     engineRef.value?.setTrackVisible(trackIndex, visible);
   }
 
   onUnmounted(() => {
-    player?.stopPlayback();
-    player = null;
-    soundEngine?.dispose();
-    soundEngine = null;
+    stop();
     engineRef.value?.dispose();
     engineRef.value = null;
   });
@@ -185,6 +132,7 @@ export function useScore3dEngine() {
     visibleTracks,
     loaded,
     loading,
+    error,
     // 动作
     onEngineReady,
     load,

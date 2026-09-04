@@ -38,7 +38,7 @@
       "Sampler": "Sampler instruments — load and play various sound libraries",
       "chordQuiz": "Test your chord recognition with randomly generated chords",
       "tuner": "Real-time pitch detection to tune your instrument precisely",
-      "scoreScroll": "MusicXML score scrolling playback with note hit effects"
+      "scoreScroll": "MusicXML score scrolling playback"
     }
   },
   "tuner": {
@@ -92,6 +92,7 @@
       "load": "Import",
       "clear": "Clear",
       "loaded": "Loaded: {name}",
+      "parsing": "Loading & parsing score…",
       "parseError": "Failed to parse file, please check the format"
     },
     "transport": {
@@ -104,16 +105,22 @@
       "keySig": "Key Sig",
       "bar": "Bar"
     },
-    "effects": {
-      "title": "Particles & Effects",
-      "driftInDistance": "Drift-in Distance",
-      "scatterRange": "Scatter Range",
-      "fragmentDelay": "Fragment Delay",
-      "highlightRange": "Highlight Range",
-      "highlightIntensity": "Highlight Intensity",
-      "highlightSize": "Highlight Size",
+    "display": {
+      "title": "Playback Display",
       "scanlinePosition": "Scanline Position",
-      "snapPosition": "Snap Position"
+      "snapPosition": "Staff Line Position",
+      "showScanline": "Show Scanline",
+      "showReveal": "Reveal on Play",
+      "flyInDistance": "Fly-in Distance",
+      "flyInScatter": "Vertical Scatter",
+      "flyInDelay": "Fly-in Delay",
+      "flyInDuration": "Fly-in Band Width",
+      "glowRange": "Glow Range",
+      "glowIntensity": "Glow Intensity",
+      "glowSize": "Glow Size",
+      "showFlyIn": "Note Fly-in",
+      "showGlow": "Notehead Glow",
+      "glowColor": "Glow Color"
     },
     "appearance": {
       "title": "Appearance",
@@ -395,6 +402,8 @@
     "generalSettings": {
       "language": "Language",
       "languageHint": "Choose the application language",
+      "showFps": "Show FPS",
+      "showFpsHint": "Show live FPS in the top-left corner (applies to all pages)",
       "theme": "Theme",
       "themeHint": "Choose the application theme"
     },
@@ -440,6 +449,12 @@
       "showKeySignatureTextHint": "Display key signature name text above the staff",
       "showBarlines": "Show Barlines",
       "showBarlinesHint": "Display barlines at the beginning and end of the staff",
+      "showNoteNames": "Show Note Names",
+      "showNoteNamesHint": "Display note names below the notes",
+      "showStaffLines": "Show Staff Lines",
+      "showStaffLinesHint": "Display the five lines of the staff",
+      "showTimeSignature": "Show Time Signature",
+      "showTimeSignatureHint": "Display the time signature at the beginning of the staff",
       "filterClef": "Filter Notes by Clef",
       "filterClefHint": "When off, single-staff renders all notes; when on, only notes matching the clef are rendered",
       "layoutOptions": "Layout Options",
@@ -474,6 +489,8 @@
       "staffLineColorHint": "Color of the staff lines",
       "noteColor": "Note Color",
       "noteColorHint": "Color of the notes",
+      "noteHighlightColor": "Note Highlight Color",
+      "noteHighlightColorHint": "Highlight color for active notes (leave empty for no highlight)",
       "fontSize": "Font Size",
       "fontSizeHint": "Font size for note names and text labels",
       "noteDuration": "Note Duration",
@@ -553,18 +570,36 @@
       "noteStartHint": "First note of keyboard",
       "noteEnd": "Note End",
       "noteEndHint": "Last note of keyboard",
+      "wrapKeyboard": "Wrap Keyboard",
+      "wrapKeyboardHint": "Map notes outside of keyboard to closest octave",
+      "displaySustainedNotes": "Display Sustained Notes",
+      "displaySustainedNotesHint": "Display notes still sustained (if use sustain is enabled)",
       "keyNames": "Key Names",
       "keyNamesHint": "Choose what names to display on keys",
+      "playedKeyInfo": "Played Key Info",
+      "playedKeyInfoHint": "Choose what played info to display on keys",
       "playedKeyLabel": "Played Key Label",
       "playedKeyLabelHint": "Choose what played info to display above keys",
+      "fadeOutDuration": "Fade out duration",
+      "fadeOutDurationHint": "Played keys will fade out when released",
       "keyboardSkin": "Keyboard Skin",
       "skin": "Skin",
       "skinHint": "Choose the appearance of the keyboard",
+      "textOpacity": "Text Opacity",
+      "textOpacityHint": "Factor of the black keys width",
+      "keyHeight": "Key Height",
+      "keyHeightHint": "Factor of the black keys width",
+      "blackKeyRatio": "Black Key Ratio",
+      "blackKeyRatioHint": "Percentage of white keys height",
       "keyBorderRadius": "Key Border Radius",
+      "keyBevel": "Key Bevel",
+      "keyBevelHint": "Adds a bevel gradient to keys",
       "keyboardColors": "Keyboard Colors",
       "blackKeys": "Black Keys",
       "whiteKeys": "White Keys",
       "playedKeys": "Played Keys",
+      "wrappedKeys": "Wrapped Keys",
+      "sustainedKeys": "Sustained Keys",
       "newModule": "New module",
       "chordDisplayList": "Chord display list",
       "addSession": "Add session",
@@ -580,6 +615,12 @@
         "octave": "Only C",
         "pitchClass": "Pitch Class",
         "note": "Note"
+      },
+      "keyInfoOptions": {
+        "none": "None",
+        "tonic": "Tonic Dot",
+        "interval": "Chord Intervals",
+        "tonicAndInterval": "Tonic Dot + Intervals"
       },
       "labelOptions": {
         "none": "None",
@@ -610,6 +651,7 @@
       "showNoteNames": "Show Note Names",
       "colors": "Colors",
       "useThemeColors": "Use Theme Colors",
+      "gradientIntensity": "Gradient Intensity",
       "whiteKeyColor": "White Key Color",
       "blackKeyColor": "Black Key Color",
       "pressedKeyColor": "Pressed Key Color",
@@ -657,7 +699,10 @@
       "area": "Area",
       "glowLayers": "Glow Layers",
       "animation": "Animation",
+      "beamShape": "Beam Shape",
       "glowSettings": "Glow Settings",
+      "rainbowSettings": "Rainbow Settings",
+      "dualSettings": "Dual Settings",
       "colors": "Colors"
     },
     "auraPadding": "Glow Range",
@@ -666,11 +711,19 @@
     "auraOuterBlur": "Outer Blur",
     "auraOuterOpacity": "Outer Brightness",
     "auraDuration": "Rotation Period (s)",
+    "auraRotationRange": "Rotation Range (deg)",
+    "auraBeamAngle": "Beam Start Angle (deg)",
+    "auraBeamWidth": "Beam Width (deg)",
+    "auraGlowExtent": "Glow Extent (%)",
     "auraGlowPeakOpacity": "Glow Peak Brightness (%)",
     "auraGlowPeakBlur": "Glow Peak Blur (px)",
     "auraGlowAfterPeakOpacity": "Outer Peak Brightness (%)",
     "auraGlowAfterPeakBlur": "Outer Peak Blur (px)",
+    "auraRainbowMargin": "Rainbow Margin (%)",
+    "auraDualOffRatio": "Off Ratio (%)",
+    "auraDualOnRatio": "On Ratio (%)",
     "auraPrimaryColor": "Primary Color",
+    "auraBackgroundColor": "Background Color",
     "colorScheme": "Color Scheme",
     "speed": "Speed",
     "lookAhead": "Lead Time",
@@ -690,6 +743,7 @@
       "standard": "Standard",
       "turbulent": "Turbulent"
     },
+    "fluidAdvanced": "Advanced Params",
     "fluidAdvancedParams": "Fluid Advanced Params",
     "fluidLayerPosition": "Fluid Layer Position",
     "fluidLayerPositionOptions": {
@@ -697,9 +751,9 @@
       "bottom": "Bottom (above background)"
     },
     "keyRangeOptions": {
-      "49": "49",
-      "61": "61",
       "88": "88",
+      "61": "61",
+      "49": "49",
       "custom": "Custom"
     },
     "keyLabelOptions": {
@@ -793,6 +847,9 @@
         "showKeySignature": "Show Key Signature",
         "showKeySignatureText": "Show Key Signature Text",
         "showBarlines": "Show Barlines",
+        "showTimeSignature": "Show Time Signature",
+        "showNoteNames": "Show Note Names",
+        "showStaffLines": "Show Staff Lines",
         "filterClef": "Filter Notes by Clef",
         "filterClefHint": "Off: render all notes on single staff. On: only render notes matching the clef"
       },
@@ -820,6 +877,7 @@
         "backgroundColor": "Background Color",
         "staffLineColor": "Staff Line Color",
         "noteColor": "Note Color",
+        "noteHighlightColor": "Note Highlight Color",
         "fontSize": "Font Size",
         "noteDuration": "Note Duration",
         "noteDurationHint": "VexFlow duration string: 1=whole, 2=half, 4=quarter, 8=eighth"
@@ -828,6 +886,8 @@
     "waterfall": {
       "fluid": {
         "title": "Fluid Advanced",
+        "fluidAdvanced": "Fluid Advanced Mode",
+        "fluidAdvancedHint": "Enable to adjust fluid simulation details",
         "simResolution": "Simulation Resolution",
         "splatRadius": "Splat Radius",
         "splatColorHue": "Splat Color Hue",
@@ -848,13 +908,25 @@
         "customTo": "Custom End Note",
         "keyBorderWidth": "Key Border Width",
         "keyBorderColor": "Key Border Color",
+        "gapBlur": "Gap Blur",
         "separatorColor": "Separator Color",
         "separatorThickness": "Separator Thickness",
+        "staffVisible": "Show Staff",
+        "synthesiaFlowDirection": "Synthesia Flow Direction",
+        "flowDirectionOptions": {
+          "up": "Up",
+          "down": "Down"
+        },
         "defaultVelocity": "Default Velocity",
         "defaultVelocityHint": "Velocity used when playing via computer keyboard (0-127)"
       },
       "midiFile": {
         "title": "MIDI File Advanced",
+        "selectedTracks": "Selected Tracks",
+        "selectedTracksHint": "Currently playing track indices",
+        "noTracks": "No tracks selected",
+        "trackColors": "Track Colors",
+        "trackColorN": "Track {n} Color",
         "rightHandTrackIdx": "Right Hand Track Index",
         "rightHandTrackIdxHint": "Track index inferred as right hand",
         "leftHandTrackIdx": "Left Hand Track Index",

@@ -1,7 +1,7 @@
 /**
  * 乐谱滚动（Score Scroll）模块类型定义
  *
- * 领域术语见 CONTEXT.md：扫描线、吸顶位置、音符命中、音符命中特效。
+ * 领域术语见 CONTEXT.md：扫描线、谱面行位置、渐显。
  */
 
 /** 音乐字体（OSMD 内置 VexFlow 支持的 SMuFL 字体子集） */
@@ -11,26 +11,44 @@ export type ScoreMusicFont = "bravura" | "petaluma" | "gonville";
 export type ScoreBackgroundStyle = "theme" | "paper" | "black" | "gradient";
 
 /**
- * 音符命中特效参数（0-100 百分比，渲染时换算为实际值）
- * 名称与原站 score-scroll.cn 的特效面板对齐
+ * 谱面显示设置（0-100 的连续参数为百分比）
+ *
+ * 播放动画三件套：飞入（fly-in）、符头高光（glow）、渐显 + 扫描线。
+ * 术语见 CONTEXT.md：飞入（Fly-in）、符头高光（Notehead Glow）。
  */
-export interface ScoreEffectSettings {
-  /** 飘入距离：谱面行入场动画的位移距离 */
-  driftInDistance: number;
-  /** 散落范围：粒子爆散时的位移半径 */
-  scatterRange: number;
-  /** 碎片延迟：碎片粒子间的 stagger 延迟 */
-  fragmentDelay: number;
-  /** 高光范围：命中高光框相对音符外接框的扩展范围 */
-  highlightRange: number;
-  /** 高光强度：命中高光的透明度/辉光强度 */
-  highlightIntensity: number;
-  /** 高光大小：命中高光框的基础尺寸 */
-  highlightSize: number;
-  /** 扫描线位置：扫描线在视口内的垂直位置（0=顶部，100=底部） */
+export interface ScoreDisplaySettings {
+  /** 扫描线位置：竖直扫描线在视口内的水平位置（0=最左，100=最右），当前发声音符对齐于此 */
   scanlinePosition: number;
-  /** 吸顶位置：换行时新谱面行在视口内的吸附锚点位置 */
+  /** 谱面行位置：单行谱线在视口内的垂直位置（0=顶部，100=底部） */
   snapPosition: number;
+  /** 是否显示扫描线（竖直播放指示线） */
+  showScanline: boolean;
+  /** 是否开启渐显：播放时未播到的区域变暗，随播放逐渐显现 */
+  showReveal: boolean;
+  /** 飞入：横向飞入距离（0-100，100 ≈ 800px，自揭示边缘右侧飞入） */
+  flyInDistance: number;
+  /** 飞入：纵向散落范围（0-100，100 ≈ ±200px 垂直散落） */
+  flyInScatter: number;
+  /** 飞入：起步延迟（0-100，100 ≈ 600px 的额外起步距离） */
+  flyInDelay: number;
+  /**
+   * 飞入带宽度（0-100，100 ≈ 300px，默认 50 = 150px）：
+   * 图元越过揭示边缘（视口右缘内缩 50px）后在此宽度内完成飞入，
+   * 见 ADR 0012（空间揭示带）
+   */
+  flyInDuration: number;
+  /** 高光：作用范围（0-100，映射为播放头两侧的世界坐标 px 半径） */
+  glowRange: number;
+  /** 高光：强度（0-100，映射光斑峰值不透明度） */
+  glowIntensity: number;
+  /** 高光：大小（0-100，映射单个光斑半径） */
+  glowSize: number;
+  /** 飞入开关（默认开） */
+  showFlyIn: boolean;
+  /** 符头高光开关（默认开） */
+  showGlow: boolean;
+  /** 高光颜色（hex，如 "#3b82f6"） */
+  glowColor: string;
 }
 
 /** 外观设置 */
@@ -43,11 +61,11 @@ export interface ScoreAppearanceSettings {
 
 /** 乐谱滚动模块设置（持久化） */
 export interface ScoreScrollSettings {
-  effects: ScoreEffectSettings;
+  display: ScoreDisplaySettings;
   appearance: ScoreAppearanceSettings;
 }
 
-/** 从 OSMD 提取的单个音符信息（用于同步与特效定位） */
+/** 从 OSMD 提取的单个音符信息（用于播放同步与滚动定位） */
 export interface ScoreNoteInfo {
   /** MIDI 音高（0-127），无固定音高的音符（如休止符）不会出现在列表中 */
   midi: number;

@@ -2,6 +2,21 @@
   <div class="relative h-full w-full overflow-hidden">
     <Score3dCanvas @ready="onEngineReady" />
 
+    <!-- OSMD 离屏渲染容器：只为取数据（音符坐标 / 谱表归属 / 速度标记） -->
+    <div
+      ref="osmdContainer"
+      aria-hidden="true"
+      class="pointer-events-none absolute -left-[10000px] top-0 w-[1200px] opacity-0"
+    />
+
+    <!-- 加载失败提示 -->
+    <div
+      v-if="error"
+      class="alert alert-error absolute left-1/2 top-4 z-20 w-[min(92%,36rem)] -translate-x-1/2"
+    >
+      <span class="text-sm">{{ error }}</span>
+    </div>
+
     <!-- 顶部提示 -->
     <div
       v-if="!loaded"
@@ -29,7 +44,7 @@
           {{ $t("score3d.load") }}
           <input
             type="file"
-            accept=".mid,.midi"
+            accept=".musicxml,.mxl,.xml"
             class="hidden"
             @change="onFileChange"
           />
@@ -76,7 +91,10 @@
         </span>
       </div>
 
-      <div v-if="trackInfos.length > 0" class="flex flex-wrap items-center gap-2">
+      <div
+        v-if="trackInfos.length > 0"
+        class="flex flex-wrap items-center gap-2"
+      >
         <span class="text-xs text-base-content/60">
           {{ $t("score3d.tracks") }}
         </span>
@@ -89,21 +107,42 @@
           "
           :style="trackButtonStyle(info.trackIndex)"
           @click="
-            setTrackVisible(info.trackIndex, !visibleTracks.has(info.trackIndex))
+            setTrackVisible(
+              info.trackIndex,
+              !visibleTracks.has(info.trackIndex),
+            )
           "
         >
-          {{ $t("score3d.track") }} {{ info.trackIndex + 1 }} ({{ info.noteCount }})
+          {{ $t("score3d.track") }} {{ info.trackIndex + 1 }} ({{
+            info.noteCount
+          }})
         </button>
       </div>
+
+      <!-- 视角操作提示 -->
+      <p
+        v-if="loaded"
+        class="text-[11px] leading-none text-base-content/40 select-none"
+      >
+        {{ $t("score3d.viewHint") }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { Icon } from "@/components/Icon";
-import { TRACK_COLORS } from "../constants";
+import { TRACK_COLORS } from "./constants";
 import { useScore3dEngine } from "./composables/useScore3dEngine";
 import Score3dCanvas from "./components/Score3dCanvas.vue";
+
+/**
+ * OSMD 需要一个真实参与布局的容器才能算出音符坐标与谱表归属。
+ * 三维场景不显示谱面，故把容器移出视野但保留布局尺寸
+ * （不能用 display:none，否则 OSMD 量不到尺寸）。
+ */
+const osmdContainer = ref<HTMLElement>();
 
 const {
   currentTime,
@@ -112,6 +151,7 @@ const {
   visibleTracks,
   loaded,
   loading,
+  error,
   onEngineReady,
   load,
   play,
@@ -119,7 +159,7 @@ const {
   stop,
   seek,
   setTrackVisible,
-} = useScore3dEngine();
+} = useScore3dEngine(osmdContainer);
 
 function onFileChange(event: Event): void {
   const input = event.target as HTMLInputElement;

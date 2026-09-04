@@ -1,8 +1,4 @@
-import type {
-  EnvelopeParams,
-  GlowParams,
-  TrailLayoutOptions,
-} from "./types";
+import type { EnvelopeParams, GlowParams, TrailLayoutOptions } from "./types";
 
 /**
  * MusicXML 无逐音符力度标记（只有 pp/mf/ff 之类的表情记号，常见导出器不落 <velocity>），

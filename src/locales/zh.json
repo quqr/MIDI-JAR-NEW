@@ -38,7 +38,7 @@
       "Sampler": "采样器音源 — 加载和演奏各种音色",
       "chordQuiz": "系统随机出和弦，考验您的和弦识别能力",
       "tuner": "实时音高检测，精准调校您的乐器",
-      "scoreScroll": "MusicXML 乐谱滚动播放与音符特效可视化"
+      "scoreScroll": "MusicXML 乐谱随播放滚动可视化"
     }
   },
   "tuner": {
@@ -92,6 +92,7 @@
       "load": "导入",
       "clear": "清除",
       "loaded": "已加载：{name}",
+      "parsing": "正在加载与解析谱面…",
       "parseError": "文件解析失败，请检查文件格式"
     },
     "transport": {
@@ -104,16 +105,22 @@
       "keySig": "调号",
       "bar": "小节"
     },
-    "effects": {
-      "title": "粒子与特效",
-      "driftInDistance": "飘入距离",
-      "scatterRange": "散落范围",
-      "fragmentDelay": "碎片延迟",
-      "highlightRange": "高光范围",
-      "highlightIntensity": "高光强度",
-      "highlightSize": "高光大小",
+    "display": {
+      "title": "播放显示",
       "scanlinePosition": "扫描线位置",
-      "snapPosition": "吸顶位置"
+      "snapPosition": "谱面行位置",
+      "showScanline": "显示扫描线",
+      "showReveal": "播放渐显",
+      "flyInDistance": "飞入距离",
+      "flyInScatter": "纵向散落",
+      "flyInDelay": "飞入延迟",
+      "flyInDuration": "飞入带宽度",
+      "glowRange": "高光范围",
+      "glowIntensity": "高光强度",
+      "glowSize": "高光大小",
+      "showFlyIn": "音符飞入",
+      "showGlow": "符头高光",
+      "glowColor": "高光颜色"
     },
     "appearance": {
       "title": "外观",
@@ -395,6 +402,8 @@
     "generalSettings": {
       "language": "语言",
       "languageHint": "选择应用语言",
+      "showFps": "显示帧数",
+      "showFpsHint": "在界面左上角显示实时帧率（所有页面生效）",
       "theme": "主题",
       "themeHint": "选择应用主题"
     },
@@ -440,6 +449,12 @@
       "showKeySignatureTextHint": "在谱表上方显示调号名称文本",
       "showBarlines": "显示小节线",
       "showBarlinesHint": "在谱表两端显示小节线",
+      "showNoteNames": "显示音名",
+      "showNoteNamesHint": "在音符下方标注音名",
+      "showStaffLines": "显示五线谱线",
+      "showStaffLinesHint": "显示五线谱的五条谱线",
+      "showTimeSignature": "显示拍号",
+      "showTimeSignatureHint": "在谱表开头显示拍号标记",
       "filterClef": "按谱号过滤音符",
       "filterClefHint": "关闭时单谱表渲染所有音符，开启时仅渲染匹配谱号的音符",
       "layoutOptions": "布局选项",
@@ -474,6 +489,8 @@
       "staffLineColorHint": "五线谱谱线的颜色",
       "noteColor": "音符颜色",
       "noteColorHint": "音符的颜色",
+      "noteHighlightColor": "音符高亮颜色",
+      "noteHighlightColorHint": "活动音符的高亮颜色（留空则不高亮）",
       "fontSize": "字体大小",
       "fontSizeHint": "音名和文本标签的字体大小",
       "noteDuration": "音符时值",
@@ -553,18 +570,36 @@
       "noteStartHint": "键盘的第一个音符",
       "noteEnd": "结束音符",
       "noteEndHint": "键盘的最后一个音符",
+      "wrapKeyboard": "键盘折叠",
+      "wrapKeyboardHint": "将键盘范围外的音符映射到最近的八度",
+      "displaySustainedNotes": "显示延音音符",
+      "displaySustainedNotesHint": "显示仍在延音的音符 (需启用延音踏板)",
       "keyNames": "键名",
       "keyNamesHint": "选择琴键上显示的名称",
+      "playedKeyInfo": "弹奏键信息",
+      "playedKeyInfoHint": "选择琴键上显示的弹奏信息",
       "playedKeyLabel": "弹奏键标签",
       "playedKeyLabelHint": "选择琴键上方显示的弹奏信息",
+      "fadeOutDuration": "淡出时长",
+      "fadeOutDurationHint": "释放琴键后淡出效果",
       "keyboardSkin": "键盘外观",
       "skin": "皮肤",
       "skinHint": "选择键盘的外观样式",
+      "textOpacity": "文字透明度",
+      "textOpacityHint": "黑键宽度的比例因子",
+      "keyHeight": "键高",
+      "keyHeightHint": "黑键宽度的比例因子",
+      "blackKeyRatio": "黑键比例",
+      "blackKeyRatioHint": "白键高度的百分比",
       "keyBorderRadius": "键圆角",
+      "keyBevel": "键斜面",
+      "keyBevelHint": "为琴键添加斜面渐变效果",
       "keyboardColors": "键盘颜色",
       "blackKeys": "黑键",
       "whiteKeys": "白键",
       "playedKeys": "弹奏键",
+      "wrappedKeys": "折叠键",
+      "sustainedKeys": "延音键",
       "newModule": "新模块",
       "chordDisplayList": "和弦显示列表",
       "addSession": "添加会话",
@@ -580,6 +615,12 @@
         "octave": "仅C",
         "pitchClass": "音名",
         "note": "音符"
+      },
+      "keyInfoOptions": {
+        "none": "无",
+        "tonic": "主音点",
+        "interval": "和弦音程",
+        "tonicAndInterval": "主音点 + 音程"
       },
       "labelOptions": {
         "none": "无",
@@ -610,6 +651,7 @@
       "showNoteNames": "显示音名",
       "colors": "颜色",
       "useThemeColors": "使用主题颜色",
+      "gradientIntensity": "渐变强度",
       "whiteKeyColor": "白键颜色",
       "blackKeyColor": "黑键颜色",
       "pressedKeyColor": "按下键颜色",
@@ -657,7 +699,10 @@
       "area": "区域",
       "glowLayers": "辉光层",
       "animation": "动画",
+      "beamShape": "光束形状",
       "glowSettings": "辉光设置",
+      "rainbowSettings": "彩虹设置",
+      "dualSettings": "双色设置",
       "colors": "颜色"
     },
     "auraPadding": "发光范围 (px)",
@@ -666,11 +711,19 @@
     "auraOuterBlur": "外层模糊 (px)",
     "auraOuterOpacity": "外层亮度 (%)",
     "auraDuration": "旋转周期 (s)",
+    "auraRotationRange": "旋转范围 (deg)",
+    "auraBeamAngle": "光束起始角 (deg)",
+    "auraBeamWidth": "光束宽度 (deg)",
+    "auraGlowExtent": "光晕扩散 (%)",
     "auraGlowPeakOpacity": "光晕峰值亮度 (%)",
     "auraGlowPeakBlur": "光晕峰值模糊 (px)",
     "auraGlowAfterPeakOpacity": "外层峰值亮度 (%)",
     "auraGlowAfterPeakBlur": "外层峰值模糊 (px)",
+    "auraRainbowMargin": "彩虹边距 (%)",
+    "auraDualOffRatio": "关闭比例 (%)",
+    "auraDualOnRatio": "开启比例 (%)",
     "auraPrimaryColor": "主色",
+    "auraBackgroundColor": "背景色",
     "colorScheme": "配色方案",
     "speed": "速度",
     "lookAhead": "出现提前量",
@@ -690,6 +743,7 @@
       "standard": "标准",
       "turbulent": "湍流"
     },
+    "fluidAdvanced": "高级参数",
     "fluidAdvancedParams": "流体高级参数",
     "fluidLayerPosition": "流体层位置",
     "fluidLayerPositionOptions": {
@@ -697,9 +751,9 @@
       "bottom": "底层（在背景之上）"
     },
     "keyRangeOptions": {
-      "49": "49",
-      "61": "61",
       "88": "88",
+      "61": "61",
+      "49": "49",
       "custom": "自定义"
     },
     "keyLabelOptions": {
@@ -792,6 +846,9 @@
         "showKeySignature": "显示调号",
         "showKeySignatureText": "显示调号文字",
         "showBarlines": "显示小节线",
+        "showTimeSignature": "显示拍号",
+        "showNoteNames": "显示音名",
+        "showStaffLines": "显示五线谱线",
         "filterClef": "按谱号过滤音符",
         "filterClefHint": "关闭时单谱表渲染所有音符，开启时仅渲染匹配谱号的音符"
       },
@@ -819,6 +876,7 @@
         "backgroundColor": "背景颜色",
         "staffLineColor": "谱线颜色",
         "noteColor": "音符颜色",
+        "noteHighlightColor": "音符高亮颜色",
         "fontSize": "字号",
         "noteDuration": "音符时值",
         "noteDurationHint": "VexFlow 时值字符串：1=全音符, 2=二分音符, 4=四分音符, 8=八分音符"
@@ -827,6 +885,8 @@
     "waterfall": {
       "fluid": {
         "title": "流体高级参数",
+        "fluidAdvanced": "流体高级模式",
+        "fluidAdvancedHint": "启用后可调整流体模拟的详细参数",
         "simResolution": "模拟分辨率",
         "splatRadius": "溅射半径",
         "splatColorHue": "溅射色相",
@@ -847,13 +907,25 @@
         "customTo": "自定义结束音",
         "keyBorderWidth": "按键边框宽度",
         "keyBorderColor": "按键边框颜色",
+        "gapBlur": "间隙模糊",
         "separatorColor": "分隔线颜色",
         "separatorThickness": "分隔线粗细",
+        "staffVisible": "显示谱表",
+        "synthesiaFlowDirection": "Synthesia 流动方向",
+        "flowDirectionOptions": {
+          "up": "上升",
+          "down": "下降"
+        },
         "defaultVelocity": "默认力度",
         "defaultVelocityHint": "电脑键盘弹奏时使用的力度（0-127）"
       },
       "midiFile": {
         "title": "MIDI文件高级参数",
+        "selectedTracks": "选中音轨",
+        "selectedTracksHint": "当前正在播放的音轨索引",
+        "noTracks": "暂无选中音轨",
+        "trackColors": "音轨颜色",
+        "trackColorN": "音轨 {n} 颜色",
         "rightHandTrackIdx": "右手轨道索引",
         "rightHandTrackIdxHint": "推断为右手的轨道索引",
         "leftHandTrackIdx": "左手轨道索引",

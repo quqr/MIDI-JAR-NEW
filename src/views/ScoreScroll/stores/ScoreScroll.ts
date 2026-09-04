@@ -28,7 +28,7 @@ function loadSettings(): ScoreScrollSettings {
   const raw = stored?.settings;
   if (!raw) return deepClone(defaultScoreScrollSettings);
   return {
-    effects: mergeSection(defaultScoreScrollSettings.effects, raw.effects),
+    display: mergeSection(defaultScoreScrollSettings.display, raw.display),
     appearance: mergeSection(
       defaultScoreScrollSettings.appearance,
       raw.appearance,
@@ -37,7 +37,7 @@ function loadSettings(): ScoreScrollSettings {
 }
 
 /**
- * 乐谱滚动模块 store：持有持久化设置（特效参数 + 外观）。
+ * 乐谱滚动模块 store：持有持久化设置（显示参数 + 外观）。
  * 播放状态等瞬态数据由 composables 管理，不进入 store。
  */
 export const useScoreScrollStore = defineStore("scoreScroll", () => {
@@ -49,11 +49,11 @@ export const useScoreScrollStore = defineStore("scoreScroll", () => {
 
   watch(settings, (value) => persist(value), { deep: true });
 
-  function updateEffects<K extends keyof ScoreScrollSettings["effects"]>(
+  function updateDisplay<K extends keyof ScoreScrollSettings["display"]>(
     key: K,
-    value: ScoreScrollSettings["effects"][K],
+    value: ScoreScrollSettings["display"][K],
   ): void {
-    settings.value.effects[key] = value;
+    settings.value.display[key] = value;
   }
 
   function updateAppearance<K extends keyof ScoreScrollSettings["appearance"]>(
@@ -69,7 +69,7 @@ export const useScoreScrollStore = defineStore("scoreScroll", () => {
 
   return {
     settings,
-    updateEffects,
+    updateDisplay,
     updateAppearance,
     resetSettings,
   };
