@@ -187,7 +187,32 @@ export interface BeatXPoint {
  * 取每个起始拍对应音符头中心 x（同拍多音符取最小 x），按拍升序去重。
  * 该映射让扫描线始终贴合当前发声音符，而非按系统行起点匀速漂移。
  */
-export function buildBeatXMap(notes: ScoreNoteInfo[]): BeatXPoint[] {
+/**
+ * 拍 → 谱面 X 映射。
+ *
+ * 提供带 x 的小节信息时用**小节边界锚点**：每个小节的拍区间线性映射到
+ * 小节宽度——小节内速度恒定，过小节线不再出现速度突刺（小节线与记号
+ * 占用的像素被整小节摊薄）。
+ * 无小节 x 数据时回退为音符中心锚点（相邻音符中心线性插值）。
+ */
+export function buildBeatXMap(
+  notes: ScoreNoteInfo[],
+  measures?: { startBeat: number; x?: number }[],
+): BeatXPoint[] {
+  if (measures && measures.length > 0) {
+    const anchored = measures
+      .filter((m) => m.x != null && Number.isFinite(m.x))
+      .map((m) => ({ beat: m.startBeat, x: m.x as number }))
+      .sort((a, b) => a.beat - b.beat);
+    // 单调性兜底：beat 递增且 x 非递减（异常布局时丢弃回退锚点）
+    const points: BeatXPoint[] = [];
+    for (const p of anchored) {
+      const last = points[points.length - 1];
+      if (last && (p.beat <= last.beat || p.x < last.x)) continue;
+      points.push(p);
+    }
+    if (points.length >= 2) return points;
+  }
   if (notes.length === 0) return [];
   const sorted = [...notes].sort((a, b) => a.beat - b.beat || a.x - b.x);
   const points: BeatXPoint[] = [];
@@ -208,7 +233,9 @@ export function buildBeatXMap(notes: ScoreNoteInfo[]): BeatXPoint[] {
 /**
  * 当前拍位的谱面 X 坐标（分段线性插值）。
  * 在相邻采样点之间按拍线性插值，使谱面随播放横向连续平移；
- * 早于首点/晚于末点时钳制到端点。空映射返回 0。
+ * 早于首点时钳制到首点；晚于末点时按最后一段斜率线性外推——
+ * 播放尾部静默期（PLAYBACK_TAIL_SEC）扫描线得以继续越过乐谱末端。
+ * 空映射返回 0。
  */
 export function xAtBeat(map: BeatXPoint[], beat: number): number {
   if (map.length === 0) return 0;
@@ -223,5 +250,11 @@ export function xAtBeat(map: BeatXPoint[], beat: number): number {
       return cur.x + (next.x - cur.x) * t;
     }
   }
-  return map[map.length - 1].x;
+  const last = map[map.length - 1];
+  const prev = map.length >= 2 ? map[map.length - 2] : null;
+  const slope =
+    prev && last.beat > prev.beat
+      ? (last.x - prev.x) / (last.beat - prev.beat)
+      : 0;
+  return last.x + (beat - last.beat) * slope;
 }

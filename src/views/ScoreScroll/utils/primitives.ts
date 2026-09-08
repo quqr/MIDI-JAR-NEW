@@ -20,6 +20,11 @@ export interface PathPrimitive {
   /** 文档序号（绘制顺序 = SVG 文档序） */
   seq: number;
   path: Path2D;
+  /**
+   * 原始 d 指令字符串（rect/line/ellipse/polygon 为合成等价轮廓）。
+   * 三维乐谱挤出（ADR 0018）需要轮廓指令，Path2D 无法读回，故冗余保留。
+   */
+  d: string;
   x: number;
   y: number;
   w: number;
@@ -29,6 +34,11 @@ export interface PathPrimitive {
   stroke: string | null;
   strokeWidth: number;
   opacity: number;
+  /**
+   * 符头标记：解析完成后与 ScoreNoteInfo 符头矩形几何匹配打上
+   * （markNoteheadPrimitives），高光染色（Notehead Tint）仅对标记图元生效。
+   */
+  notehead?: boolean;
 }
 
 /** 文字图元（歌词/力度/指法/小节号/速度标记等 <text> 元素） */
@@ -303,15 +313,30 @@ function parseTransform(value: string): Affine {
   const re = /(translate|scale|matrix)\s*\(([^)]*)\)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(value)) !== null) {
-    const args = m[2].trim().split(/[\s,]+/).map(Number);
+    const args = m[2]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number);
     if (m[1] === "translate") {
       const tx = args[0] || 0;
       const ty = args.length > 1 ? args[1] : 0;
-      a = { sx: a.sx, sy: a.sy, tx: a.tx + tx * a.sx, ty: a.ty + ty * a.sy, unsafe: a.unsafe };
+      a = {
+        sx: a.sx,
+        sy: a.sy,
+        tx: a.tx + tx * a.sx,
+        ty: a.ty + ty * a.sy,
+        unsafe: a.unsafe,
+      };
     } else if (m[1] === "scale") {
       const sx = args[0] ?? 1;
       const sy = args.length > 1 ? args[1] : sx;
-      a = { sx: a.sx * sx, sy: a.sy * sy, tx: a.tx, ty: a.ty, unsafe: a.unsafe };
+      a = {
+        sx: a.sx * sx,
+        sy: a.sy * sy,
+        tx: a.tx,
+        ty: a.ty,
+        unsafe: a.unsafe,
+      };
     } else {
       // matrix：仅在纯平移/纯缩放时精确，其余标记不可裁剪
       const [m11, , , m22, m41, m42] = args;
@@ -345,7 +370,20 @@ function applyAffine(a: Affine, box: BBox | null): BBox | null {
 // ── 主解析入口 ──
 
 const PAINT_NONE = new Set(["none", "transparent"]);
-const SKIP_TAGS = new Set(["defs", "clippath", "mask", "lineargradient", "radialgradient", "pattern", "marker", "symbol", "style", "title", "desc", "metadata"]);
+const SKIP_TAGS = new Set([
+  "defs",
+  "clippath",
+  "mask",
+  "lineargradient",
+  "radialgradient",
+  "pattern",
+  "marker",
+  "symbol",
+  "style",
+  "title",
+  "desc",
+  "metadata",
+]);
 
 function colorOrNull(v: string | null): string | null {
   if (!v) return null;
@@ -355,6 +393,7 @@ function colorOrNull(v: string | null): string | null {
 
 function makePathPrim(
   path: Path2D,
+  d: string,
   box: BBox | null,
   inh: Inherited,
   seq: number,
@@ -365,6 +404,7 @@ function makePathPrim(
     kind: "path",
     seq,
     path,
+    d,
     x: b ? b.x0 : 0,
     y: b ? b.y0 : 0,
     w: b ? b.x1 - b.x0 : -1, // -1 = 恒绘制
@@ -380,6 +420,27 @@ function rectToPath(x: number, y: number, w: number, h: number): Path2D {
   const p = new Path2D();
   p.rect(x, y, w, h);
   return p;
+}
+
+function rectToD(x: number, y: number, w: number, h: number): string {
+  return `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+}
+
+function lineToD(x1: number, y1: number, x2: number, y2: number): string {
+  return `M${x1} ${y1}L${x2} ${y2}`;
+}
+
+/** 椭圆采样为多边形轮廓 d（24 段，挤出/描边用途足够平滑） */
+function ellipseToD(cx: number, cy: number, rx: number, ry: number): string {
+  const SEG = 24;
+  let d = "";
+  for (let i = 0; i <= SEG; i++) {
+    const a = (i / SEG) * Math.PI * 2;
+    const x = cx + Math.cos(a) * rx;
+    const y = cy + Math.sin(a) * ry;
+    d += `${i === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+  }
+  return d + "Z";
 }
 
 function lineToPath(x1: number, y1: number, x2: number, y2: number): Path2D {
@@ -405,6 +466,17 @@ function pointsToPath(points: string, close: boolean): Path2D | null {
   }
   if (close) p.closePath();
   return p;
+}
+
+/** polygon/polyline points 属性 → 等价 path d 字符串 */
+function pointsToD(points: string, close: boolean): string | null {
+  const nums = points.match(NUM_RE);
+  if (!nums || nums.length < 4) return null;
+  let d = `M${nums[0]} ${nums[1]}`;
+  for (let k = 2; k + 1 < nums.length; k += 2) {
+    d += `L${nums[k]} ${nums[k + 1]}`;
+  }
+  return close ? d + "Z" : d;
 }
 
 function textEstBox(
@@ -447,6 +519,62 @@ export function parseSvgTopLevel(
     visit(node, DEFAULT_INHERITED, IDENTITY, prims, stats);
   }
   return { prims, stats, nodes };
+}
+
+// ── 符头标记：ScoreNoteInfo 矩形 × 图元中心点几何匹配 ──
+
+/** 符头矩形匹配外扩（px）：图形模型包围盒略紧，留容差防漏标 */
+const NOTEHEAD_MATCH_MARGIN_PX = 2;
+/** 单图元反向扫描候选上限：符头矩形宽度有限，兜底防御异常宽矩形 */
+const NOTEHEAD_SCAN_BACK_MAX = 256;
+
+/**
+ * 对图元批量打符头标记：path 图元中心点落入任一符头外接矩形（含容差）
+ * 即标记 notehead。notes 与图元同为 OSMD zoom-1 内容坐标（OSMD 固定
+ * zoom=1 渲染，extractNotes 的 UNIT_IN_PX×1 缩放与 SVG 坐标一致）。
+ * notes 按 x 排序 + 二分定位 + 有界回扫，一次性 O(N log M)。
+ */
+export function markNoteheadPrimitives(
+  prims: readonly ScorePrimitive[],
+  notes: ReadonlyArray<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>,
+): void {
+  if (notes.length === 0) return;
+  const sorted = [...notes].sort((a, b) => a.x - b.x);
+  for (const p of prims) {
+    if (p.kind !== "path" || p.w < 0 || p.h < 0) continue;
+    const cx = p.x + p.w / 2;
+    const cy = p.y + p.h / 2;
+    // 第一个 x > cx + margin 的候选：其矩形起点已越过中心点右界
+    let lo = 0;
+    let hi = sorted.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid].x <= cx + NOTEHEAD_MATCH_MARGIN_PX) lo = mid + 1;
+      else hi = mid;
+    }
+    for (
+      let i = lo - 1, scanned = 0;
+      i >= 0 && scanned < NOTEHEAD_SCAN_BACK_MAX;
+      i--, scanned++
+    ) {
+      const n = sorted[i];
+      if (n.x + n.width + NOTEHEAD_MATCH_MARGIN_PX < cx) break; // 再往左矩形更靠左
+      if (
+        cx >= n.x - NOTEHEAD_MATCH_MARGIN_PX &&
+        cx <= n.x + n.width + NOTEHEAD_MATCH_MARGIN_PX &&
+        cy >= n.y - NOTEHEAD_MATCH_MARGIN_PX &&
+        cy <= n.y + n.height + NOTEHEAD_MATCH_MARGIN_PX
+      ) {
+        p.notehead = true;
+        break;
+      }
+    }
+  }
 }
 
 function visit(
@@ -525,7 +653,9 @@ function visit(
         return;
       }
       stats.paths++;
-      out.push(makePathPrim(new Path2D(d), pathBBoxFromD(d), next, seq, combined));
+      out.push(
+        makePathPrim(new Path2D(d), d, pathBBoxFromD(d), next, seq, combined),
+      );
       return;
     }
     case "rect": {
@@ -536,7 +666,16 @@ function visit(
       const h = numAttr(el, "height");
       if (w <= 0 || h <= 0) return;
       const box: BBox = { x0: x, y0: y, x1: x + w, y1: y + h };
-      out.push(makePathPrim(rectToPath(x, y, w, h), box, next, seq, combined));
+      out.push(
+        makePathPrim(
+          rectToPath(x, y, w, h),
+          rectToD(x, y, w, h),
+          box,
+          next,
+          seq,
+          combined,
+        ),
+      );
       return;
     }
     case "line": {
@@ -551,7 +690,16 @@ function visit(
         x1: Math.max(x1, x2),
         y1: Math.max(y1, y2),
       };
-      out.push(makePathPrim(lineToPath(x1, y1, x2, y2), box, next, seq, combined));
+      out.push(
+        makePathPrim(
+          lineToPath(x1, y1, x2, y2),
+          lineToD(x1, y1, x2, y2),
+          box,
+          next,
+          seq,
+          combined,
+        ),
+      );
       return;
     }
     case "circle":
@@ -563,7 +711,16 @@ function visit(
       const ry = tag === "circle" ? numAttr(el, "r") : numAttr(el, "ry");
       if (rx <= 0 || ry <= 0) return;
       const box: BBox = { x0: cx - rx, y0: cy - ry, x1: cx + rx, y1: cy + ry };
-      out.push(makePathPrim(ellipseToPath(cx, cy, rx, ry), box, next, seq, combined));
+      out.push(
+        makePathPrim(
+          ellipseToPath(cx, cy, rx, ry),
+          ellipseToD(cx, cy, rx, ry),
+          box,
+          next,
+          seq,
+          combined,
+        ),
+      );
       return;
     }
     case "polygon":
@@ -573,12 +730,14 @@ function visit(
       if (!pts) return;
       const p = pointsToPath(pts, tag === "polygon");
       if (!p) return;
+      const d = pointsToD(pts, tag === "polygon");
+      if (!d) return;
       const nums = pts.match(NUM_RE) ?? [];
       let box: BBox | null = null;
       for (let k = 0; k + 1 < nums.length; k += 2) {
         box = extend(box, Number(nums[k]), Number(nums[k + 1]));
       }
-      out.push(makePathPrim(p, box, next, seq, combined));
+      out.push(makePathPrim(p, d, box, next, seq, combined));
       return;
     }
     case "text": {
@@ -587,7 +746,13 @@ function visit(
       if (!content.trim()) return;
       const x = numAttr(el, "x");
       const y = numAttr(el, "y");
-      const est = textEstBox(x, y, next.fontSizePx, content.length, next.textAnchor);
+      const est = textEstBox(
+        x,
+        y,
+        next.fontSizePx,
+        content.length,
+        next.textAnchor,
+      );
       const eb = applyAffine(combined, {
         x0: est.x,
         y0: est.y,

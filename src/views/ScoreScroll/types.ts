@@ -4,17 +4,14 @@
  * 领域术语见 CONTEXT.md：扫描线、谱面行位置、渐显。
  */
 
-/** 音乐字体（OSMD 内置 VexFlow 支持的 SMuFL 字体子集） */
-export type ScoreMusicFont = "bravura" | "petaluma" | "gonville";
-
-/** 背景样式预设 */
-export type ScoreBackgroundStyle = "theme" | "paper" | "black" | "gradient";
+/** 背景样式预设（custom = 用户自选纯色，见 ScoreAppearanceSettings.customColor） */
+export type ScoreBackgroundStyle = "theme" | "paper" | "custom";
 
 /**
  * 谱面显示设置（0-100 的连续参数为百分比）
  *
- * 播放动画三件套：飞入（fly-in）、符头高光（glow）、渐显 + 扫描线。
- * 术语见 CONTEXT.md：飞入（Fly-in）、符头高光（Notehead Glow）。
+ * 播放动画：飞入（fly-in）、符头染色（glow）、扫描线。
+ * 术语见 CONTEXT.md：飞入（Fly-in）、符头染色（Notehead Tint）。
  */
 export interface ScoreDisplaySettings {
   /** 扫描线位置：竖直扫描线在视口内的水平位置（0=最左，100=最右），当前发声音符对齐于此 */
@@ -23,13 +20,11 @@ export interface ScoreDisplaySettings {
   snapPosition: number;
   /** 是否显示扫描线（竖直播放指示线） */
   showScanline: boolean;
-  /** 是否开启渐显：播放时未播到的区域变暗，随播放逐渐显现 */
-  showReveal: boolean;
-  /** 飞入：横向飞入距离（0-100，100 ≈ 800px，自揭示边缘右侧飞入） */
+  /** 飞入：横向飞入距离（0-200，100 ≈ 800px，自扫描线右侧飞入） */
   flyInDistance: number;
-  /** 飞入：纵向散落范围（0-100，100 ≈ ±200px 垂直散落） */
+  /** 飞入：纵向散落范围（0-200，100 ≈ ±200px 垂直散落） */
   flyInScatter: number;
-  /** 飞入：起步延迟（0-100，100 ≈ 600px 的额外起步距离） */
+  /** 飞入：起步延迟（0-200，100 ≈ 600px 的额外起步距离） */
   flyInDelay: number;
   /**
    * 飞入带宽度（0-100，100 ≈ 300px，默认 50 = 150px）：
@@ -37,26 +32,34 @@ export interface ScoreDisplaySettings {
    * 见 ADR 0012（空间揭示带）
    */
   flyInDuration: number;
-  /** 高光：作用范围（0-100，映射为播放头两侧的世界坐标 px 半径） */
+  /** 飞出开关（默认开）：已播放音符越过扫描线后飞出消失 */
+  showFlyOut: boolean;
+  /** 飞出：横向飞出距离（0-200，与飞入距离同量纲） */
+  flyOutDistance: number;
+  /** 飞出：纵向散落范围（0-200） */
+  flyOutScatter: number;
+  /** 飞出：起步延迟（0-200） */
+  flyOutDelay: number;
+  /** 飞出带宽度（0-200，与飞入带宽度同量纲）：音符越过扫描线后在此宽度内完成飞出 */
+  flyOutDuration: number;
+  /** 高光：作用范围（0-200，映射为播放头两侧的世界坐标 px 半径） */
   glowRange: number;
-  /** 高光：强度（0-100，映射光斑峰值不透明度） */
+  /** 高光：强度（0-100，映射染色最大插值比例） */
   glowIntensity: number;
-  /** 高光：大小（0-100，映射单个光斑半径） */
-  glowSize: number;
   /** 飞入开关（默认开） */
   showFlyIn: boolean;
-  /** 符头高光开关（默认开） */
+  /** 符头染色开关（默认开） */
   showGlow: boolean;
-  /** 高光颜色（hex，如 "#3b82f6"） */
-  glowColor: string;
+  /** 染色颜色（hex）：播放头附近音符 fill/stroke 的插值目标 */
+  tintColor: string;
 }
 
 /** 外观设置 */
 export interface ScoreAppearanceSettings {
-  /** 音乐字体 */
-  musicFont: ScoreMusicFont;
   /** 背景样式 */
   background: ScoreBackgroundStyle;
+  /** 自定义背景色（hex，仅 background="custom" 时使用） */
+  customColor: string;
 }
 
 /** 乐谱滚动模块设置（持久化） */
@@ -110,6 +113,11 @@ export interface ScoreMeasureInfo {
   startBeat: number;
   /** 结束拍 */
   endBeat: number;
+  /**
+   * 图形小节左缘 x（px，缩放后内容坐标）；
+   * 缺省/未知时不参与节拍→坐标锚点
+   */
+  x?: number;
 }
 
 /** 谱面系统行（一行谱面）的几何与时间范围，用于滚动同步 */

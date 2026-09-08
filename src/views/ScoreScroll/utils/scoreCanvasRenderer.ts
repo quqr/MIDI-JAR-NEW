@@ -5,16 +5,16 @@
  * 图元矢量重绘（Path2D + fillText）保证任意缩放无损；扫描线与渐显
  * 作为绘制参数一并画入（导出画面自带播放指示，见 ADR 0010）。
  *
- * 播放动画（空间揭示带模型，见 ADR 0012；术语见 CONTEXT.md「飞入 /
- * 揭示边缘 / 符头高光」）：
- * - 揭示边缘 = 视口右缘内缩 FLY_IN_EDGE_MARGIN_PX css px（换算为世界
- *   内容 x）：边缘右侧图元不绘制；播放中视口连续右移，新内容依次在
- *   边缘处越过揭示线进入飞入带，视口内播放头右侧始终有预显示内容；
- * - 飞入：越过边缘后在「飞入带宽度」内按 cubic ease-out 平移 + 淡入，
+ * 播放动画（扫描线锚定飞入带，见 ADR 0012；术语见 CONTEXT.md「飞入 /
+ * 飞入带 / 符头高光」）：
+ * - 飞入带起始 = 扫描线的内容位置（随画布平移与播放推进同步变化）：
+ *   带自扫描线向右延伸「带宽 + 延迟」，带远端之外图元未显现（不绘制）；
+ *   音符在带内朝扫描线方向飞入，抵达扫描线即落位——动画始终发生在
+ *   扫描线附近，拖画布与播放的表现一致；
+ * - 飞入：按行进距离 cubic ease-out 平移 + 淡入，
  *   随机偏移由图元 seq 种子散列驱动（确定性、零内存）；
  *   五线谱线常驻直绘（完全跳过编排，作为静态背景框架始终绘制）；
- * - 高光：播放头 ±range 内的音符（ScoreNoteInfo，调用方保证按 x 升序）
- *   画径向渐变光斑垫底，亮度按 smoothstep 随距离衰减。
+ * - 高光：播放头 ±range 内的音符 fill/stroke 向染色色插值（smoothstep 衰减）。
  *
  * context 无关：只依赖 Canvas2D 的最小方法子集（ScoreContext2D），
  * 同一绘制函数可运行在主线程 canvas、OffscreenCanvas 或大尺寸离屏
@@ -25,7 +25,6 @@
  * 背板 = css 尺寸 × dpr，setTransform 一次性组合 dpr × zoom。
  */
 
-import type { ScoreNoteInfo } from "../types";
 import type { PrimitiveIndex, ScorePrimitive } from "./primitives";
 
 /** 渲染所需的最小 2D 上下文子集（CanvasRenderingContext2D 结构兼容） */
@@ -52,10 +51,9 @@ export type ScoreContext2D = Pick<
   | "save"
   | "restore"
   | "translate"
-> & {
-  createLinearGradient: CanvasRenderingContext2D["createLinearGradient"];
-  createRadialGradient: CanvasRenderingContext2D["createRadialGradient"];
-};
+  | "strokeRect"
+  | "setLineDash"
+>;
 
 /** 视图状态（显示 px 坐标系） */
 export interface ScoreViewState {
@@ -77,21 +75,29 @@ export interface ScanlineDraw {
   color: string;
 }
 
-export interface RevealDraw {
-  positionPct: number;
-  /** 调光基色（CSS 颜色原串） */
-  color: string;
-  /** 软边过渡宽度（css px） */
-  softEdge: number;
+/**
+ * 画布背景（屏幕空间绘制，位于图元之下）。
+ * canvas 自含背景：导出画面自带底色；点阵为世界坐标网格——
+ * 平移/缩放时随谱面移动（拖动点阵跟着走，ADR 0013 后的视觉反馈）。
+ */
+export interface BackgroundDraw {
+  kind: "dots" | "solid";
+  /** 底色（CSS 颜色原串） */
+  base: string;
+  /** 点阵点色（kind=dots 时必填） */
+  dot?: string;
 }
 
 /** 飞入参数（世界 px；调用方负责把 0-100 设置映射为具体值） */
 export interface FlyInEffect {
   /**
-   * 飞入带宽度（世界 px）：图元越过揭示边缘后在此宽度内完成飞入
-   * （cubic ease-out）。揭示边缘由渲染器按视口右缘内缩
-   * FLY_IN_EDGE_MARGIN_PX 自行换算，调用方只给带宽（ADR 0012）。
+   * 飞入带起始（世界内容坐标 x）= 扫描线的内容位置：飞入带自扫描线
+   * 向右延伸「带宽 + 延迟」，音符在此区间内朝扫描线方向飞入落位；
+   * 远端之外未显现（不绘制）。边缘随画布平移/播放推进同步变化——
+   * 动画始终发生在扫描线附近（ADR 0012 修订）。
    */
+  bandEdgeX: number;
+  /** 飞入带宽度（世界 px）：音符在带内完成飞入 */
   bandWidth: number;
   /** 横向飞入距离（自右向左，100% ≈ 800px） */
   distance: number;
@@ -101,16 +107,37 @@ export interface FlyInEffect {
   delay: number;
 }
 
+/** 飞出参数（世界 px；调用方负责把 0-100 设置映射为具体值） */
+export interface FlyOutEffect {
+  /**
+   * 飞出带起始（世界内容坐标 x）= 扫描线的内容位置：飞出带自扫描线
+   * 向左延伸「带宽 + 延迟」，音符越过扫描线后在带内飞出淡出，
+   * 越过带远端即完全消失（不绘制）。
+   */
+  bandEdgeX: number;
+  /** 飞出带宽度（世界 px）：音符在带内完成飞出 */
+  bandWidth: number;
+  /** 横向飞出距离（向左，100% ≈ 800px） */
+  distance: number;
+  /** 纵向散落总幅（±scatter/2，100% ≈ ±200px） */
+  scatter: number;
+  /** 起步延迟（每个图元随机 0–delay 的额外距离，100% ≈ 600px） */
+  delay: number;
+}
+
 /** 符头高光参数（世界 px；调用方负责把 0-100 设置映射为具体值） */
 export interface GlowEffect {
-  /** 作用半径（播放头两侧，超出不发光） */
+  /**
+   * 播放头世界坐标 x（未缩放内容 px，时间锚定）：
+   * 由播放同步器逐帧给出（当前发声位置），与视口平移无关。
+   */
+  playheadX: number;
+  /** 作用半径（播放头两侧，超出不染色） */
   range: number;
-  /** 峰值不透明度（0-1） */
+  /** 峰值强度（0-1）：染色最大插值比例 */
   intensity: number;
-  /** 单个光斑半径（世界 px） */
-  size: number;
-  /** 光斑颜色（#rrggbb hex） */
-  color: string;
+  /** 染色颜色（范围内音符 fill/stroke 插值目标，#rrggbb hex） */
+  tint: string;
 }
 
 export interface ScoreFrameOptions {
@@ -119,23 +146,20 @@ export interface ScoreFrameOptions {
   cssWidth: number;
   cssHeight: number;
   dpr: number;
+  /** 画布背景（底色 + 可选点阵）；null = 透明（调用方自行处理底色） */
+  background: BackgroundDraw | null;
   scanline: ScanlineDraw | null;
-  reveal: RevealDraw | null;
-  /** 播放头在视口内的水平位置（0-100 百分比）；null = 未播放（飞入/高光禁用） */
-  playheadPct: number | null;
   /** 飞入参数；showFlyIn 关闭时传 null */
   flyIn: FlyInEffect | null;
-  /** 高光参数；showGlow 关闭时传 null */
+  /** 飞出参数；showFlyOut 关闭时传 null */
+  flyOut: FlyOutEffect | null;
+  /** 高光（染色）参数；showGlow 关闭时传 null */
   glow: GlowEffect | null;
-  /** 按 x 升序排序的音符信息（高光定位用；可省略） */
-  notes?: readonly ScoreNoteInfo[];
 }
 
 /** 可见窗口外扩边距（未缩放内容 px）：文本 bbox 估算误差 + 软边余量 */
 const CULL_MARGIN_PX = 160;
 
-/** 飞入：揭示边缘内缩（css px）——视口右缘往左多少距离为飞入开始线 */
-const FLY_IN_EDGE_MARGIN_PX = 50;
 /** 飞入：最小横向偏移（世界 px），保证随机值为 0 时仍有起步距离 */
 const FLY_IN_MIN_OFFSET_PX = 50;
 /** 飞入：带内动画图元上限，超出退化为纯 alpha 淡入（防极小缩放整谱入带卡顿） */
@@ -155,8 +179,63 @@ function isStaffLinePrimitive(p: ScorePrimitive): boolean {
   return p.w >= STAFF_LINE_MIN_W && p.h <= STAFF_LINE_MAX_H;
 }
 
-/** 空音符表（未传 notes 时的兜底，避免每帧分配） */
-const EMPTY_NOTES: readonly ScoreNoteInfo[] = [];
+// ── 高光可染判定：仅符头（Notehead Tint） ──
+// 图元由解析后与 ScoreNoteInfo 符头矩形几何匹配打标记（见 useOsmd.extractAll
+// → markNoteheadPrimitives），未标记的谱线/符梁/加线/连线/文字一律不染——
+// 否则大范围高光下整行谱面被染色，与「符头高光」语义不符。
+function isGlowEligible(p: ScorePrimitive): boolean {
+  return p.kind === "path" && p.notehead === true;
+}
+
+/** 点阵网格：世界坐标间距（未缩放内容 px） */
+const DOT_GRID_SPACING_PX = 20;
+/** 点阵 LOD：屏幕间距下限（低于此值网格升层，防止摩尔纹与点数爆炸） */
+const DOT_MIN_SCREEN_SPACING_PX = 16;
+/** 点大小（屏幕 css px，恒定不随缩放变化） */
+const DOT_SIZE_PX = 1.2;
+/** 点不透明度 */
+const DOT_ALPHA = 0.16;
+
+/**
+ * 点阵网格（屏幕空间绘制，世界坐标对齐）：
+ * 网格点吸附在世界坐标 step 的整数倍上——拖动/缩放时点阵随谱面移动、
+ * 缩放时间距真实变化；屏幕间距低于下限时 k 倍升层（点密度重置，无摩尔纹）。
+ * 点大小固定屏幕像素，不随缩放变化（Figma/Miro 同类画布的做法）。
+ */
+function drawDotGrid(
+  ctx: ScoreContext2D,
+  view: ScoreViewState,
+  cssWidth: number,
+  cssHeight: number,
+  dotColor: string,
+): void {
+  const spacing = DOT_GRID_SPACING_PX * view.zoom;
+  const k = Math.max(1, Math.ceil(DOT_MIN_SCREEN_SPACING_PX / spacing));
+  const step = DOT_GRID_SPACING_PX * k; // 世界 px 步长（k 的整数倍）
+
+  // 可见世界范围（反解变换：屏幕 = pan + (offset + 世界) × zoom）
+  const wx0 = (0 - view.panX) / view.zoom - view.contentOffsetX;
+  const wx1 = (cssWidth - view.panX) / view.zoom - view.contentOffsetX;
+  const wy0 = (0 - view.panY) / view.zoom - view.contentOffsetY;
+  const wy1 = (cssHeight - view.panY) / view.zoom - view.contentOffsetY;
+
+  // ceil/floor：只画起笔落在画布内的点（边缘外 1.2px 点虽被裁剪也无谓）
+  const i0 = Math.ceil(wx0 / step);
+  const i1 = Math.floor(wx1 / step);
+  const j0 = Math.ceil(wy0 / step);
+  const j1 = Math.floor(wy1 / step);
+
+  ctx.fillStyle = dotColor;
+  ctx.globalAlpha = DOT_ALPHA;
+  for (let ix = i0; ix <= i1; ix++) {
+    const sx = view.panX + (view.contentOffsetX + ix * step) * view.zoom;
+    for (let jy = j0; jy <= j1; jy++) {
+      const sy = view.panY + (view.contentOffsetY + jy * step) * view.zoom;
+      ctx.fillRect(sx, sy, DOT_SIZE_PX, DOT_SIZE_PX);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
 
 /** 构造 canvas font 字符串（属性已做 normal 归一，缺省段直接省略） */
 function fontString(p: Extract<ScorePrimitive, { kind: "text" }>): string {
@@ -182,62 +261,64 @@ export function smoothstep01(r: number): number {
   return c * c * (3 - 2 * c);
 }
 
-/** "#rrggbb" → rgba(r,g,b,a)；非 6 位 hex 返回 null（调用方自行兜底） */
-function hexToRgba(color: string, alpha: number): string | null {
-  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
-  if (!m) return null;
-  const v = parseInt(m[1] as string, 16);
-  return `rgba(${(v >> 16) & 255},${(v >> 8) & 255},${v & 255},${alpha})`;
-}
-
 /** 屏幕 css x → 内容世界 x（反解变换公式 屏幕 = pan + (offset + x) × zoom） */
 function screenToContentX(screenX: number, view: ScoreViewState): number {
   return (screenX - view.panX) / view.zoom - view.contentOffsetX;
 }
 
-/**
- * x 升序 notes 中第一个 x ≥ target 的下标（二分）。
- * 调用方需保证 notes 已按 x 升序排序。
- */
-function lowerBoundByX(notes: readonly ScoreNoteInfo[], target: number): number {
-  let lo = 0;
-  let hi = notes.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if ((notes[mid] as ScoreNoteInfo).x < target) lo = mid + 1;
-    else hi = mid;
-  }
-  return lo;
+// ── 高光染色（方案一）：播放头 ±range 内图元 fill/stroke 向高光色插值 ──
+
+/** 染色插值量化档数：t 截断到档位后缓存混合色，避免每帧海量颜色字符串 */
+const TINT_QUANT = 24;
+/** 混合色缓存：key = 原 fill | 高光色 | 档位（fill 种类有限，命中率高） */
+const tintCache = new Map<string, string>();
+const TINT_CACHE_MAX = 2048;
+
+/** "#rrggbb" → [r, g, b]；非 6 位 hex 返回 null */
+function parseHex(color: string): [number, number, number] | null {
+  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
+  if (!m) return null;
+  const v = parseInt(m[1] as string, 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
 }
 
 /**
- * 高光光斑垫底：播放头 ±range 内的音符各画一个径向渐变软边光斑，
- * 亮度 = intensity × smoothstep(1 − |dx|/range)。绘制在图元之下。
+ * 原色 → 高光色线性插值（t ∈ (0,1]，量化缓存）。
+ * 任一端非 hex（理论不会发生——谱面色都是固定 hex）返回 null = 不染。
  */
-function drawGlowBlobs(
-  ctx: ScoreContext2D,
-  notes: readonly ScoreNoteInfo[],
+function mixHexColors(
+  base: string,
+  highlight: string,
+  t: number,
+): string | null {
+  if (t <= 0) return base;
+  const pa = parseHex(base);
+  if (!pa) return null; // 非 hex 基色一律不染（含 t=1 满强度）
+  if (t >= 1) return highlight;
+  const pb = parseHex(highlight);
+  if (!pb) return null;
+  const q = Math.round(t * TINT_QUANT);
+  if (q <= 0) return base;
+  const key = `${base}|${highlight}|${q}`;
+  const hit = tintCache.get(key);
+  if (hit !== undefined) return hit;
+  const f = q / TINT_QUANT;
+  const mixed = `rgb(${Math.round(pa[0] + (pb[0]! - pa[0]!) * f)},${Math.round(pa[1] + (pb[1]! - pa[1]!) * f)},${Math.round(pa[2] + (pb[2]! - pa[2]!) * f)})`;
+  if (tintCache.size >= TINT_CACHE_MAX) tintCache.clear();
+  tintCache.set(key, mixed);
+  return mixed;
+}
+
+/** 单图元染色强度：intensity × smoothstep(1 − |图元中心 − 播放头| / range) */
+function tintStrength(
+  p: ScorePrimitive,
   glow: GlowEffect,
   playheadX: number,
-): void {
-  // 从播放头左缘往前多留 64px：覆盖二分起点附近音符头外接框半宽的误差
-  const start = lowerBoundByX(notes, playheadX - glow.range - 64);
-  const rightLimit = playheadX + glow.range;
-  for (let i = start; i < notes.length; i++) {
-    const n = notes[i] as ScoreNoteInfo;
-    if (n.x > rightLimit) break;
-    const cx = n.x + n.width / 2;
-    const r = 1 - Math.abs(cx - playheadX) / glow.range;
-    if (r <= 0) continue;
-    const a = glow.intensity * smoothstep01(r);
-    if (a < 0.004) continue;
-    const cy = n.y + n.height / 2;
-    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glow.size);
-    grad.addColorStop(0, hexToRgba(glow.color, a) ?? glow.color);
-    grad.addColorStop(1, hexToRgba(glow.color, 0) ?? "transparent");
-    ctx.fillStyle = grad;
-    ctx.fillRect(cx - glow.size, cy - glow.size, glow.size * 2, glow.size * 2);
-  }
+): number {
+  const dx = p.x + p.w / 2 - playheadX;
+  const r = 1 - Math.abs(dx) / glow.range;
+  if (r <= 0) return 0;
+  return glow.intensity * smoothstep01(r);
 }
 
 /**
@@ -251,11 +332,19 @@ export function drawScoreFrame(
   opts: ScoreFrameOptions,
 ): void {
   const { view, cssWidth, cssHeight, dpr } = opts;
-  const notes = opts.notes ?? EMPTY_NOTES;
 
-  // 1) 清屏（css 像素坐标系）
+  // 1) 清屏 + 背景（css 像素坐标系）：canvas 自含底色与点阵
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const bg = opts.background;
+  if (bg) {
+    ctx.fillStyle = bg.base;
+    ctx.fillRect(0, 0, cssWidth, cssHeight);
+    if (bg.kind === "dots" && bg.dot) {
+      drawDotGrid(ctx, view, cssWidth, cssHeight, bg.dot);
+    }
+  }
 
   // 2) 内容变换：屏幕 = dpr × (pan + (offset + x) × zoom)
   const zx = dpr * view.zoom;
@@ -268,38 +357,40 @@ export function drawScoreFrame(
   const x1 =
     (cssWidth - view.panX) / view.zoom - view.contentOffsetX + CULL_MARGIN_PX;
 
-  // 4) 播放动画参数：激活条件 = 已加载乐谱（flyIn/glow 由调用方按
+  // 4) 播放动画参数：激活条件 = 已加载乐谱（flyIn/flyOut/glow 由调用方按
   //    是否有图元决定），不区分播放/暂停/idle——进度条即动画时间轴
   const flyIn = opts.flyIn;
+  const flyOut = opts.flyOut;
   const glow = opts.glow;
-  // 揭示边缘（世界内容坐标）= 视口右缘内缩 FLY_IN_EDGE_MARGIN_PX
-  // （空间锚定，ADR 0012）：边缘右侧图元不绘制；播放中视口连续右移，
-  // 新内容依次越过边缘进入飞入带
-  const edgeX = flyIn
-    ? screenToContentX(cssWidth - FLY_IN_EDGE_MARGIN_PX, view)
-    : Number.POSITIVE_INFINITY;
+  // 扫描线的内容位置：飞入带（向右）与飞出带（向左）的公共起点，
+  // 随画布平移与播放推进同步变化——音符始终在扫描线附近飞入/飞出
+  const edgeX =
+    flyIn || flyOut
+      ? screenToContentX(
+          (cssWidth * (opts.scanline?.positionPct ?? 50)) / 100,
+          view,
+        )
+      : Number.POSITIVE_INFINITY;
   const band = flyIn ? Math.max(1, flyIn.bandWidth) : 1;
-  const playheadX = glow
-    ? screenToContentX((cssWidth * (opts.playheadPct as number)) / 100, view)
-    : 0;
+  const outBand = flyOut ? Math.max(1, flyOut.bandWidth) : 1;
+  // 高光锚点 = 播放头世界坐标（时间锚定，由同步器逐帧给出，
+  // 与视口平移/缩放无关——拖动画布不会改变"哪些音符在发声"）
+  const playheadX = glow ? glow.playheadX : 0;
 
-  // 5) 高光光斑垫底（画在图元之下，位于扫描线处的渐显 alpha≈0 区，不被调光压暗）
-  if (glow && notes.length > 0 && glow.range > 0 && glow.size >= 1) {
-    drawGlowBlobs(ctx, notes, glow, playheadX);
-  }
-
-  // 6) 飞入带图元预计数：超出上限时整帧退化为纯 alpha 淡入（不做逐图元平移）
+  // 6) 飞入/飞出带图元预计数：超出上限时整帧退化为纯 alpha 淡入（不做逐图元平移）
   //    （谱线常驻直绘，不占动画预算）
   const items = index.items;
   const visible = index.queryVisible(x0, x1);
   let degraded = false;
-  if (flyIn) {
+  if (flyIn || flyOut) {
     let inBand = 0;
     for (let k = 0; k < visible.length; k++) {
       const p = items[visible[k] as number];
       if (isStaffLinePrimitive(p)) continue;
-      const distInside = edgeX - p.x;
-      if (distInside > 0 && distInside < band + flyIn.delay) {
+      const dist = p.x - edgeX;
+      const inFlyIn = flyIn && dist > 0 && dist < band + flyIn.delay;
+      const inFlyOut = flyOut && dist < 0 && -dist < outBand + flyOut.delay;
+      if (inFlyIn || inFlyOut) {
         if (++inBand > MAX_FLY_IN_PRIMITIVES) {
           degraded = true;
           break;
@@ -308,7 +399,7 @@ export function drawScoreFrame(
     }
   }
 
-  // 7) 裁剪绘制（文档序 = seq 升序，保持 SVG 遮挡关系；含飞入编排）
+  // 7) 裁剪绘制（文档序 = seq 升序，保持 SVG 遮挡关系；含飞入/飞出编排）
   let lastAlpha = 1;
   let lastFill = "";
   let lastStroke = "";
@@ -317,36 +408,85 @@ export function drawScoreFrame(
   for (let k = 0; k < visible.length; k++) {
     const p = items[visible[k] as number];
 
-    // —— 飞入编排：边缘右侧未揭示；带内按 cubic ease-out 平移 + 淡入 ——
+    // —— 飞入编排：飞入带自扫描线向右延伸「带宽 + 延迟」，带内音符朝
+    //    扫描线方向飞入落位，抵达扫描线即完成；带远端之外未显现 ——
+    // —— 飞出编排（镜像）：已播放音符越过扫描线后向左飞出淡出，
+    //    越过飞出带远端即完全消失 ——
     // （五线谱线常驻直绘 ADR 0012：完全跳过编排——不 skip、不位移、
     //   不渐隐，恒为完成态直接绘制）
     let ease = 1;
     let ox = 0;
     let oy = 0;
-    if (flyIn && !isStaffLinePrimitive(p)) {
-      const distInside = edgeX - p.x;
-      if (distInside <= 0) continue;
-      // 距离远超「带宽 + 最大延迟」的图元必然已完成飞入，跳过散列计算
-      if (distInside < band + flyIn.delay) {
-        const raw = (distInside - hash01(p.seq) * flyIn.delay) / band;
-        if (raw <= 0) continue; // 仍在自身延迟区，尚未起步
-        if (raw < 1) {
-          ease = 1 - (1 - raw) ** 3;
-          if (!degraded) {
-            // 起点在揭示边缘右侧：横向 rand×distance + 50px，纵向 ±scatter/2
-            ox =
-              (hash01(p.seq + 0x27d4eb2f) * flyIn.distance +
-                FLY_IN_MIN_OFFSET_PX) *
-              (1 - ease);
-            oy =
-              (hash01(p.seq + 0x1b873593) - 0.5) * flyIn.scatter * (1 - ease);
+    let skip = false;
+    if (!isStaffLinePrimitive(p)) {
+      const dist = p.x - edgeX; // 距扫描线的内容距离（右侧为正，未播放）
+      if (flyIn) {
+        if (dist > band + flyIn.delay) skip = true; // 飞入带远端之外：未显现
+        else if (dist > 0) {
+          // u：飞入进度，0 = 在远端起步，1 = 抵达扫描线落位
+          const u = 1 - (dist - hash01(p.seq) * flyIn.delay) / band;
+          if (u <= 0) skip = true; // 仍在自身延迟区，尚未起步
+          else if (u < 1) {
+            ease = 1 - (1 - u) ** 3;
+            if (!degraded) {
+              // 起点在扫描线右侧：横向 rand×distance + 50px，纵向 ±scatter/2
+              ox =
+                (hash01(p.seq + 0x27d4eb2f) * flyIn.distance +
+                  FLY_IN_MIN_OFFSET_PX) *
+                (1 - ease);
+              oy =
+                (hash01(p.seq + 0x1b873593) - 0.5) * flyIn.scatter * (1 - ease);
+            }
+          }
+        }
+      }
+      if (flyOut && !skip) {
+        const outDist = -dist; // 已越过扫描线的距离（左侧为正）
+        if (outDist > outBand + flyOut.delay) skip = true; // 完全飞出
+        else if (outDist > 0) {
+          // raw：飞出进度，0 = 刚越过扫描线（原位），1 = 完全消失
+          const raw =
+            (outDist - hash01(p.seq + 0x9e3779b9) * flyOut.delay) / outBand;
+          if (raw >= 1) skip = true;
+          else if (raw > 0) {
+            const flyE = 1 - (1 - raw) ** 3;
+            ease = 1 - flyE;
+            if (!degraded) {
+              // 飞出方向与飞入相反：向左离场，纵向 ±scatter/2
+              ox =
+                -(
+                  hash01(p.seq + 0x85ebca6b) * flyOut.distance +
+                  FLY_IN_MIN_OFFSET_PX
+                ) * flyE;
+              oy = (hash01(p.seq + 0xc2b2ae35) - 0.5) * flyOut.scatter * flyE;
+            }
           }
         }
       }
     }
+    if (skip) continue;
 
     const alpha = p.opacity * ease;
     const translated = ox !== 0 || oy !== 0;
+
+    // —— 高光染色（方案一）：播放头 ±range 内的音符类图元向高光色插值 ——
+    // fill/stroke 皆为固定 hex（主题配色），量化缓存混合串，lastFill
+    // 缓存机制自然兼容；非 hex 色降级为不染；文字图元无 stroke
+    let fill = p.fill;
+    let stroke = p.kind === "path" ? p.stroke : null;
+    if (glow && glow.range > 0 && isGlowEligible(p)) {
+      const t = tintStrength(p, glow, playheadX);
+      if (t > 0) {
+        if (fill) {
+          const mixed = mixHexColors(fill, glow.tint, t);
+          if (mixed) fill = mixed;
+        }
+        if (stroke) {
+          const mixed = mixHexColors(stroke, glow.tint, t);
+          if (mixed) stroke = mixed;
+        }
+      }
+    }
 
     if (p.kind === "path") {
       if (alpha !== lastAlpha) {
@@ -357,27 +497,31 @@ export function drawScoreFrame(
         ctx.save();
         ctx.translate(ox, oy);
       }
-      if (p.fill) {
-        if (p.fill !== lastFill) {
-          ctx.fillStyle = p.fill;
-          lastFill = p.fill;
+      if (fill) {
+        if (fill !== lastFill) {
+          ctx.fillStyle = fill;
+          lastFill = fill;
         }
         ctx.fill(p.path);
       }
-      if (p.stroke) {
-        if (p.stroke !== lastStroke) {
-          ctx.strokeStyle = p.stroke;
-          lastStroke = p.stroke;
+      if (stroke) {
+        if (stroke !== lastStroke) {
+          ctx.strokeStyle = stroke;
+          lastStroke = stroke;
         }
         ctx.lineWidth = p.strokeWidth;
         ctx.stroke(p.path);
       }
       if (translated) {
         ctx.restore();
-        lastAlpha = -1; // restore 还原了 globalAlpha，强制下个图元重设
+        // restore 还原了 save 后的全部状态，所有 JS 侧状态缓存同步失效，
+        // 强制下个图元重设——否则过期颜色串残留会串染后续图元
+        lastAlpha = -1;
+        lastFill = "";
+        lastStroke = "";
       }
     } else {
-      if (!p.fill) continue;
+      if (!fill) continue;
       if (alpha !== lastAlpha) {
         ctx.globalAlpha = alpha;
         lastAlpha = alpha;
@@ -391,9 +535,9 @@ export function drawScoreFrame(
         ctx.font = font;
         lastFont = font;
       }
-      if (p.fill !== lastFill) {
-        ctx.fillStyle = p.fill;
-        lastFill = p.fill;
+      if (fill !== lastFill) {
+        ctx.fillStyle = fill;
+        lastFill = fill;
       }
       if (p.textAlign !== lastAlign) {
         ctx.textAlign = p.textAlign;
@@ -403,34 +547,16 @@ export function drawScoreFrame(
       if (translated) {
         ctx.restore();
         lastAlpha = -1;
+        lastFill = "";
+        lastFont = "";
+        lastAlign = "";
       }
     }
   }
 
-  // 8) 屏幕空间 overlay：渐显 + 扫描线
+  // 8) 屏幕空间 overlay：扫描线
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.globalAlpha = 1;
-
-  if (opts.reveal) {
-    const sx = (cssWidth * opts.reveal.positionPct) / 100;
-    if (sx < cssWidth) {
-      try {
-        // color-mix 生成 82% 不透明基色（与原 CSS 方案同源），canvas 颜色解析器支持
-        const solid = `color-mix(in oklab, ${opts.reveal.color} 82%, transparent)`;
-        const grad = ctx.createLinearGradient(sx, 0, sx + opts.reveal.softEdge, 0);
-        grad.addColorStop(0, "transparent");
-        grad.addColorStop(1, solid);
-        ctx.fillStyle = grad;
-        ctx.fillRect(sx, 0, cssWidth - sx, cssHeight);
-      } catch {
-        // color-mix 不被 canvas 解析时降级：纯色 + 全局透明度（无软边）
-        ctx.globalAlpha = 0.82;
-        ctx.fillStyle = opts.reveal.color;
-        ctx.fillRect(sx, 0, cssWidth - sx, cssHeight);
-        ctx.globalAlpha = 1;
-      }
-    }
-  }
 
   if (opts.scanline) {
     const sx = (cssWidth * opts.scanline.positionPct) / 100;

@@ -107,6 +107,7 @@ const emit = defineEmits<{
   (e: "pause"): void;
   (e: "stop"): void;
   (e: "seek", seconds: number): void;
+  (e: "export"): void;
 }>();
 
 const { t } = useI18n();

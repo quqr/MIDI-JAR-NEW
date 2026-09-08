@@ -5,11 +5,15 @@ import type {
   SourceMeasure,
 } from "opensheetmusicdisplay";
 import { createLogger } from "@/utils/logger";
-import { PrimitiveIndex, parseSvgTopLevel, type ParseStats } from "../utils/primitives";
+import {
+  PrimitiveIndex,
+  markNoteheadPrimitives,
+  parseSvgTopLevel,
+  type ParseStats,
+} from "../utils/primitives";
 import type {
   ScoreMeasureInfo,
   ScoreMetaInfo,
-  ScoreMusicFont,
   ScoreNoteInfo,
   ScoreSystemInfo,
 } from "../types";
@@ -42,14 +46,40 @@ const LIGHT_COLOR_LABEL = "#000000";
 
 /** 调号数量 → 大调主音名（索引 = key + 7，key 范围 -7..7） */
 const MAJOR_KEY_NAMES = [
-  "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F",
-  "C", "G", "D", "A", "E", "B", "F#", "C#",
+  "Cb",
+  "Gb",
+  "Db",
+  "Ab",
+  "Eb",
+  "Bb",
+  "F",
+  "C",
+  "G",
+  "D",
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
 ];
 
 /** 调号数量 → 小调主音名（关系小调） */
 const MINOR_KEY_NAMES = [
-  "Ab", "Eb", "Bb", "F", "C", "G", "D",
-  "A", "E", "B", "F#", "C#", "G#", "D#", "A#",
+  "Ab",
+  "Eb",
+  "Bb",
+  "F",
+  "C",
+  "G",
+  "D",
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
+  "G#",
+  "D#",
+  "A#",
 ];
 
 /** 乐谱速度标记（MusicXML <sound tempo> / <metronome>） */
@@ -97,12 +127,12 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
   const zoom = ref(1);
   const osmd = shallowRef<OpenSheetMusicDisplay | null>(null);
 
-  /** 当前应用的音乐字体（VexFlow 字体名） */
-  let currentFont = "Bravura";
+  /** 固定音乐字体（Bravura，OSMD/VexFlow 默认；字体选项已按需求移除） */
+  const FIXED_MUSIC_FONT = "Bravura";
   /** 当前谱面配色是否为深色主题 */
   let darkMode = false;
   /**
-   * 加载会话令牌（ADR 0013）：每次 loadScore / applyFont / setDark / clear
+   * 加载会话令牌（ADR 0013）：每次 loadScore / setDark / clear
    * 开始时自增。渲染与解析的 async 循环每步核对自己开启时的令牌，
    * 不匹配即静默中止——防止快速连续加载/切主题时旧会话污染新状态。
    */
@@ -123,7 +153,8 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     if (osmd.value) return osmd.value;
     if (!container.value) return null;
     try {
-      const { OpenSheetMusicDisplay: OSMD } = await import("opensheetmusicdisplay");
+      const { OpenSheetMusicDisplay: OSMD } =
+        await import("opensheetmusicdisplay");
       const instance = new OSMD(container.value, {
         backend: "svg",
         autoResize: false,
@@ -154,12 +185,18 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     rules.applyDefaultColorMusic(
       darkMode ? DARK_COLOR_MUSIC : LIGHT_COLOR_MUSIC,
     );
-    rules.StaffLineColor = darkMode ? DARK_COLOR_STAFFLINE : LIGHT_COLOR_STAFFLINE;
-    rules.LedgerLineColorDefault = darkMode ? DARK_COLOR_STAFFLINE : LIGHT_COLOR_STAFFLINE;
+    rules.StaffLineColor = darkMode
+      ? DARK_COLOR_STAFFLINE
+      : LIGHT_COLOR_STAFFLINE;
+    rules.LedgerLineColorDefault = darkMode
+      ? DARK_COLOR_STAFFLINE
+      : LIGHT_COLOR_STAFFLINE;
     rules.DefaultColorLabel = darkMode ? DARK_COLOR_LABEL : LIGHT_COLOR_LABEL;
     rules.DefaultColorLyrics = darkMode ? DARK_COLOR_LABEL : LIGHT_COLOR_LABEL;
     rules.DefaultColorTitle = darkMode ? DARK_COLOR_LABEL : LIGHT_COLOR_LABEL;
-    rules.DefaultColorChordSymbol = darkMode ? DARK_COLOR_LABEL : LIGHT_COLOR_LABEL;
+    rules.DefaultColorChordSymbol = darkMode
+      ? DARK_COLOR_LABEL
+      : LIGHT_COLOR_LABEL;
   }
 
   /** 取 OSMD 当前渲染的 SVG 根（backend 引用优先，容器查询兜底） */
@@ -171,7 +208,9 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     ).Backend;
     const svg = backend?.getSvgElement?.();
     if (svg) return svg;
-    return (container.value?.querySelector("svg") as SVGSVGElement | null) ?? null;
+    return (
+      (container.value?.querySelector("svg") as SVGSVGElement | null) ?? null
+    );
   }
 
   function accumulateStats(s: ParseStats): void {
@@ -204,7 +243,10 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
    * 批次间摘除安全，摘除同时提前释放 DOM 内存。
    * maxNodes 限制单次解析量（全量重渲染后的存量按片解析）。
    */
-  function flushNewSvgNodes(instance: OpenSheetMusicDisplay, maxNodes: number): void {
+  function flushNewSvgNodes(
+    instance: OpenSheetMusicDisplay,
+    maxNodes: number,
+  ): void {
     const svg = getSvgRoot(instance);
     if (!svg || svg.childElementCount === 0) return;
     const res = parseSvgTopLevel(svg, maxNodes);
@@ -295,12 +337,32 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     };
   }
 
-  /** 从 SourceMeasure 列表构建小节时间范围 */
-  function extractMeasures(instance: OpenSheetMusicDisplay): ScoreMeasureInfo[] {
+  /**
+   * 从 SourceMeasure 列表构建小节时间范围，并附带图形小节的左缘 x（px）。
+   * x 用于节拍→坐标映射的小节锚点（消除过小节线时的速度突刺）。
+   */
+  function extractMeasures(
+    instance: OpenSheetMusicDisplay,
+    z: number,
+  ): ScoreMeasureInfo[] {
+    const scale = UNIT_IN_PX * z;
+    // 图形小节左缘 x（按 SourceMeasure 索引收集；取首个可用 staff）
+    const xByIndex = new Map<number, number>();
+    for (const page of instance.GraphicSheet.MusicPages) {
+      for (const system of page.MusicSystems) {
+        for (const staffMeasures of system.GraphicalMeasures) {
+          for (const gm of staffMeasures) {
+            const idx = gm.parentSourceMeasure?.measureListIndex ?? -1;
+            if (idx < 0 || xByIndex.has(idx)) continue;
+            xByIndex.set(idx, gm.PositionAndShape.AbsolutePosition.x * scale);
+          }
+        }
+      }
+    }
     return instance.Sheet.SourceMeasures.map((sm, index) => {
       const startBeat = sm.AbsoluteTimestamp.RealValue * 4;
       const endBeat = startBeat + sm.Duration.RealValue * 4;
-      return { index, startBeat, endBeat };
+      return { index, startBeat, endBeat, x: xByIndex.get(index) };
     });
   }
 
@@ -363,9 +425,10 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     for (const page of graphic.MusicPages) {
       for (const system of page.MusicSystems) {
         const staff0 = system.GraphicalMeasures[0] ?? [];
-        const staffAny = staff0.length > 0
-          ? staff0
-          : (system.GraphicalMeasures.find((m) => m.length > 0) ?? []);
+        const staffAny =
+          staff0.length > 0
+            ? staff0
+            : (system.GraphicalMeasures.find((m) => m.length > 0) ?? []);
         if (staffAny.length === 0) continue;
 
         const first = staffAny[0];
@@ -383,8 +446,14 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
         for (const staffMeasures of system.GraphicalMeasures) {
           for (const measure of staffMeasures) {
             const ps = measure.PositionAndShape;
-            topY = Math.min(topY, (ps.AbsolutePosition.y + ps.BorderTop) * scale);
-            bottomY = Math.max(bottomY, (ps.AbsolutePosition.y + ps.BorderBottom) * scale);
+            topY = Math.min(
+              topY,
+              (ps.AbsolutePosition.y + ps.BorderTop) * scale,
+            );
+            bottomY = Math.max(
+              bottomY,
+              (ps.AbsolutePosition.y + ps.BorderBottom) * scale,
+            );
             maxRight = Math.max(
               maxRight,
               (ps.AbsolutePosition.x + ps.BorderRight) * scale,
@@ -394,14 +463,23 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
         if (!Number.isFinite(topY)) continue;
         maxBottom = Math.max(maxBottom, bottomY);
 
-        systems.push({ index: index++, startBeat, endBeat: lastEnd, topY, bottomY });
+        systems.push({
+          index: index++,
+          startBeat,
+          endBeat: lastEnd,
+          topY,
+          bottomY,
+        });
       }
     }
     return { systems, contentWidthPx: maxRight, contentHeightPx: maxBottom };
   }
 
   /** 遍历图形模型，收集所有有音高的、可见的音符 */
-  function extractNotes(instance: OpenSheetMusicDisplay, z: number): ScoreNoteInfo[] {
+  function extractNotes(
+    instance: OpenSheetMusicDisplay,
+    z: number,
+  ): ScoreNoteInfo[] {
     const graphic = instance.GraphicSheet;
     const notes: ScoreNoteInfo[] = [];
     const scale = UNIT_IN_PX * z;
@@ -434,7 +512,9 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
           const pitch = src.Pitch;
           if (!pitch) continue;
           const midi =
-            (pitch.Octave + 1) * 12 + pitch.FundamentalNote + pitch.AccidentalHalfTones;
+            (pitch.Octave + 1) * 12 +
+            pitch.FundamentalNote +
+            pitch.AccidentalHalfTones;
           const beat = src.getAbsoluteTimestamp().RealValue * 4;
           const durationBeats = Math.max(0, src.Length.RealValue * 4);
           const ps = gn.PositionAndShape;
@@ -456,13 +536,24 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
   }
 
   /** 重渲染后的统一提取 */
-  function extractAll(instance: OpenSheetMusicDisplay, z: number): OsmdLoadResult {
+  function extractAll(
+    instance: OpenSheetMusicDisplay,
+    z: number,
+  ): OsmdLoadResult {
     const { tempoMarks, defaultBpm } = extractTempo(instance);
-    const { systems, contentWidthPx, contentHeightPx } = extractSystems(instance, z);
+    const { systems, contentWidthPx, contentHeightPx } = extractSystems(
+      instance,
+      z,
+    );
+    const notes = extractNotes(instance, z);
+    // 符头标记：高光染色仅对与 ScoreNoteInfo 矩形匹配的 path 图元生效
+    // （图元与 notes 同为 zoom-1 内容坐标；extractAll 在解析完成后调用，
+    //  覆盖 loadScore 与 setDark 两条重建路径）
+    markNoteheadPrimitives(primitives.items, notes);
     return {
-      notes: extractNotes(instance, z),
+      notes,
       systems,
-      measures: extractMeasures(instance),
+      measures: extractMeasures(instance, z),
       tempoMarks,
       defaultBpm,
       meta: extractMeta(instance),
@@ -477,10 +568,7 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
    * ——调用方解除加载遮罩时谱面即完整可用，播放推进不再遇到未解析区域。
    * @returns 加载结果；期间发生新的加载/清空（会话失效）时返回 null
    */
-  async function loadScore(
-    data: ArrayBuffer,
-    font: ScoreMusicFont,
-  ): Promise<OsmdLoadResult | null> {
+  async function loadScore(data: ArrayBuffer): Promise<OsmdLoadResult | null> {
     const session = ++loadSession;
     loading.value = true;
     error.value = null;
@@ -489,8 +577,7 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
       const instance = await ensureInstance();
       if (!instance) throw new Error("渲染容器未就绪");
       if (session !== loadSession) return null;
-      currentFont = font.charAt(0).toUpperCase() + font.slice(1);
-      instance.EngravingRules.DefaultVexFlowNoteFont = currentFont;
+      instance.EngravingRules.DefaultVexFlowNoteFont = FIXED_MUSIC_FONT;
       applyThemeColors(instance);
       // 令牌已自增：上一谱面遗留的渲染/解析循环会在下一步自查退出；
       // 图元缓存与统计复位后从零开始累积
@@ -518,35 +605,6 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
       logger.error("MusicXML 解析失败: " + e);
       error.value = String(e);
       throw e;
-    } finally {
-      if (session === loadSession) loading.value = false;
-    }
-  }
-
-  /**
-   * 应用音乐字体并重渲染（须在 render 前设置 EngravingRules），返回重提取的数据。
-   * 字体改变度量须整谱重排：全量渲染（会重置增量会话），随后一次性异步
-   * 解析完存量 SVG 才返回（加载遮罩期间完成，ADR 0013）。
-   * @returns 重提取数据；无变化/未就绪/会话失效时返回 null
-   */
-  async function applyFont(font: ScoreMusicFont): Promise<OsmdLoadResult | null> {
-    const vfFont = font.charAt(0).toUpperCase() + font.slice(1);
-    if (vfFont === currentFont) {
-      return null;
-    }
-    currentFont = vfFont;
-    const instance = osmd.value;
-    if (!instance || !instance.IsReadyToRender()) {
-      return null;
-    }
-    const session = ++loadSession;
-    loading.value = true;
-    try {
-      instance.EngravingRules.DefaultVexFlowNoteFont = vfFont;
-      instance.render();
-      resetPrimitives();
-      if (!(await parseAllSvgNodes(instance, session))) return null;
-      return extractAll(instance, zoom.value);
     } finally {
       if (session === loadSession) loading.value = false;
     }
@@ -601,7 +659,6 @@ export function useOsmd(container: Ref<HTMLElement | undefined>) {
     ready,
     zoom,
     loadScore,
-    applyFont,
     setDark,
     clear,
     primitives,
