@@ -9,21 +9,19 @@
         {{ description }}
       </span>
     </div>
-    <input
-      type="color"
-      class="w-10 h-8 rounded cursor-pointer border border-base-300 flex-shrink-0 ml-4 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-100 disabled:opacity-50 disabled:cursor-not-allowed"
-      :value="modelValue"
+    <ColorPicker
+      class="flex-shrink-0 ml-4"
+      :model-value="modelValue"
       :disabled="disabled"
-      :aria-labelledby="colorLabelId"
-      @input="
-        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
-      "
+      :aria-label="label"
+      @update:model-value="$emit('update:modelValue', $event)"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useId } from "vue";
+import ColorPicker from "@/components/common/ColorPicker.vue";
 
 const id = useId();
 const colorLabelId = `color-label-${id}`;

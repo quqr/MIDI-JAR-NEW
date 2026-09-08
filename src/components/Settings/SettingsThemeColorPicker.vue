@@ -36,6 +36,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Icon from "@/components/Icon/Icon.vue";
+import { cssColorToHex, getLuminance } from "@/helpers/color";
 
 interface ThemeColorOption {
   value: string;
@@ -132,6 +133,7 @@ const selectedLabel = computed(() => {
   return found ? found.label : "";
 });
 
+// 亮色 token 兜底表：token 无法解析为具体颜色时使用
 const lightColors = new Set([
   "primary-content",
   "secondary-content",
@@ -142,7 +144,24 @@ const lightColors = new Set([
   "base-content",
 ]);
 
+/** 解析 daisyUI token 的实际颜色为 hex；失败返回 null */
+function resolveTokenHex(value: string): string | null {
+  try {
+    if (typeof document === "undefined") return null;
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--color-${value}`)
+      .trim();
+    if (!raw) return null;
+    const hex = cssColorToHex(raw);
+    return hex.toLowerCase().startsWith("#") ? hex : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 真实亮度判定（对齐主题实际渲染）；解析失败回落到硬编码兜底表 */
 function isLightColor(value: string): boolean {
-  return lightColors.has(value);
+  const hex = resolveTokenHex(value);
+  return hex ? getLuminance(hex) >= 0.5 : lightColors.has(value);
 }
 </script>
