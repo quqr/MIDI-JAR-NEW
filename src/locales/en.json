@@ -1,4 +1,44 @@
 {
+  "colorPicker": {
+    "panelLabel": "Pick a color",
+    "eyedropper": "Pick color from screen",
+    "copy": "Copy color value",
+    "tabs": {
+      "hex": "HEX",
+      "rgb": "RGB",
+      "hsl": "HSL"
+    },
+    "modes": {
+      "rgb": "RGB",
+      "hsv": "HSV",
+      "hsl": "HSL"
+    },
+    "palette": {
+      "recent": "Recent"
+    },
+    "harmonies": {
+      "title": "Harmonies",
+      "complementary": "Complementary",
+      "analogous": "Analogous",
+      "triadic": "Triadic",
+      "splitComplementary": "Split comp.",
+      "tetradic": "Tetradic"
+    },
+    "scales": {
+      "tints": "Tints",
+      "shades": "Shades"
+    },
+    "channels": {
+      "r": "R",
+      "g": "G",
+      "b": "B",
+      "h": "H",
+      "s": "S",
+      "v": "V",
+      "l": "L",
+      "a": "A"
+    }
+  },
   "file": "file",
   "common": {
     "cancel": "Cancel",
@@ -26,7 +66,8 @@
     "debugger": "Debugger",
     "WaterfallPiano": "Waterfall Piano",
     "Sampler": "Sampler",
-    "scoreScroll": "Score Scroll"
+    "scoreScroll": "Score Scroll",
+    "score3d": "3D Score"
   },
   "home": {
     "moduleDescriptions": {
@@ -38,7 +79,8 @@
       "Sampler": "Sampler instruments — load and play various sound libraries",
       "chordQuiz": "Test your chord recognition with randomly generated chords",
       "tuner": "Real-time pitch detection to tune your instrument precisely",
-      "scoreScroll": "MusicXML score scrolling playback"
+      "scoreScroll": "MusicXML score scrolling playback",
+      "score3d": "Score extruded into 3D glyph solids, camera following playback"
     }
   },
   "tuner": {
@@ -99,6 +141,7 @@
       "play": "Play",
       "pause": "Pause",
       "stop": "Stop",
+      "exportVideo": "Export Video",
       "barlines": "Barlines",
       "measures": "Measures",
       "timeSig": "Time Sig",
@@ -110,27 +153,50 @@
       "scanlinePosition": "Scanline Position",
       "snapPosition": "Staff Line Position",
       "showScanline": "Show Scanline",
-      "showReveal": "Reveal on Play",
       "flyInDistance": "Fly-in Distance",
       "flyInScatter": "Vertical Scatter",
       "flyInDelay": "Fly-in Delay",
       "flyInDuration": "Fly-in Band Width",
+      "showFlyOut": "Note Fly-out",
+      "flyOutDuration": "Fly-out Band Width",
+      "flyOutDistance": "Fly-out Distance",
+      "flyOutScatter": "Vertical Scatter",
+      "flyOutDelay": "Fly-out Delay",
       "glowRange": "Glow Range",
       "glowIntensity": "Glow Intensity",
-      "glowSize": "Glow Size",
       "showFlyIn": "Note Fly-in",
       "showGlow": "Notehead Glow",
-      "glowColor": "Glow Color"
+      "tintColor": "Tint Color"
     },
     "appearance": {
       "title": "Appearance",
-      "musicFont": "Music Font",
       "background": "Background",
-      "backgroundTheme": "Theme",
+      "backgroundTheme": "Theme · Dot Grid",
       "backgroundPaper": "Paper",
-      "backgroundBlack": "Black",
-      "backgroundGradient": "Gradient"
+      "backgroundCustom": "Custom",
+      "customColor": "Custom Color",
+      "resetView": "Reset view (press 0)"
     }
+  },
+  "videoExport": {
+    "title": "Export Video",
+    "codec": "Video Codec",
+    "resolution": "Resolution",
+    "fps": "Frame Rate",
+    "cameraPreview": "Show camera rect",
+    "encodingMode": "Encoder",
+    "gpu": "GPU (hardware)",
+    "cpu": "CPU (software)",
+    "noCodec": "No supported video encoder in this environment",
+    "realtime": "realtime",
+    "start": "Start Export",
+    "cancel": "Cancel",
+    "exporting": "Offline rendering… (faster than realtime)",
+    "done": "Export complete, file saved",
+    "progress": "Progress",
+    "unsupported": "Offline video encoding (WebCodecs) is not supported in this browser",
+    "error": "Export failed",
+    "cameraHint": "Drag the dashed rect on the score to frame the export: edges resize it, drag inside to move it vertically. During export the rect follows the playhead across the whole score."
   },
   "layout": {
     "minimize": "Minimize",
@@ -670,7 +736,8 @@
         "pitchClass": "Pitch Class",
         "note": "Note"
       }
-    }
+    },
+    "score3d": "3D Score"
   },
   "WaterfallPiano": {
     "title": "Waterfall Piano",
@@ -945,5 +1012,21 @@
     "preview": "Preview",
     "clearInstrumentCache": "Clear Cache",
     "categories": "Categories"
+  },
+  "score3d": {
+    "viewport": "3D score viewport",
+    "emptyHint": "Load a MusicXML score to build the 3D glyph scene",
+    "load": "Load score",
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop",
+    "progress": "Playback progress",
+    "tracks": "Tracks:",
+    "track": "Track",
+    "recenter": "Recenter to playhead",
+    "viewHint": "MMB drag to orbit · Shift+MMB / right-drag to pan · scroll to zoom",
+    "settings": {
+      "background": "Background color"
+    }
   }
 }

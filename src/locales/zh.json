@@ -1,4 +1,44 @@
 {
+  "colorPicker": {
+    "panelLabel": "选择颜色",
+    "eyedropper": "屏幕取色",
+    "copy": "复制颜色值",
+    "tabs": {
+      "hex": "HEX",
+      "rgb": "RGB",
+      "hsl": "HSL"
+    },
+    "modes": {
+      "rgb": "RGB",
+      "hsv": "HSV",
+      "hsl": "HSL"
+    },
+    "palette": {
+      "recent": "最近使用"
+    },
+    "harmonies": {
+      "title": "和谐色",
+      "complementary": "互补",
+      "analogous": "邻近",
+      "triadic": "三角",
+      "splitComplementary": "分裂互补",
+      "tetradic": "四角"
+    },
+    "scales": {
+      "tints": "明阶",
+      "shades": "暗阶"
+    },
+    "channels": {
+      "r": "R",
+      "g": "G",
+      "b": "B",
+      "h": "H",
+      "s": "S",
+      "v": "V",
+      "l": "L",
+      "a": "A"
+    }
+  },
   "file": "文件",
   "common": {
     "cancel": "取消",
@@ -26,7 +66,8 @@
     "debugger": "调试器",
     "WaterfallPiano": "瀑布流钢琴",
     "Sampler": "采样器",
-    "scoreScroll": "乐谱滚动"
+    "scoreScroll": "乐谱滚动",
+    "score3d": "三维乐谱"
   },
   "home": {
     "moduleDescriptions": {
@@ -38,7 +79,8 @@
       "Sampler": "采样器音源 — 加载和演奏各种音色",
       "chordQuiz": "系统随机出和弦，考验您的和弦识别能力",
       "tuner": "实时音高检测，精准调校您的乐器",
-      "scoreScroll": "MusicXML 乐谱随播放滚动可视化"
+      "scoreScroll": "MusicXML 乐谱随播放滚动可视化",
+      "score3d": "MusicXML 乐谱以浮雕式符号实体铺入三维空间，随播放推进视角"
     }
   },
   "tuner": {
@@ -99,6 +141,7 @@
       "play": "播放",
       "pause": "暂停",
       "stop": "停止",
+      "exportVideo": "导出视频",
       "barlines": "小节线",
       "measures": "小节",
       "timeSig": "拍号",
@@ -110,27 +153,50 @@
       "scanlinePosition": "扫描线位置",
       "snapPosition": "谱面行位置",
       "showScanline": "显示扫描线",
-      "showReveal": "播放渐显",
       "flyInDistance": "飞入距离",
       "flyInScatter": "纵向散落",
       "flyInDelay": "飞入延迟",
       "flyInDuration": "飞入带宽度",
+      "showFlyOut": "音符飞出",
+      "flyOutDuration": "飞出带宽度",
+      "flyOutDistance": "飞出距离",
+      "flyOutScatter": "纵向散落",
+      "flyOutDelay": "飞出延迟",
       "glowRange": "高光范围",
       "glowIntensity": "高光强度",
-      "glowSize": "高光大小",
       "showFlyIn": "音符飞入",
       "showGlow": "符头高光",
-      "glowColor": "高光颜色"
+      "tintColor": "染色颜色"
     },
     "appearance": {
       "title": "外观",
-      "musicFont": "音乐字体",
       "background": "背景",
-      "backgroundTheme": "主题背景",
+      "backgroundTheme": "主题 · 点阵",
       "backgroundPaper": "纸张",
-      "backgroundBlack": "纯黑",
-      "backgroundGradient": "渐变"
+      "backgroundCustom": "自定义",
+      "customColor": "自定义颜色",
+      "resetView": "重置视图（快捷键 0）"
     }
+  },
+  "videoExport": {
+    "title": "导出视频",
+    "codec": "编码格式",
+    "resolution": "分辨率",
+    "fps": "帧率",
+    "cameraPreview": "显示取景矩形",
+    "encodingMode": "编码模式",
+    "gpu": "GPU 硬件编码",
+    "cpu": "CPU 软件编码",
+    "noCodec": "当前环境无可用视频编码",
+    "realtime": "实时",
+    "start": "开始导出",
+    "cancel": "取消",
+    "exporting": "正在离线渲染…（快于实时，请稍候）",
+    "done": "导出完成，已保存",
+    "progress": "进度",
+    "unsupported": "当前浏览器不支持离线视频编码（WebCodecs），无法导出",
+    "error": "导出失败",
+    "cameraHint": "在谱面中直接拖动虚线矩形设置导出画面：拖动四边调宽高、拖动内部上下移位置；导出时矩形随播放头水平平移，扫过完整乐谱。"
   },
   "layout": {
     "minimize": "最小化",
@@ -670,7 +736,8 @@
         "pitchClass": "音级",
         "note": "音符"
       }
-    }
+    },
+    "score3d": "三维乐谱"
   },
   "WaterfallPiano": {
     "title": "瀑布流钢琴",
@@ -944,5 +1011,21 @@
     "preview": "试听",
     "clearInstrumentCache": "清除缓存",
     "categories": "分类"
+  },
+  "score3d": {
+    "viewport": "三维乐谱视口",
+    "emptyHint": "请加载 MusicXML 乐谱以构建三维符号场景",
+    "load": "加载乐谱",
+    "play": "播放",
+    "pause": "暂停",
+    "stop": "停止",
+    "progress": "播放进度",
+    "tracks": "声部：",
+    "track": "声部",
+    "recenter": "回到播放头",
+    "viewHint": "中键拖拽旋转 · Shift+中键 / 右键拖拽平移 · 滚轮缩放",
+    "settings": {
+      "background": "背景颜色"
+    }
   }
 }
