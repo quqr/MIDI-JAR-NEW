@@ -9,6 +9,8 @@ export interface SmplrInstance {
   output: { volume: number; disconnect: () => void };
   loadProgress: LoadProgress;
   dispose: () => void;
+  /** 底层 AudioContext（前瞻调度读音频时钟用） */
+  context: BaseAudioContext;
 }
 
 /** 缓存条目状态机（原 InstrumentCacheInfo，L43-54） */

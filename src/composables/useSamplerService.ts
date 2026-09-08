@@ -131,6 +131,40 @@ function noteOff(note: number | string): void {
   }
 }
 
+// ─── 前瞻调度（score-scroll 播放：按 AudioContext 时间精确发声） ───
+
+/** 音频时钟当前值（AudioContext 秒）；无活动乐器时返回 null */
+function getAudioNow(): number | null {
+  const inst = cacheManager.getActive();
+  return inst ? inst.context.currentTime : null;
+}
+
+/**
+ * 前瞻调度：按 AudioContext 时间精确触发音符（smplr 原生 time 支持），
+ * 主线程卡顿不影响发声时刻。event 需携带唯一 stopId 供取消。
+ */
+function scheduleNoteEvent(event: NoteEvent): StopFn | null {
+  const inst = cacheManager.getActive();
+  if (!inst) return null;
+  try {
+    return inst.start(event);
+  } catch (err) {
+    logger.error("[SamplerService] scheduleNoteEvent error: %s", err);
+    return null;
+  }
+}
+
+/** 按 stopId 停止/取消前瞻调度的音符（time 省略 = 立即） */
+function stopByStopId(stopId: string | number, time?: number): void {
+  const inst = cacheManager.getActive();
+  if (!inst) return;
+  try {
+    inst.stop({ stopId, ...(time != null ? { time } : {}) });
+  } catch (err) {
+    logger.error("[SamplerService] stopByStopId error: %s", err);
+  }
+}
+
 /** 播放音符（固定时长模式） */
 function playNote(
   note: number | string,
@@ -386,6 +420,9 @@ export function useSamplerService() {
     playNote,
     noteOn,
     noteOff,
+    getAudioNow,
+    scheduleNoteEvent,
+    stopByStopId,
     stopNote,
     stopAllNotes,
     getCacheSize,

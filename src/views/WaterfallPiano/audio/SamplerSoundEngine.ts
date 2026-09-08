@@ -88,6 +88,59 @@ export class SamplerSoundEngine implements ISoundEngine {
     this.sustainedNotes.clear();
   }
 
+  // ── 前瞻调度扩展（score-scroll 播放） ──
+
+  private scheduledSeq = 0;
+  /** 已调度音符注册表：stopId + 计划发声时刻（AudioContext 秒） */
+  private scheduledNotes: { stopId: string; startAt: number }[] = [];
+
+  scheduleNote(
+    midi: number,
+    velocity: number,
+    when: number,
+    duration: number,
+  ): void {
+    if (!this.initialized) return;
+
+    const store = useSamplerStore();
+    if (!store.soundEnabled || !store.isReady) return;
+
+    const service = useSamplerService();
+    const stopId = `lookahead-${midi}-${++this.scheduledSeq}`;
+    this.scheduledNotes.push({ stopId, startAt: when });
+    // 注册表防膨胀：超阈值时清理已发声结束的条目
+    if (this.scheduledNotes.length > 256) {
+      const now = service.getAudioNow() ?? when;
+      this.scheduledNotes = this.scheduledNotes.filter(
+        (s) => s.startAt + duration > now - 1,
+      );
+    }
+    // smplr velocity 范围 0-100，MIDI velocity 范围 0-127
+    service.scheduleNoteEvent({
+      note: midi,
+      velocity: Math.round((velocity / 127) * 100),
+      time: when,
+      duration,
+      stopId,
+    });
+  }
+
+  cancelScheduledNotes(): void {
+    const service = useSamplerService();
+    const now = service.getAudioNow();
+    for (const s of this.scheduledNotes) {
+      // 只取消尚未发声的；已发声的让其自然收尾（与轮询模式的暂停一致）
+      if (now == null || s.startAt > now) {
+        service.stopByStopId(s.stopId, s.startAt);
+      }
+    }
+    this.scheduledNotes = [];
+  }
+
+  getAudioNow(): number | null {
+    return useSamplerService().getAudioNow();
+  }
+
   /** 释放资源 */
   dispose(): void {
     this.allNotesOff();
