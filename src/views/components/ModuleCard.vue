@@ -72,6 +72,7 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-bug": "bug",
   "mdi-tune-vertical": "tuner",
   "mdi-music-note-eighth": "music-note",
+  "mdi-cube-outline": "layers",
 };
 
 function mapMdiToIcon(mdiName: string): IconName {

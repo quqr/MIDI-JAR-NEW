@@ -75,6 +75,16 @@
           <Icon name="stop" :size="16" />
         </button>
 
+        <button
+          class="btn btn-square btn-sm"
+          :disabled="!loaded"
+          :title="$t('score3d.recenter')"
+          :aria-label="$t('score3d.recenter')"
+          @click="recenter()"
+        >
+          <Icon name="reset" :size="16" />
+        </button>
+
         <input
           type="range"
           class="range range-primary range-xs flex-1"
@@ -91,34 +101,6 @@
         </span>
       </div>
 
-      <div
-        v-if="trackInfos.length > 0"
-        class="flex flex-wrap items-center gap-2"
-      >
-        <span class="text-xs text-base-content/60">
-          {{ $t("score3d.tracks") }}
-        </span>
-        <button
-          v-for="info in trackInfos"
-          :key="info.trackIndex"
-          class="btn btn-xs"
-          :class="
-            visibleTracks.has(info.trackIndex) ? 'btn-outline' : 'btn-ghost'
-          "
-          :style="trackButtonStyle(info.trackIndex)"
-          @click="
-            setTrackVisible(
-              info.trackIndex,
-              !visibleTracks.has(info.trackIndex),
-            )
-          "
-        >
-          {{ $t("score3d.track") }} {{ info.trackIndex + 1 }} ({{
-            info.noteCount
-          }})
-        </button>
-      </div>
-
       <!-- 视角操作提示 -->
       <p
         v-if="loaded"
@@ -133,7 +115,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Icon } from "@/components/Icon";
-import { TRACK_COLORS } from "./constants";
 import { useScore3dEngine } from "./composables/useScore3dEngine";
 import Score3dCanvas from "./components/Score3dCanvas.vue";
 
@@ -147,8 +128,6 @@ const osmdContainer = ref<HTMLElement>();
 const {
   currentTime,
   duration,
-  trackInfos,
-  visibleTracks,
   loaded,
   loading,
   error,
@@ -158,7 +137,7 @@ const {
   pause,
   stop,
   seek,
-  setTrackVisible,
+  recenter,
 } = useScore3dEngine(osmdContainer);
 
 function onFileChange(event: Event): void {
@@ -170,10 +149,6 @@ function onFileChange(event: Event): void {
 
 function onSeek(event: Event): void {
   seek(Number((event.target as HTMLInputElement).value));
-}
-
-function trackButtonStyle(trackIndex: number): Record<string, string> {
-  return { "--btn-color": TRACK_COLORS[trackIndex % TRACK_COLORS.length] };
 }
 
 function formatTime(seconds: number): string {

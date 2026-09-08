@@ -69,6 +69,15 @@
           </div>
           <div>
             <ModuleCard
+              to="/score-3d"
+              settings-to="/settings/score-3d"
+              :title="$t('nav.score3d')"
+              :description="$t('home.moduleDescriptions.score3d')"
+              icon="mdi-cube-outline"
+            />
+          </div>
+          <div>
+            <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
               :title="$t('nav.routing')"

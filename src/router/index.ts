@@ -74,6 +74,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.scoreScroll", icon: "file-music" },
       },
       {
+        path: "score-3d",
+        name: "score-3d",
+        component: () => import("@/views/Score3D/Score3D.vue"),
+        meta: { title: "nav.score3d", icon: "layers" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },
@@ -154,6 +160,12 @@ const routes: RouteRecordRaw[] = [
             component: () =>
               import("@/views/WaterfallPiano/WaterfallPianoSettings.vue"),
             meta: { title: "settings.WaterfallPiano" },
+          },
+          {
+            path: "score-3d",
+            name: "settings-score-3d",
+            component: () => import("@/views/Score3D/Score3DSettings.vue"),
+            meta: { title: "settings.score3d" },
           },
           {
             path: "piano",

@@ -1,12 +1,16 @@
 /**
  * 三维乐谱（3D Score）模块类型定义
  *
- * 领域术语见 CONTEXT.md：三维乐谱、时间轴、音高轴、声部轴、播放头、
- * 声部轨、能量轨迹、光点。
+ * 领域术语见 CONTEXT.md：三维乐谱、时间轴、播放头、声部轨、符号实体、
+ * 能量轨迹（引导线）、光点、相机目标跟随。
  *
  * 数据源为 MusicXML 自驱动：拍位与音长来自乐谱本身，秒值由小节速度标记
  * 构建的 tempo map 换算（见 useOsmd.extractTempo / beatMap.buildTempoMapFromMeasures）。
  * MusicXML 无逐音符力度，velocity 取常量兜底。
+ *
+ * 场景架构见 ADR 0018：OSMD 渲染的每个符号以轮廓挤出为三维浮雕体
+ * （符号实体），保持谱面布局直铺；能量轨迹降级为引导线；相机由
+ * OrbitControls 接管，注视目标平滑跟随播放头。
  */
 
 /** 三维乐谱音符记录：乐谱音符补出秒级时间与声部轨归属后的形态 */
@@ -44,50 +48,43 @@ export interface TrailPoint {
   z: number;
 }
 
-/** 和弦锚点：主音控制点之外、同时发声的其他音高 */
-export interface ChordAnchor {
-  /** 所属主音控制点在 points 中的下标 */
-  pointIndex: number;
-  /** 同时发声的其他音高（已排序，不含主音） */
-  otherMidis: number[];
-  /** 其他音高对应的空间点（与 otherMidis 一一对应） */
-  otherPoints: TrailPoint[];
+/**
+ * 谱表带（px @ zoom 1）：一条谱表在一个系统行内的 y 区间与 x 范围。
+ * 符号图元按 y 中心归入谱表带 → 声部轨；播放头高亮与声部显隐均以此为准。
+ */
+export interface StaffBand {
+  /** 声部轨索引（谱表索引压缩映射后的连续编号） */
+  trackIndex: number;
+  /** 带上缘（px，含容差外扩） */
+  yTop: number;
+  /** 带下缘（px） */
+  yBottom: number;
+  /** 该行该谱表的 x 起点与终点（px） */
+  x0: number;
+  x1: number;
 }
 
-/** 一条声部轨的能量轨迹 */
-export interface TrailTrack {
+/** 时间↔谱面 x 的锚点（由音符的秒级时间与谱面像素坐标配对而来） */
+export interface TimeXPoint {
+  /** 时间（秒） */
+  t: number;
+  /** 谱面 x（px @ zoom 1） */
+  x: number;
+  /** 声部轨索引（该锚点所属音符） */
+  trackIndex: number;
+}
+
+/**
+ * 声部轨播放事件（追迹小球的数据源，ADR 0019）：
+ * 同一时刻（同拍）同声部轨的所有音符符头位置——单音 1 个、和弦 N 个。
+ */
+export interface VoiceEvent {
+  /** 时间（秒，音符起点） */
+  t: number;
   /** 声部轨索引 */
   trackIndex: number;
-  /** 主音控制点（按时间升序） */
-  points: TrailPoint[];
-  /** 和弦锚点（光点经过时点亮） */
-  chordAnchors: ChordAnchor[];
-}
-
-/** 轨迹布局参数 */
-export interface TrailLayoutOptions {
-  /** 每秒对应的世界坐标长度（时间轴缩放） */
-  unitsPerSecond: number;
-  /** 每个半音对应的世界坐标高度（音高轴缩放） */
-  unitsPerSemitone: number;
-  /** 相邻声部轨在声部轴上的间距 */
-  staffGap: number;
-  /** 和弦主音选取策略：最高音 / 最低音 */
-  chordPolicy: "top" | "bottom";
-}
-
-/** ADSR 包络参数（时间单位：秒） */
-export interface EnvelopeParams {
-  /** 起音时长 */
-  attack: number;
-  /** 衰减时长 */
-  decay: number;
-  /** 延音电平（0-1） */
-  sustain: number;
-  /** 释音时长 */
-  release: number;
-  /** 力度对包络的影响权重（0 = 无影响，1 = 完全按力度缩放） */
-  velocitySensitivity: number;
+  /** 该时刻发声的音符符头中心（谱面 px @ zoom 1，按 y 升序） */
+  notes: { x: number; y: number }[];
 }
 
 /** 光点参数 */
@@ -96,7 +93,7 @@ export interface GlowParams {
   radius: number;
   /** 静息辉光强度 */
   baseIntensity: number;
-  /** 峰值辉光强度（包络 × 力度映射后达到的上限） */
+  /** 峰值辉光强度（播放头经过符号块时的高亮上限） */
   peakIntensity: number;
 }
 

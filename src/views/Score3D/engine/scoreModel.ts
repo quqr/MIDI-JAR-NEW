@@ -5,7 +5,7 @@ import {
   type TempoSegment,
 } from "@/views/ScoreScroll/utils/beatMap";
 import { DEFAULT_VELOCITY } from "../constants";
-import type { Score3dNote, Score3dTimeRange, TrackInfo } from "../types";
+import type { Score3dNote, Score3dTimeRange } from "../types";
 
 /**
  * 由乐谱速度标记构建 tempo map。
@@ -61,27 +61,6 @@ function buildStaffToTrackMap(
     (a, b) => a - b,
   );
   return new Map(staffs.map((staff, index) => [staff, index]));
-}
-
-/** 由已映射的音符汇总声部轨摘要 */
-export function buildTrackInfo(notes: readonly Score3dNote[]): TrackInfo[] {
-  const map = new Map<number, Score3dNote[]>();
-  for (const n of notes) {
-    const list = map.get(n.trackIndex);
-    if (list) list.push(n);
-    else map.set(n.trackIndex, [n]);
-  }
-  return [...map.entries()]
-    .map(([trackIndex, list]) => {
-      const midis = list.map((n) => n.midi);
-      return {
-        trackIndex,
-        noteCount: list.length,
-        minMidi: Math.min(...midis),
-        maxMidi: Math.max(...midis),
-      };
-    })
-    .sort((a, b) => a.trackIndex - b.trackIndex);
 }
 
 /** 整首曲子的时间范围（秒） */
