@@ -18,14 +18,6 @@
       <button class="btn btn-sm btn-outline btn-error" @click="clearLogs">
         {{ t("settings.debuggerSettings.clearMessages") }}
       </button>
-      <div class="divider divider-horizontal mx-1"></div>
-
-      <label class="cursor-pointer flex items-center gap-2">
-        <input type="checkbox" class="toggle" v-model="autoScroll" />
-        <span class="text-xs">{{
-          t("settings.debuggerSettings.autoScroll") || "Auto Scroll"
-        }}</span>
-      </label>
     </div>
 
     <div

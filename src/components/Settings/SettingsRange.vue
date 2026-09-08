@@ -9,7 +9,7 @@
     <div class="flex items-center gap-2">
       <input
         type="range"
-        class="range range-xs w-full"
+        class="range range-xs range-primary w-full"
         :min="min"
         :max="max"
         :step="step"

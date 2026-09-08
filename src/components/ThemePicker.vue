@@ -11,7 +11,7 @@ const themeStore = useThemeStore();
     <div
       v-for="theme in themes"
       :key="theme.name"
-      class="border-base-content/20 hover:border-base-content/40 overflow-hidden rounded-lg border outline-2 outline-offset-2 outline-transparent outline-base-content!"
+      class="aura aura-rainbow border-base-content/20 hover:border-base-content/40 overflow-hidden rounded-lg border outline-2 outline-offset-2 outline-transparent outline-base-content!"
       :class="{
         '!outline-base-content': theme.name === themeStore.currentTheme,
       }"

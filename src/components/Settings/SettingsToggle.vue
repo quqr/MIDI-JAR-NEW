@@ -16,7 +16,7 @@
       <input
         :id="toggleId"
         type="checkbox"
-        class="toggle"
+        class="toggle toggle-primary"
         :class="{ loading: loading }"
         :checked="modelValue"
         :disabled="disabled || loading"
