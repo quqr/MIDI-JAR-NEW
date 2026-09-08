@@ -1,26 +1,21 @@
 <template>
-  <fieldset class="fieldset w-full py-2.5">
+  <fieldset class="fieldset w-full py-2.5 by-select">
     <legend v-if="label" class="fieldset-legend pb-1 text-sm">
       {{ label }}
     </legend>
-    <select
-      :id="selectId"
-      :class="['select select-sm w-full rounded-lg', { 'select-error': error }]"
-      :value="modelValue"
+    <RangeSlider
+      v-if="options.length > 0"
+      :model-value="selectedIndex"
+      :min="0"
+      :max="options.length - 1"
+      :step="1"
+      :tick-labels="optionLabels"
+      no-fill
+      :color="error ? 'error' : undefined"
       :disabled="disabled"
       :aria-label="label || 'Select an option'"
-      @change="
-        $emit('update:modelValue', ($event.target as HTMLSelectElement).value)
-      "
-    >
-      <option
-        v-for="option in options"
-        :key="String(option.value)"
-        :value="option.value"
-      >
-        {{ option.label }}
-      </option>
-    </select>
+      @update:model-value="onSlide"
+    />
     <span v-if="error && errorMessage" class="label text-error">{{
       errorMessage
     }}</span>
@@ -31,9 +26,10 @@
 </template>
 
 <script setup lang="ts">
-import { useId } from "vue";
-
-const id = useId();
+import { computed } from "vue";
+import RangeSlider from "@/components/common/RangeSlider.vue";
+import type { RangeSliderValue } from "@/components/common/rangeSlider";
+import { optionIndexOf } from "@/components/common/rangeSlider";
 
 interface Props {
   modelValue: string | number;
@@ -45,11 +41,20 @@ interface Props {
   errorMessage?: string;
 }
 
-const selectId = `select-${id}`;
+const props = defineProps<Props>();
 
-defineProps<Props>();
-
-defineEmits<{
+const emit = defineEmits<{
   "update:modelValue": [value: string | number];
 }>();
+
+// 选项 → 索引滑条映射：组件值域 0..n-1，领域值不进入滑条
+const selectedIndex = computed(() =>
+  Math.max(0, optionIndexOf(props.options, props.modelValue)),
+);
+const optionLabels = computed(() => props.options.map((o) => o.label));
+
+function onSlide(index: RangeSliderValue) {
+  const option = props.options[Number(index)];
+  if (option) emit("update:modelValue", option.value);
+}
 </script>

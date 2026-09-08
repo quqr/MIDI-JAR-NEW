@@ -36,72 +36,72 @@
         class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5"
       >
         <div class="flex flex-wrap items-end gap-x-5 gap-y-3">
-          <fieldset class="fieldset">
+          <fieldset class="fieldset w-56">
             <legend class="fieldset-legend text-xs">
               {{ $t("quiz.difficultyLabel") }}
             </legend>
-            <select
-              class="select select-sm select-bordered w-28"
-              v-model="difficulty"
+            <RangeSlider
+              :model-value="difficultyIndex"
+              :min="0"
+              :max="difficultyOptions.length - 1"
+              :step="1"
+              :tick-labels="difficultyLabels"
+              no-fill
               :disabled="sessionActive"
-            >
-              <option value="easy">{{ $t("quiz.difficulty.easy") }}</option>
-              <option value="intermediate">
-                {{ $t("quiz.difficulty.intermediate") }}
-              </option>
-              <option value="expert">{{ $t("quiz.difficulty.expert") }}</option>
-            </select>
+              :aria-label="$t('quiz.difficultyLabel')"
+              @update:model-value="setDifficulty"
+            />
           </fieldset>
 
-          <fieldset class="fieldset">
+          <fieldset class="fieldset w-60">
             <legend class="fieldset-legend text-xs">
               {{ $t("quiz.modeLabel") }}
             </legend>
-            <select
-              class="select select-sm select-bordered w-28"
-              v-model="mode"
+            <RangeSlider
+              :model-value="modeIndex"
+              :min="0"
+              :max="modeOptions.length - 1"
+              :step="1"
+              :tick-labels="modeLabels"
+              no-fill
               :disabled="sessionActive"
-            >
-              <option value="visual">{{ $t("quiz.mode.visual") }}</option>
-              <option value="scrambled">{{ $t("quiz.mode.scrambled") }}</option>
-              <option value="aural">{{ $t("quiz.mode.aural") }}</option>
-              <option value="mix">{{ $t("quiz.mode.mix") }}</option>
-            </select>
+              :aria-label="$t('quiz.modeLabel')"
+              @update:model-value="setMode"
+            />
           </fieldset>
 
-          <fieldset class="fieldset">
+          <fieldset class="fieldset w-56">
             <legend class="fieldset-legend text-xs">
               {{ $t("quiz.displayLabel") }}
             </legend>
-            <select
-              class="select select-sm select-bordered w-24"
-              v-model="display"
+            <RangeSlider
+              :model-value="displayIndex"
+              :min="0"
+              :max="displayOptions.length - 1"
+              :step="1"
+              :tick-labels="displayLabels"
+              no-fill
               :disabled="sessionActive"
-            >
-              <option value="auto">{{ $t("quiz.display.auto") }}</option>
-              <option value="keyboard">
-                {{ $t("quiz.display.keyboard") }}
-              </option>
-              <option value="notation">
-                {{ $t("quiz.display.notation") }}
-              </option>
-              <option value="both">{{ $t("quiz.display.both") }}</option>
-            </select>
+              :aria-label="$t('quiz.displayLabel')"
+              @update:model-value="setDisplay"
+            />
           </fieldset>
 
-          <fieldset class="fieldset">
+          <fieldset class="fieldset w-28">
             <legend class="fieldset-legend text-xs">
               {{ $t("quiz.countLabel") }}
             </legend>
-            <select
-              class="select select-sm select-bordered w-20"
-              v-model="questionCount"
+            <RangeSlider
+              :model-value="questionCountIndex"
+              :min="0"
+              :max="questionCountOptions.length - 1"
+              :step="1"
+              :tick-labels="questionCountLabels"
+              no-fill
               :disabled="sessionActive"
-            >
-              <option :value="5">5</option>
-              <option :value="10">10</option>
-              <option :value="20">20</option>
-            </select>
+              :aria-label="$t('quiz.countLabel')"
+              @update:model-value="setQuestionCount"
+            />
           </fieldset>
         </div>
 
@@ -421,6 +421,8 @@ import type {
 } from "@/types";
 import QuestionDisplay from "./components/QuestionDisplay.vue";
 import AnswerOptions from "./components/AnswerOptions.vue";
+import RangeSlider from "@/components/common/RangeSlider.vue";
+import type { RangeSliderValue } from "@/components/common/rangeSlider";
 
 const router = useRouter();
 const samplerStore = useSamplerStore();
@@ -453,6 +455,49 @@ const questionCount = ref<5 | 10 | 20>(settings.value.questionCount);
 const keyboardRange = ref<KeyboardRange>(
   settings.value.keyboardRange ?? "medium",
 );
+
+// ── 设置面板选项滑条（替代原 select）：组件值域为 0..n-1 索引，领域值不进入滑条 ──
+const difficultyOptions = ["easy", "intermediate", "expert"] as const;
+const modeOptions = ["visual", "scrambled", "aural", "mix"] as const;
+const displayOptions = ["auto", "keyboard", "notation", "both"] as const;
+const questionCountOptions = [5, 10, 20] as const;
+
+const difficultyIndex = computed(() =>
+  Math.max(0, difficultyOptions.indexOf(difficulty.value)),
+);
+const modeIndex = computed(() => Math.max(0, modeOptions.indexOf(mode.value)));
+const displayIndex = computed(() =>
+  Math.max(0, displayOptions.indexOf(display.value)),
+);
+const questionCountIndex = computed(() =>
+  Math.max(0, questionCountOptions.indexOf(questionCount.value)),
+);
+
+const difficultyLabels = computed(() =>
+  difficultyOptions.map((k) => t(`quiz.difficulty.${k}`)),
+);
+const modeLabels = computed(() => modeOptions.map((k) => t(`quiz.mode.${k}`)));
+const displayLabels = computed(() =>
+  displayOptions.map((k) => t(`quiz.display.${k}`)),
+);
+const questionCountLabels = questionCountOptions.map(String);
+
+function setDifficulty(index: RangeSliderValue) {
+  const v = difficultyOptions[Number(index)];
+  if (v) difficulty.value = v;
+}
+function setMode(index: RangeSliderValue) {
+  const v = modeOptions[Number(index)];
+  if (v) mode.value = v;
+}
+function setDisplay(index: RangeSliderValue) {
+  const v = displayOptions[Number(index)];
+  if (v) display.value = v;
+}
+function setQuestionCount(index: RangeSliderValue) {
+  const v = questionCountOptions[Number(index)];
+  if (v !== undefined) questionCount.value = v;
+}
 
 /** 键盘音域分段按钮选项 */
 const RANGE_OPTIONS: readonly KeyboardRange[] = [

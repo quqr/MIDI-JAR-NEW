@@ -217,29 +217,20 @@
               t("settings.routingSettings.virtualPortType")
             }}</span>
           </label>
-          <div class="flex gap-4">
-            <label class="label cursor-pointer gap-2">
-              <input
-                v-model="virtualPortType"
-                type="radio"
-                value="input"
-                class="radio radio-sm radio-primary"
-              />
-              <span class="fieldset-legend text-sm">{{
-                t("settings.routingSettings.virtualInput")
-              }}</span>
-            </label>
-            <label class="label cursor-pointer gap-2">
-              <input
-                v-model="virtualPortType"
-                type="radio"
-                value="output"
-                class="radio radio-sm radio-primary"
-              />
-              <span class="fieldset-legend text-sm">{{
-                t("settings.routingSettings.virtualOutput")
-              }}</span>
-            </label>
+          <div class="w-56">
+            <RangeSlider
+              :model-value="virtualPortTypeIndex"
+              :min="0"
+              :max="1"
+              :step="1"
+              :tick-labels="[
+                t('settings.routingSettings.virtualInput'),
+                t('settings.routingSettings.virtualOutput'),
+              ]"
+              no-fill
+              :aria-label="t('settings.routingSettings.virtualPortType')"
+              @update:model-value="setVirtualPortType"
+            />
           </div>
         </div>
         <div class="modal-action">
@@ -264,7 +255,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   onMounted as vueOnMounted,
@@ -277,6 +268,8 @@ import { useMidiRoutingStore } from "@/stores/midiRouting";
 import type { MidiRoute } from "@/stores/midiRouting";
 import Icon from "@/components/Icon/Icon.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import RangeSlider from "@/components/common/RangeSlider.vue";
+import type { RangeSliderValue } from "@/components/common/rangeSlider";
 import MidiFlowGraph from "./MidiFlowGraph.vue";
 
 const { t } = useI18n();
@@ -299,6 +292,15 @@ const virtualPortSupported = ref(false);
 const showVirtualPortModal = ref(false);
 const virtualPortName = ref("");
 const virtualPortType = ref<"input" | "output">("output");
+
+// 虚拟端口类型选项滑条（替代原 radio）：组件值域为 0/1 索引
+const virtualPortTypeIndex = computed(() =>
+  virtualPortType.value === "input" ? 0 : 1,
+);
+
+function setVirtualPortType(index: RangeSliderValue) {
+  virtualPortType.value = Number(index) === 0 ? "input" : "output";
+}
 
 // Check virtual port support on mount
 onMounted(async () => {

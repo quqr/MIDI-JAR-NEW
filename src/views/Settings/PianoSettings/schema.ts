@@ -34,8 +34,13 @@ export const pianoRangeGroup: SettingsGroupSchema = {
   titleKey: "settings.pianoSettings.range",
   icon: "piano",
   fields: [
-    { key: "from", control: "select", options: noteOptions },
-    { key: "to", control: "select", options: noteOptions },
+    {
+      key: "from",
+      dualToKey: "to",
+      control: "dualRange",
+      labelKey: "range",
+      options: noteOptions,
+    },
   ],
 };
 

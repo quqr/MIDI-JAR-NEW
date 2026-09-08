@@ -19,6 +19,8 @@ export type SettingsFieldControl =
   | "select"
   | "radio"
   | "textInput"
+  /** 双头范围滑条：key = 低位字段，dualToKey = 高位字段（select 风格选项映射为索引） */
+  | "dualRange"
   /** 分组分隔标题：labelKey 缺省时渲染无文字分隔线 */
   | "heading";
 
@@ -51,10 +53,12 @@ export type SettingsFieldSchema = {
   debugStep?: number;
   /** 值为 undefined/null 时的显示兜底（不写回，仅展示） */
   fallback?: number | string | boolean;
-  /** select/radio 的静态选项（优先于 optionsKey） */
+  /** select/radio 的静态选项（优先于 optionsKey；dualRange 也用） */
   options?: SettingsFieldOption[];
   /** select/radio 的 i18n 选项对象 key（子 key = value，`${value}Hint` = 可选 hint） */
   optionsKey?: string;
+  /** dualRange 的高位字段 key（低位为 key 本身） */
+  dualToKey?: string;
   /** themeAwareColor 的来源字段 key，缺省 `${key}Source` */
   sourceKey?: string;
   /** 条件渲染（基于当前 model 值） */

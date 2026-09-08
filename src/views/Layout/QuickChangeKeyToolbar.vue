@@ -1,24 +1,24 @@
 <template>
-  <div>
-    <select
-      v-model="keySignature"
-      class="select select-sm max-w-xs"
+  <div class="max-w-xs min-w-48">
+    <RangeSlider
+      :model-value="keyIndex"
+      :min="0"
+      :max="keyChoices.length - 1"
+      :step="1"
+      :tick-labels="keyTitles"
+      hide-labels
+      no-fill
       :aria-label="t('settings.notationSettings.key')"
-    >
-      <option
-        v-for="choice in keyChoices"
-        :key="choice.value"
-        :value="choice.value"
-      >
-        {{ choice.title }}
-      </option>
-    </select>
+      @update:model-value="setKey"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import RangeSlider from "@/components/common/RangeSlider.vue";
+import type { RangeSliderValue } from "@/components/common/rangeSlider";
 import { useSettingsStore } from "@/stores/settings";
 
 const { t } = useI18n();
@@ -43,4 +43,17 @@ const keyChoices = computed(() => [
   { title: t("settings.notationSettings.keySignatures.Bb"), value: "Bb" },
   { title: t("settings.notationSettings.keySignatures.F"), value: "F" },
 ]);
+
+const keyTitles = computed(() => keyChoices.value.map((c) => c.title));
+const keyIndex = computed(() =>
+  Math.max(
+    0,
+    keyChoices.value.findIndex((c) => c.value === keySignature.value),
+  ),
+);
+
+function setKey(index: RangeSliderValue) {
+  const choice = keyChoices.value[Number(index)];
+  if (choice) keySignature.value = choice.value;
+}
 </script>

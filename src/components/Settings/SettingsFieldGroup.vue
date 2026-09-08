@@ -60,6 +60,22 @@
           @update:model-value="update(field, $event)"
         />
       </template>
+      <SettingsDualRange
+        v-else-if="field.control === 'dualRange'"
+        :label="label(field)"
+        :description="description(field)"
+        :options="optionsOf(field)"
+        :from="
+          (getPathValue(model, field.key) as
+            string | number | null | undefined) ?? undefined
+        "
+        :to="
+          (getPathValue(model, field.dualToKey ?? '') as
+            string | number | null | undefined) ?? undefined
+        "
+        :disabled="isDisabled(field)"
+        @update="updateDualRange(field, $event)"
+      />
       <SettingsSelect
         v-else-if="field.control === 'select'"
         :model-value="(getPathValue(model, field.key) as string | number) ?? ''"
@@ -96,6 +112,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import SettingsCollapse from "./SettingsCollapse.vue";
 import SettingsColorPicker from "./SettingsColorPicker.vue";
+import SettingsDualRange from "./SettingsDualRange.vue";
 import SettingsRadioGroup from "./SettingsRadioGroup.vue";
 import SettingsRange from "./SettingsRange.vue";
 import SettingsSelect from "./SettingsSelect.vue";
@@ -264,5 +281,14 @@ function hookEmit(key: string, value: SettingsFieldValue | undefined): void {
 function update(field: SettingsFieldSchema, value: SettingsFieldValue): void {
   emit("update", field.key, value);
   field.onChange?.(value, props.model, hookEmit);
+}
+
+/** dualRange：一次更新低位/高位两个字段（走同一 update 事件通道） */
+function updateDualRange(
+  field: SettingsFieldSchema,
+  range: [string | number, string | number],
+): void {
+  hookEmit(field.key, range[0]);
+  hookEmit(field.dualToKey ?? "", range[1]);
 }
 </script>

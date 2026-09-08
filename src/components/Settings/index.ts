@@ -2,6 +2,7 @@ export { default as SettingsCollapse } from "./SettingsCollapse.vue";
 export { default as SettingsToggle } from "./SettingsToggle.vue";
 export { default as SettingsSelect } from "./SettingsSelect.vue";
 export { default as SettingsRange } from "./SettingsRange.vue";
+export { default as SettingsDualRange } from "./SettingsDualRange.vue";
 export { default as SettingsTextInput } from "./SettingsTextInput.vue";
 export { default as SettingsSection } from "./SettingsSection.vue";
 export { default as SettingsColorPicker } from "./SettingsColorPicker.vue";
