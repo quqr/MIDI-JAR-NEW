@@ -16,14 +16,12 @@
       <AppBreadcrumb />
     </div>
 
+    <!-- 弹性占位：Tauri 中为拖拽区（双击最大化）；浏览器中仅占位把右侧控件推到最右 -->
     <div
-      v-if="inTauri"
       class="flex-1 min-w-10 self-stretch"
-      style="-webkit-app-region: drag"
+      :style="inTauri ? '-webkit-app-region: drag' : undefined"
       @dblclick="handleDragAreaDblClick"
     ></div>
-
-    <QuickChangeKeyToolbar />
 
     <!-- 延迟状态圆点（常驻） -->
     <div
@@ -51,6 +49,14 @@
       </RouterLink>
 
       <ThemeSwitcher />
+
+      <!-- 调性快切滑条：置于最右，但保持在窗口控制按钮（最小化/最大化/关闭）左侧 -->
+      <div
+        class="flex min-w-0 items-center"
+        style="-webkit-app-region: no-drag"
+      >
+        <QuickChangeKeyToolbar />
+      </div>
 
       <div
         v-if="!isMac && inTauri"
@@ -225,6 +231,7 @@ const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/chord-quiz", label: "nav.chordQuiz", icon: "quiz" },
   { path: "/tuner", label: "nav.tuner", icon: "tuner" },
   { path: "/score-scroll", label: "nav.scoreScroll", icon: "file-music" },
+  { path: "/score-3d", label: "nav.score3d", icon: "layers" },
 ];
 
 const isActive = (path: string) => {
