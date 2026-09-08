@@ -18,7 +18,7 @@ import {
 } from "@/engine/fluid";
 import { SplatPerturbation } from "@/engine/fluid/FluidConfig";
 import { noteToColor } from "./NoteColorMapper";
-import { hexToRgbNorm, hslToRgbNorm } from "./colorUtils";
+import { hexToRgbNorm, hslToRgbNorm } from "@/helpers/color";
 import { PerlinNoise1D } from "@/utils/PerlinNoise1D";
 import { createLogger } from "@/utils/logger";
 
