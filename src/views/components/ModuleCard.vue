@@ -67,12 +67,16 @@ const MDI_TO_ICON: Record<string, string> = {
   "mdi-piano": "piano",
   "mdi-help-circle-outline": "help-circle",
   "mdi-circle-outline": "circle",
+  "mdi-circle-of-fifths": "circle-of-fifths",
   "mdi-book-open-page-variant": "book",
   "mdi-swap-horizontal": "swap",
   "mdi-bug": "bug",
   "mdi-tune-vertical": "tuner",
   "mdi-music-note-eighth": "music-note",
   "mdi-cube-outline": "layers",
+  "mdi-lead-sheet": "lead-sheet",
+  "mdi-metronome": "metronome",
+  "mdi-puzzle": "plugin",
 };
 
 function mapMdiToIcon(mdiName: string): IconName {

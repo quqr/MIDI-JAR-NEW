@@ -8,6 +8,28 @@
     silk;
 }
 
+/* Bravura —— SMuFL 标准开源音乐字体（SIL Open Font License 1.1）
+   来源：https://github.com/steinbergmedia/bravura（redist/woff/Bravura.woff2）
+   仅用于渲染 SMuFL 码位音符字形（♩ U+E1D5 / ♪ U+E1D7 等），不做正文文本。
+   font-display: block —— 图标场景下宁可短暂空白也不闪现 fallback 豆腐块。 */
+@font-face {
+  font-family: "Bravura";
+  src: url("../assets/fonts/Bravura.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+/* 音乐字形容器：音符符号用，不带任何文本样式继承干扰 */
+.music-glyph {
+  font-family: "Bravura", serif;
+  font-weight: 400;
+  line-height: 1;
+  /* Bravura 符号以 staff 空间设计，基线偏下；微调让字形在 flex 居中场景视觉居中 */
+  display: inline-block;
+  vertical-align: -0.08em;
+}
+
 /* z-index 规范 - 全局层级语义（从底到顶）：
    base: 正常文档流
    sticky: sticky header / 控件层

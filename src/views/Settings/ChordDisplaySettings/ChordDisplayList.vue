@@ -1,17 +1,21 @@
 <template>
   <div class="flex items-center gap-2 p-2 bg-base-200">
-    <div class="tabs tabs-boxed bg-transparent flex-1 overflow-x-auto">
+    <div class="tabs tabs-box flex-1 overflow-x-auto">
       <RouterLink
         v-for="moduleId in moduleIds"
         :key="moduleId"
         :to="`/settings/chords/${moduleId}`"
         class="tab tab-sm"
-        :class="
-          currentRoute === `/settings/chords/${moduleId}` ? 'tab-active' : ''
+        :class="{ 'tab-active': isCurrent(moduleId) }"
+        :style="
+          isCurrent(moduleId)
+            ? {
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--color-primary-content)',
+              }
+            : undefined
         "
-        :aria-current="
-          currentRoute === `/settings/chords/${moduleId}` ? 'page' : undefined
-        "
+        :aria-current="isCurrent(moduleId) ? 'page' : undefined"
       >
         {{ moduleId }}
       </RouterLink>
@@ -54,6 +58,11 @@ const moduleIds = computed(() =>
 const currentRoute = computed(
   () => `/settings/chords/${route.params.moduleId}`,
 );
+
+/** 当前路由对应的模块 tab（激活项用主题强调色底 + 反色文字） */
+function isCurrent(moduleId: string): boolean {
+  return currentRoute.value === `/settings/chords/${moduleId}`;
+}
 
 function handleSave(name: string) {
   try {

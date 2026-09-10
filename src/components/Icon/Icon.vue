@@ -169,6 +169,10 @@ const iconPath = computed((): string => {
     filter: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
     "chevrons-up": "M17 11l5-5-5-5M7 11l-5-5 5-5M7 13l5 5 5-5",
     "chevrons-down": "M7 13l5 5 5-5M7 6l5 5 5-5M17 19l5-5-5-5M7 6l-5 5 5 5",
+    metronome:
+      "M12 3v2M10 5h4M9 5l-3 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2L15 5M7 19h10M12 8l3 6",
+    "lead-sheet":
+      "M2 9h20M2 12h20M2 15h20M2 18h20M6 5.5v14M6 5.5c-1.2.9-1.6 2.3-.9 3.5M6 14c-.9 1.4-.5 2.9.9 3.7M19 3.5h3",
     list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
   };
   return paths[props.name] || paths.home;

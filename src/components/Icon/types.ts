@@ -92,4 +92,6 @@ export type IconName =
   | "file-text"
   | "plugin"
   | "tuner"
+  | "metronome"
+  | "lead-sheet"
   | "list";

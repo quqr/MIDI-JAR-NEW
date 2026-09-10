@@ -10,15 +10,16 @@
     ></div>
 
     <div
-      class="min-w-0 flex items-center overflow-hidden"
+      class="shrink-0 min-w-max flex items-center"
       style="-webkit-app-region: no-drag"
     >
       <AppBreadcrumb />
     </div>
 
-    <!-- 弹性占位：Tauri 中为拖拽区（双击最大化）；浏览器中仅占位把右侧控件推到最右 -->
+    <!-- 弹性占位：Tauri 中为拖拽区（双击最大化）；浏览器中仅占位把右侧控件推到最右。
+         唯一可伸缩项，吸收全部剩余空间；面包屑与右侧控件均 shrink-0 优先保内容。 -->
     <div
-      class="flex-1 min-w-10 self-stretch"
+      class="flex-1 min-w-0 self-stretch"
       :style="inTauri ? '-webkit-app-region: drag' : undefined"
       @dblclick="handleDragAreaDblClick"
     ></div>
@@ -33,6 +34,19 @@
     >
       <StateDot :status="latencyStatus" :aria-label="latencyAriaLabel" />
     </div>
+
+    <!-- 音源引擎状态圆点：仅在 VST 出错时出现（采样器路径下不占位）；点击前往 VST 页 -->
+    <RouterLink
+      v-if="vstErrorVisible"
+      to="/vst"
+      class="flex items-center justify-center w-6 h-6 shrink-0"
+      style="-webkit-app-region: no-drag"
+      role="status"
+      :title="vstErrorTooltip"
+      :aria-label="vstErrorTooltip"
+    >
+      <StateDot status="error" size="sm" :aria-label="vstErrorTooltip" />
+    </RouterLink>
 
     <div
       class="flex items-center gap-0.5 shrink-0"
@@ -52,7 +66,7 @@
 
       <!-- 调性快切滑条：置于最右，但保持在窗口控制按钮（最小化/最大化/关闭）左侧 -->
       <div
-        class="flex min-w-0 items-center"
+        class="flex shrink-0 items-center"
         style="-webkit-app-region: no-drag"
       >
         <QuickChangeKeyToolbar />
@@ -195,6 +209,8 @@ import StateDot from "@/components/common/StateDot.vue";
 import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
+import { useSamplerStore } from "@/stores/sampler";
+import { useVstStore } from "@/stores/vst";
 import { isTauri } from "@/utils/tauri";
 
 const logger = createLogger("AppNavbar");
@@ -202,6 +218,8 @@ const inTauri = isTauri();
 
 const { t } = useI18n();
 const route = useRoute();
+const samplerStore = useSamplerStore();
+const vstStore = useVstStore();
 
 const mobileMenuOpen = ref(false);
 const isMaximized = ref(false);
@@ -225,6 +243,21 @@ const latencyAriaLabel = computed(() =>
   t("layout.latencyAriaLabel", { ms: currentLatency.value.toFixed(2) }),
 );
 
+// ─── 音源引擎全局错误指示（E3） ───
+// 后端没有独立的 `vst:error` 事件：错误统一由 `vst:status` 的 state === "error" 表达，
+// 因此这里从 store 状态派生，不额外订阅。
+// 只在“当前正在用 VST”时显示——采样器路径下插件崩溃与本页无关，不该打扰。
+const vstErrorVisible = computed(
+  () => samplerStore.toneSource === "vst" && vstStore.hasError,
+);
+
+const vstErrorTooltip = computed(() => {
+  const message = vstStore.errorMessage;
+  return message
+    ? t("vst.globalErrorTooltip", { message })
+    : t("vst.globalErrorTooltipGeneric");
+});
+
 const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/home", label: "nav.home", icon: "home" },
   { path: "/chord-dictionary", label: "nav.chordDictionary", icon: "book" },
@@ -232,6 +265,14 @@ const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/tuner", label: "nav.tuner", icon: "tuner" },
   { path: "/score-scroll", label: "nav.scoreScroll", icon: "file-music" },
   { path: "/score-3d", label: "nav.score3d", icon: "layers" },
+  {
+    path: "/circle-of-fifths",
+    label: "nav.circleOfFifths",
+    icon: "circle-of-fifths",
+  },
+  { path: "/chord-chart", label: "nav.chordChart", icon: "lead-sheet" },
+  { path: "/metronome", label: "nav.metronome", icon: "metronome" },
+  { path: "/vst", label: "nav.vst", icon: "plugin" },
 ];
 
 const isActive = (path: string) => {

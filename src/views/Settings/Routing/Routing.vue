@@ -165,7 +165,10 @@
     </div>
 
     <!-- 流程图视图（高级模式） -->
-    <div v-else class="flex-1 h-0 p-4 rounded-xl">
+    <div
+      v-else
+      class="flex-1 h-0 p-4 rounded-xl overflow-hidden border border-base-200 bg-base-100"
+    >
       <MidiFlowGraph
         :inputs="inputs"
         :outputs="outputs"

@@ -80,6 +80,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "nav.score3d", icon: "layers" },
       },
       {
+        path: "circle-of-fifths",
+        name: "circle-of-fifths",
+        component: () => import("@/views/CircleOfFifths/CircleOfFifths.vue"),
+        meta: { title: "nav.circleOfFifths", icon: "circle-of-fifths" },
+      },
+      {
+        path: "metronome",
+        name: "metronome",
+        component: () => import("@/views/Metronome/Metronome.vue"),
+        meta: { title: "nav.metronome", icon: "metronome" },
+      },
+      {
+        path: "chord-chart",
+        name: "chord-chart",
+        component: () => import("@/views/ChordChart/ChordChart.vue"),
+        meta: { title: "nav.chordChart", icon: "lead-sheet" },
+      },
+      {
+        path: "vst",
+        name: "vst",
+        component: () => import("@/views/Vst/Vst.vue"),
+        meta: { title: "nav.vst", icon: "plugin" },
+      },
+      {
         path: "settings",
         component: SettingsLayout,
         meta: { title: "settings.title", icon: "settings" },

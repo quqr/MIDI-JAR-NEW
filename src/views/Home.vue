@@ -78,6 +78,38 @@
           </div>
           <div>
             <ModuleCard
+              to="/circle-of-fifths"
+              :title="$t('nav.circleOfFifths')"
+              :description="$t('home.moduleDescriptions.circleOfFifths')"
+              icon="mdi-circle-of-fifths"
+            />
+          </div>
+          <div>
+            <ModuleCard
+              to="/metronome"
+              :title="$t('nav.metronome')"
+              :description="$t('home.moduleDescriptions.metronome')"
+              icon="mdi-metronome"
+            />
+          </div>
+          <div>
+            <ModuleCard
+              to="/chord-chart"
+              :title="$t('nav.chordChart')"
+              :description="$t('home.moduleDescriptions.chordChart')"
+              icon="mdi-lead-sheet"
+            />
+          </div>
+          <div>
+            <ModuleCard
+              to="/vst"
+              :title="$t('nav.vst')"
+              :description="$t('home.moduleDescriptions.vst')"
+              icon="mdi-puzzle"
+            />
+          </div>
+          <div>
+            <ModuleCard
               to="/settings/routing"
               settings-to="/settings/routing"
               :title="$t('nav.routing')"

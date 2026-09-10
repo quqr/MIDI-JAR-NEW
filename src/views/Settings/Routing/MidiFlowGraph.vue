@@ -31,9 +31,12 @@
         <Wire v-bind="wireEdgeProps" />
       </template>
 
+      <!-- 点阵背景：半径/间距随画布缩放联动，缩放时视觉密度保持一致 -->
       <Background
+        variant="dots"
         :gap="20"
-        pattern-color="color-mix(in oklch, var(--color-base-content) 6%, transparent)"
+        :size="2"
+        color="color-mix(in oklch, var(--color-base-content) 16%, transparent)"
       />
 
       <Controls position="top-right">

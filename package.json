@@ -48,6 +48,8 @@
     "@tonaljs/core": "^5.0.2",
     "@tonaljs/pcset": "^4.10.1",
     "@tonejs/midi": "^2.0.28",
+    "@tsparticles/engine": "^4.4.0",
+    "@tsparticles/slim": "^4.4.0",
     "@types/three": "^0.185.4",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
