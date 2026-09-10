@@ -22,6 +22,22 @@ pub async fn open_file_dialog(app: AppHandle) -> Result<Option<Vec<String>>, Str
     .pipe(Ok)
 }
 
+/// 打开目录选择对话框（无过滤器）；用户取消返回 None。
+///
+/// 与 [`open_file_dialog`] 分开：`blocking_pick_folder` 只允许单选目录，
+/// 而插件扫描目录是单值语义，混用会逼前端从数组里猜第一个。
+#[tauri::command]
+pub async fn open_directory_dialog(app: AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    tauri::async_runtime::spawn_blocking(move || {
+        app.dialog().file().blocking_pick_folder()
+    })
+    .await
+    .map_err(|e| format!("dialog task failed: {e}"))?
+    .map(|p| p.to_string())
+    .pipe(Ok)
+}
+
 /// 打开保存文件对话框（默认文件名 untitled.mid）；用户取消返回 None。
 #[tauri::command]
 pub async fn save_file_dialog(app: AppHandle) -> Result<Option<String>, String> {

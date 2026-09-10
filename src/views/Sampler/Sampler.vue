@@ -63,7 +63,9 @@ async function selectInstrument(info: InstrumentInfo) {
 }
 
 function onNoteOn(note: number) {
-  if (!samplerStore.isReady) return;
+  // VST 路径不依赖采样器的 isReady（那是采样器的加载语义）；
+  // 是否真的发声由 useSamplerService 内部按 soundEnabled + 后端状态判定。
+  if (samplerStore.toneSource === "sampler" && !samplerStore.isReady) return;
   activeNotes.value.add(note);
   samplerService.noteOn(note, 100);
 }

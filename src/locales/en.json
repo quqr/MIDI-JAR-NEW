@@ -53,7 +53,8 @@
     "clear": "Clear",
     "connected": "Connected",
     "disconnected": "Disconnected",
-    "back": "Back"
+    "back": "Back",
+    "retry": "Retry"
   },
   "nav": {
     "home": "Home",
@@ -67,7 +68,11 @@
     "WaterfallPiano": "Waterfall Piano",
     "Sampler": "Sampler",
     "scoreScroll": "Score Scroll",
-    "score3d": "3D Score"
+    "score3d": "3D Score",
+    "circleOfFifths": "Circle of Fifths",
+    "chordChart": "Chord Chart",
+    "metronome": "Metronome",
+    "vst": "VST Plugins"
   },
   "home": {
     "moduleDescriptions": {
@@ -80,7 +85,11 @@
       "chordQuiz": "Test your chord recognition with randomly generated chords",
       "tuner": "Real-time pitch detection to tune your instrument precisely",
       "scoreScroll": "MusicXML score scrolling playback",
-      "score3d": "Score extruded into 3D glyph solids, camera following playback"
+      "score3d": "Score extruded into 3D glyph solids, camera following playback",
+      "circleOfFifths": "A map of the twelve keys by fifths, with scale and diatonic chord playback plus progression transposition",
+      "chordChart": "iReal Pro style chord chart editor with chord-level editing, transposition and library management",
+      "metronome": "Synthesized click metronome with time signature, accents and subdivision",
+      "vst": "Host local VST3 plugins as your tone source, switchable with the built-in sampler"
     }
   },
   "tuner": {
@@ -471,7 +480,8 @@
       "showFps": "Show FPS",
       "showFpsHint": "Show live FPS in the top-left corner (applies to all pages)",
       "theme": "Theme",
-      "themeHint": "Choose the application theme"
+      "themeHint": "Choose the application theme",
+      "toggleTheme": "Toggle theme"
     },
     "routingSettings": {
       "refreshDevices": "Refresh devices",
@@ -742,6 +752,9 @@
   "WaterfallPiano": {
     "title": "Waterfall Piano",
     "settings": "Waterfall Piano Settings",
+    "errors": {
+      "playbackFailed": "Playback failed"
+    },
     "particles": "Note Particles",
     "background": "Background",
     "keyboard": "Keyboard",
@@ -818,9 +831,9 @@
       "bottom": "Bottom (above background)"
     },
     "keyRangeOptions": {
-      "88": "88",
-      "61": "61",
       "49": "49",
+      "61": "61",
+      "88": "88",
       "custom": "Custom"
     },
     "keyLabelOptions": {
@@ -891,114 +904,13 @@
     }
   },
   "advancedDebug": {
-    "presets": {
-      "title": "Preset Manager",
-      "saveCurrent": "Save current configuration as preset",
-      "namePlaceholder": "Preset name",
-      "save": "Save",
-      "list": "Saved presets",
-      "empty": "No presets yet. Save current configuration to quickly restore later",
-      "apply": "Apply",
-      "rename": "Rename",
-      "delete": "Delete",
-      "export": "Export",
-      "import": "Import",
-      "confirmDelete": "Delete preset \"{name}\"?",
-      "importSuccess": "Imported {count} presets",
-      "importFailed": "Import failed: invalid file format"
-    },
-    "notation": {
-      "display": {
-        "title": "Notation - Display",
-        "showClef": "Show Clef",
-        "showKeySignature": "Show Key Signature",
-        "showKeySignatureText": "Show Key Signature Text",
-        "showBarlines": "Show Barlines",
-        "showTimeSignature": "Show Time Signature",
-        "showNoteNames": "Show Note Names",
-        "showStaffLines": "Show Staff Lines",
-        "filterClef": "Filter Notes by Clef",
-        "filterClefHint": "Off: render all notes on single staff. On: only render notes matching the clef"
-      },
-      "layout": {
-        "title": "Notation - Layout",
-        "paddingTop": "Padding Top",
-        "staveHeight": "Stave Height",
-        "staveGap": "Stave Gap",
-        "textHeight": "Text Height",
-        "bottomPadding": "Bottom Padding",
-        "sidePadding": "Side Padding",
-        "clefWidth": "Clef Width",
-        "noteWidth": "Note Width",
-        "keySignatureWidthPerAlteration": "Key Signature Width Factor",
-        "keySignatureWidthPerAlterationHint": "Width per accidental (px), extended range beyond 200",
-        "maxScale": "Max Scale",
-        "maxScaleHint": "Extended range beyond 2.0x limit",
-        "noteStartXOffset": "Note Start X Offset",
-        "noteStartXOffsetHint": "Horizontal offset of notes relative to clef (px)",
-        "minScaleRatio": "Min Scale Ratio",
-        "minScaleRatioHint": "Lower bound of scale relative to container width (0-1)"
-      },
-      "style": {
-        "title": "Notation - Style",
-        "backgroundColor": "Background Color",
-        "staffLineColor": "Staff Line Color",
-        "noteColor": "Note Color",
-        "noteHighlightColor": "Note Highlight Color",
-        "fontSize": "Font Size",
-        "noteDuration": "Note Duration",
-        "noteDurationHint": "VexFlow duration string: 1=whole, 2=half, 4=quarter, 8=eighth"
-      }
-    },
-    "waterfall": {
-      "fluid": {
-        "title": "Fluid Advanced",
-        "fluidAdvanced": "Fluid Advanced Mode",
-        "fluidAdvancedHint": "Enable to adjust fluid simulation details",
-        "simResolution": "Simulation Resolution",
-        "splatRadius": "Splat Radius",
-        "splatColorHue": "Splat Color Hue",
-        "trailLength": "Trail Length",
-        "trailLengthHint": "1=long trail, 0=fast fade",
-        "flowPersistence": "Flow Persistence",
-        "flowPersistenceHint": "1=persistent, 0=short",
-        "bloom": "Bloom",
-        "bloomIntensity": "Bloom Intensity",
-        "hitExplosion": "Hit Explosion",
-        "hitExplosionHint": "Produce explosion effect on key hit",
-        "blockCoverage": "Block Coverage",
-        "blockCoverageHint": "Produce emission when note blocks cover"
-      },
-      "keyboard": {
-        "title": "Keyboard Advanced",
-        "customFrom": "Custom Start Note",
-        "customTo": "Custom End Note",
-        "keyBorderWidth": "Key Border Width",
-        "keyBorderColor": "Key Border Color",
-        "gapBlur": "Gap Blur",
-        "separatorColor": "Separator Color",
-        "separatorThickness": "Separator Thickness",
-        "staffVisible": "Show Staff",
-        "synthesiaFlowDirection": "Synthesia Flow Direction",
-        "flowDirectionOptions": {
-          "up": "Up",
-          "down": "Down"
-        },
-        "defaultVelocity": "Default Velocity",
-        "defaultVelocityHint": "Velocity used when playing via computer keyboard (0-127)"
-      },
-      "midiFile": {
-        "title": "MIDI File Advanced",
-        "selectedTracks": "Selected Tracks",
-        "selectedTracksHint": "Currently playing track indices",
-        "noTracks": "No tracks selected",
-        "trackColors": "Track Colors",
-        "trackColorN": "Track {n} Color",
-        "rightHandTrackIdx": "Right Hand Track Index",
-        "rightHandTrackIdxHint": "Track index inferred as right hand",
-        "leftHandTrackIdx": "Left Hand Track Index",
-        "leftHandTrackIdxHint": "Track index inferred as left hand"
-      }
+    "cache": {
+      "title": "Cache Management",
+      "localStorage": "localStorage",
+      "cacheStorage": "CacheStorage",
+      "total": "Total",
+      "clearAll": "Clear all caches",
+      "note": "Clearing caches means loaded instruments must be downloaded again. Your settings and theme are kept."
     }
   },
   "sampler": {
@@ -1011,7 +923,12 @@
     "arpeggiatedChord": "Arpeggiated Chord",
     "preview": "Preview",
     "clearInstrumentCache": "Clear Cache",
-    "categories": "Categories"
+    "categories": "Categories",
+    "refreshList": "Refresh instrument list",
+    "downloading": "Downloading {completed}/{total}",
+    "batchDownload": "Batch download",
+    "vstNotice": "The keyboard currently plays through a VST plugin",
+    "vstManage": "Manage"
   },
   "score3d": {
     "viewport": "3D score viewport",
@@ -1027,6 +944,336 @@
     "viewHint": "MMB drag to orbit · Shift+MMB / right-drag to pan · scroll to zoom",
     "settings": {
       "background": "Background color"
+    }
+  },
+  "circleOfFifths": {
+    "subtitle": "Circle of Fifths · Key Relationship Map",
+    "currentKey": "Current Key",
+    "mode": {
+      "major": "Major",
+      "minor": "Minor"
+    },
+    "signature": {
+      "none": "No sharps or flats",
+      "sharps": "{count} sharp(s)",
+      "flats": "{count} flat(s)"
+    },
+    "quality": {
+      "major": "Major",
+      "minor": "Minor",
+      "diminished": "Diminished",
+      "augmented": "Augmented"
+    },
+    "relations": {
+      "dominant": "Dominant",
+      "subdominant": "Subdominant",
+      "relative": "Relative",
+      "parallel": "Parallel"
+    },
+    "wheel": {
+      "ariaLabel": "Circle of fifths key selector",
+      "sectorAria": "{major} major (relative minor {minor}, {signature})"
+    },
+    "legend": {
+      "title": "Legend",
+      "selected": "Selected",
+      "currentBadge": "Current key"
+    },
+    "panel": {
+      "isCurrent": "Current Key",
+      "isCurrentHint": "Global key setting matches this key",
+      "useAsCurrent": "Use as current key",
+      "minorKeySignatureHint": "Major key sharing this signature: {major}",
+      "scale": "Scale",
+      "diatonicChords": "Diatonic Chords",
+      "relations": "Nearby Keys"
+    },
+    "actions": {
+      "play": "Play scale",
+      "stop": "Stop",
+      "playChord": "Play chord",
+      "openInDictionary": "Open in chord dictionary"
+    },
+    "audio": {
+      "needsInstrument": "Load an instrument first to preview audio.",
+      "openSampler": "Go to Sampler"
+    },
+    "transpose": {
+      "title": "Transpose Progression",
+      "clear": "Clear",
+      "inputLabel": "Source progression",
+      "placeholder": "e.g. C - Am - F - G",
+      "source": "Source",
+      "target": "Target",
+      "pinSource": "Pin source",
+      "copy": "Copy result",
+      "copied": "Copied",
+      "semantics": "Shifts every chord by the same interval to the target tonic; chord qualities are preserved.",
+      "invalid": "Some tokens were not recognized and were left as-is.",
+      "hint": "Pick a target key on the circle; the result follows live.",
+      "pickHint": "Pick a target key on the circle"
+    }
+  },
+  "vst": {
+    "toneSource": "Tone source",
+    "sourceSampler": "Built-in sampler",
+    "sourceVst": "VST plugin",
+    "rescan": "Rescan",
+    "scanning": "Scanning plugins…",
+    "scanFailed": "Scan could not complete",
+    "noPlugins": "No VST3 plugins found",
+    "scanPaths": "Scan folders",
+    "noCustomPaths": "No custom folders",
+    "addScanPath": "Add folder",
+    "removeScanPath": "Remove this folder",
+    "lastScan": "Last scan: {time}",
+    "disabledNoMidi": "This plugin has no MIDI input and cannot be used as a tone source",
+    "disabledNoOutput": "This plugin has no audio output and cannot be used as a tone source",
+    "skipCrashed": "Plugin crashed, skipped",
+    "skipTimedOut": "Scan timed out, skipped",
+    "skipFailed": "Scan failed, skipped",
+    "crashed": "The plugin has crashed. Please reload it.",
+    "reload": "Reload",
+    "globalErrorTooltip": "Tone engine error: {message}",
+    "globalErrorTooltipGeneric": "Tone engine error",
+    "title": "VST Plugins",
+    "subtitle": "Manage local VST3 plugins and set them as the global tone source.",
+    "desktopOnly": "Desktop app required",
+    "desktopOnlyHint": "VST3 plugin hosting is only available in the desktop app.",
+    "toneSourceHintSampler": "The keyboard and playback sound through the built-in sampler.",
+    "toneSourceHintVst": "The keyboard and playback sound through the selected VST3 plugin.",
+    "stateRunning": "Running",
+    "stateError": "Error",
+    "stateIdle": "Not loaded",
+    "currentPlugin": "Current plugin",
+    "noPluginSelected": "No plugin loaded yet — pick one from the library below.",
+    "loading": "Loading plugin…",
+    "openEditor": "Open editor",
+    "closeEditor": "Close editor",
+    "unload": "Unload",
+    "audioRunning": "Audio running",
+    "library": "Plugin library",
+    "pluginCount": "{count} usable",
+    "badgeAudioOuts": "{count} out",
+    "skippedSection": "Skipped plugins ({count})",
+    "usingSampler": "The built-in sampler is active. Pick GM instruments on the Sampler page.",
+    "goSampler": "Open Sampler"
+  },
+  "chordChart": {
+    "subtitle": "iReal Pro style chord chart editor",
+    "untitled": "Untitled Chart",
+    "demo": {
+      "title": "Demo Chart"
+    },
+    "stats": "{measures} measures · {chords} chords",
+    "issue": {
+      "emptyChart": "The chart has no measures",
+      "tooManyMeasures": "Too many measures",
+      "tooManyBeats": "Chord durations exceed the measure length",
+      "tooManyChords": "Too many chords for this measure",
+      "emptyMeasure": "Empty measure",
+      "firstMeasureNeedsChord": "The first measure needs a chord to play",
+      "measureTooWide": "This measure is too wide to share a row",
+      "repeatEndsOnEmptyMeasure": "A repeat cannot end on an empty measure"
+    },
+    "undo": "Undo",
+    "redo": "Redo",
+    "keyboardHint": "Arrows to move · Shift+Arrows to select · Backspace to delete",
+    "cursor": {
+      "hint": "Measure {measure} · {chord}",
+      "hintMeasure": "Measure {measure}",
+      "selection": "Selected"
+    },
+    "input": {
+      "title": "Chord input",
+      "placeholder": "e.g. Cm7 / F#7b9/A / N.C.",
+      "textAria": "Chord text input",
+      "preview": "Preview",
+      "unknownType": "Unrecognized chord type",
+      "root": "Root",
+      "toggleAccidental": "Toggle accidental spelling",
+      "quality": "Quality",
+      "typeGroupAria": "Chord type group",
+      "bass": "Slash bass",
+      "noBass": "Root position",
+      "beats": "Duration (beats)",
+      "beatsAria": "Chord duration",
+      "invisibleRoot": "Hide root",
+      "delete": "Delete chord",
+      "apply": "Apply",
+      "upSemitone": "Up a semitone",
+      "downSemitone": "Down a semitone"
+    },
+    "typeGroup": {
+      "triad": "Triads",
+      "sixth": "Sixths",
+      "seventh": "Sevenths",
+      "extended": "Extended",
+      "altered": "Altered",
+      "added": "Added"
+    },
+    "type": {
+      "major": "maj"
+    },
+    "beats": {
+      "1": "1 beat",
+      "2": "2 beats",
+      "3": "3 beats",
+      "4": "4 beats",
+      "1.5": "1.5 beats"
+    },
+    "context": {
+      "titleMeasure": "Measure attributes",
+      "titleChord": "Chord attributes",
+      "scopeMeasure": "Measure",
+      "scopeChord": "Chord",
+      "clearMeasure": "Clear measure",
+      "deleteChord": "Delete chord",
+      "barline": "Barline",
+      "barlineStart": "Start barline",
+      "barlineEnd": "End barline",
+      "timeSignature": "Time signature",
+      "grouping": "Beat grouping",
+      "groupingDefault": "Default",
+      "ending": "Ending",
+      "endingNone": "None",
+      "jumps": "Jump",
+      "jumpNone": "None",
+      "marks": "Marks",
+      "segno": "Segno",
+      "coda": "Coda",
+      "fermata": "Fermata",
+      "endMark": "END",
+      "playTimes": "Play times",
+      "playTimesNone": "None",
+      "section": "Section mark",
+      "sectionNone": "None",
+      "text": "Staff text",
+      "textPlaceholder": "Enter staff text…",
+      "size": "Size",
+      "sizeNormal": "Normal",
+      "sizeSmall": "Small",
+      "alternate": "Alternate chord",
+      "alternatePlaceholder": "e.g. Am7 (empty to clear)",
+      "noChord": "N.C.",
+      "invisibleRoot": "Invisible root",
+      "beats": "Beats",
+      "close": "Close"
+    },
+    "barlineKind": {
+      "single": "Single",
+      "double": "Double",
+      "repeat-start": "Repeat start",
+      "repeat-end": "Repeat end",
+      "final": "Final"
+    },
+    "jumpCommand": {
+      "dc": "D.C.",
+      "dc-al-fine": "D.C. al Fine",
+      "dc-al-coda": "D.C. al Coda",
+      "ds": "D.S.",
+      "ds-al-fine": "D.S. al Fine",
+      "ds-al-coda": "D.S. al Coda",
+      "ds-al-1st": "D.S. al 1st"
+    },
+    "sectionMark": {
+      "A": "A",
+      "B": "B",
+      "C": "C",
+      "D": "D",
+      "V": "Verse",
+      "i": "Intro"
+    },
+    "toolbar": {
+      "insertMeasure": "Insert bar",
+      "appendMeasure": "Add bar at end",
+      "deleteMeasure": "Delete bar",
+      "transpose": "Transpose",
+      "transposeDown": "Down a semitone",
+      "transposeUp": "Up a semitone",
+      "zoom": "Zoom"
+    },
+    "metaPanel": {
+      "edit": "Edit chart info",
+      "title": "Title",
+      "composer": "Composer",
+      "style": "Style",
+      "key": "Key",
+      "mode": "Mode",
+      "major": "Major",
+      "minor": "Minor",
+      "tempo": "Tempo",
+      "notation": "Notation",
+      "notationLong": "Long",
+      "notationShort": "Short",
+      "notationSymbol": "Symbol",
+      "repeats": "Repeats"
+    }
+  },
+  "metronome": {
+    "subtitle": "Synthesized click, sample-accurate tempo engine",
+    "start": "Start",
+    "stop": "Stop",
+    "hintIdle": "Press space or the play button to start",
+    "hintPlaying": "Press space or stop to finish",
+    "status": {
+      "idle": "Idle",
+      "starting": "Starting",
+      "playing": "Playing"
+    },
+    "tempo": {
+      "bpmAria": "Beats per minute",
+      "decrease": "Decrease by 1 BPM",
+      "increase": "Increase by 1 BPM",
+      "tap": "Tap tempo",
+      "tapHint": "Tap or hold for steady pulses",
+      "tapPulse": "Pulsing · {bpm} BPM",
+      "tapped": "≈ {bpm} BPM"
+    },
+    "subdivision": {
+      "title": "Subdivision",
+      "off": "Off",
+      "eighth": "Eighth",
+      "sixteenth": "Sixteenth",
+      "triplet": "Triplet",
+      "offHint": "No subdivision: one click per beat",
+      "slotsHint": "{count} slots per beat",
+      "volume": "Subdivision volume",
+      "volumeAria": "Subdivision volume"
+    },
+    "countIn": {
+      "title": "Count-in",
+      "off": "Off",
+      "oneBar": "1 bar",
+      "twoBars": "2 bars",
+      "counting": "Count-in {bar}·{beat}",
+      "modeAria": "Count-in bars"
+    },
+    "volume": {
+      "title": "Master volume",
+      "aria": "Master volume"
+    },
+    "signature": {
+      "title": "Time signature",
+      "numerator": "Beats per bar",
+      "numeratorAria": "Beats per bar",
+      "denominator": "Beat unit",
+      "denominatorAria": "Beat unit",
+      "previewBeats": "Beats per bar",
+      "previewUnit": "One beat = this note"
+    },
+    "accent": {
+      "title": "Accents",
+      "hint": "Click a number to cycle: strong → medium → weak → silent",
+      "strong": "Strong",
+      "medium": "Medium",
+      "weak": "Weak",
+      "silent": "Silent",
+      "beatAria": "Beat {index}: {accent}"
+    },
+    "visual": {
+      "ariaLabel": "Beat dots visualization",
+      "signatureLabel": "Time signature"
     }
   }
 }

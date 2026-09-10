@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import type { LoadProgress } from "smplr";
 import { loadFromStorage, saveToStorage } from "@/helpers/storage";
 import { InstrumentEvents } from "@/types/instrument-events";
+import type { ToneSource } from "@/types/vst";
 import { createLogger } from "@/utils/logger";
 
 import instrumentsData from "@/data/instruments.json";
@@ -122,6 +123,12 @@ export const useSamplerStore = defineStore("sampler", () => {
   const error = ref<string | null>(null);
   /** 全局声音开关 — 控制所有页面是否使用采样器发声 */
   const soundEnabled = ref(true);
+  /**
+   * 音源来源：内置采样器 / 外部 VST3 插件。
+   * **单一决策源**——`useSamplerService` 的所有播放入口都按它分流。
+   * 放在 sampler store 持久化里（而非 vst store）以保持“采样器状态”聚合。
+   */
+  const toneSource = ref<ToneSource>("sampler");
   /** 动态加载的音色列表 */
   const instrumentCatalog = ref<InstrumentInfo[]>(DEFAULT_INSTRUMENTS);
   /** 是否正在刷新音色列表 */
@@ -135,13 +142,20 @@ export const useSamplerStore = defineStore("sampler", () => {
   /** 批量下载已完成数 */
   const batchDownloadCompleted = ref(0);
 
-  // --- 持久化：仅保存 currentInstrumentId 和 soundEnabled ---
+  // --- 持久化：保存 currentInstrumentId / soundEnabled / toneSource ---
   const savedState = loadFromStorage<{
     currentInstrumentId: string | null;
     soundEnabled: boolean;
+    toneSource: ToneSource;
   }>({
     key: SAMPLER_STORAGE_KEY,
-    defaultValue: { currentInstrumentId: null, soundEnabled: true },
+    defaultValue: {
+      currentInstrumentId: null,
+      soundEnabled: true,
+      toneSource: "sampler",
+    },
+    // 向前兼容：老版本没有 toneSource 字段，靠浅合并补默认值
+    mergeWithDefault: true,
   });
   if (savedState.currentInstrumentId) {
     currentInstrumentId.value = savedState.currentInstrumentId;
@@ -149,14 +163,18 @@ export const useSamplerStore = defineStore("sampler", () => {
   if (typeof savedState.soundEnabled === "boolean") {
     soundEnabled.value = savedState.soundEnabled;
   }
+  if (savedState.toneSource === "sampler" || savedState.toneSource === "vst") {
+    toneSource.value = savedState.toneSource;
+  }
 
   // 自动持久化关键状态
   watch(
-    [currentInstrumentId, soundEnabled],
-    ([id, enabled]) => {
+    [currentInstrumentId, soundEnabled, toneSource],
+    ([id, enabled, source]) => {
       saveToStorage(SAMPLER_STORAGE_KEY, {
         currentInstrumentId: id,
         soundEnabled: enabled,
+        toneSource: source,
       });
     },
     { deep: true },
@@ -404,6 +422,7 @@ export const useSamplerStore = defineStore("sampler", () => {
     loadProgress,
     error,
     soundEnabled,
+    toneSource,
     instrumentCatalog,
     isRefreshing,
     isBatchDownloading,

@@ -4,10 +4,12 @@ pub mod app;
 pub mod dialog;
 pub mod fs;
 pub mod midi;
+pub mod vst;
 pub mod widget;
 
 pub use app::*;
 pub use dialog::*;
 pub use fs::*;
 pub use midi::*;
+pub use vst::*;
 pub use widget::*;

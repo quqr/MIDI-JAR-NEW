@@ -5,6 +5,12 @@ import type {
   ApiMidiOutput,
   ApiMidiWire,
 } from "./index";
+import type {
+  VstScanCache,
+  VstScanProgress,
+  VstSnapshot,
+  VstStatusPayload,
+} from "./vst";
 
 export interface TauriAPI {
   on: (channel: string, callback: (data?: any) => void) => void;
@@ -30,6 +36,7 @@ export interface TauriAPI {
   };
   fileSystem: {
     openFileDialog: () => Promise<any>;
+    openDirectoryDialog: () => Promise<string | null>;
     readFile: (
       filePath: string,
     ) => Promise<{ success: boolean; content?: string; error?: string }>;
@@ -71,6 +78,25 @@ export interface TauriAPI {
   };
   shell: {
     openExternal: (url: string) => Promise<void>;
+  };
+  vst: {
+    scan: () => Promise<VstScanCache>;
+    getScanCache: () => Promise<VstScanCache | null>;
+    addScanPath: (path: string) => Promise<string[]>;
+    removeScanPath: (path: string) => Promise<string[]>;
+    restoreScanPaths: (paths: string[]) => Promise<string[]>;
+    load: (path: string, openEditor?: boolean) => Promise<void>;
+    unload: () => Promise<void>;
+    sendMidi: (bytes: number[]) => Promise<void>;
+    openEditor: () => Promise<void>;
+    closeEditor: () => Promise<void>;
+    getStatus: () => Promise<VstSnapshot>;
+    onStatus: (
+      callback: (status: VstStatusPayload) => void,
+    ) => Promise<UnlistenFn>;
+    onScanProgress: (
+      callback: (progress: VstScanProgress) => void,
+    ) => Promise<UnlistenFn>;
   };
 }
 

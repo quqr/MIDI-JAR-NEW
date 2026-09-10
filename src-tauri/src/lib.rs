@@ -44,9 +44,10 @@ pub fn run() {
             let midi_manager = MidiManager::new(app_handle.clone());
             app.manage(AppState::new(midi_manager));
 
-            // VST 插件宿主：加载 Pianoteq 并打开编辑器窗口
+            // VST 插件宿主：注册管理器为受管状态 + 启动编辑器服务循环。
+            // 插件加载改为前端通过命令发起，不再在启动时硬编码加载。
             // （失败仅记日志，不中断应用启动）
-            vst::init_vst_plugin();
+            vst::init(app_handle.clone());
 
             let window = app
                 .get_webview_window("main")
@@ -95,6 +96,7 @@ pub fn run() {
             commands::get_window_state,
             commands::set_always_on_top,
             commands::open_file_dialog,
+            commands::open_directory_dialog,
             commands::save_file_dialog,
             commands::read_file,
             commands::write_file,
@@ -119,6 +121,17 @@ pub fn run() {
             commands::delete_virtual_output,
             commands::get_virtual_inputs,
             commands::get_virtual_outputs,
+            commands::scan_vst_plugins,
+            commands::get_vst_scan_cache,
+            commands::add_vst_scan_path,
+            commands::remove_vst_scan_path,
+            commands::restore_vst_scan_paths,
+            commands::load_vst_plugin,
+            commands::unload_vst_plugin,
+            commands::send_vst_midi,
+            commands::open_vst_editor,
+            commands::close_vst_editor,
+            commands::get_vst_status,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -131,6 +144,10 @@ pub fn run() {
                 }
                 // 停止 MIDI 刷新线程，避免退出时悬挂
                 let _ = with_midi_write(app_handle, |m| m.stop_refresh_loop());
+                // 卸载 VST 插件：显式停音频、关编辑器。
+                // 这一步必须在主线程上跑——管理器持有 HWND 与 !Send 的音频流，
+                // 而 ExitRequested 回调已在主线程，故直接调用即可。
+                let _ = vst::with_manager(|mgr| mgr.shutdown());
                 let _ = app_handle.emit("app:on-before-quit", ());
             }
         });

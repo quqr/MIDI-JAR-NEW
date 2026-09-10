@@ -53,7 +53,8 @@
     "clear": "清除",
     "connected": "已连接",
     "disconnected": "未连接",
-    "back": "返回"
+    "back": "返回",
+    "retry": "重试"
   },
   "nav": {
     "home": "首页",
@@ -67,7 +68,11 @@
     "WaterfallPiano": "瀑布流钢琴",
     "Sampler": "采样器",
     "scoreScroll": "乐谱滚动",
-    "score3d": "三维乐谱"
+    "score3d": "三维乐谱",
+    "circleOfFifths": "五度循环圈",
+    "chordChart": "和弦谱",
+    "metronome": "节拍器",
+    "vst": "VST 插件"
   },
   "home": {
     "moduleDescriptions": {
@@ -80,7 +85,11 @@
       "chordQuiz": "系统随机出和弦，考验您的和弦识别能力",
       "tuner": "实时音高检测，精准调校您的乐器",
       "scoreScroll": "MusicXML 乐谱随播放滚动可视化",
-      "score3d": "MusicXML 乐谱以浮雕式符号实体铺入三维空间，随播放推进视角"
+      "score3d": "MusicXML 乐谱以浮雕式符号实体铺入三维空间，随播放推进视角",
+      "circleOfFifths": "十二个调性的五度关系图谱，可试听音阶与顺阶和弦、移调和弦进行",
+      "chordChart": "iReal Pro 风格的和弦谱编辑器，支持和弦级编辑、移调与曲库管理",
+      "metronome": "合成点击声节拍器，拍号、重音与细分实时可视化",
+      "vst": "加载本机 VST3 插件作为音源，与内置采样器一键切换"
     }
   },
   "tuner": {
@@ -471,7 +480,8 @@
       "showFps": "显示帧数",
       "showFpsHint": "在界面左上角显示实时帧率（所有页面生效）",
       "theme": "主题",
-      "themeHint": "选择应用主题"
+      "themeHint": "选择应用主题",
+      "toggleTheme": "切换主题"
     },
     "routingSettings": {
       "refreshDevices": "刷新设备",
@@ -742,6 +752,9 @@
   "WaterfallPiano": {
     "title": "瀑布流钢琴",
     "settings": "瀑布流钢琴设置",
+    "errors": {
+      "playbackFailed": "播放失败"
+    },
     "particles": "音符粒子",
     "background": "背景",
     "keyboard": "键盘",
@@ -818,9 +831,9 @@
       "bottom": "底层（在背景之上）"
     },
     "keyRangeOptions": {
-      "88": "88",
-      "61": "61",
       "49": "49",
+      "61": "61",
+      "88": "88",
       "custom": "自定义"
     },
     "keyLabelOptions": {
@@ -875,7 +888,8 @@
       "rainbow": "彩虹",
       "warm": "暖色",
       "cool": "冷色",
-      "neon": "霓虹"
+      "neon": "霓虹",
+      "custom": "自定义颜色"
     },
     "midiDrawer": {
       "title": "MIDI",
@@ -890,114 +904,13 @@
     }
   },
   "advancedDebug": {
-    "presets": {
-      "title": "预设管理",
-      "saveCurrent": "保存当前配置为预设",
-      "namePlaceholder": "预设名称",
-      "save": "保存",
-      "list": "已保存的预设",
-      "empty": "暂无预设，保存当前配置以快速恢复",
-      "apply": "应用",
-      "rename": "重命名",
-      "delete": "删除",
-      "export": "导出",
-      "import": "导入",
-      "confirmDelete": "确定删除预设 \"{name}\" 吗？",
-      "importSuccess": "成功导入 {count} 个预设",
-      "importFailed": "导入失败：文件格式无效"
-    },
-    "notation": {
-      "display": {
-        "title": "记谱 - 显示参数",
-        "showClef": "显示谱号",
-        "showKeySignature": "显示调号",
-        "showKeySignatureText": "显示调号文字",
-        "showBarlines": "显示小节线",
-        "showTimeSignature": "显示拍号",
-        "showNoteNames": "显示音名",
-        "showStaffLines": "显示五线谱线",
-        "filterClef": "按谱号过滤音符",
-        "filterClefHint": "关闭时单谱表渲染所有音符，开启时仅渲染匹配谱号的音符"
-      },
-      "layout": {
-        "title": "记谱 - 布局参数",
-        "paddingTop": "顶部内边距",
-        "staveHeight": "谱表高度",
-        "staveGap": "谱表间距",
-        "textHeight": "文字高度",
-        "bottomPadding": "底部内边距",
-        "sidePadding": "侧边内边距",
-        "clefWidth": "谱号宽度",
-        "noteWidth": "音符宽度",
-        "keySignatureWidthPerAlteration": "调号宽度系数",
-        "keySignatureWidthPerAlterationHint": "每个升降号分配的宽度（像素），高级模式可突破200",
-        "maxScale": "最大缩放",
-        "maxScaleHint": "高级模式可突破2.0倍限制",
-        "noteStartXOffset": "音符起始 X 偏移",
-        "noteStartXOffsetHint": "音符相对谱号的起始水平偏移（像素）",
-        "minScaleRatio": "最小缩放比例",
-        "minScaleRatioHint": "相对容器宽度的缩放下限（0-1）"
-      },
-      "style": {
-        "title": "记谱 - 样式参数",
-        "backgroundColor": "背景颜色",
-        "staffLineColor": "谱线颜色",
-        "noteColor": "音符颜色",
-        "noteHighlightColor": "音符高亮颜色",
-        "fontSize": "字号",
-        "noteDuration": "音符时值",
-        "noteDurationHint": "VexFlow 时值字符串：1=全音符, 2=二分音符, 4=四分音符, 8=八分音符"
-      }
-    },
-    "waterfall": {
-      "fluid": {
-        "title": "流体高级参数",
-        "fluidAdvanced": "流体高级模式",
-        "fluidAdvancedHint": "启用后可调整流体模拟的详细参数",
-        "simResolution": "模拟分辨率",
-        "splatRadius": "溅射半径",
-        "splatColorHue": "溅射色相",
-        "trailLength": "拖尾长度",
-        "trailLengthHint": "1=长拖尾，0=快消散",
-        "flowPersistence": "流动持久度",
-        "flowPersistenceHint": "1=持久，0=短促",
-        "bloom": "发光效果",
-        "bloomIntensity": "发光强度",
-        "hitExplosion": "命中爆炸",
-        "hitExplosionHint": "按键命中时产生爆炸效果",
-        "blockCoverage": "块体覆盖",
-        "blockCoverageHint": "音符块覆盖时产生发射效果"
-      },
-      "keyboard": {
-        "title": "键盘高级参数",
-        "customFrom": "自定义起始音",
-        "customTo": "自定义结束音",
-        "keyBorderWidth": "按键边框宽度",
-        "keyBorderColor": "按键边框颜色",
-        "gapBlur": "间隙模糊",
-        "separatorColor": "分隔线颜色",
-        "separatorThickness": "分隔线粗细",
-        "staffVisible": "显示谱表",
-        "synthesiaFlowDirection": "Synthesia 流动方向",
-        "flowDirectionOptions": {
-          "up": "上升",
-          "down": "下降"
-        },
-        "defaultVelocity": "默认力度",
-        "defaultVelocityHint": "电脑键盘弹奏时使用的力度（0-127）"
-      },
-      "midiFile": {
-        "title": "MIDI文件高级参数",
-        "selectedTracks": "选中音轨",
-        "selectedTracksHint": "当前正在播放的音轨索引",
-        "noTracks": "暂无选中音轨",
-        "trackColors": "音轨颜色",
-        "trackColorN": "音轨 {n} 颜色",
-        "rightHandTrackIdx": "右手轨道索引",
-        "rightHandTrackIdxHint": "推断为右手的轨道索引",
-        "leftHandTrackIdx": "左手轨道索引",
-        "leftHandTrackIdxHint": "推断为左手的轨道索引"
-      }
+    "cache": {
+      "title": "缓存管理",
+      "localStorage": "localStorage",
+      "cacheStorage": "CacheStorage",
+      "total": "总计",
+      "clearAll": "清除全部缓存",
+      "note": "清除缓存后，已加载的音源需要重新下载。用户设置和主题将保留。"
     }
   },
   "sampler": {
@@ -1010,7 +923,12 @@
     "arpeggiatedChord": "分解和弦",
     "preview": "试听",
     "clearInstrumentCache": "清除缓存",
-    "categories": "分类"
+    "categories": "分类",
+    "refreshList": "刷新音色列表",
+    "downloading": "下载中 {completed}/{total}",
+    "batchDownload": "批量下载",
+    "vstNotice": "键盘当前经由 VST 插件发声",
+    "vstManage": "管理"
   },
   "score3d": {
     "viewport": "三维乐谱视口",
@@ -1026,6 +944,336 @@
     "viewHint": "中键拖拽旋转 · Shift+中键 / 右键拖拽平移 · 滚轮缩放",
     "settings": {
       "background": "背景颜色"
+    }
+  },
+  "circleOfFifths": {
+    "subtitle": "五度循环圈 · 调性关系图谱",
+    "currentKey": "当前调",
+    "mode": {
+      "major": "大调",
+      "minor": "小调"
+    },
+    "signature": {
+      "none": "无升降号",
+      "sharps": "{count} 个升号",
+      "flats": "{count} 个降号"
+    },
+    "quality": {
+      "major": "大",
+      "minor": "小",
+      "diminished": "减",
+      "augmented": "增"
+    },
+    "relations": {
+      "dominant": "属调",
+      "subdominant": "下属调",
+      "relative": "关系调",
+      "parallel": "同主音调"
+    },
+    "wheel": {
+      "ariaLabel": "五度循环圈调性选择",
+      "sectorAria": "{major} 大调（关系小调 {minor} 调，{signature}）"
+    },
+    "legend": {
+      "title": "图例",
+      "selected": "已选中",
+      "currentBadge": "当前调"
+    },
+    "panel": {
+      "isCurrent": "当前调",
+      "isCurrentHint": "全局调性设置与此调一致",
+      "useAsCurrent": "设为当前调",
+      "minorKeySignatureHint": "与小调同调号的大调：{major}",
+      "scale": "音阶",
+      "diatonicChords": "顺阶和弦",
+      "relations": "近关系调"
+    },
+    "actions": {
+      "play": "试听音阶",
+      "stop": "停止",
+      "playChord": "试听和弦",
+      "openInDictionary": "在和弦词典中查看"
+    },
+    "audio": {
+      "needsInstrument": "需要先加载音源才能试听。",
+      "openSampler": "前往采样器"
+    },
+    "transpose": {
+      "title": "和弦进行移调",
+      "clear": "清除",
+      "inputLabel": "源和弦进行",
+      "placeholder": "例如 C - Am - F - G",
+      "source": "源调",
+      "target": "目标调",
+      "pinSource": "固定源调",
+      "copy": "复制结果",
+      "copied": "已复制",
+      "semantics": "按目标主音整体等距平移，和弦性质保持不变。",
+      "invalid": "存在无法识别的记号，已原样保留。",
+      "hint": "在圈上选择目标调，结果实时跟随。",
+      "pickHint": "在圈上选择目标调"
+    }
+  },
+  "vst": {
+    "toneSource": "音源",
+    "sourceSampler": "内置采样器",
+    "sourceVst": "VST 插件",
+    "rescan": "重新扫描",
+    "scanning": "正在扫描插件…",
+    "scanFailed": "扫描未能完成",
+    "noPlugins": "未发现 VST3 插件",
+    "scanPaths": "扫描目录",
+    "noCustomPaths": "没有自定义目录",
+    "addScanPath": "添加目录",
+    "removeScanPath": "移除该目录",
+    "lastScan": "上次扫描：{time}",
+    "disabledNoMidi": "该插件没有 MIDI 输入，无法作为音源",
+    "disabledNoOutput": "该插件没有音频输出，无法作为音源",
+    "skipCrashed": "插件崩溃，已跳过",
+    "skipTimedOut": "扫描超时，已跳过",
+    "skipFailed": "扫描失败，已跳过",
+    "crashed": "插件已崩溃，请重新加载",
+    "reload": "重新加载",
+    "globalErrorTooltip": "音源引擎错误：{message}",
+    "globalErrorTooltipGeneric": "音源引擎出错",
+    "title": "VST 插件",
+    "subtitle": "管理本机 VST3 插件，并将其设为全局音源。",
+    "desktopOnly": "需要桌面端",
+    "desktopOnlyHint": "VST3 插件宿主功能仅在桌面应用中可用。",
+    "toneSourceHintSampler": "键盘与播放将由内置采样器发声。",
+    "toneSourceHintVst": "键盘与播放将由所选 VST3 插件发声。",
+    "stateRunning": "运行中",
+    "stateError": "错误",
+    "stateIdle": "未加载",
+    "currentPlugin": "当前插件",
+    "noPluginSelected": "尚未加载插件——从下方插件库中选择一个。",
+    "loading": "正在加载插件…",
+    "openEditor": "打开编辑器",
+    "closeEditor": "关闭编辑器",
+    "unload": "卸载",
+    "audioRunning": "音频运行中",
+    "library": "插件库",
+    "pluginCount": "{count} 个可用",
+    "badgeAudioOuts": "{count} 路输出",
+    "skippedSection": "被跳过的插件（{count}）",
+    "usingSampler": "当前由内置采样器发声，可在采样器页选择 GM 音色。",
+    "goSampler": "前往采样器"
+  },
+  "chordChart": {
+    "subtitle": "iReal Pro 风格的和弦谱编辑器",
+    "untitled": "未命名曲目",
+    "demo": {
+      "title": "示例曲目"
+    },
+    "stats": "{measures} 小节 · {chords} 个和弦",
+    "issue": {
+      "emptyChart": "曲目没有任何小节",
+      "tooManyMeasures": "小节数超出上限",
+      "tooManyBeats": "和弦总时长超出小节拍数",
+      "tooManyChords": "和弦数超出小节拍数",
+      "emptyMeasure": "空小节",
+      "firstMeasureNeedsChord": "首小节必须有和弦才能演奏",
+      "measureTooWide": "小节过宽，无法与相邻小节同行",
+      "repeatEndsOnEmptyMeasure": "反复段不能收尾在空小节上"
+    },
+    "undo": "撤销",
+    "redo": "重做",
+    "keyboardHint": "方向键移动 · Shift+方向键选择 · Backspace 删除",
+    "cursor": {
+      "hint": "第 {measure} 小节 · {chord}",
+      "hintMeasure": "第 {measure} 小节",
+      "selection": "已选择"
+    },
+    "input": {
+      "title": "和弦输入",
+      "placeholder": "如 Cm7 / F#7b9/A / N.C.",
+      "textAria": "和弦文本输入",
+      "preview": "预览",
+      "unknownType": "无法识别的和弦类型",
+      "root": "根音",
+      "toggleAccidental": "切换升降号拼写",
+      "quality": "和弦类型",
+      "typeGroupAria": "和弦类型分组",
+      "bass": "转位低音",
+      "noBass": "原位",
+      "beats": "时长（拍）",
+      "beatsAria": "和弦时长",
+      "invisibleRoot": "隐藏根音",
+      "delete": "删除和弦",
+      "apply": "确定",
+      "upSemitone": "升半音",
+      "downSemitone": "降半音"
+    },
+    "typeGroup": {
+      "triad": "三和弦",
+      "sixth": "六和弦",
+      "seventh": "七和弦",
+      "extended": "延伸",
+      "altered": "变化",
+      "added": "加音"
+    },
+    "type": {
+      "major": "大三"
+    },
+    "beats": {
+      "1": "1拍",
+      "2": "2拍",
+      "3": "3拍",
+      "4": "4拍",
+      "1.5": "1.5拍"
+    },
+    "context": {
+      "titleMeasure": "小节属性",
+      "titleChord": "和弦属性",
+      "scopeMeasure": "小节",
+      "scopeChord": "和弦",
+      "clearMeasure": "清空本小节",
+      "deleteChord": "删除该和弦",
+      "barline": "小节线",
+      "barlineStart": "起始小节线",
+      "barlineEnd": "结束小节线",
+      "timeSignature": "拍号",
+      "grouping": "拍分组",
+      "groupingDefault": "默认",
+      "ending": "结束句",
+      "endingNone": "无",
+      "jumps": "跳转",
+      "jumpNone": "无",
+      "marks": "记号",
+      "segno": "Segno",
+      "coda": "Coda",
+      "fermata": "Fermata",
+      "endMark": "END",
+      "playTimes": "反复次数",
+      "playTimesNone": "无",
+      "section": "段落记号",
+      "sectionNone": "无",
+      "text": "谱面文字",
+      "textPlaceholder": "输入谱面文字…",
+      "size": "尺寸",
+      "sizeNormal": "正常",
+      "sizeSmall": "小号",
+      "alternate": "上方小和弦",
+      "alternatePlaceholder": "如 Am7（留空清除）",
+      "noChord": "N.C.",
+      "invisibleRoot": "隐藏根音",
+      "beats": "时长",
+      "close": "关闭"
+    },
+    "barlineKind": {
+      "single": "单线",
+      "double": "双线",
+      "repeat-start": "反复开始",
+      "repeat-end": "反复结束",
+      "final": "终止线"
+    },
+    "jumpCommand": {
+      "dc": "D.C.",
+      "dc-al-fine": "D.C. al Fine",
+      "dc-al-coda": "D.C. al Coda",
+      "ds": "D.S.",
+      "ds-al-fine": "D.S. al Fine",
+      "ds-al-coda": "D.S. al Coda",
+      "ds-al-1st": "D.S. al 1st"
+    },
+    "sectionMark": {
+      "A": "A",
+      "B": "B",
+      "C": "C",
+      "D": "D",
+      "V": "Verse",
+      "i": "Intro"
+    },
+    "toolbar": {
+      "insertMeasure": "插入小节",
+      "appendMeasure": "末尾添加小节",
+      "deleteMeasure": "删除小节",
+      "transpose": "移调",
+      "transposeDown": "下移半音",
+      "transposeUp": "上移半音",
+      "zoom": "缩放"
+    },
+    "metaPanel": {
+      "edit": "编辑曲目信息",
+      "title": "曲名",
+      "composer": "作曲",
+      "style": "风格",
+      "key": "调号",
+      "mode": "调式",
+      "major": "大调",
+      "minor": "小调",
+      "tempo": "速度",
+      "notation": "记法",
+      "notationLong": "完整",
+      "notationShort": "简写",
+      "notationSymbol": "符号",
+      "repeats": "反复次数"
+    }
+  },
+  "metronome": {
+    "subtitle": "合成点击声 · 精确到音频时钟的稳定节拍",
+    "start": "开始",
+    "stop": "停止",
+    "hintIdle": "按空格或播放键开始",
+    "hintPlaying": "按空格或停止键结束",
+    "status": {
+      "idle": "待机",
+      "starting": "启动中",
+      "playing": "播放中"
+    },
+    "tempo": {
+      "bpmAria": "每分钟拍数",
+      "decrease": "减速 1 BPM",
+      "increase": "加速 1 BPM",
+      "tap": "敲击定速",
+      "tapHint": "点击或长按以连续脉冲",
+      "tapPulse": "脉冲中 · {bpm} BPM",
+      "tapped": "约 {bpm} BPM"
+    },
+    "subdivision": {
+      "title": "细分",
+      "off": "关",
+      "eighth": "八分",
+      "sixteenth": "十六分",
+      "triplet": "三连音",
+      "offHint": "关闭细分：每拍一声",
+      "slotsHint": "每拍 {count} 个时隙",
+      "volume": "细分音量",
+      "volumeAria": "细分音量"
+    },
+    "countIn": {
+      "title": "预备拍",
+      "off": "无",
+      "oneBar": "1 小节",
+      "twoBars": "2 小节",
+      "counting": "预备 {bar}·{beat}",
+      "modeAria": "预备拍小节数"
+    },
+    "volume": {
+      "title": "主音量",
+      "aria": "主音量"
+    },
+    "signature": {
+      "title": "拍号",
+      "numerator": "每小节拍数",
+      "numeratorAria": "每小节拍数",
+      "denominator": "拍的单位音符",
+      "denominatorAria": "拍的单位音符",
+      "previewBeats": "每小节拍数",
+      "previewUnit": "以该音符为一拍"
+    },
+    "accent": {
+      "title": "重音",
+      "hint": "点击数字循环切换：强 → 中 → 弱 → 静音",
+      "strong": "强",
+      "medium": "中",
+      "weak": "弱",
+      "silent": "静音",
+      "beatAria": "第 {index} 拍：{accent}"
+    },
+    "visual": {
+      "ariaLabel": "拍点阵实时可视化",
+      "signatureLabel": "拍号"
     }
   }
 }

@@ -87,7 +87,33 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- 上部：分类列表 + 搜索框 -->
+    <!-- 上部：VST 音源提示（仅 VST 激活时出现——管理入口在独立的 VST 页） -->
+    <div
+      v-if="samplerStore.toneSource === 'vst'"
+      class="shrink-0 p-3 border-b border-base-300"
+    >
+      <div
+        class="flex items-center gap-2 rounded-md bg-info/10 px-2 py-1.5 text-xs"
+      >
+        <Icon
+          name="plugin"
+          :size="14"
+          class="shrink-0 text-info"
+          aria-hidden="true"
+        />
+        <span class="min-w-0 flex-1 truncate text-base-content/80">
+          {{ t("sampler.vstNotice") }}
+        </span>
+        <RouterLink
+          to="/vst"
+          class="shrink-0 link link-info link-hover font-medium"
+        >
+          {{ t("sampler.vstManage") }}
+        </RouterLink>
+      </div>
+    </div>
+
+    <!-- 中部：分类列表 + 搜索框 -->
     <div class="flex-1 overflow-y-auto p-4">
       <!-- 刷新按钮 -->
       <div class="flex items-center justify-between mb-3">
@@ -99,7 +125,8 @@ onUnmounted(() => {
           :disabled="samplerStore.isRefreshing"
           :class="{ loading: samplerStore.isRefreshing }"
           @click="handleRefreshInstruments"
-          title="刷新音色列表"
+          :title="t('sampler.refreshList')"
+          :aria-label="t('sampler.refreshList')"
         >
           <Icon
             name="refresh"
@@ -154,7 +181,7 @@ onUnmounted(() => {
     <div class="flex flex-col border-t border-base-300 p-4 gap-3">
       <div class="flex items-baseline justify-between">
         <h3 class="text-sm font-semibold text-base-content/70">
-          {{ t("sampler.cacheSize") || "Cache Size" }}
+          {{ t("sampler.cacheSize") }}
         </h3>
         <span class="text-xl font-bold tabular">{{
           formatBytes(cacheSize)
@@ -175,11 +202,14 @@ onUnmounted(() => {
       >
         <Icon name="refresh" :size="16" aria-hidden="true" />
         <span v-if="samplerStore.isBatchDownloading" class="tabular">
-          下载中 {{ samplerStore.batchDownloadCompleted }}/{{
-            samplerStore.batchDownloadTotal
+          {{
+            t("sampler.downloading", {
+              completed: samplerStore.batchDownloadCompleted,
+              total: samplerStore.batchDownloadTotal,
+            })
           }}
         </span>
-        <span v-else>批量下载</span>
+        <span v-else>{{ t("sampler.batchDownload") }}</span>
       </button>
     </div>
   </div>

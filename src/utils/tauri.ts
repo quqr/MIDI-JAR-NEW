@@ -1,6 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import type {
+  VstScanCache,
+  VstScanProgress,
+  VstSnapshot,
+  VstStatusPayload,
+} from "@/types/vst";
 
 let appWindow: ReturnType<typeof getCurrentWindow> | null = null;
 
@@ -123,6 +129,8 @@ const tauriAPI = {
   },
   fileSystem: {
     openFileDialog: () => invoke<any>("open_file_dialog"),
+    /** 选择单个目录（用于 VST 扫描目录等）；取消返回 null */
+    openDirectoryDialog: () => invoke<string | null>("open_directory_dialog"),
     readFile: (filePath: string) =>
       invoke<{ success: boolean; content?: string; error?: string }>(
         "read_file",
@@ -209,6 +217,50 @@ const tauriAPI = {
   },
   shell: {
     openExternal: (url: string) => invoke<void>("open_external", { url }),
+  },
+  vst: {
+    /** 扫描全部 VST3 插件并刷新后端缓存（重活，耗时数秒） */
+    scan: () => invoke<VstScanCache>("scan_vst_plugins"),
+    /** 读取上一次扫描的缓存结果；从未扫描过返回 null */
+    getScanCache: () => invoke<VstScanCache | null>("get_vst_scan_cache"),
+    /** 添加自定义扫描目录，返回添加后的完整目录列表 */
+    addScanPath: (path: string) =>
+      invoke<string[]>("add_vst_scan_path", { path }),
+    /** 移除自定义扫描目录，返回移除后的完整目录列表 */
+    removeScanPath: (path: string) =>
+      invoke<string[]>("remove_vst_scan_path", { path }),
+    /** 用持久化的自定义目录初始化后端（启动时调用一次），返回生效目录列表 */
+    restoreScanPaths: (paths: string[]) =>
+      invoke<string[]>("restore_vst_scan_paths", { paths }),
+    /**
+     * 加载插件。`openEditor` 由 Tauri 自动映射到 Rust 侧 `open_editor`。
+     * 失败时后端进入 error 态并广播 `vst:status`，同时把同一错误抛给调用方。
+     */
+    load: (path: string, openEditor = true) =>
+      invoke<void>("load_vst_plugin", { path, openEditor }),
+    /** 卸载当前插件（停止音频、关闭编辑器） */
+    unload: () => invoke<void>("unload_vst_plugin"),
+    /** 转发一批原始 MIDI 字节到当前插件 */
+    sendMidi: (bytes: number[]) =>
+      invoke<void>("send_vst_midi", { bytes: Array.from(bytes) }),
+    /** 打开插件编辑器窗口 */
+    openEditor: () => invoke<void>("open_vst_editor"),
+    /** 关闭插件编辑器窗口（插件保活） */
+    closeEditor: () => invoke<void>("close_vst_editor"),
+    /** 查询当前 VST 状态（状态机 + 已加载插件信息） */
+    getStatus: () => invoke<VstSnapshot>("get_vst_status"),
+    /** 订阅状态变化（加载/卸载/错误） */
+    onStatus: (callback: (status: VstStatusPayload) => void) => {
+      return listen<VstStatusPayload>("vst:status", (event) => {
+        callback(event.payload);
+      });
+    },
+    /** 订阅扫描进度（started / done 两相，无细粒度进度） */
+    onScanProgress: (callback: (progress: VstScanProgress) => void) => {
+      return listen<VstScanProgress>("vst:scan-progress", (event) => {
+        callback(event.payload);
+      });
+    },
   },
 };
 

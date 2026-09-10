@@ -23,4 +23,9 @@ serde_json = "1.0.151"
 midir = "=0.11.0"
 regex = "1.13.1"
 log = "0.4.33"
+# cpal 0.18 起 Windows 上 COM 接口包在 `SendWrapper` 里，`cpal::Stream` 是 `Send`；
+# vst3-host 的默认 feature 把 `cpal::Stream` 藏进 `Box<dyn AudioStream>`（无 `Send`
+# bound），导致 `AudioHandle` 被判为 `!Send`。直接依赖同一版本，用
+# `downcast::<CpalStream>()` 把具体类型取回来，就能把音频句柄移进专用的音频线程。
+cpal = "0.18"
 vst3-host = "0.9.0"
