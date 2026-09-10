@@ -89,13 +89,13 @@
             <Icon name="alert-circle" :size="48" aria-hidden="true" />
           </div>
           <h3 class="text-lg font-bold text-base-content mb-2">
-            {{ t("WaterfallPiano.errors.playbackFailed") || "播放失败" }}
+            {{ t("WaterfallPiano.errors.playbackFailed") }}
           </h3>
           <p class="text-sm text-base-content/70 mb-4">
             {{ ui.errorMessage.value }}
           </p>
           <button class="btn btn-primary btn-sm" @click="ui.onRetry">
-            {{ t("common.retry") || "重试" }}
+            {{ t("common.retry") }}
           </button>
         </div>
       </div>

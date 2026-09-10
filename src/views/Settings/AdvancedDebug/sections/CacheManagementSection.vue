@@ -55,15 +55,13 @@ onUnmounted(() => {
 <template>
   <SettingsCollapse
     :open="open"
-    :title="t('advancedDebug.cache.title', '缓存管理')"
+    :title="t('advancedDebug.cache.title')"
     @update:open="emit('update:open', $event)"
   >
     <div class="space-y-4">
       <!-- localStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{
-          t("advancedDebug.cache.localStorage", "localStorage")
-        }}</span>
+        <span class="text-sm">{{ t("advancedDebug.cache.localStorage") }}</span>
         <span class="badge badge-neutral">{{
           formatBytes(localStorageSize)
         }}</span>
@@ -71,9 +69,7 @@ onUnmounted(() => {
 
       <!-- CacheStorage 大小 -->
       <div class="flex items-center justify-between">
-        <span class="text-sm">{{
-          t("advancedDebug.cache.cacheStorage", "CacheStorage")
-        }}</span>
+        <span class="text-sm">{{ t("advancedDebug.cache.cacheStorage") }}</span>
         <span class="badge badge-neutral">{{
           formatBytes(cacheStorageSize)
         }}</span>
@@ -84,7 +80,7 @@ onUnmounted(() => {
         class="flex items-center justify-between pt-2 border-t border-base-300"
       >
         <span class="text-sm font-semibold">{{
-          t("advancedDebug.cache.total", "总计")
+          t("advancedDebug.cache.total")
         }}</span>
         <span class="badge badge-primary">{{
           formatBytes(localStorageSize + cacheStorageSize)
@@ -102,17 +98,12 @@ onUnmounted(() => {
           :size="16"
           :class="{ 'animate-spin': isClearing }"
         />
-        <span>{{ t("advancedDebug.cache.clearAll", "清除全部缓存") }}</span>
+        <span>{{ t("advancedDebug.cache.clearAll") }}</span>
       </button>
 
       <!-- 说明 -->
       <p class="text-xs text-base-content/70">
-        {{
-          t(
-            "advancedDebug.cache.note",
-            "清除缓存后，已加载的音源需要重新下载。用户设置和主题将保留。",
-          )
-        }}
+        {{ t("advancedDebug.cache.note") }}
       </p>
     </div>
   </SettingsCollapse>
