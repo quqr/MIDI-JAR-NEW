@@ -14,7 +14,9 @@ import ChartContextPanel from "./components/ChartContextPanel.vue";
 import ChordInputPopover from "./components/ChordInputPopover.vue";
 import ChartToolbar from "./components/ChartToolbar.vue";
 import ChartMetaPanel from "./components/ChartMetaPanel.vue";
+import PlaybackBar from "./components/PlaybackBar.vue";
 import { useChordChartStore } from "./stores/ChordChart";
+import { usePlaybackStore } from "./stores/Playback";
 import { useChartEditor } from "./composables/useChartEditor";
 import { useChartKeyboard } from "./composables/useChartKeyboard";
 import { parseChordUnit, formatChordUnit } from "./domain/chordText";
@@ -23,6 +25,7 @@ import { isChordInSelection } from "./domain/editing";
 import {
   createChart,
   loadLibraryIndex,
+  initChartLibrary,
 } from "./composables/useChartPersistence";
 import { createEmptyChart, createMeasure } from "./domain/empty";
 
@@ -31,6 +34,7 @@ import type { ChordUnit, SectionMark } from "./domain/types";
 const { t } = useI18n();
 const store = useChordChartStore();
 const editor = useChartEditor();
+const playback = usePlaybackStore();
 
 /** 每拍像素宽（工具条缩放档位控制） */
 const cellWidth = ref(28);
@@ -70,8 +74,9 @@ function rectOf(measureIndex: number, chordIndex: number): DOMRect | null {
   return el ? el.getBoundingClientRect() : null;
 }
 
-/** 打开输入浮层（编辑当前光标所在和弦） */
+/** 打开输入浮层（编辑当前光标所在和弦）；播放态锁定编辑 */
 function openInput(initialText?: string): void {
+  if (playback.editLocked) return;
   const { measureIndex, chordIndex } = editor.cursor.value;
   const measure = store.chart.measures[measureIndex];
   const existing =
@@ -116,8 +121,9 @@ const contextScope = ref<{
   chordIndex: number | null;
 } | null>(null);
 
-/** 打开上下文面板：优先锚到当前和弦块，无块则锚到小节 */
+/** 打开上下文面板：优先锚到当前和弦块，无块则锚到小节；播放态锁定 */
 function openContext(): void {
+  if (playback.editLocked) return;
   const { measureIndex, chordIndex } = editor.cursor.value;
   const el =
     chordIndex !== null
@@ -188,9 +194,9 @@ function selectedChord(measureIndex: number, chordIndex: number): boolean {
   return isChordInSelection(store.selection, measureIndex, chordIndex);
 }
 
-/** 键盘导航：Enter 或直接输入字符即打开输入浮层 */
+/** 键盘导航：Enter 或直接输入字符即打开输入浮层；播放态禁用（P0-2 编辑锁定） */
 useChartKeyboard({
-  enabled: () => store.chartId !== null,
+  enabled: () => store.chartId !== null && !playback.editLocked,
   onEnter: () => openInput(),
   onCharInput: (char) => openInput(char),
   onContext: () => openContext(),
@@ -203,6 +209,11 @@ const issuesBySeverity = computed(() => {
 });
 
 function onSelect(measureIndex: number, chordIndex: number): void {
+  // 播放态：小节点击 = seek（可复用接口，为练习功能留口）
+  if (playback.editLocked) {
+    playback.seek(measureIndex);
+    return;
+  }
   store.setCursor({ measureIndex, chordIndex });
   // 单击即打开输入浮层（iReal 的交互：点格子直接编辑）
   openInput();
@@ -248,9 +259,21 @@ function seedIfEmpty(): void {
   store.saveNow();
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 先水合曲库（文件系统 + localStorage 迁移），再播种/预载
+  await initChartLibrary();
   seedIfEmpty();
+  // 后台预载三轨乐器（计划 P1：别让用户点播放后等 1-3 秒）
+  void playback.preloadInstruments();
 });
+
+/** 播放态：小节高亮跟随时间线，光标高亮让位（复用 cursor 高亮通道） */
+const gridCursorMeasure = computed(() =>
+  playback.editLocked ? playback.currentMeasureIndex : editor.cursor.value.measureIndex,
+);
+const gridCursorChord = computed(() =>
+  playback.editLocked ? null : editor.cursor.value.chordIndex,
+);
 </script>
 
 <template>
@@ -328,6 +351,7 @@ onMounted(() => {
               :class="{ 'btn-active': metaEditing }"
               :title="$t('chordChart.metaPanel.edit')"
               :aria-label="$t('chordChart.metaPanel.edit')"
+              :disabled="playback.editLocked"
               @click="metaEditing = !metaEditing"
             >
               <Icon name="pencil" :size="12" />
@@ -338,11 +362,12 @@ onMounted(() => {
         <!-- 元信息编辑面板（铅笔展开） -->
         <ChartMetaPanel v-if="metaEditing" class="mb-4" />
 
-        <!-- 编辑工具条 -->
-        <div class="mb-4 pb-3 border-b border-base-content/10">
-          <ChartToolbar
-            v-model:cell-width="cellWidth"
-          />
+        <!-- 编辑工具条（播放态锁定） -->
+        <div
+          class="mb-4 pb-3 border-b border-base-content/10"
+          :class="{ 'pointer-events-none opacity-60': playback.editLocked }"
+        >
+          <ChartToolbar v-model:cell-width="cellWidth" />
         </div>
 
         <ChartGrid
@@ -353,12 +378,16 @@ onMounted(() => {
           :key-sig="keySig"
           :sections-by-measure="sectionsByMeasure"
           :texts-by-measure="textsByMeasure"
-          :cursor-measure="editor.cursor.value.measureIndex"
-          :cursor-chord="editor.cursor.value.chordIndex"
+          :cursor-measure="gridCursorMeasure"
+          :cursor-chord="gridCursorChord"
           :is-selected="selectedChord"
+          :class="{ 'pointer-events-none opacity-60': playback.editLocked }"
           @select="onSelect"
         />
       </section>
+
+      <!-- ===== 播放控制条 ===== -->
+      <PlaybackBar />
 
       <!-- ===== 光标状态条 ===== -->
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">

@@ -109,9 +109,7 @@ function makeSelectedChecker(measureIndex: number) {
 <template>
   <div class="flex items-start" :style="{ paddingTop: `${spacingPx}px` }">
     <!-- 行首 gutter：调号列（每行谱首，与 iReal 一致）+ 叠置拍号 -->
-    <div
-      class="w-16 shrink-0 flex items-center justify-end gap-1.5 pr-1.5"
-    >
+    <div class="w-16 shrink-0 flex items-center justify-end gap-1.5 pr-1.5">
       <span
         v-if="keySig && keySig.count > 0"
         class="flex items-center gap-px text-base-content/70"

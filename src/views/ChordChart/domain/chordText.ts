@@ -22,7 +22,12 @@ import { preferSpelling } from "@/views/CircleOfFifths/circleOfFifths";
 import { chordToMidi } from "@/views/CircleOfFifths/circleOfFifths";
 
 import type { AccidentalPreference } from "@/views/CircleOfFifths/circleOfFifths";
-import type { ChartMeasure, ChordBeats, ChordNotation, ChordUnit } from "./types";
+import type {
+  ChartMeasure,
+  ChordBeats,
+  ChordNotation,
+  ChordUnit,
+} from "./types";
 
 /* ── iReal 简写兼容表 ─────────────────────────────────── */
 

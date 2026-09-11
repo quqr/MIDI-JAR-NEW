@@ -19,18 +19,56 @@ export interface KeySignatureInfo {
   accidental: "sharp" | "flat" | "none";
 }
 
-const SHARP_MAJORS: readonly string[] = ["C", "G", "D", "A", "E", "B", "F#", "C#"];
-const FLAT_MAJORS: readonly string[] = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
-const SHARP_MINORS: readonly string[] = ["A", "E", "B", "F#", "C#", "G#", "D#", "A#"];
-const FLAT_MINORS: readonly string[] = ["A", "D", "G", "C", "F", "Bb", "Eb", "Ab"];
+const SHARP_MAJORS: readonly string[] = [
+  "C",
+  "G",
+  "D",
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
+];
+const FLAT_MAJORS: readonly string[] = [
+  "C",
+  "F",
+  "Bb",
+  "Eb",
+  "Ab",
+  "Db",
+  "Gb",
+  "Cb",
+];
+const SHARP_MINORS: readonly string[] = [
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
+  "G#",
+  "D#",
+  "A#",
+];
+const FLAT_MINORS: readonly string[] = [
+  "A",
+  "D",
+  "G",
+  "C",
+  "F",
+  "Bb",
+  "Eb",
+  "Ab",
+];
 
 export function keySignature(key: ChartKey): KeySignatureInfo {
   const tonic = key.tonic;
-  const sharpIndex =
-    (key.mode === "major" ? SHARP_MAJORS : SHARP_MINORS).indexOf(tonic);
+  const sharpIndex = (
+    key.mode === "major" ? SHARP_MAJORS : SHARP_MINORS
+  ).indexOf(tonic);
   if (sharpIndex > 0) return { count: sharpIndex, accidental: "sharp" };
-  const flatIndex =
-    (key.mode === "major" ? FLAT_MAJORS : FLAT_MINORS).indexOf(tonic);
+  const flatIndex = (key.mode === "major" ? FLAT_MAJORS : FLAT_MINORS).indexOf(
+    tonic,
+  );
   if (flatIndex > 0) return { count: flatIndex, accidental: "flat" };
   // C 大调 / A 小调，或表外拼写（如重升）→ 无调号
   return { count: 0, accidental: "none" };

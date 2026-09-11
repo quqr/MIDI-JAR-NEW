@@ -16,7 +16,18 @@ import { useChordChartStore } from "../stores/ChordChart";
 import type { ChordNotation } from "../domain/types";
 
 const TONICS: readonly string[] = [
-  "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B",
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B",
 ];
 const MODES: readonly ("major" | "minor")[] = ["major", "minor"];
 const NOTATIONS: readonly ChordNotation[] = ["long", "short", "symbol"];
@@ -77,14 +88,21 @@ const modeLabels = computed(() => [
     class="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3 p-3 rounded-xl bg-base-200/40 border border-base-content/10"
   >
     <!-- 曲名（占两列） -->
-    <label class="col-span-2 flex flex-col gap-1 text-[11px] text-base-content/60">
+    <label
+      class="col-span-2 flex flex-col gap-1 text-[11px] text-base-content/60"
+    >
       {{ t("chordChart.metaPanel.title") }}
       <input
         type="text"
         class="input input-sm w-full"
         :value="store.chart.meta.title"
         :placeholder="t('chordChart.untitled')"
-        @change="(e) => store.updateMeta({ title: (e.target as HTMLInputElement).value.trim() })"
+        @change="
+          (e) =>
+            store.updateMeta({
+              title: (e.target as HTMLInputElement).value.trim(),
+            })
+        "
       />
     </label>
 
@@ -95,7 +113,12 @@ const modeLabels = computed(() => [
         type="text"
         class="input input-sm w-full"
         :value="store.chart.meta.composer"
-        @change="(e) => store.updateMeta({ composer: (e.target as HTMLInputElement).value.trim() })"
+        @change="
+          (e) =>
+            store.updateMeta({
+              composer: (e.target as HTMLInputElement).value.trim(),
+            })
+        "
       />
     </label>
 
@@ -107,12 +130,19 @@ const modeLabels = computed(() => [
         class="input input-sm w-full"
         :value="store.chart.meta.style"
         :placeholder="'Medium Swing'"
-        @change="(e) => store.updateMeta({ style: (e.target as HTMLInputElement).value.trim() })"
+        @change="
+          (e) =>
+            store.updateMeta({
+              style: (e.target as HTMLInputElement).value.trim(),
+            })
+        "
       />
     </label>
 
     <!-- 调号（主音，占两列） -->
-    <label class="col-span-2 flex flex-col gap-1 text-[11px] text-base-content/60">
+    <label
+      class="col-span-2 flex flex-col gap-1 text-[11px] text-base-content/60"
+    >
       {{ t("chordChart.metaPanel.key") }}
       <RangeSlider
         :model-value="tonicIndex"
@@ -122,7 +152,12 @@ const modeLabels = computed(() => [
         size="xs"
         :aria-label="t('chordChart.metaPanel.key')"
         @update:model-value="
-          (v) => onIndex(v, TONICS, (p) => store.updateMeta({ key: { ...store.chart.meta.key, tonic: p as string } }))
+          (v) =>
+            onIndex(v, TONICS, (p) =>
+              store.updateMeta({
+                key: { ...store.chart.meta.key, tonic: p as string },
+              }),
+            )
         "
       />
     </label>
@@ -137,7 +172,12 @@ const modeLabels = computed(() => [
         size="xs"
         :aria-label="t('chordChart.metaPanel.mode')"
         @update:model-value="
-          (v) => onIndex(v, MODES, (p) => store.updateMeta({ key: { ...store.chart.meta.key, mode: p as 'major' | 'minor' } }))
+          (v) =>
+            onIndex(v, MODES, (p) =>
+              store.updateMeta({
+                key: { ...store.chart.meta.key, mode: p as 'major' | 'minor' },
+              }),
+            )
         "
       />
     </label>
@@ -160,12 +200,17 @@ const modeLabels = computed(() => [
       {{ t("chordChart.metaPanel.repeats") }}
       <RangeSlider
         :model-value="repeatsIndex"
-        v-bind="optionsToRange(REPEATS.map((n) => ({ value: n, label: `${n}×` })))"
+        v-bind="
+          optionsToRange(REPEATS.map((n) => ({ value: n, label: `${n}×` })))
+        "
         :tick-labels="REPEATS.map((n) => `${n}×`)"
         size="xs"
         :aria-label="t('chordChart.metaPanel.repeats')"
         @update:model-value="
-          (v) => onIndex(v, REPEATS, (p) => store.updateMeta({ repeats: p as number }))
+          (v) =>
+            onIndex(v, REPEATS, (p) =>
+              store.updateMeta({ repeats: p as number }),
+            )
         "
       />
     </label>
@@ -181,7 +226,10 @@ const modeLabels = computed(() => [
         size="xs"
         :aria-label="t('chordChart.metaPanel.notation')"
         @update:model-value="
-          (v) => onIndex(v, NOTATIONS, (p) => store.updateMeta({ notation: p as ChordNotation }))
+          (v) =>
+            onIndex(v, NOTATIONS, (p) =>
+              store.updateMeta({ notation: p as ChordNotation }),
+            )
         "
       />
     </label>

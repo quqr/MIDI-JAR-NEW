@@ -9,10 +9,7 @@
 
 import { clampBeats, normalizeChordUnit } from "./grid";
 import { createChordUnit, createMeasure } from "./empty";
-import {
-  transposeChordUnit,
-  transposeNoteName,
-} from "./chordText";
+import { transposeChordUnit, transposeNoteName } from "./chordText";
 
 import type { AccidentalPreference } from "@/views/CircleOfFifths/circleOfFifths";
 import type {
@@ -279,28 +276,26 @@ export function removeMeasuresInRange(
  * 小节插入后重排锚点：插入位及之后的小节索引整体 +1。
  * （新小节占据 `at`，原 `at` 及以后的内容顺延）
  */
-export function reindexAnchorsAfterInsert<
-  T extends { measureIndex: number },
->(items: T[], at: number): T[] {
+export function reindexAnchorsAfterInsert<T extends { measureIndex: number }>(
+  items: T[],
+  at: number,
+): T[] {
   return items.map((it) =>
-    it.measureIndex >= at
-      ? { ...it, measureIndex: it.measureIndex + 1 }
-      : it,
+    it.measureIndex >= at ? { ...it, measureIndex: it.measureIndex + 1 } : it,
   );
 }
 
 /**
  * 小节删除后重排锚点：删掉挂在被删小节上的锚点，其后的小节索引整体 -1。
  */
-export function reindexAnchorsAfterRemove<
-  T extends { measureIndex: number },
->(items: T[], at: number): T[] {
+export function reindexAnchorsAfterRemove<T extends { measureIndex: number }>(
+  items: T[],
+  at: number,
+): T[] {
   return items
     .filter((it) => it.measureIndex !== at)
     .map((it) =>
-      it.measureIndex > at
-        ? { ...it, measureIndex: it.measureIndex - 1 }
-        : it,
+      it.measureIndex > at ? { ...it, measureIndex: it.measureIndex - 1 } : it,
     );
 }
 
@@ -328,9 +323,7 @@ export function transposeChart(
     },
     measures: chart.measures.map((m) => ({
       ...m,
-      chords: m.chords.map((c) =>
-        transposeChordUnit(c, semitones, preference),
-      ),
+      chords: m.chords.map((c) => transposeChordUnit(c, semitones, preference)),
     })),
   };
 }

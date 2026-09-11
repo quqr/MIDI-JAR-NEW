@@ -100,7 +100,9 @@ const ending = computed(() => mark.value?.ending ?? null);
 /** 右上角徽章链是否有内容 */
 const hasBadges = computed(() => {
   const m = mark.value;
-  return !!m && !!(m.jump || m.segno || m.coda || m.fermata || m.playTimes || m.end);
+  return (
+    !!m && !!(m.jump || m.segno || m.coda || m.fermata || m.playTimes || m.end)
+  );
 });
 
 /** 跳转指令的可读标签（D.C. al Coda …） */
@@ -124,7 +126,9 @@ const playTimes = computed(() => mark.value?.playTimes ?? null);
         v-for="(p, i) in leftParts"
         :key="`l${i}`"
         class="flex items-center justify-center"
-        :class="p.solid ? (p.w > 2 ? 'bg-base-content/70' : 'bg-base-content/30') : ''"
+        :class="
+          p.solid ? (p.w > 2 ? 'bg-base-content/70' : 'bg-base-content/30') : ''
+        "
         :style="{ width: `${p.w}px` }"
       >
         <MusicGlyph
@@ -261,7 +265,9 @@ const playTimes = computed(() => mark.value?.playTimes ?? null);
         v-for="(p, i) in rightParts"
         :key="`r${i}`"
         class="flex items-center justify-center"
-        :class="p.solid ? (p.w > 2 ? 'bg-base-content/70' : 'bg-base-content/30') : ''"
+        :class="
+          p.solid ? (p.w > 2 ? 'bg-base-content/70' : 'bg-base-content/30') : ''
+        "
         :style="{ width: `${p.w}px` }"
       >
         <MusicGlyph
