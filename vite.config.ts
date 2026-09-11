@@ -95,7 +95,10 @@ export default defineConfig(() => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["./vitest.setup.ts"],
-      include: ["src/**/*.test.ts", "src/**/__tests__/**/*.test.ts"],
+      // 测试统一放顶层 test/ 目录（按 src/ 结构镜像分层）。
+      // 保留 src/**/*.test.ts 兜底：误放在源码旁的测试也能跑起来，
+      // 而不是被静默忽略。项目规则禁止 __tests__ 目录，故不再匹配该路径。
+      include: ["test/**/*.test.ts", "src/**/*.test.ts"],
       exclude: ["node_modules", "dist"],
       server: {
         deps: {

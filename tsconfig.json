@@ -28,6 +28,12 @@
     /* Types */
     "types": ["vite/client", "dom-webcodecs"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "test/**/*.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
