@@ -1,7 +1,13 @@
 <template>
   <!-- z-0 创建 stacking context，将 PixiJS canvas (z-index:1) 与 fluid canvas (z-index:0/2)
        限制在容器内部，避免它们突破到外层覆盖顶部 UI 栏与播放控制面板 -->
-  <div ref="containerRef" class="absolute inset-0 overflow-hidden z-0">
+  <!-- 底色取设置的纯色背景：流体在底层时 PixiJS 背景保持透明，
+       由本容器 CSS 背景供底色（与视频导出合成先铺 solidColor 一致） -->
+  <div
+    ref="containerRef"
+    class="absolute inset-0 overflow-hidden z-0"
+    :style="{ backgroundColor: settings.background.solidColor }"
+  >
     <!-- PixiJS Application canvas is appended here by createWaterfallApp() -->
     <!-- WebGL fluid simulation canvas: independent GL context -->
     <!-- w-full h-full 必需：canvas 是 replaced element，inset:0 不会拉伸其 CSS 尺寸，
@@ -32,7 +38,6 @@ import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 const props = defineProps<{
   settings: WaterfallPianoSettings;
   mode: NoteBlockMode;
-  showFPS?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -205,14 +210,6 @@ watch(
 watch(
   () => props.mode,
   (m) => engine?.setMode(m),
-);
-
-watch(
-  () => props.showFPS,
-  (show) => {
-    if (engine) engine.showFPS = show;
-  },
-  { immediate: true },
 );
 
 onUnmounted(() => {

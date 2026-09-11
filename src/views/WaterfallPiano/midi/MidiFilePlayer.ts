@@ -79,6 +79,7 @@ export class MidiFilePlayer {
   async loadFile(file: File): Promise<MidiTrackInfo[]> {
     const arrayBuffer = await file.arrayBuffer();
     this.midi = new Midi(arrayBuffer);
+    this.externalNotes = null;
     this.tracks = this.extractTrackInfo();
     this.duration = this.midi.duration;
     this.notes = this.collectNotes();
@@ -143,6 +144,46 @@ export class MidiFilePlayer {
     }
     result.sort((a, b) => a.time - b.time);
     return result;
+  }
+
+  /**
+   * 注入外部解析的调度音符（如 MusicXML 解析结果，ADR 0024），
+   * 跳过 @tonejs/midi 文件解析，复用整条播放链路（速度/循环/跳转/调度）
+   * @param notes - 已按时间排序的调度音符（trackIndex = 声部索引）
+   * @param durationSec - 总时长（秒）
+   * @param tracks - 声部（轨道）摘要，供资料面板勾选与过滤
+   */
+  loadExternalNotes(
+    notes: ScheduledNote[],
+    durationSec: number,
+    tracks: MidiTrackInfo[] = [],
+  ): void {
+    this.midi = null;
+    this.externalNotes = notes;
+    this.tracks = tracks;
+    this.duration = durationSec;
+    this.applyExternalFilter();
+    this.callbacks.onTracksReady?.(this.tracks);
+    waterfallPianoEvents.onTracksReady.internalInvoke({ tracks: this.tracks });
+  }
+
+  /**
+   * 按当前 selectedTracks 过滤外部音符并重新调度。
+   * 未勾选任何轨道（空数组）时视为全选，与 MIDI 文件路径语义一致。
+   */
+  private applyExternalFilter(): void {
+    const all = this.externalNotes ?? [];
+    const selected =
+      this.selectedTracks.length > 0
+        ? this.selectedTracks
+        : this.tracks.map((t) => t.index);
+    const allowed = new Set(selected);
+    this.notes = all.filter((n) => allowed.has(n.trackIndex));
+    this.scheduler.setNotes(this.notes);
+    this.callbacks.onScheduledNotesReady?.(this.notes);
+    waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
+      notes: this.notes,
+    });
   }
 
   getTracks(): MidiTrackInfo[] {
@@ -228,6 +269,8 @@ export class MidiFilePlayer {
   }
 
   private selectedTracks: number[] = [];
+  /** 外部注入的完整音符集（loadExternalNotes），selectedTracks 过滤前的原始数据 */
+  private externalNotes: ScheduledNote[] | null = null;
 
   /**
    * 设置参与播放的轨道索引，会重新收集调度音符并通过回调通知外部
@@ -242,6 +285,10 @@ export class MidiFilePlayer {
       waterfallPianoEvents.onScheduledNotesReady.internalInvoke({
         notes: this.notes,
       });
+    }
+    // 外部注入的音符（MusicXML 声部）：同样按勾选过滤并重新调度
+    else if (this.externalNotes) {
+      this.applyExternalFilter();
     }
   }
 

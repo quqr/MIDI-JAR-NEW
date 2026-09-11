@@ -48,7 +48,6 @@ export class WaterfallEngine implements IRenderPipeline {
   private dpr = 1;
   /** 保存旧值的数值副本，用于检测设置变更（避免 deep watch 引用问题） */
   private prevKeyboardHeightRatio: number | null = null;
-  public showFPS = true;
   /** 每帧回调，在 noteBlockSystem.update() 之前调用，用于推进播放器时间 */
   frameCallback: (() => void) | null = null;
   /** 资源清理任务注册表（增强型 RAII 模式） */
@@ -118,6 +117,9 @@ export class WaterfallEngine implements IRenderPipeline {
         onNoteOff: (midi) => this.triggerNoteOff(midi),
       });
       this.interaction.enable(app.canvas);
+      // 指针追踪：为粒子方块的指针排斥效果提供坐标（CSS px = 逻辑坐标）
+      app.canvas.addEventListener("pointermove", this.onPointerMove);
+      app.canvas.addEventListener("pointerleave", this.onPointerLeave);
       this.renderLoop = new RenderLoop(this, this.perfMonitor);
       this.renderLoop.start();
 
@@ -143,6 +145,16 @@ export class WaterfallEngine implements IRenderPipeline {
       throw error;
     }
   }
+
+  /** 指针移动：记录坐标供粒子排斥使用（offsetX/Y 即瀑布逻辑坐标） */
+  private onPointerMove = (e: PointerEvent): void => {
+    this.noteBlockSystem.setPointerState(e.offsetX, e.offsetY, true);
+  };
+
+  /** 指针离开画布：关闭排斥 */
+  private onPointerLeave = (): void => {
+    this.noteBlockSystem.setPointerState(0, 0, false);
+  };
 
   setSoundEngine(engine: ISoundEngine): void {
     this.soundEngine = engine;
@@ -202,6 +214,38 @@ export class WaterfallEngine implements IRenderPipeline {
 
   getFPS(): number {
     return this.perfMonitor.getFps();
+  }
+
+  /**
+   * 停止内置渲染循环（视频导出专用，ADR 0023）：
+   * 离屏导出引擎需按合成帧率手动驱动 IRenderPipeline 各阶段，
+   * 不允许 Ticker 以实时节奏并发推进（会与导出步进互相干扰）。
+   */
+  stopRenderLoop(): void {
+    this.renderLoop?.stop();
+  }
+
+  /**
+   * 前台让路：暂停渲染循环（视频导出期间，ADR 0026）。
+   *
+   * 停掉 Ticker 即停掉每帧的全部重活——背景 / 音符方块 / 键盘 / Aura 滤镜 /
+   * 流体 WebGL 步进 / 场景图提交，把 CPU / GPU 全部让给离屏导出引擎与编码器。
+   * 与 stopRenderLoop 的区别：本方法成对提供 resumeRendering()，语义是
+   * 「临时让路」而非「永久停止」；画面停在最后一帧，不会黑屏。
+   */
+  suspendRendering(): void {
+    this.renderLoop?.stop();
+  }
+
+  /** 恢复前台渲染（与 suspendRendering 成对，导出结束后调用） */
+  resumeRendering(): void {
+    if (this.disposed) return;
+    this.renderLoop?.start();
+  }
+
+  /** 当前布局视口尺寸（CSS 像素），供导出计算画面宽高比 */
+  getViewportSize(): { width: number; height: number } {
+    return { width: this.width, height: this.height };
   }
 
   /**
@@ -317,20 +361,14 @@ export class WaterfallEngine implements IRenderPipeline {
     this.keyboardRenderer.render();
   }
 
-  /** FPS 叠加层渲染（委托给 NoteBlockSystem） */
-  displayFPS(fps: number): void {
-    if (!this.showFPS) return;
-    this.noteBlockSystem.renderFPS(fps);
-  }
-
   /** 判断当前帧是否应更新流体 */
   shouldUpdateFluid(): boolean {
     return this.visualEffects?.isFluidActive() ?? false;
   }
 
-  /** 流体模拟更新 + 持续 splat */
-  updateFluidAndSplats(): void {
-    this.visualEffects?.update();
+  /** 流体模拟更新 + 持续 splat（dt 传入时走确定性步长，视频导出用） */
+  updateFluidAndSplats(dt?: number): void {
+    this.visualEffects?.update(dt);
   }
 
   /** 将场景图提交到 GPU 进行渲染 */
@@ -411,6 +449,10 @@ export class WaterfallEngine implements IRenderPipeline {
     // 销毁交互控制器（解绑 Pointer 事件，清理已按住的音符）
     this.interaction?.dispose();
     this.interaction = null;
+    if (this.app) {
+      this.app.canvas.removeEventListener("pointermove", this.onPointerMove);
+      this.app.canvas.removeEventListener("pointerleave", this.onPointerLeave);
+    }
 
     // 执行所有注册的清理任务
     const results = await Promise.allSettled(

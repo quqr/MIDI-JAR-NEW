@@ -159,6 +159,11 @@ export class NoteBlockSystem {
     this.particleConfig = config;
   }
 
+  /** 更新指针状态（瀑布逻辑坐标），用于粒子方块的指针排斥效果 */
+  setPointerState(x: number, y: number, active: boolean): void {
+    this.renderer.setPointer(x, y, active);
+  }
+
   setAuraConfig(config: AuraConfig): void {
     this.auraConfig = config;
   }
@@ -279,9 +284,9 @@ export class NoteBlockSystem {
     this.renderer.render();
   }
 
-  /** 渲染 FPS 叠加层 */
-  renderFPS(fps: number): void {
-    this.renderer.renderFPS(fps);
+  /** 设置渲染时钟（ms）：视频导出用 transport 时间驱动粒子动画，null 恢复墙钟 */
+  setRenderTime(ms: number | null): void {
+    this.renderer.renderTimeMs = ms;
   }
 
   getActiveBlockCount(): number {

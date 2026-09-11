@@ -14,7 +14,7 @@ import { Recorder } from "../audio/Recorder";
 import type { WaterfallEngine } from "../engine/WaterfallEngine";
 import type { NoteBlockMode } from "../engine/NoteBlockSystem";
 import { PlayerStateMachine } from "../state/PlayerStateMachine";
-import type { MidiTrackInfo } from "../types";
+import type { MidiTrackInfo, ScheduledNote } from "../types";
 import {
   createPlaybackStrategy,
   type PlaybackStrategy,
@@ -129,6 +129,37 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
       stateMachine.setState("ready");
     } catch (e) {
       logger.error({ err: e }, "loadFile failed");
+      errorMessage.value = e instanceof Error ? e.message : String(e);
+      stateMachine.setState("error");
+    }
+  }
+
+  /**
+   * 加载 MusicXML 文件并切换至 synthesia 模式（ADR 0024）：
+   * OSMD 解析 → ScheduledNote 注入 MidiFilePlayer，复用整条 MIDI 播放链路
+   * @param file - 用户选择的 MusicXML 文件（.musicxml/.xml/.mxl）
+   */
+  async function onLoadMusicXml(file: File): Promise<void> {
+    if (!player || !stateMachine.canLoadFile) {
+      logger.warn(`Cannot load MusicXML in state: ${stateMachine.getState()}`);
+      return;
+    }
+    if (!stateMachine.setState("loading")) return;
+    try {
+      mode.value = "synthesia";
+      engineRef.value?.setMode("synthesia");
+      const { parseMusicXml } = await import("../midi/musicXmlParser");
+      const result = await parseMusicXml(await file.arrayBuffer());
+      player.loadExternalNotes(result.notes, result.durationSec, result.parts);
+      tracks.value = result.parts;
+      selectedTracks.value = result.parts.map((p) => p.index);
+      fileName.value = file.name;
+      contentType.value = "midi";
+      duration.value = result.durationSec;
+      currentTime.value = 0;
+      stateMachine.setState("ready");
+    } catch (e) {
+      logger.error({ err: e }, "loadMusicXml failed");
       errorMessage.value = e instanceof Error ? e.message : String(e);
       stateMachine.setState("error");
     }
@@ -369,6 +400,25 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
     recorder = null;
   });
 
+  /**
+   * 视频导出数据源（ADR 0023）：仅 MIDI 文件内容可导出（synthesia 模式）。
+   * 返回预定音符序列、时长与文件名；无可导出内容时返回 null。
+   */
+  function getExportSource(): {
+    notes: ScheduledNote[];
+    durationSec: number;
+    fileName: string;
+  } | null {
+    if (contentType.value !== "midi" || !player) return null;
+    const notes = player.getScheduledNotes();
+    if (notes.length === 0) return null;
+    return {
+      notes,
+      durationSec: duration.value || player.getDuration(),
+      fileName: fileName.value,
+    };
+  }
+
   return {
     contentType,
     isRecording,
@@ -378,8 +428,10 @@ export function useWaterfallMidi(options: UseWaterfallMidiOptions) {
     tracks,
     selectedTracks,
     getStrategy,
+    getExportSource,
     onEngineInit,
     onLoadMidi,
+    onLoadMusicXml,
     onToggleRecord,
     onPlay,
     onPause,

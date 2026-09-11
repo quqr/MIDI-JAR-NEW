@@ -1,9 +1,14 @@
-import { Container, Graphics, Text } from "pixi.js";
+import { Container, Graphics } from "pixi.js";
 import { OutlineFilter, GlowFilter } from "pixi-filters";
 import type { AuraConfig, ParticleConfig } from "../types";
 import { noteToColor, type CustomColors } from "./NoteColorMapper";
 import type { KeyboardRenderer } from "./KeyboardRenderer";
 import type { NoteBlock } from "./NoteBlockPool";
+import {
+  NoteBlockParticleField,
+  type BlockRectInfo,
+  type PointerState,
+} from "./NoteBlockParticleField";
 
 const BLACK_KEY_CLASSES = new Set([1, 3, 6, 8, 10]);
 export const BLACK_KEY_WIDTH_RATIO = 0.6;
@@ -69,7 +74,19 @@ export class NoteBlockRenderer {
   });
   private blocksGraphics: Graphics = new Graphics();
   private hitLineGraphics: Graphics = new Graphics();
-  private fpsText: Text | null = null;
+  /** 粒子方块场（blockParticle.enabled 时替代实体方块渲染） */
+  private particleField = new NoteBlockParticleField();
+  /** 上一帧粒子模式开关（用于关闭时清空残留 span） */
+  private particleEnabledLast = false;
+  /** 复用的 BlockRectInfo 缓冲区，避免每帧分配 */
+  private rectBuffer: BlockRectInfo[] = [];
+  /** 指针状态（由 NoteBlockSystem 注入更新） */
+  private pointer: PointerState = { x: 0, y: 0, active: false };
+  /**
+   * 渲染时钟（ms）。null = 跟随墙钟（实时预览）；
+   * 视频导出设置 transport 时间，保证粒子动画逐帧确定、与编码速度无关。
+   */
+  renderTimeMs: number | null = null;
 
   constructor(
     private readonly getParticleConfig: () => ParticleConfig | null,
@@ -82,18 +99,21 @@ export class NoteBlockRenderer {
   ) {}
 
   init(container: Container): void {
-    this.fpsText = new Text({
-      text: "",
-      style: { fontSize: 12, fill: "white", fontFamily: "monospace" },
-    });
     container.addChild(
       this.auraOuterLayer,
       this.auraInnerLayer,
       this.auraBaseLayer,
       this.blocksGraphics,
+      this.particleField.view,
       this.hitLineGraphics,
-      this.fpsText,
     );
+  }
+
+  /** 更新指针状态（瀑布逻辑坐标，用于粒子排斥） */
+  setPointer(x: number, y: number, active: boolean): void {
+    this.pointer.x = x;
+    this.pointer.y = y;
+    this.pointer.active = active;
   }
 
   render(): void {
@@ -127,7 +147,7 @@ export class NoteBlockRenderer {
     const blackKeyWidth = whiteKeyWidth * BLACK_KEY_WIDTH_RATIO;
     const customColors: CustomColors = p.customColors;
     const triggeredSet = this.getTriggeredSet();
-    const time = performance.now();
+    const time = this.renderTimeMs ?? performance.now();
 
     const auraBlocks: Array<{
       x: number;
@@ -137,6 +157,7 @@ export class NoteBlockRenderer {
       color: string;
     }> = [];
     const needAura = auraCfg?.enabled ?? false;
+    const particleModeAny = p.blockParticle?.enabled ?? false;
 
     for (const b of active) {
       const isBlack = isBlackKey(b.midi);
@@ -150,16 +171,36 @@ export class NoteBlockRenderer {
         b.hand,
         customColors,
       );
-      const isTriggered = triggeredSet.has(b.midi);
+      // 触发高亮的判定依据随方块来源而不同：
+      // - synthesia 方块（trackIndex >= 0）有起止时间，必须用方块自身的
+      //   触发状态判断，否则同一音高的「未来」方块会因全局集合里存在该
+      //   音高而被一起点亮（尚未接触命中线却被高亮）；
+      // - realtime 方块（trackIndex < 0）没有起止时间，仍以全局已触发
+      //   集合（按音高）判断。
+      const isTriggered =
+        b.trackIndex >= 0 ? b.triggered && !b.ended : triggeredSet.has(b.midi);
       const color = isTriggered ? brightenColor(baseColor, 0.4) : baseColor;
 
-      // 绘制实体方块（单 Graphics 批绘制）
-      if (p.cornerRadius > 0) {
-        this.blocksGraphics.roundRect(x, y, blockWidth, h, p.cornerRadius);
+      // 粒子模式：跳过实体填充，收集矩形信息给粒子场
+      if (particleModeAny) {
+        this.rectBuffer.push({
+          block: b,
+          x,
+          y,
+          w: blockWidth,
+          h,
+          tint: hexToNumber(color),
+          triggered: isTriggered,
+        });
       } else {
-        this.blocksGraphics.rect(x, y, blockWidth, h);
+        // 绘制实体方块（单 Graphics 批绘制）
+        if (p.cornerRadius > 0) {
+          this.blocksGraphics.roundRect(x, y, blockWidth, h, p.cornerRadius);
+        } else {
+          this.blocksGraphics.rect(x, y, blockWidth, h);
+        }
+        this.blocksGraphics.fill({ color, alpha: p.opacity });
       }
-      this.blocksGraphics.fill({ color, alpha: p.opacity });
 
       // 收集 aura 数据
       if (needAura && auraCfg) {
@@ -172,6 +213,25 @@ export class NoteBlockRenderer {
       }
     }
 
+    // 3.5 粒子场更新/清空
+    if (particleModeAny) {
+      const cfg = p.blockParticle;
+      this.particleField.setGlow(cfg.glow);
+      this.particleField.view.alpha = p.opacity;
+      this.particleField.update(
+        this.rectBuffer,
+        cfg,
+        this.pointer,
+        time,
+        width,
+      );
+    } else if (this.particleEnabledLast) {
+      // 刚关闭：立即清空残留粒子
+      this.particleField.clear(p.blockParticle, true);
+    }
+    this.particleEnabledLast = particleModeAny;
+    this.rectBuffer.length = 0;
+
     // 4. 批量渲染 aura 图层
     if (auraBlocks.length > 0 && auraCfg) {
       // 有内容时设置 filter
@@ -183,10 +243,6 @@ export class NoteBlockRenderer {
       this.auraOuterLayer.filters = null;
       this.auraInnerLayer.filters = null;
     }
-  }
-
-  renderFPS(fps: number): void {
-    if (this.fpsText) this.fpsText.text = `FPS: ${Math.round(fps)}`;
   }
 
   /** ease-out 插值：1 - (1 - t)^2 */
@@ -327,6 +383,6 @@ export class NoteBlockRenderer {
     this.glowFilter.destroy();
     this.blocksGraphics.destroy();
     this.hitLineGraphics.destroy();
-    this.fpsText?.destroy();
+    this.particleField.dispose();
   }
 }

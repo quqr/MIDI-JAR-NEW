@@ -1,97 +1,90 @@
 <template>
   <SettingsSection :show-reset="true" :on-reset="() => store.resetSettings()">
-    <div class="grid grid-cols-1 gap-4 m-4">
+    <div class="flex flex-col gap-3 p-2">
       <SettingsFieldGroup
-        :fields="particlesGroup.fields"
-        :model="settings.particles"
-        :title-key="particlesGroup.titleKey"
-        :icon="particlesGroup.icon"
+        v-for="(layer, i) in visibleLayers"
+        :key="layer.id"
+        :fields="layerFields[i]"
+        :model="layerModels[i]"
+        :title-key="layer.titleKey"
+        :icon="layer.icon"
         i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('particles', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="auraGroup.fields"
-        :model="settings.aura"
-        :title-key="auraGroup.titleKey"
-        :icon="auraGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('aura', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="backgroundGroup.fields"
-        :model="settings.background"
-        :title-key="backgroundGroup.titleKey"
-        :icon="backgroundGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('background', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="fluidAdvancedGroup.fields"
-        :model="settings.background"
-        :title-key="fluidAdvancedGroup.titleKey"
-        :icon="fluidAdvancedGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('background', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="effectsGroup.fields"
-        :model="settings.effects"
-        :title-key="effectsGroup.titleKey"
-        :icon="effectsGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('effects', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="keyboardGroup.fields"
-        :model="settings.keyboard"
-        :title-key="keyboardGroup.titleKey"
-        :icon="keyboardGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('keyboard', key, value)"
-      />
-      <SettingsFieldGroup
-        :fields="midiFileGroup.fields"
-        :model="settings.midiFile"
-        :title-key="midiFileGroup.titleKey"
-        :icon="midiFileGroup.icon"
-        i18n-prefix="WaterfallPiano"
-        @update="(key, value) => updateSection('midiFile', key, value)"
-      />
+        :section-id="`waterfall-${layer.id}`"
+        @update="(key, value) => updateLayer(layer, key, value)"
+      >
+        <BackgroundImageSetting v-if="layer.id === 'background'" />
+      </SettingsFieldGroup>
     </div>
   </SettingsSection>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, toRaw } from "vue";
 import { useWaterfallPianoStore } from "../stores/WaterfallPiano";
-import type { WaterfallPianoSettings } from "../types";
 import { setValueByPath } from "@/helpers";
 import { SettingsFieldGroup, SettingsSection } from "@/components/Settings";
-import {
-  particlesGroup,
-  auraGroup,
-  backgroundGroup,
-  fluidAdvancedGroup,
-  effectsGroup,
-  keyboardGroup,
-  midiFileGroup,
-} from "../settingsSchema";
+import { LAYERS, layerSectionOf, layerSections } from "../settingsSchema";
+import type { LayerGroupSchema } from "../settingsSchema";
+import BackgroundImageSetting from "./BackgroundImageSetting.vue";
+
+const props = defineProps<{
+  /**
+   * 是否展示进阶字段（ADR 0024，如流体"随机扰动"干扰抖动组）：
+   * 全局设置页传 true，侧边设置抽屉默认 false 过滤隐藏。
+   */
+  showAdvanced?: boolean;
+}>();
 
 const store = useWaterfallPianoStore();
 const settings = computed(() => store.settings);
 
+/** 过滤进阶字段后的层级清单（字段 schema 为常量，setup 内一次完成） */
+const visibleLayers: readonly LayerGroupSchema[] = props.showAdvanced
+  ? LAYERS
+  : LAYERS.map((layer) => ({
+      ...layer,
+      fields: layer.fields.filter((e) => !e.advanced),
+    }));
+
+/**
+ * 分组清单 = 渲染层级（LAYERS 常量数组，settingsSchema.ts）：
+ * 数组顺序即渲染顺序（背景色 → 特殊效果 → 流体 → Note Block → 钢琴 → UI），
+ * 新增层级只需向 LAYERS 追加一项。
+ * 全部默认展开（非受控模式），不再做手风琴单开互斥。
+ */
+const layerFields = computed(() =>
+  visibleLayers.map((layer) => layer.fields.map((entry) => entry.field)),
+);
+
+/**
+ * 层级组的数据模型：层级可能跨多个设置段（如特殊效果层 = background.galaxy
+ * + effects），合并相关 section 为一个平面 model 供字段 visibleWhen / 取值。
+ */
+const layerModels = computed<Record<string, unknown>[]>(() =>
+  visibleLayers.map((layer) => {
+    const model: Record<string, unknown> = {};
+    for (const section of layerSections(layer)) {
+      Object.assign(model, settings.value[section]);
+    }
+    return model;
+  }),
+);
+
 type FieldValue = boolean | number | string | null | undefined;
 
 /**
- * 字段写回：平铺 key 直写；点路径 key（如 "hitLine.color"、
- * "fluidParams.fluidSplatPerturbation.positionJitter"）浅拷贝外层对象后
- * 经 setValueByPath 深写入再整体写回，与迁移前各 section 的 spread 语义一致。
+ * 字段写回：按字段 key 顶层段路由到所属设置段；平铺 key 直写；
+ * 点路径 key（如 "hitLine.color"、"fluidParams.*.positionJitter"）浅拷贝
+ * 外层对象后经 setValueByPath 深写入再整体写回，与迁移前各 section 的
+ * spread 语义一致。
  */
-function updateSection<K extends keyof WaterfallPianoSettings>(
-  section: K,
+function updateLayer(
+  layer: LayerGroupSchema,
   key: string,
   value: FieldValue,
 ): void {
+  const section = layerSectionOf(layer, key);
+  if (!section) return;
   if (!key.includes(".")) {
     store.updateSetting(section, key as never, value);
     return;
@@ -99,7 +92,9 @@ function updateSection<K extends keyof WaterfallPianoSettings>(
   const [outer, ...rest] = key.split(".");
   const base =
     (store.settings[section] as Record<string, unknown>)[outer] ?? {};
-  const clone = structuredClone(base) as Record<string, unknown>;
+  // settings 是深层响应式 ref，这里拿到的 base 是 reactive Proxy；
+  // structuredClone 无法克隆 Proxy（DataCloneError），先 toRaw 还原原始对象
+  const clone = structuredClone(toRaw(base)) as Record<string, unknown>;
   setValueByPath(clone, rest.join("."), value);
   store.updateSetting(section, outer as never, clone);
 }

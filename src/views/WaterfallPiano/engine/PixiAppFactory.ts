@@ -37,3 +37,30 @@ export async function createWaterfallApp(
   logger.debug("PixiJS Application created");
   return app;
 }
+
+/**
+ * 创建离屏（视频导出专用）的 PixiJS Application 实例（ADR 0023）
+ * - 与 createWaterfallApp 相同的渲染偏好（webgl / antialias / autoStart:false）
+ * - canvas 不 append 到 DOM、不设 CSS 样式，由导出管线手动驱动渲染
+ * - resolution 固定为传入 dpr（导出 = 1：画布像素即视频像素）
+ * - 不写入 __PIXI_APP__ 全局（避免与前台可见实例混淆）
+ */
+export async function createOfflineWaterfallApp(
+  width: number,
+  height: number,
+  dpr = 1,
+): Promise<Application> {
+  const app = new Application();
+  await app.init({
+    width,
+    height,
+    antialias: true,
+    backgroundAlpha: 0,
+    preference: "webgl",
+    resolution: dpr,
+    autoDensity: false,
+    autoStart: false,
+  });
+  logger.debug(`Offline PixiJS Application created (${width}x${height})`);
+  return app;
+}

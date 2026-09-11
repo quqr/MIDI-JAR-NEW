@@ -80,6 +80,23 @@ export interface AuraConfig {
   primaryColor?: string; // 主色（仅 custom 模式）
 }
 
+/** 粒子方块效果配置（方块由粒子网格组成，移植自 ParticleText 视觉） */
+export interface BlockParticleConfig {
+  enabled: boolean; // 总开关，default false
+  gridSize: number; // 采样步长 px（越小越密），3-14, default 6
+  particleSize: number; // 粒子尺寸 px，1-14, default 6（≈gridSize 保证覆盖）
+  scatter: number; // 方块出现时的初始散开距离 px，0-160, default 60（0=直接就位）
+  stagger: number; // 聚拢延迟系数 ms（delay=seed*stagger），0-1500, default 420
+  highlightColor: string; // 高光色（targetX/width 渐变混合目标），default "#ffffff"
+  entryGather: boolean; // 方块出现时播放入场聚拢动画（对应 reference trigger 模式），default true
+  idleDrift: number; // 待机漂移幅度 px，0-4, default 0.7
+  pointerRepelRadius: number; // 指针排斥半径 px，0-200, default 100（0=关闭）
+  pointerRepelForce: number; // 指针排斥力度 px，0-80, default 30
+  burstStrength: number; // 触发爆发距离 px（触发沿重新散开），0-160, default 60（0=关闭）
+  gatherDuration: number; // 聚拢时长 ms，200-2000, default 600
+  glow: boolean; // 粒子辉光（AdditiveBlending 模拟），default true
+}
+
 /** 瀑布流音符方块的视觉与行为配置 */
 export interface ParticleConfig {
   colorScheme: ColorScheme;
@@ -90,14 +107,34 @@ export interface ParticleConfig {
   cornerRadius: number;
   hitLine: HitLineConfig;
   hitExplosionRadius: number; // 命中爆炸大小（0-0.1）
+  blockParticle: BlockParticleConfig;
 }
 
 // ─── 流体高级参数（从 @/engine/fluid 重新导出，保持单一类型源） ───
 export type { FluidAdvancedParams, SplatPerturbation } from "@/engine/fluid";
 
-/** 背景渲染配置，支持纯色底色和流体动画效果 */
+/** Galaxy 星系粒子背景配置（移植自 reactbits Galaxy，核心参数） */
+export interface GalaxyConfig {
+  enabled: boolean; // 总开关，default false
+  density: number; // 粒子密度倍率 0.2–2, default 1
+  glowIntensity: number; // 辉光强度 0–1, default 0.18
+  saturation: number; // 饱和度 0–1, default 0.3
+  hueShift: number; // 色相偏移 0–360, default 265（useThemeColors=false 时生效）
+  rotationSpeed: number; // 星系旋转速度 0–1, default 0.1
+  starSpeed: number; // 星星闪烁速度 0–1, default 0.5
+  speed: number; // 全局速度倍率 0–3, default 1
+  useThemeColors: boolean; // true 时从 daisyUI --color-primary 派生色相
+}
+
+/** 背景渲染配置，支持纯色底色、自定义背景图片和流体动画效果 */
 export interface BackgroundConfig {
   solidColor: string;
+  /**
+   * 自定义背景图片（dataURL）。作为最底层绘制：图片存在时覆盖纯色底，
+   * 无图/加载失败/流体激活时回退到 solidColor。
+   */
+  backgroundImage?: string;
+  galaxy: GalaxyConfig;
   fluidEnabled: boolean;
   fluidQuality: FluidQuality;
   fluidStyle: FluidStyle;

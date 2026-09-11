@@ -3,7 +3,9 @@ import type {
   SettingsFieldValue,
   SettingsGroupSchema,
 } from "@/components/Settings/schema";
+import type { IconName } from "@/components/Icon/types";
 import { getThemeColors, type PianoTheme } from "./config/pianoThemes";
+import type { WaterfallPianoSettings } from "./types";
 
 /** 瀑布流设置字段 schema：正式设置页与 AdvancedDebug 共用（差异经字段 key/前缀/debug range 表达） */
 
@@ -16,6 +18,75 @@ const particleGate = (m: Record<string, unknown>) =>
   Boolean((m.hitLine as Record<string, unknown> | undefined)?.visible);
 const colorSchemeCustom = (m: Record<string, unknown>) =>
   m.colorScheme === "custom";
+const blockParticleGate = (m: Record<string, unknown>) =>
+  Boolean((m.blockParticle as Record<string, unknown> | undefined)?.enabled);
+
+/* ─── 渲染层级组织 ───────────────────────────────────────────────
+ * 用户视角的设置分组 = 引擎渲染层级（从底到顶）：
+ *   1. 背景色层（纯色 + 自定义背景图片）
+ *   2. 特殊效果层（galaxy 星系 + bloom/blur 后期）
+ *   3. 流体模拟层（fluid 基础 + 高级参数）
+ *   4. Note Block 层（方块外观/配色 + 粒子方块 + 光晕）
+ *   5. 钢琴层
+ *   6. UI 层（其余不适合上述层级的组）
+ * 新增层级只需向 LAYERS 追加一项；数组顺序即渲染顺序。
+ * 一个层级组可跨多个设置段（section），字段经 LayerFieldEntry 显式归属。
+ * ────────────────────────────────────────────────────────────── */
+
+type SettingsSectionKey = keyof WaterfallPianoSettings;
+
+/** 层级字段条目：字段 + 所属设置段（层级组可跨 section） */
+export interface LayerFieldEntry {
+  section: SettingsSectionKey;
+  field: SettingsFieldSchema;
+  /**
+   * 进阶参数标记（ADR 0024）：仅在全局设置页展示，
+   * 侧边设置抽屉过滤隐藏（如流体"随机扰动"干扰抖动组）。
+   */
+  advanced?: boolean;
+}
+
+/** 渲染层级组：id + 标题 i18n key + 图标 + 字段条目（数组顺序 = 渲染顺序） */
+export interface LayerGroupSchema {
+  id: string;
+  titleKey: string;
+  icon?: IconName;
+  fields: readonly LayerFieldEntry[];
+}
+
+const f = (
+  section: SettingsSectionKey,
+  field: SettingsFieldSchema,
+): LayerFieldEntry => ({ section, field });
+
+/** 将既有 SettingsGroupSchema 的字段按指定 section 包装为层级条目 */
+const ofGroup = (
+  section: SettingsSectionKey,
+  group: SettingsGroupSchema,
+): LayerFieldEntry[] => group.fields.map((field) => f(section, field));
+
+/**
+ * 标记进阶字段：key 匹配给定前缀（或精确 key）的条目置 advanced=true。
+ * 用于把高频干扰项（随机扰动/抖动）从侧边抽屉移到全局设置页。
+ */
+const markAdvanced = (
+  entries: LayerFieldEntry[],
+  ...keys: Array<string | RegExp>
+): LayerFieldEntry[] =>
+  entries.map((entry) =>
+    keys.some((k) =>
+      typeof k === "string" ? entry.field.key === k : k.test(entry.field.key),
+    )
+      ? { ...entry, advanced: true }
+      : entry,
+  );
+
+const auraEnabled = (m: Record<string, unknown>) => Boolean(m.enabled);
+const auraStyle = (m: Record<string, unknown>) => m.style;
+const auraStyleIs =
+  (...styles: string[]) =>
+  (m: Record<string, unknown>) =>
+    auraEnabled(m) && styles.includes(auraStyle(m) as string);
 
 export const particlesGroup: SettingsGroupSchema = {
   titleKey: "WaterfallPiano.particles",
@@ -71,15 +142,112 @@ export const particlesGroup: SettingsGroupSchema = {
       labelKey: "high",
       visibleWhen: colorSchemeCustom,
     },
+    {
+      key: "blockParticle.enabled",
+      control: "toggle",
+      labelKey: "blockParticle",
+    },
+    {
+      key: "blockParticle.gridSize",
+      control: "range",
+      labelKey: "blockParticleGridSize",
+      min: 3,
+      max: 14,
+      step: 1,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.particleSize",
+      control: "range",
+      labelKey: "blockParticleParticleSize",
+      min: 1,
+      max: 14,
+      step: 0.5,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.entryGather",
+      control: "toggle",
+      labelKey: "blockParticleEntryGather",
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.scatter",
+      control: "range",
+      labelKey: "blockParticleScatter",
+      min: 0,
+      max: 160,
+      step: 5,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.stagger",
+      control: "range",
+      labelKey: "blockParticleStagger",
+      min: 0,
+      max: 1500,
+      step: 10,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.highlightColor",
+      control: "color",
+      labelKey: "blockParticleHighlightColor",
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.idleDrift",
+      control: "range",
+      labelKey: "blockParticleIdleDrift",
+      min: 0,
+      max: 4,
+      step: 0.1,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.pointerRepelRadius",
+      control: "range",
+      labelKey: "blockParticleRepelRadius",
+      min: 0,
+      max: 200,
+      step: 5,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.pointerRepelForce",
+      control: "range",
+      labelKey: "blockParticleRepelForce",
+      min: 0,
+      max: 80,
+      step: 1,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.burstStrength",
+      control: "range",
+      labelKey: "blockParticleBurst",
+      min: 0,
+      max: 160,
+      step: 5,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.gatherDuration",
+      control: "range",
+      labelKey: "blockParticleGather",
+      min: 200,
+      max: 2000,
+      step: 50,
+      visibleWhen: blockParticleGate,
+    },
+    {
+      key: "blockParticle.glow",
+      control: "toggle",
+      labelKey: "blockParticleGlow",
+      visibleWhen: blockParticleGate,
+    },
   ],
 };
-
-const auraEnabled = (m: Record<string, unknown>) => Boolean(m.enabled);
-const auraStyle = (m: Record<string, unknown>) => m.style;
-const auraStyleIs =
-  (...styles: string[]) =>
-  (m: Record<string, unknown>) =>
-    auraEnabled(m) && styles.includes(auraStyle(m) as string);
 
 export const auraGroup: SettingsGroupSchema = {
   titleKey: "WaterfallPiano.aura",
@@ -209,11 +377,100 @@ const fluidGate = (m: Record<string, unknown>) => Boolean(m.fluidEnabled);
 const fluidParamsOf = (m: Record<string, unknown>) =>
   (m.fluidParams as Record<string, unknown> | undefined) ?? {};
 
+const galaxyOf = (m: Record<string, unknown>) =>
+  (m.galaxy as Record<string, unknown> | undefined) ?? {};
+const galaxyEnabled = (m: Record<string, unknown>) =>
+  Boolean(galaxyOf(m).enabled);
+const galaxyManualHue = (m: Record<string, unknown>) =>
+  galaxyEnabled(m) && !galaxyOf(m).useThemeColors;
+
 export const backgroundGroup: SettingsGroupSchema = {
   titleKey: "WaterfallPiano.background",
   icon: "image",
+  fields: [{ key: "solidColor", control: "color" }],
+};
+
+export const galaxyGroup: SettingsGroupSchema = {
+  titleKey: "WaterfallPiano.galaxy",
+  icon: "sparkles",
   fields: [
-    { key: "solidColor", control: "color" },
+    { key: "galaxy.enabled", control: "toggle", labelKey: "galaxyEnabled" },
+    {
+      key: "galaxy.useThemeColors",
+      control: "toggle",
+      labelKey: "galaxyUseThemeColors",
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.density",
+      control: "range",
+      labelKey: "galaxyDensity",
+      min: 0.2,
+      max: 2,
+      step: 0.1,
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.glowIntensity",
+      control: "range",
+      labelKey: "galaxyGlowIntensity",
+      min: 0,
+      max: 1,
+      step: 0.05,
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.saturation",
+      control: "range",
+      labelKey: "galaxySaturation",
+      min: 0,
+      max: 1,
+      step: 0.05,
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.hueShift",
+      control: "range",
+      labelKey: "galaxyHueShift",
+      min: 0,
+      max: 360,
+      step: 5,
+      visibleWhen: galaxyManualHue,
+    },
+    {
+      key: "galaxy.rotationSpeed",
+      control: "range",
+      labelKey: "galaxyRotationSpeed",
+      min: 0,
+      max: 1,
+      step: 0.05,
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.starSpeed",
+      control: "range",
+      labelKey: "galaxyStarSpeed",
+      min: 0,
+      max: 1,
+      step: 0.05,
+      visibleWhen: galaxyEnabled,
+    },
+    {
+      key: "galaxy.speed",
+      control: "range",
+      labelKey: "galaxySpeed",
+      min: 0,
+      max: 3,
+      step: 0.1,
+      visibleWhen: galaxyEnabled,
+    },
+  ],
+};
+
+export const fluidGroup: SettingsGroupSchema = {
+  titleKey: "WaterfallPiano.fluid",
+  icon: "droplet",
+  fields: [
     { key: "fluidEnabled", control: "toggle" },
     {
       key: "fluidParams.simResolution",
@@ -449,3 +706,76 @@ export const midiFileGroup: SettingsGroupSchema = {
     { key: "loop", control: "toggle" },
   ],
 };
+
+/* ─── LAYERS：层级清单（数组顺序 = 渲染顺序）────────────────────── */
+
+export const LAYERS: readonly LayerGroupSchema[] = [
+  {
+    id: "background",
+    titleKey: "WaterfallPiano.layers.background",
+    icon: "image",
+    fields: [...ofGroup("background", backgroundGroup)],
+  },
+  {
+    id: "specialEffects",
+    titleKey: "WaterfallPiano.layers.specialEffects",
+    icon: "filter",
+    fields: [
+      ...ofGroup("background", galaxyGroup),
+      ...ofGroup("effects", effectsGroup),
+    ],
+  },
+  {
+    id: "fluid",
+    titleKey: "WaterfallPiano.layers.fluid",
+    icon: "droplet",
+    fields: markAdvanced(
+      [
+        ...ofGroup("background", fluidGroup),
+        ...ofGroup("background", fluidAdvancedGroup),
+      ],
+      "fluidParams.group",
+      /Perturbation\./,
+    ),
+  },
+  {
+    id: "noteBlock",
+    titleKey: "WaterfallPiano.layers.noteBlock",
+    icon: "music-note",
+    fields: [
+      ...ofGroup("particles", particlesGroup),
+      ...ofGroup("aura", auraGroup),
+    ],
+  },
+  {
+    id: "piano",
+    titleKey: "WaterfallPiano.layers.piano",
+    icon: "piano",
+    fields: [...ofGroup("keyboard", keyboardGroup)],
+  },
+  {
+    id: "ui",
+    titleKey: "WaterfallPiano.layers.ui",
+    icon: "settings",
+    fields: [...ofGroup("midiFile", midiFileGroup)],
+  },
+];
+
+/** 层级内顶层 key（字段 key 首段）→ 所属设置段，用于字段写回路由 */
+export function layerSectionOf(
+  layer: LayerGroupSchema,
+  key: string,
+): SettingsSectionKey | undefined {
+  const top = key.split(".")[0];
+  const entry = layer.fields.find((e) => e.field.key.split(".")[0] === top);
+  return entry?.section;
+}
+
+/** 层级涉及的设置段（去重，按出现顺序） */
+export function layerSections(layer: LayerGroupSchema): SettingsSectionKey[] {
+  const out: SettingsSectionKey[] = [];
+  for (const e of layer.fields) {
+    if (!out.includes(e.section)) out.push(e.section);
+  }
+  return out;
+}

@@ -23,8 +23,6 @@ export interface IRenderPipeline {
   renderNoteBlocks(): void;
   /** 渲染键盘 */
   renderKeyboard(): void;
-  /** 显示 FPS 叠加层 */
-  displayFPS(fps: number): void;
   /** 判断当前帧是否应更新流体（由调用方检查 fluid 实例与暂停状态） */
   shouldUpdateFluid(): boolean;
   /** 流体模拟更新 + 持续 splat 应用 */
@@ -92,10 +90,7 @@ export class RenderLoop {
         this.callbacks.renderKeyboard();
         const tKb = performance.now();
 
-        // 6. FPS 显示
-        this.callbacks.displayFPS(this.perfMonitor.getFps());
-
-        // 7. 流体模拟（降帧运行）
+        // 6. 流体模拟（降帧运行）
         this.fluidFrameCount++;
         let tFluid = 0;
         if (
@@ -108,10 +103,10 @@ export class RenderLoop {
           this.fluidFrameCount = 0;
         }
 
-        // 8. 提交场景图到 GPU
+        // 7. 提交场景图到 GPU
         this.callbacks.renderFrame();
 
-        // 9. 性能日志（每秒一次）
+        // 8. 性能日志（每秒一次）
         const now = performance.now();
         if (now - this.lastPerfLog > 1000) {
           this.lastPerfLog = now;

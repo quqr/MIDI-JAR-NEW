@@ -120,6 +120,10 @@ function loadSettings(): WaterfallPianoSettings {
     const background: BackgroundConfig = {
       ...defaultWaterfallSettings.background,
       ...stored.background,
+      galaxy: {
+        ...defaultWaterfallSettings.background.galaxy,
+        ...stored.background?.galaxy,
+      },
       fluidParams: migrateFluidParams(
         stored.background?.fluidParams as Record<string, unknown> | undefined,
       ),

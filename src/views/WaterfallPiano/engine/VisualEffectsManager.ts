@@ -151,10 +151,15 @@ export class VisualEffectsManager {
     this.fluid?.resize();
   }
 
-  /** 每帧流体更新 + 持续 splat（由 RenderLoop 调用） */
-  update(): void {
+  /** 每帧流体更新 + 持续 splat（由 RenderLoop / 导出器调用）。
+   * dt 传入时以确定性步长推进（视频导出），缺省走墙钟（实时预览） */
+  update(dt?: number): void {
     if (!this.fluid) return;
-    this.fluid.update();
+    if (dt === undefined) {
+      this.fluid.update();
+    } else {
+      this.fluid.updateWithDt(dt);
+    }
     this.continuousSplat();
   }
 
