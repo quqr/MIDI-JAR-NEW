@@ -1,4 +1,5 @@
 import { isTauri } from "@/utils/tauri";
+import type { DialogFilter } from "@/types/tauri";
 
 /**
  * 双环境文件选择器
@@ -9,20 +10,20 @@ import { isTauri } from "@/utils/tauri";
 export function useFilePicker() {
   /**
    * 打开文件选择对话框并读取文件内容
-   * @param accept - 可接受的文件类型（浏览器环境生效），如 ".mid,.midi"
+   * @param accept - 可接受的文件类型，如 ".mid,.midi"（双环境均生效）
    */
   async function openFile(
     accept?: string,
   ): Promise<{ name: string; data: ArrayBuffer } | null> {
     if (isTauri()) {
-      return openFileTauri();
+      return openFileTauri(acceptToFilters(accept));
     }
     return openFileBrowser(accept);
   }
 
   /**
    * 保存文件
-   * @param name - 文件名
+   * @param name - 文件名（双环境均生效）
    * @param data - 文件数据
    * @param mimeType - MIME 类型（浏览器环境生效）
    */
@@ -40,9 +41,29 @@ export function useFilePicker() {
   return { openFile, saveFile };
 }
 
+/**
+ * 把浏览器风格的 accept 字符串（".mid,.midi"）解析为 Tauri 对话框过滤器
+ */
+function acceptToFilters(accept?: string): DialogFilter[] | undefined {
+  if (!accept) return undefined;
+  const extensions = accept
+    .split(",")
+    .map((s) => s.trim().replace(/^\./, ""))
+    .filter(Boolean);
+  if (extensions.length === 0) return undefined;
+  return [{ name: "Files", extensions }];
+}
+
+/** 按保存文件名推断过滤器（如 video.mp4 → mp4），供 Tauri 保存对话框使用 */
+function filterFromName(name: string): DialogFilter[] | undefined {
+  const ext = name.split(".").pop();
+  if (!ext || ext === name) return undefined;
+  return [{ name: ext.toUpperCase(), extensions: [ext.toLowerCase()] }];
+}
+
 // ─── Tauri 实现 ───
 
-async function openFileTauri(): Promise<{
+async function openFileTauri(filters?: DialogFilter[]): Promise<{
   name: string;
   data: ArrayBuffer;
 } | null> {
@@ -50,7 +71,7 @@ async function openFileTauri(): Promise<{
     const api = window.tauriAPI;
     if (!api) return null;
 
-    const filePath = await api.fileSystem.openFileDialog();
+    const filePath = await api.fileSystem.openFileDialog(filters);
     if (!filePath) return null;
 
     const result = await api.fileSystem.readFile(filePath as string);
@@ -75,28 +96,25 @@ async function openFileTauri(): Promise<{
 }
 
 async function saveFileTauri(
-  _name: string,
+  name: string,
   data: ArrayBuffer | Blob,
 ): Promise<void> {
-  try {
-    const api = window.tauriAPI;
-    if (!api) return;
+  const api = window.tauriAPI;
+  if (!api) return;
 
-    const filePath = await api.fileSystem.saveFileDialog();
-    if (!filePath) return;
+  const filePath = await api.fileSystem.saveFileDialog(
+    name,
+    filterFromName(name),
+  );
+  if (!filePath) return;
 
-    let base64: string;
-    if (data instanceof Blob) {
-      const buffer = await data.arrayBuffer();
-      base64 = arrayBufferToBase64(buffer);
-    } else {
-      base64 = arrayBufferToBase64(data);
-    }
-
-    await api.fileSystem.writeFile(filePath as string, base64);
-  } catch {
-    // 静默处理
-  }
+  // 大文件走原始字节 IPC：写临时文件再移动到目标路径，
+  // 避免几百 MB base64 + JSON 序列化冻结 WebView
+  const bytes =
+    data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : data;
+  const tmpPath = await api.fileSystem.writeTempFile(bytes);
+  // 移动失败时错误抛给调用方（临时文件留在系统临时目录，无碍）
+  await api.fileSystem.moveFile(tmpPath, filePath as string);
 }
 
 // ─── 浏览器实现 ───
@@ -163,15 +181,4 @@ async function saveFileBrowser(
   }, 100);
 }
 
-// ─── 工具函数 ───
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-  return btoa(binary);
-}

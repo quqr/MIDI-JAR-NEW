@@ -12,6 +12,7 @@
     <ColorPicker
       class="flex-shrink-0 ml-4"
       :model-value="modelValue"
+      :alpha="alpha"
       :disabled="disabled"
       :aria-label="label"
       @update:model-value="$emit('update:modelValue', $event)"
@@ -31,9 +32,16 @@ interface Props {
   label?: string;
   description?: string;
   disabled?: boolean;
+  /** 是否启用透明度通道（默认开启；仅在实际 a<1 时输出 8 位 hex） */
+  alpha?: boolean;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+  label: undefined,
+  description: undefined,
+  disabled: false,
+  alpha: true,
+});
 defineEmits<{
   "update:modelValue": [value: string];
 }>();

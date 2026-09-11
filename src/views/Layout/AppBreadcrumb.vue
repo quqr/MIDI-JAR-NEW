@@ -1,5 +1,5 @@
 <template>
-  <nav class="breadcrumbs text-sm w-max" aria-label="Breadcrumb">
+  <nav class="breadcrumbs text-sm w-max" :aria-label="t('common.breadcrumb')">
     <ul>
       <li v-for="(crumb, index) in allCrumbs" :key="crumb.to + index">
         <RouterLink

@@ -7,6 +7,7 @@
       :aria-label="title"
     >
       <div
+        v-magic
         class="card bg-base-100 border border-base-300 h-full duration-200 group-hover:border-primary/50 group-hover:shadow-md"
       >
         <div class="card-body p-5 gap-4">

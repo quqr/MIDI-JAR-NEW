@@ -36,5 +36,6 @@ const style = computed(() => ({ fontSize: `${props.size}px` }));
     :role="label ? 'img' : undefined"
     :aria-label="label"
     :aria-hidden="label ? undefined : 'true'"
-  >{{ char }}</span>
+    >{{ char }}</span
+  >
 </template>

@@ -22,6 +22,9 @@ export interface IFluidSimulation {
   /** 外部驱动的更新方法 */
   update(): void;
 
+  /** 以指定确定性步长更新（视频导出用，绕开墙钟） */
+  updateWithDt(dt: number): void;
+
   /** 销毁所有 GPU 资源 */
   destroy(): void;
 

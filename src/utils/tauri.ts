@@ -7,6 +7,7 @@ import type {
   VstSnapshot,
   VstStatusPayload,
 } from "@/types/vst";
+import type { DialogFilter } from "@/types/tauri";
 
 let appWindow: ReturnType<typeof getCurrentWindow> | null = null;
 
@@ -128,7 +129,8 @@ const tauriAPI = {
     },
   },
   fileSystem: {
-    openFileDialog: () => invoke<any>("open_file_dialog"),
+    openFileDialog: (filters?: DialogFilter[]) =>
+      invoke<any>("open_file_dialog", { filters: filters ?? null }),
     /** 选择单个目录（用于 VST 扫描目录等）；取消返回 null */
     openDirectoryDialog: () => invoke<string | null>("open_directory_dialog"),
     readFile: (filePath: string) =>
@@ -141,7 +143,17 @@ const tauriAPI = {
         filePath,
         content,
       }),
-    saveFileDialog: () => invoke<any>("save_file_dialog"),
+    saveFileDialog: (fileName?: string, filters?: DialogFilter[]) =>
+      invoke<any>("save_file_dialog", {
+        fileName: fileName ?? null,
+        filters: filters ?? null,
+      }),
+    /** 原始字节写入系统临时文件（大文件免 base64/JSON 编码），返回临时绝对路径 */
+    writeTempFile: (data: ArrayBuffer | Uint8Array) =>
+      invoke<string>("write_temp_file", new Uint8Array(data)),
+    /** 移动文件到目标绝对路径（保存对话框返回的路径） */
+    moveFile: (from: string, to: string) =>
+      invoke<void>("move_file", { from, to }),
   },
   midi: {
     refreshDevices: () => {

@@ -53,3 +53,6 @@
   --z-index-toast: 70;
   --z-index-cursor: 9999;
 }
+
+@import "./magic.css";
+@import "./collapse.css";

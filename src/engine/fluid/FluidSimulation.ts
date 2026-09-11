@@ -69,6 +69,32 @@ function makeProgram(
   );
 }
 
+/**
+ * 计算流体画布的绘制缓冲尺寸（设备像素）。
+ *
+ * 画布有两种使用形态：
+ * - 可见画布（挂载在 DOM）：以 CSS 布局尺寸 × devicePixelRatio 为准，
+ *   尺寸随容器 / 窗口 / DPI 变化联动；
+ * - 离屏画布（视频导出，ADR 0023）：未挂载到 DOM，clientWidth/clientHeight
+ *   恒为 0，此时以元素自身的 width/height 属性为准——调用方已按导出像素
+ *   尺寸显式设定。注意不要再乘 dpr：属性本身就是设备像素，二次缩放会让
+ *   画布逐帧膨胀。
+ */
+export function resolveFluidCanvasBufferSize(canvas: {
+  clientWidth: number;
+  clientHeight: number;
+  width: number;
+  height: number;
+}): { width: number; height: number } {
+  if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
+    return {
+      width: scaleByPixelRatio(canvas.clientWidth),
+      height: scaleByPixelRatio(canvas.clientHeight),
+    };
+  }
+  return { width: canvas.width, height: canvas.height };
+}
+
 export class FluidSimulation implements IFluidSimulation {
   private canvas: HTMLCanvasElement;
   private gl: WebGLRenderingContext;
@@ -216,6 +242,12 @@ export class FluidSimulation implements IFluidSimulation {
   update(): void {
     if (this.destroyed || !this.initialized) return;
     const dt = this.calcDeltaTime();
+    this.updateWithDt(dt);
+  }
+
+  /** 以指定确定性步长更新（视频导出用，绕开墙钟，逐帧可复现） */
+  updateWithDt(dt: number): void {
+    if (this.destroyed || !this.initialized) return;
     if (this.resizeCanvas()) {
       this.solver.resize();
       this.bloomPass.resize();
@@ -238,8 +270,7 @@ export class FluidSimulation implements IFluidSimulation {
   }
 
   private resizeCanvas(): boolean {
-    const width = scaleByPixelRatio(this.canvas.clientWidth);
-    const height = scaleByPixelRatio(this.canvas.clientHeight);
+    const { width, height } = resolveFluidCanvasBufferSize(this.canvas);
     if (this.canvas.width !== width || this.canvas.height !== height) {
       this.canvas.width = width;
       this.canvas.height = height;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { RouterView } from "vue-router";
+import { useI18n } from "vue-i18n";
 import AppNavbar from "@/views/Layout/AppNavbar.vue";
 import CustomCursor from "@/components/CustomCursor.vue";
 import FpsOverlay from "@/components/common/FpsOverlay.vue";
@@ -10,8 +11,11 @@ import { useSamplerStore } from "@/stores/sampler";
 import { useVstStore } from "@/stores/vst";
 import { isTauri } from "@/utils/tauri";
 import { createLogger } from "@/utils/logger";
+import { useMagicSpotlight } from "@/composables/useMagicSpotlight";
 
 const logger = createLogger("App");
+
+const { t } = useI18n();
 
 const { showMidiWarning } = useBrowserSupport();
 const inTauri = isTauri();
@@ -31,6 +35,7 @@ samplerService.installToneSourceWatcher();
 
 onMounted(() => {
   if (inTauri) void bootstrapVst();
+  useMagicSpotlight();
 });
 
 /**
@@ -75,19 +80,17 @@ async function bootstrapVst() {
     class="alert alert-warning m-2"
     role="alert"
   >
-    <span
-      >当前浏览器不支持 Web MIDI API，请使用 Chrome 或 Edge 以获得完整 MIDI
-      体验</span
-    >
+    <span>{{ t("app.webMidiUnsupported") }}</span>
     <button
       class="btn btn-ghost btn-xs"
-      aria-label="关闭"
+      :aria-label="t('common.close')"
       @click="dismissMidiWarning"
     >
       ✕
     </button>
   </div>
-  <div class="grid grid-rows-[auto_1fr_auto] h-screen w-screen bg-base-100">
+  <!-- w-full 而非 w-screen：100vw 含纵向滚动条宽度，页面可滚动时会多出 ~15px 横向溢出 -->
+  <div class="grid grid-rows-[auto_1fr_auto] h-screen w-full bg-base-100">
     <AppNavbar />
     <RouterView />
   </div>

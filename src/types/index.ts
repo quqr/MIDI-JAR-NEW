@@ -149,6 +149,40 @@ export type GeneralSettings = {
   showFps: boolean;
 };
 
+/** 界面特效（MagicBento 风格）设置 */
+export type MagicSettings = {
+  /** 主开关（默认开启） */
+  enabled: boolean;
+  /** 边框辉光：radial-gradient + mask-composite 的 1px 边缘光环 */
+  borderGlow: boolean;
+  /** 全局聚光灯：光斑跟随鼠标并照亮附近卡片 */
+  spotlight: boolean;
+  /** 3D 倾斜：悬停时卡片随鼠标位置轻微 rotateX/Y */
+  tilt: boolean;
+  /** 磁性吸附：卡片轻微跟随鼠标平移 */
+  magnetism: boolean;
+  /** 点击涟漪：点击卡片产生扩散光圈 */
+  clickEffect: boolean;
+  /** 辉光颜色（hex 存储，运行时转 "r,g,b" 通道串写 CSS 变量） */
+  glowColor: string;
+  /** 聚光灯半径（px）：光斑影响范围，proximity/fade 随动 */
+  spotlightRadius: number;
+  /** 光斑最大透明度：聚光灯靠近卡片时的亮度上限 */
+  spotlightOpacity: number;
+  /** 辉光强度：边框辉光环的 alpha 系数（0.1–1） */
+  glowIntensity: number;
+  /** 卡片高亮宽度（px）：边框辉光环的宽度（2–16） */
+  glowWidth: number;
+  /** 最大倾斜角（°）：3D 倾斜公式的角度上限，0 即关闭倾斜 */
+  tiltMaxAngle: number;
+  /** 磁吸强度：卡片跟随鼠标的偏移系数（0–0.2） */
+  magnetismStrength: number;
+  /** 涟漪大小：涟漪直径相对卡片角距的倍率（默认 2×） */
+  rippleSize: number;
+  /** 涟漪时长（ms）：点击涟漪扩散动画时长 */
+  rippleDuration: number;
+};
+
 // 钢琴设置类型定义
 export type PianoSettings = {
   from: string;
@@ -171,6 +205,7 @@ export type Settings = {
   chordDictionary: ChordDictionarySettings;
   notation: NotationSettings;
   piano: PianoSettings;
+  magic: MagicSettings;
 };
 
 /**
@@ -263,6 +298,24 @@ export const defaultPianoSettings: PianoSettings = {
   useThemeColors: true, // 默认使用主题颜色
 };
 
+export const defaultMagicSettings: MagicSettings = {
+  enabled: true, // 默认开启；≤768px / 无 hover 设备自动禁用悬停类特效
+  borderGlow: true,
+  spotlight: true,
+  tilt: true, // 默认启用 3D 倾斜
+  magnetism: true,
+  clickEffect: true,
+  glowColor: "#8400FF", // 对应参考实现 "132, 0, 255"
+  spotlightRadius: 300, // 对应 useMagicSpotlight SPOTLIGHT_RADIUS
+  spotlightOpacity: 0.8, // 对应 SPOTLIGHT_MAX_OPACITY
+  glowIntensity: 0.8, // 对应 magic.css 边框辉光环 alpha 系数
+  glowWidth: 2, // 对应 magic.css ::after 辉光环宽度（px）
+  tiltMaxAngle: 10, // 对应 magic.ts tilt 公式 ±10°
+  magnetismStrength: 0.05, // 对应 magic.ts 磁吸偏移 ×0.05
+  rippleSize: 2, // 对应 magic.ts 涟漪直径 2×max corner distance
+  rippleDuration: 800, // 对应 magic.ts onClick 涟漪 anime duration
+};
+
 export const defaultSettings: Settings = {
   general: defaultGeneralSettings,
   cursor: defaultCursorSettings,
@@ -270,6 +323,7 @@ export const defaultSettings: Settings = {
   chordDictionary: defaultChordDictionarySettings,
   notation: defaultNotationSettings,
   piano: defaultPianoSettings,
+  magic: defaultMagicSettings,
 };
 
 export const defaultWindowState: WindowState = {

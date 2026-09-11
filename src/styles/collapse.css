@@ -1,0 +1,16 @@
+/* Collapse 收紧全局覆盖：daisyUI 的 .collapse-title 默认带 1rem 左右 padding
+   与 min-height，.collapse-content 默认 padding 较宽，导致窄侧栏/抽屉里
+   内容与容器之间出现大片空白。这里统一收紧，让内容充满父容器；
+   局部需要更宽留白的场景可再用工具类覆盖。 */
+.collapse > .collapse-title {
+  min-height: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.collapse > .collapse-content {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}

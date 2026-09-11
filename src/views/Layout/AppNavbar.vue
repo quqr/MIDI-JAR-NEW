@@ -17,12 +17,20 @@
     </div>
 
     <!-- 弹性占位：Tauri 中为拖拽区（双击最大化）；浏览器中仅占位把右侧控件推到最右。
-         唯一可伸缩项，吸收全部剩余空间；面包屑与右侧控件均 shrink-0 优先保内容。 -->
+         页面级插拔区（ADR 0024）内嵌其中并居中——路由页面经 <Teleport defer>
+         注入导航栏控件（如瀑布流钢琴的播放传输条），注入内容过宽时随 min-w-0
+         收缩，绝不挤压面包屑与右侧控件簇；无注入时布局与原状完全一致。 -->
     <div
-      class="flex-1 min-w-0 self-stretch"
+      class="flex-1 min-w-0 self-stretch flex items-center justify-center gap-2"
       :style="inTauri ? '-webkit-app-region: drag' : undefined"
       @dblclick="handleDragAreaDblClick"
-    ></div>
+    >
+      <div
+        id="app-navbar-page-zone"
+        class="flex items-center gap-2 min-w-0 max-w-full"
+        style="-webkit-app-region: no-drag"
+      ></div>
+    </div>
 
     <!-- 延迟状态圆点（常驻） -->
     <div
@@ -35,18 +43,9 @@
       <StateDot :status="latencyStatus" :aria-label="latencyAriaLabel" />
     </div>
 
-    <!-- 音源引擎状态圆点：仅在 VST 出错时出现（采样器路径下不占位）；点击前往 VST 页 -->
-    <RouterLink
-      v-if="vstErrorVisible"
-      to="/vst"
-      class="flex items-center justify-center w-6 h-6 shrink-0"
-      style="-webkit-app-region: no-drag"
-      role="status"
-      :title="vstErrorTooltip"
-      :aria-label="vstErrorTooltip"
-    >
-      <StateDot status="error" size="sm" :aria-label="vstErrorTooltip" />
-    </RouterLink>
+    <!-- 常驻音源状态标签：采样/VST/无音源，错误变红；点击前往 VST 页
+         （原 VST 错误红点已并入此标签） -->
+    <ToneSourceIndicator v-if="inTauri" />
 
     <div
       class="flex items-center gap-0.5 shrink-0"
@@ -208,9 +207,8 @@ import Icon from "@/components/Icon/Icon.vue";
 import StateDot from "@/components/common/StateDot.vue";
 import { createLogger } from "@/utils/logger";
 import QuickChangeKeyToolbar from "./QuickChangeKeyToolbar.vue";
+import ToneSourceIndicator from "./components/ToneSourceIndicator.vue";
 import { useMidiLatency } from "@/composables/useMidiLatency";
-import { useSamplerStore } from "@/stores/sampler";
-import { useVstStore } from "@/stores/vst";
 import { isTauri } from "@/utils/tauri";
 
 const logger = createLogger("AppNavbar");
@@ -218,8 +216,6 @@ const inTauri = isTauri();
 
 const { t } = useI18n();
 const route = useRoute();
-const samplerStore = useSamplerStore();
-const vstStore = useVstStore();
 
 const mobileMenuOpen = ref(false);
 const isMaximized = ref(false);
@@ -242,21 +238,6 @@ const latencyTooltip = computed(() =>
 const latencyAriaLabel = computed(() =>
   t("layout.latencyAriaLabel", { ms: currentLatency.value.toFixed(2) }),
 );
-
-// ─── 音源引擎全局错误指示（E3） ───
-// 后端没有独立的 `vst:error` 事件：错误统一由 `vst:status` 的 state === "error" 表达，
-// 因此这里从 store 状态派生，不额外订阅。
-// 只在“当前正在用 VST”时显示——采样器路径下插件崩溃与本页无关，不该打扰。
-const vstErrorVisible = computed(
-  () => samplerStore.toneSource === "vst" && vstStore.hasError,
-);
-
-const vstErrorTooltip = computed(() => {
-  const message = vstStore.errorMessage;
-  return message
-    ? t("vst.globalErrorTooltip", { message })
-    : t("vst.globalErrorTooltipGeneric");
-});
 
 const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: "/home", label: "nav.home", icon: "home" },

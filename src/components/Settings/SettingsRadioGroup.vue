@@ -12,7 +12,7 @@
       :tick-labels="optionLabels"
       no-fill
       :disabled="disabled"
-      :aria-label="label || 'Select an option'"
+      :aria-label="label || t('common.selectAnOption')"
       @update:model-value="onSlide"
     />
     <span v-if="selectedHint" class="label text-base-content/70">{{
@@ -26,9 +26,12 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import RangeSlider from "@/components/common/RangeSlider.vue";
 import type { RangeSliderValue } from "@/components/common/rangeSlider";
 import { optionIndexOf } from "@/components/common/rangeSlider";
+
+const { t } = useI18n();
 
 interface Props {
   modelValue: string | number;

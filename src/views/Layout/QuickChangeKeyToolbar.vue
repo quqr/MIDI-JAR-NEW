@@ -1,24 +1,21 @@
 <template>
-  <div class="max-w-xs min-w-48">
-    <RangeSlider
-      :model-value="keyIndex"
-      :min="0"
-      :max="keyChoices.length - 1"
-      :step="1"
-      :tick-labels="keyTitles"
-      hide-labels
-      no-fill
+  <!-- 调性快切：下拉选择（primary 强调）。超窄屏隐藏：<640px 的顶栏放不下 -->
+  <div class="w-36 max-sm:hidden">
+    <select
+      v-model="keySignature"
+      class="select select-primary select-sm w-full"
       :aria-label="t('settings.notationSettings.key')"
-      @update:model-value="setKey"
-    />
+    >
+      <option v-for="choice in keyChoices" :key="choice.value" :value="choice.value">
+        {{ choice.title }}
+      </option>
+    </select>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import RangeSlider from "@/components/common/RangeSlider.vue";
-import type { RangeSliderValue } from "@/components/common/rangeSlider";
 import { useSettingsStore } from "@/stores/settings";
 
 const { t } = useI18n();
@@ -43,17 +40,4 @@ const keyChoices = computed(() => [
   { title: t("settings.notationSettings.keySignatures.Bb"), value: "Bb" },
   { title: t("settings.notationSettings.keySignatures.F"), value: "F" },
 ]);
-
-const keyTitles = computed(() => keyChoices.value.map((c) => c.title));
-const keyIndex = computed(() =>
-  Math.max(
-    0,
-    keyChoices.value.findIndex((c) => c.value === keySignature.value),
-  ),
-);
-
-function setKey(index: RangeSliderValue) {
-  const choice = keyChoices.value[Number(index)];
-  if (choice) keySignature.value = choice.value;
-}
 </script>

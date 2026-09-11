@@ -124,6 +124,13 @@ const routes: RouteRecordRaw[] = [
             meta: { title: "settings.cursor" },
           },
           {
+            path: "magic",
+            name: "settings-magic",
+            component: () =>
+              import("@/views/Settings/MagicSettings/MagicSettings.vue"),
+            meta: { title: "settings.magic" },
+          },
+          {
             path: "routing",
             name: "settings-routing",
             component: () => import("@/views/Settings/Routing/Routing.vue"),

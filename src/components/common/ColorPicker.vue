@@ -107,12 +107,13 @@
         />
       </div>
 
-      <!-- 透明度滑条 -->
+      <!-- 透明度滑条（0-255，与 RGB 通道量纲一致） -->
       <input
         v-if="alpha"
+        ref="alphaSliderRef"
         type="range"
         min="0"
-        max="100"
+        max="255"
         step="1"
         class="range range-xs"
         :style="{ ...alphaTrackStyle, '--range-fill': '0' }"
@@ -323,6 +324,7 @@ const copied = ref(false);
 const modes: ColorMode[] = ["rgb", "hsv", "hsl"];
 
 const triggerRef = ref<HTMLButtonElement>();
+const alphaSliderRef = ref<HTMLInputElement>();
 const panelRef = ref<HTMLElement>();
 const wheelRef = ref<HTMLDivElement>();
 const triCanvasRef = ref<HTMLCanvasElement>();
@@ -596,8 +598,8 @@ const sliderChannels = computed<SliderChannel[]>(() => {
   if (props.alpha) {
     list.push({
       key: "A",
-      value: Math.round(hsv.a * 100),
-      max: 100,
+      value: Math.round(hsv.a * 255),
+      max: 255,
       track: "",
     });
   }
@@ -617,7 +619,7 @@ function onSliderInput(ch: SliderChannel, e: Event): void {
   const raw = Number((e.target as HTMLInputElement).value) || 0;
   const v = Math.max(0, Math.min(ch.max, raw));
   if (ch.key === "A") {
-    hsv.a = v / 100;
+    hsv.a = v / 255;
     commit();
     return;
   }
@@ -691,9 +693,16 @@ const alphaTrackStyle = computed(() => {
 });
 
 function onAlphaSlider(e: Event): void {
-  hsv.a = Number((e.target as HTMLInputElement).value) / 100;
+  hsv.a = Number((e.target as HTMLInputElement).value) / 255;
   commit();
 }
+
+/** 独立 alpha 滑条反映当前 hsv.a（外部 applyHex/通道修改后同步） */
+watch(open, (v) => {
+  if (v) {
+    alphaSliderRef.value?.setAttribute("value", String(Math.round(hsv.a * 255)));
+  }
+});
 
 function onHexInput(e: Event): void {
   const raw = (e.target as HTMLInputElement).value.trim().toLowerCase();

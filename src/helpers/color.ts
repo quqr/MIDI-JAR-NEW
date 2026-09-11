@@ -170,12 +170,14 @@ export function rgbToHex(r: number, g: number, b: number): string {
 }
 
 /**
- * hex → 0-255 整数 RGB；非法输入返回 null
+ * hex → 0-255 整数 RGB；非法输入返回 null。
+ * 接受 6 位与 8 位（#rrggbbaa 的 alpha 部分被忽略）。
  * @param hex - 十六进制颜色字符串
  * @returns RGB 对象（0-255），解析失败时 null
  */
 export function hexToRgb(hex: string): Rgb | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result =
+    /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})(?:[a-f\d]{2})?$/i.exec(hex);
   return result
     ? {
         r: parseInt(result[1], 16),
@@ -183,6 +185,19 @@ export function hexToRgb(hex: string): Rgb | null {
         b: parseInt(result[3], 16),
       }
     : null;
+}
+
+/**
+ * 把任意颜色归一化为 6 位 `#rrggbb`（丢弃 alpha）。
+ * 供不支持 8 位 hex 的消费方使用（如 three.js 的 Color，实测 `#rrggbbaa`
+ * 会被解析成白色）。
+ * @param color - CSS 颜色字符串（hex / rgb() / hsl() 等）
+ * @returns 6 位小写 hex；无法解析时原样返回
+ */
+export function toHex6(color: string): string {
+  const hex = cssColorToHex(color);
+  const rgb = hexToRgb(hex);
+  return rgb ? rgbToHex(rgb.r, rgb.g, rgb.b) : color;
 }
 
 /**
@@ -307,11 +322,13 @@ export function oklchToHex(L: number, C: number, H: number): string {
 
 /**
  * 将任意 CSS 颜色字符串（hex, rgb, oklch, hsl 等）转为 #rrggbb 格式
+ * （8 位 hex 会丢弃 alpha 只取色值部分）
  * @param color - CSS 颜色字符串
  * @returns hex 字符串；无法解析时原样返回
  */
 export function cssColorToHex(color: string): string {
-  if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+  const hexMatch = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color);
+  if (hexMatch) return `#${hexMatch[1]}`;
 
   // oklch 格式解析：oklch(L% C H) 或 oklch(L C H)
   const oklchMatch = color.match(

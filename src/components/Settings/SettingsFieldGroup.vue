@@ -3,7 +3,8 @@
     v-if="isVisible"
     :title="title"
     :icon="icon"
-    :default-open="true"
+    :default-open="defaultOpen"
+    :badge="badge"
     :open="isOpen"
     :section-id="sectionId"
     @update:open="$emit('update:open', $event)"
@@ -147,6 +148,8 @@ interface Props {
   variant?: "standard" | "debug";
   /** 默认插槽位置：after = 字段之后（缺省），before = 字段之前（混排动态列表用） */
   slotPosition?: "before" | "after";
+  /** 非受控时的默认展开状态（手风琴布局的页面传 false） */
+  defaultOpen?: boolean;
   /** 外部控制展开状态（v-model:open，供搜索过滤场景使用） */
   open?: boolean;
   /** 唯一标识，用于搜索过滤 */
@@ -160,6 +163,7 @@ const props = withDefaults(defineProps<Props>(), {
   i18nPrefix: "settings",
   variant: "standard",
   slotPosition: "after",
+  defaultOpen: true,
   open: undefined,
   sectionId: undefined,
   searchQuery: "",
@@ -188,6 +192,11 @@ const isOpen = computed(() => {
 
 const visibleFields = computed(() =>
   props.fields.filter((f) => !f.visibleWhen || f.visibleWhen(props.model)),
+);
+
+/** 组标题徽章：当前可见的设置项数量（不含 heading 小节标题） */
+const badge = computed(
+  () => visibleFields.value.filter((f) => f.control !== "heading").length,
 );
 
 function label(field: SettingsFieldSchema): string {

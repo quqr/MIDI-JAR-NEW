@@ -38,22 +38,29 @@ export function hexToHsv(hex: string): HsvState {
 }
 
 /**
- * HSV 面板状态 → hex 字符串（按 alpha 模式决定 6/8 位输出）
+ * HSV 面板状态 → hex 字符串。
+ * 输出策略：仅在 alpha 启用且实际透明度 < 1 时输出 8 位 `#rrggbbaa`，
+ * 否则输出 6 位 `#rrggbb`——避免全不透明值污染存档与下游 6 位假设。
  * @param state - HSV 状态
- * @param alpha - 是否启用透明度输出（true = 恒 8 位 #rrggbbaa）
+ * @param alpha - 是否启用透明度（false 时恒 6 位）
  * @returns 小写 hex 字符串
  */
 export function hsvToHex(state: HsvState, alpha: boolean): string {
   // colord 的 HSV 量纲：s/v 为 0-100（面板内部状态为 0-1，需换算）
-  const c = colord({
+  const a = alpha ? Math.max(0, Math.min(1, state.a)) : 1;
+  const { r, g, b } = colord({
     h: state.h,
     s: state.s * 100,
     v: state.v * 100,
-    a: alpha ? state.a : 1,
-  });
-  const hex = c.toHex();
-  if (alpha && hex.length === 7) return `${hex}ff`;
-  return alpha ? hex : hex.slice(0, 7);
+    a,
+  }).toRgb();
+  const byte = (n: number): string =>
+    Math.round(n).toString(16).padStart(2, "0");
+  const base = `#${byte(r)}${byte(g)}${byte(b)}`;
+  // 仅在 alpha 启用且实际透明度 < 1 时输出 8 位 #rrggbbaa（真实 alpha 字节，
+  // colord.toHex() 不含 alpha，此前硬编码追加 "ff" 导致半透明永不生效）
+  if (!alpha || a >= 1) return base;
+  return `${base}${byte(a * 255)}`;
 }
 
 // ============================================================================

@@ -12,6 +12,7 @@ import tauriAPI from "@/utils/tauri";
 import { initRustLogListener } from "@/composables/useDebuggerLogs";
 import { createMidiBackend } from "@/midi/backend";
 import { useBrowserSupport } from "@/composables/useBrowserSupport";
+import { vMagic } from "@/directives";
 
 const logger = createLogger("Main");
 
@@ -19,6 +20,8 @@ const app = createApp(App);
 const pinia = createPinia();
 
 app.use(pinia).use(router).use(i18n);
+
+app.directive("magic", vMagic);
 
 async function initializeMidi() {
   try {

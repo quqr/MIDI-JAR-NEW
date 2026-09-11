@@ -1,0 +1,119 @@
+/**
+ * MagicBento 风格界面特效（v-magic 指令 / useMagicSpotlight 配套样式）。
+ * 样式对齐参考实现 .card--border-glow::after / .global-spotlight。
+ *
+ * 颜色约定：--glow-color 由指令以 "r,g,b" 通道串写入，
+ * 本文件统一以 rgba(var(--glow-color), a) 消费；不写死 hex（辉光色是用户可调设置项）。
+ */
+
+.magic-card {
+  position: relative;
+  overflow: hidden;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  /* --glow-strength：辉光强度系数（glowIntensity 设置），默认 0.8 与旧硬编码一致 */
+  --glow-strength: 0.8;
+  /* --glow-radius / --glow-color 由指令写入，这里给默认值兜底 */
+  --glow-radius: 300px;
+  --glow-color: 132, 0, 255;
+}
+
+/* 边框辉光：radial-gradient + mask-composite，边缘环随鼠标位置发光。
+   环宽度由 --glow-ring-width（glowWidth 设置）控制，默认 6px 与旧硬编码一致。
+   mask 同时写标准与 -webkit 前缀（旧 WebView2 / Safari 兼容），
+   composite 关键字放在独立属性上，避免整条简写在旧内核被丢弃。
+   环 alpha 由 --glow-intensity（悬停开关）× --glow-strength（用户强度系数）决定，
+   默认 1×0.8=0.8 与原硬编码观感一致。 */
+.magic-card.magic--border-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: var(--glow-ring-width, 6px);
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(
+        var(--glow-color),
+        calc(var(--glow-intensity) * var(--glow-strength, 0.8))
+      )
+      0%,
+    rgba(
+        var(--glow-color),
+        calc(var(--glow-intensity) * var(--glow-strength, 0.8) * 0.5)
+      )
+      30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+/* 悬停外发光（参考实现 .card--border-glow:hover） */
+.magic-card.magic--border-glow:hover {
+  box-shadow:
+    0 4px 20px rgba(var(--glow-color), 0.25),
+    0 0 30px rgba(var(--glow-color), 0.2);
+}
+
+/* 点击涟漪（指令动态创建，尺寸/位置由内联样式控制），渐变对齐参考实现 */
+.magic-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(var(--glow-color), 0.4) 0%,
+    rgba(var(--glow-color), 0.2) 30%,
+    transparent 70%
+  );
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+/* 全局聚光灯（useMagicSpotlight 单例 div，挂在 body 上），样式对齐参考实现 */
+.magic-spotlight {
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(var(--glow-color), 0.15) 0%,
+    rgba(var(--glow-color), 0.08) 15%,
+    rgba(var(--glow-color), 0.04) 25%,
+    rgba(var(--glow-color), 0.02) 40%,
+    rgba(var(--glow-color), 0.01) 65%,
+    transparent 70%
+  );
+  /* 参考实现 z-index 200：内容层之上、自定义光标(9999)之下 */
+  z-index: 200;
+  --glow-color: 132, 0, 255;
+  opacity: 0;
+  /* left/top 由补间驱动为光斑中心，自身居中偏移 */
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  will-change: left, top, opacity;
+}
+
+/* 减少动态效果偏好：禁用过渡与涟漪 */
+@media (prefers-reduced-motion: reduce) {
+  .magic-card {
+    transition: none !important;
+  }
+
+  .magic-ripple {
+    display: none;
+  }
+}

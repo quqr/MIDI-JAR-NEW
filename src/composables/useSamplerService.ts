@@ -16,6 +16,7 @@ import { createInstrument } from "@/services/sampler/InstrumentFactory";
 import { InstrumentCacheManager } from "@/services/sampler/InstrumentCacheManager";
 import { runWithConcurrency } from "@/utils/concurrency";
 import type { BatchDownloadResult } from "@/services/sampler/types";
+import type { ToneSource } from "@/types/vst";
 
 // 重新导出类型以保持向后兼容（原 useSamplerService.ts L606-610）
 export type { BatchDownloadResult } from "@/services/sampler/types";
@@ -31,8 +32,13 @@ const logger = createLogger("SamplerService");
 // 是否发声由 soundEnabled 与后端状态机共同决定。
 
 /** 读取当前音源来源 */
-function currentToneSource(): "sampler" | "vst" {
+function currentToneSource(): ToneSource {
   return useSamplerStore().toneSource;
+}
+
+/** 是否处于"无音源"静默态（出厂默认；不出声、不初始化音频） */
+function isSilent(): boolean {
+  return currentToneSource() === "none";
 }
 
 /**
@@ -199,6 +205,7 @@ async function loadInstrument(instrumentId: string): Promise<void> {
 // ─── 播放（按音源来源分流） ───
 /** 播放音符（持续模式 — 直到调用 noteOff 或 stopNote） */
 function noteOn(note: number | string, velocity = 100): StopFn | null {
+  if (isSilent()) return null;
   if (currentToneSource() === "vst") {
     if (vstCanSound()) {
       const midi = toMidiNumber(note);
@@ -226,6 +233,7 @@ function noteOn(note: number | string, velocity = 100): StopFn | null {
 
 /** 停止指定音符（持续模式） */
 function noteOff(note: number | string): void {
+  if (isSilent()) return;
   if (currentToneSource() === "vst") {
     // noteOff 始终发送：即使插件刚崩溃，清音也是安全且必要的
     if (vstCanSound()) {
@@ -265,6 +273,7 @@ function getAudioNow(): number | null {
  * 因此退化为立即发送；调用方的调度循环仍按自身节奏触发。
  */
 function scheduleNoteEvent(event: NoteEvent): StopFn | null {
+  if (isSilent()) return null;
   if (currentToneSource() === "vst") {
     if (vstCanSound()) {
       const { note, velocity } = splitNoteEvent(event);
@@ -292,6 +301,7 @@ function scheduleNoteEvent(event: NoteEvent): StopFn | null {
 
 /** 按 stopId 停止/取消前瞻调度的音符（time 省略 = 立即） */
 function stopByStopId(stopId: string | number, time?: number): void {
+  if (isSilent()) return;
   if (currentToneSource() === "vst") {
     if (vstCanSound()) {
       const midi = toMidiNumber(stopId);
@@ -341,6 +351,7 @@ function playNote(
   velocity = 100,
   duration?: number,
 ): StopFn | null {
+  if (isSilent()) return null;
   if (currentToneSource() === "vst") {
     if (vstCanSound()) {
       const midi = toMidiNumber(note);
@@ -373,11 +384,13 @@ function playNote(
 
 /** 停止指定音符 */
 function stopNote(note: number | string): void {
+  if (isSilent()) return;
   noteOff(note);
 }
 
 /** 停止所有音符 */
 function stopAllNotes(): void {
+  if (isSilent()) return;
   if (currentToneSource() === "vst") {
     clearVstNoteOffTimers();
     // 用 CC 123 (All Notes Off) 一次性清音，避免逐音符补发 noteOff
@@ -423,7 +436,7 @@ function scheduleVstUnload() {
  * 安装 toneSource 切换副作用（幂等）。
  *
  * - 切到 `vst`：取消待卸载，并把该加载的插件加载起来（若有选中项）；
- * - 切到 `sampler`：先清音（避免卡住的 note），再延迟卸载插件。
+ * - 切到 `sampler` / `none`：先清音（避免卡住的 note），再延迟卸载插件。
  *
  * 由 Sampler 页面在挂载时调用一次；store 在切换时就地生效。
  */

@@ -11,27 +11,30 @@
       <h3 :id="titleId" class="font-bold text-lg">{{ title }}</h3>
       <p class="py-4 text-base-content/80">{{ message }}</p>
       <div class="modal-action">
-        <button class="btn btn-sm" :aria-label="cancelLabel" @click="onCancel">
-          {{ cancelLabel }}
+        <button class="btn btn-sm" :aria-label="cancelText" @click="onCancel">
+          {{ cancelText }}
         </button>
         <button
           class="btn btn-sm"
           :class="variant === 'error' ? 'btn-error' : 'btn-primary'"
-          :aria-label="confirmLabel"
+          :aria-label="confirmText"
           @click="onConfirm"
         >
-          {{ confirmLabel }}
+          {{ confirmText }}
         </button>
       </div>
     </div>
     <form method="dialog" class="modal-backdrop">
-      <button @click="onCancel">close</button>
+      <button :aria-label="t('common.close')" @click="onCancel"></button>
     </form>
   </dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, useId } from "vue";
+import { ref, watch, useId, computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -43,11 +46,14 @@ const props = withDefaults(
     variant?: "primary" | "error";
   }>(),
   {
-    confirmLabel: "确认",
-    cancelLabel: "取消",
+    confirmLabel: undefined,
+    cancelLabel: undefined,
     variant: "primary",
   },
 );
+
+const confirmText = computed(() => props.confirmLabel ?? t("common.confirm"));
+const cancelText = computed(() => props.cancelLabel ?? t("common.cancel"));
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
