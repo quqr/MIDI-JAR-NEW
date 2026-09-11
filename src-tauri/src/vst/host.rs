@@ -1,56 +1,21 @@
 //! VST3 插件宿主管理：插件实例生命周期、编辑器窗口服务与音频流持有。
 //!
-//! 设计要点（ADR 0021）：
+//! 设计要点（ADR 0021 / ADR 0022）：
 //! - 插件作为**音色后端**存在，与内置采样器互斥；本模块只管"实例"，不决定发声时机。
+//! - **本模块运行在 `vst-host` 子进程里**（ADR 0022 进程隔离）：坏插件的 native
+//!   崩溃只杀子进程，主程序存活并由 [`super::bridge`] 兜底重启。编辑器窗口与音频流
+//!   同在子进程，编辑器是子进程的独立顶层浮动窗口。
 //! - 编辑器窗口需**逐帧服务**：`service_platform_events()` 处理插件的 resize / DPI
 //!   变更请求，`closed_by_user()` 检测用户点标题栏关窗——crate 不会主动通知宿主。
-//!   两者都由 [`spawn_editor_service_loop`] 统一轮询。
+//!   由子进程主循环（[`super::child`]）以 ~16ms 间隔轮询。
 //! - 用户关窗 = **仅关闭编辑器**，插件继续发声并接收 MIDI；卸载是独立操作。
 //!
-//! # Threading spike：为什么管理器暂时进不了 Tauri 受管状态
+//! # Threading 约束（子进程内）
 //!
-//! [`VstManager`] 目前含两个 `!Send` 成员，必须留在创建它的线程上：
-//!
-//! | 成员 | 来源 | 为何 `!Send` |
-//! | --- | --- | --- |
-//! | `PluginWindow` 里的 `HWND` | winapi 裸句柄 | Windows 窗口句柄具有线程亲和性 |
-//! | `Option<AudioHandle>` | cpal 输出流 | 见下 |
-//!
-//! `AudioHandle` 的 `!Send` 是**上游类型擦除的产物，不是 cpal 的限制**：
-//! cpal 0.18 起 Windows 上的 `cpal::Stream` 已经是 `Send`（已用编译期断言验证），
-//! 但 `vst3-host` 把它塞进 `Box<dyn AudioStream>`——`AudioStream` trait 没有
-//! `Send` bound，而 `Box<dyn Trait>` 只实现所声明 trait 的超 trait，于是
-//! `downcast` 也救不回来。同一份代码在 macOS/Linux 后端同样是 `!Send`，
-//! 所以这不是 Windows 特有缺陷，而是 crate 的全局设计选择。
-//!
-//! 后果：`app.manage(Arc<Mutex<VstManager>>)` 无法编译（Tauri 受管状态要求
-//! `Send + Sync + 'static`），`run_on_main_thread` 的闭包也无法跨线程传递管理器。
-//!
-//! ## 已排除的方案
-//!
-//! - **`unsafe impl Send for VstManager`**：纯属掩盖。Tauri 在**任意**工作线程
-//!   drop 受管状态——那时 `AudioHandle` 会在非创建线程上析构，正是 cpal 文档
-//!   警告的 UB 场景（其文档特别注明 drop 必须回到创建线程）。之所以禁止，是
-//!   因为"能编译"与"正确"在这里恰好反向。
-//! - **自实现 `AudioBackend`**：`vst3-host` 的 `play_with_backend` / `AudioConfig`
-//!   是公开 API，这里能拿到**`Send` 的流**。但 `vst3-host` 的 `AudioStream` trait
-//!   本身声明了 `fn downcast(self: Box<Self>) -> Box<dyn Any>` 且要求 `Any`
-//!   （隐含 `'static`），而任何带生命周期的借用型后端都满足不了——除非其内部
-//!   自己 `Arc` 持有全部状态。可做，但要重写一整条音频后端，收益与风险都不划算，
-//!   除非后续确认"管理器必须跨线程"。
-//! - **`Box::leak` / `mem::forget`**：泄漏句柄换 `'static`，永久占用 WASAPI 设备。
-//!   退化成应用退出前一直在跑的第二条音频流，与内置采样器抢设备。
-//!
-//! ## 当前出路
-//!
-//! VST 子系统**整条链路固定在主线程**：命令、编辑器服务循环、音频流全部由主线程
-//! 事件循环驱动（[`spawn_editor_service_loop`] 的模式）。管理器不进 Tauri 受管
-//! 状态，改由 `thread_local!` 存放。代价是命令必须**从主线程调用**——Tauri 中
-//! `#[tauri::command]` 默认在工作线程池里执行，因此每个 VST 命令都要显式做
-//! "若不在主线程则转发"的包装（见 `commands/vst.rs`）。
-//!
-//! 一旦音频句柄被迁到专用音频线程、`VstManager` 只剩 `Send` 成员，本约束即解除，
-//! 可以回到简单的 `app.manage(Arc<Mutex<VstManager>>)` 形态。
+//! [`VstManager`] 仍含两个 `!Send` 成员（`HWND` 与擦除后的音频流句柄，见下方
+//! 历史注释），因此管理器固定在**子进程主线程**：stdin 读取线程把请求经 mpsc
+//! 递给主循环，主循环串行处理请求并轮询编辑器——与旧版"主线程 + on_main 转发"
+//! 同构，只是范围缩小到了子进程内部。
 
 use std::sync::{Arc, Mutex};
 
@@ -61,7 +26,8 @@ use vst3_host::{Plugin, PluginWindow};
 ///
 /// `service_platform_events()` 是非阻塞的：若插件锁被音频回调持有则直接返回，
 /// 待下次轮询再处理——因此该间隔只影响插件窗口响应速度，不影响音频。
-const EDITOR_SERVICE_INTERVAL_MS: u64 = 16;
+/// 由子进程主循环（[`super::child`]）使用。
+pub(crate) const EDITOR_SERVICE_INTERVAL_MS: u64 = 16;
 
 /// 插件实例的运行状态。
 ///
@@ -116,65 +82,6 @@ struct LoadedPlugin {
 pub struct VstManager {
     current: Option<LoadedPlugin>,
     status: VstStatus,
-}
-
-thread_local! {
-    /// 管理器的主线程存储。
-    ///
-    /// 见文件顶部 threading spike 注释：管理器 `!Send`，因此不能放进 Tauri 受管状态
-    /// （Tauri 会把受管状态放到任意工作线程）。`thread_local` 天然满足
-    /// "只有主线程能碰它"这条硬约束，代价是任何访问都必须先回到主线程。
-    static MANAGER: std::cell::RefCell<Option<Arc<Mutex<VstManager>>>> =
-        const { std::cell::RefCell::new(None) };
-}
-
-/// 在主线程创建管理器（幂等；重复调用只返回既有实例）。
-pub fn install_manager() -> Arc<Mutex<VstManager>> {
-    MANAGER.with(|cell| {
-        let mut slot = cell.borrow_mut();
-        slot.get_or_insert_with(|| Arc::new(Mutex::new(VstManager::new())))
-            .clone()
-    })
-}
-
-/// 取管理器；未创建时返回 `None`。
-///
-/// **必须在主线程调用**——`thread_local` 读到的是调用线程自己的槽位，
-/// 在工作线程上取到的永远是 `None`（这正是我们想要的失败模式：安静地不动作，
-/// 而不是跨线程触碰 `HWND`）。
-pub fn manager() -> Option<Arc<Mutex<VstManager>>> {
-    MANAGER.with(|cell| cell.borrow().as_ref().cloned())
-}
-
-/// 在主线程上对管理器做一次操作；管理器不存在时返回 `None`。
-pub fn with_manager<R>(f: impl FnOnce(&mut VstManager) -> R) -> Option<R> {
-    let mgr = manager()?;
-    let mut guard = mgr.lock().ok()?;
-    Some(f(&mut guard))
-}
-
-/// 当前线程是否为主线程。
-///
-/// Tauri 的命令默认在工作线程池执行，而 VST 子系统全部依赖主线程。命令层据此决定
-/// "直接执行"还是"转发到主线程"。
-pub fn is_main_thread() -> bool {
-    MAIN_THREAD_ID.with(|id| *id.borrow() == Some(std::thread::current().id()))
-}
-
-thread_local! {
-    /// 首次被主线程调用时惰性记录主线程 ID。
-    static MAIN_THREAD_ID: std::cell::RefCell<Option<std::thread::ThreadId>> =
-        const { std::cell::RefCell::new(None) };
-}
-
-/// 记录当前线程为主线程。必须在应用启动早期、从主线程调用一次。
-pub fn mark_main_thread() {
-    MAIN_THREAD_ID.with(|id| {
-        let mut slot = id.borrow_mut();
-        if slot.is_none() {
-            *slot = Some(std::thread::current().id());
-        }
-    });
 }
 
 impl VstManager {
@@ -247,14 +154,10 @@ impl VstManager {
         // ── 1. 构建宿主并加载插件 ──
         // 采样率 44100 / 块 512：与 vst3-host 的 simple 默认一致，此处显式化。
         //
-        // **不开进程隔离**（与 ADR 0021 的 I1 决策相悖，原因见下）：
-        // Phase 0 实测发现两件事使隔离在 Windows 上不可用——
-        //   ① `vst3-host-helper` 是**依赖包**的 `[[bin]]` 目标，Cargo 不会为上层包
-        //      构建它；生产环境三条搜索路径全部落空，隔离必然启动失败。
-        //   ② 即便 helper 就位，crate README 明说编辑器跨隔离边界打开
-        //      "on macOS ...; Windows/Linux not yet"——本项目在 Windows，
-        //      "隔离 + 编辑器"不可兼得。
-        // 故当前采用 in-process，并用 UI 明示崩溃风险（见 VstStatus::Error 上报）。
+        // 进程隔离由**外层**实现（ADR 0022）：本代码整体运行在 vst-host 子进程里，
+        // 加载的 DLL 崩溃只带走子进程。crate 自带的 `vst3-host-helper` 隔离不可用
+        // （依赖包 `[[bin]]` 不随上层包构建 + Windows 不支持跨进程编辑器桥接），
+        // 故采用"自托管子进程 + 浮动编辑器"方案。
         let mut host = vst3_host::Vst3Host::builder()
             .sample_rate(44100.0)
             .block_size(512)
@@ -456,58 +359,17 @@ fn parse_midi_bytes(bytes: &[u8]) -> Option<vst3_host::midi::MidiEvent> {
     }
 }
 
-/// 编辑器窗口服务循环。
+/// 编辑器窗口服务：一轮轮询。
 ///
-/// **必须持续运行**：`service_platform_events()` 处理插件的 resize / DPI 请求，
-/// `closed_by_user()` 检测用户关窗——crate 不会主动通知宿主。
-/// Windows 上关窗检测依赖窗口过程填充的 `close_requests()` 全局表，
-/// 一旦停止轮询，该事件**永久丢失**（这正是原 `mem::forget` 实现废掉的能力）。
+/// **必须持续被调用**（子进程主循环以 ~16ms 间隔驱动）：`service_platform_events()`
+/// 处理插件的 resize / DPI 请求，`closed_by_user()` 检测用户关窗——crate 不会
+/// 主动通知宿主。Windows 上关窗检测依赖窗口过程填充的 `close_requests()` 全局表，
+/// 一旦停止轮询，该事件**永久丢失**。
 ///
 /// 用户关窗时只释放窗口句柄，**不卸载插件**——插件继续发声、继续接收 MIDI。
 ///
-/// # 为什么不用后台线程持有管理器
-///
-/// [`VstManager`] 内含 `HWND`（编辑器窗口）与 `dyn AudioStream`（cpal 流），
-/// **两者都不是 `Send`**——Windows 窗口句柄具有线程亲和性，音频流亦不可跨线程移动。
-/// 因此管理器必须留在主线程，本函数只负责**定时唤醒主线程**去服务编辑器。
-///
-/// 唤醒方式：每隔 [`EDITOR_SERVICE_INTERVAL_MS`] 向主线程投递一次服务请求，
-/// 由主线程上的 [`service_editor_once`] 真正执行。
-pub fn spawn_editor_service_loop(app: tauri::AppHandle) {
-    use tauri::Emitter;
-
-    // 定时线程只做"请求主线程跑一轮服务"，自己不碰管理器。
-    //
-    // 关键：闭包必须 `Send`，而管理器 `!Send`，所以**不能在闭包里捕获管理器**——
-    // 由主线程在闭包内部自行去 `thread_local` 里取。见文件顶部 threading spike 注释。
-    std::thread::spawn(move || {
-        loop {
-            std::thread::sleep(std::time::Duration::from_millis(
-                EDITOR_SERVICE_INTERVAL_MS,
-            ));
-
-            let app_for_main = app.clone();
-            if let Err(e) = app.run_on_main_thread(move || {
-                let changed = with_manager(|mgr| service_editor_once(mgr)).unwrap_or(false);
-                if changed
-                    && let Some(mgr) = manager()
-                    && let Ok(guard) = mgr.lock()
-                {
-                    let _ = app_for_main.emit("vst:status", guard.status.to_payload());
-                }
-            }) {
-                // Tauri 已关闭：循环使命结束
-                debug!("vst: editor service loop stopping ({e})");
-                return;
-            }
-        }
-    });
-}
-
-/// 服务一次编辑器窗口；返回 `true` 表示状态发生变化（需向前端广播）。
-///
-/// **必须在主线程调用**（触碰 `HWND` / 音频流）。
-fn service_editor_once(mgr: &mut VstManager) -> bool {
+/// 返回 `true` 表示状态发生变化（子进程主循环据此向前端推送快照）。
+pub(crate) fn service_editor_once(mgr: &mut VstManager) -> bool {
     let Some(p) = mgr.current.as_mut() else {
         return false;
     };

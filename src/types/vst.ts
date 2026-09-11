@@ -5,8 +5,8 @@
  * `#[serde(rename_all = "camelCase")]` 结构一一对应；两边任何一侧改字段都需要同步。
  */
 
-/** 音源来源：内置采样器 / 外部 VST3 插件。单一决策源在前端。 */
-export type ToneSource = "sampler" | "vst";
+/** 音源来源：无音源（默认，不出声）/ 内置采样器 / 外部 VST3 插件。单一决策源在前端。 */
+export type ToneSource = "none" | "sampler" | "vst";
 
 /** 单个扫描成功的插件。 */
 export interface ScannedPlugin {

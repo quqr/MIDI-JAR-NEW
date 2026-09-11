@@ -12,6 +12,12 @@ import type {
   VstStatusPayload,
 } from "./vst";
 
+/** 对话框文件过滤器（name 为显示名，extensions 为不带点的扩展名） */
+export interface DialogFilter {
+  name: string;
+  extensions: string[];
+}
+
 export interface TauriAPI {
   on: (channel: string, callback: (data?: any) => void) => void;
   app: {
@@ -35,7 +41,7 @@ export interface TauriAPI {
     ) => void;
   };
   fileSystem: {
-    openFileDialog: () => Promise<any>;
+    openFileDialog: (filters?: DialogFilter[]) => Promise<any>;
     openDirectoryDialog: () => Promise<string | null>;
     readFile: (
       filePath: string,
@@ -44,7 +50,9 @@ export interface TauriAPI {
       filePath: string,
       content: string,
     ) => Promise<{ success: boolean; error?: string }>;
-    saveFileDialog: () => Promise<any>;
+    saveFileDialog: (fileName?: string, filters?: DialogFilter[]) => Promise<any>;
+    writeTempFile: (data: ArrayBuffer | Uint8Array) => Promise<string>;
+    moveFile: (from: string, to: string) => Promise<void>;
   };
   midi: {
     refreshDevices: () => Promise<void>;

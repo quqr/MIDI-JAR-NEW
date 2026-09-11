@@ -1,35 +1,25 @@
 //! VST3 插件扫描与扫描结果缓存。
 //!
-//! 扫描走注入式 in-process 内省（[`vst3_host::get_detailed_plugin_info`]）：**逐插件**
-//! 读取元数据，单个插件内省失败只记为 `skipped`，不会中断整轮扫描。
+//! 扫描分两半（ADR 0022 进程隔离）：
+//! - **目录枚举**（纯文件系统，无崩溃风险）在主进程：[`effective_scan_paths`]；
+//! - **逐插件内省**（加载 DLL，可能被坏插件崩掉）在 `vst-host` 子进程：
+//!   [`introspect_plugins`]，由主进程经 [`super::bridge`] 转发。
 //!
-//! # 为什么不用 `discover_plugins_safe`（探针子进程）
-//!
-//! crate 提供的"安全扫描"要把每个插件放到独立子进程里内省，靠子进程崩溃来隔离坏插件。
-//! 本项目**放弃了这条路**：
-//!
-//! 1. 探针二进制属于 `vst3-host` 这个**依赖**的 `[[bin]]` 目标，Cargo 不会为上层包
-//!    构建它 → 必须手动/脚本单独构建并随包分发，对任何新机器都是隐形成本；
-//! 2. 隔离只能覆盖扫描阶段，而**真正危险的时刻是加载/运行**，那一侧在 Windows 上
-//!    无法做进程隔离（跨进程编辑器桥接只在 macOS 实现）。隔离做一半，收益有限却
-//!    带来实打实的构建与分发负担。
-//!
-//! 因此扫描与加载统一为 in-process + 显式错误态：崩溃风险由 UI 明示（见 README）。
-//! [`scan_plugins`] 的 **错误语义保持不变**——它依然返回带 `error` 字段的报告，
-//! 前端据此区分"扫了但没有插件"与"扫描根本没跑起来"，只是现在 `error` 只会来自
-//! 目录枚举失败（例如标准目录不可读），不再来自"探针缺失"。
+//! [`scan_plugins`] 的**错误语义保持不变**——依然返回带 `error` 字段的报告，
+//! 前端据此区分"扫了但没有插件"与"扫描根本没跑起来"。
 
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// 单个插件的扫描结果（面向前端的扁平结构）。
 ///
 /// 只保留界面上真正要用的字段：`vst3-host` 的 [`vst3_host::DetailedPluginInfo`] 很深
 /// （包含全部 class、全部 bus、moduleinfo），直接丢给前端既冗长又有多处版本耦合。
-#[derive(Debug, Clone, Serialize)]
+/// `Deserialize` 供 bridge 从子进程的 scan 响应反序列化（扫描内省在子进程执行）。
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScannedPlugin {
     /// `.vst3` bundle 的绝对路径，同时作为实例的唯一标识。
@@ -57,7 +47,7 @@ pub struct ScannedPlugin {
 }
 
 /// 被跳过的插件及其原因。
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SkippedPlugin {
     /// 插件路径。
@@ -72,7 +62,7 @@ pub struct SkippedPlugin {
 }
 
 /// 一次完整扫描的产物。
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanCache {
     /// 本次扫描实际使用的目录列表（标准目录 + 用户自定义目录，去重后）。
@@ -150,16 +140,50 @@ pub fn effective_scan_paths() -> Vec<PathBuf> {
     paths
 }
 
-/// 执行一次全量扫描，并把结果写入缓存。
+/// 对给定目录列表执行逐插件内省，返回扫描报告。
 ///
-/// 流程：枚举目录 → 逐插件 in-process 内省 → 成功的进 `plugins`，失败进 `skipped`。
-/// 单个插件的失败**不会**中断整轮扫描；只有"目录枚举失败"这类致命问题才写 `error`。
+/// **本函数加载 DLL，运行在 vst-host 子进程里**（ADR 0022）——坏插件崩溃只带走
+/// 子进程。只做内省，不枚举目录、不写缓存；单个插件失败记为 `skipped` 并继续。
+/// 子进程不直接访问 `EXTRA_PATHS`，目录列表由主进程传入。
+pub fn introspect_plugins(paths: &[PathBuf]) -> ScanCache {
+    let mut plugins = Vec::new();
+    let mut skipped = Vec::new();
+
+    for path in paths {
+        match vst3_host::get_detailed_plugin_info(path) {
+            Ok(info) => plugins.push(to_scanned_plugin(&info)),
+            Err(e) => {
+                // 内省失败：插件本身有问题（缺 factory、模块加载失败、元数据非法……）。
+                // 记下来继续扫下一个——单个坏插件不该让整轮白跑。
+                let detail = e.to_string();
+                log::warn!("Skipping plugin {}: {detail}", path.display());
+                skipped.push(SkippedPlugin {
+                    path: path_string(path),
+                    reason: "failed".to_string(),
+                    detail: Some(detail),
+                });
+            }
+        }
+    }
+
+    ScanCache {
+        paths: paths.iter().map(|p| path_string(p)).collect(),
+        plugins,
+        skipped,
+        error: None,
+        scanned_at: now_millis(),
+    }
+}
+
+/// 执行一次全量扫描，并把结果写入缓存（**主进程侧**）。
 ///
-/// 无论扫描是否成功都会写缓存：失败时缓存里 `error` 为 `Some`，前端据此渲染明确的错误态
-/// 而不是"未发现插件"。
+/// 流程：枚举目录（主进程）→ 经 bridge 把目录列表交给子进程内省 → 写缓存。
+/// 子进程不可用（启动失败/崩溃后重启失败）时，返回带 `error` 的空报告——
+/// 与"目录枚举失败"同一错误通道，前端渲染明确的错误态。
 pub fn scan_plugins() -> ScanCache {
     let paths = effective_scan_paths();
 
+    // 目录枚举是纯文件系统操作（找 .vst3 bundle），不加载 DLL，留在主进程安全。
     let (plugin_paths, error) = match vst3_host::discovery::scan_directories(&paths) {
         Ok(found) => (found, None),
         Err(e) => {
@@ -169,33 +193,27 @@ pub fn scan_plugins() -> ScanCache {
         }
     };
 
-    let mut plugins = Vec::new();
-    let mut skipped = Vec::new();
-
-    for path in plugin_paths {
-        match vst3_host::get_detailed_plugin_info(&path) {
-            Ok(info) => plugins.push(to_scanned_plugin(&info)),
-            Err(e) => {
-                // in-process 内省失败：插件本身有问题（缺 factory、模块加载失败、
-                // 元数据非法……）。记下来继续扫下一个——单个坏插件不该让整轮白跑。
-                let detail = e.to_string();
-                log::warn!("Skipping plugin {}: {detail}", path.display());
-                skipped.push(SkippedPlugin {
-                    path: path_string(&path),
-                    reason: "failed".to_string(),
-                    detail: Some(detail),
-                });
+    // DLL 内省交给子进程（坏插件崩溃只带走子进程）。
+    let mut cache = match super::bridge::introspect(
+        plugin_paths.iter().map(|p| path_string(p)).collect(),
+    ) {
+        Ok(mut c) => {
+            c.paths = paths.iter().map(|p| path_string(p)).collect();
+            c.error = error;
+            c
+        }
+        Err(e) => {
+            log::warn!("VST scan could not reach vst-host process: {e}");
+            ScanCache {
+                paths: paths.iter().map(|p| path_string(p)).collect(),
+                plugins: Vec::new(),
+                skipped: Vec::new(),
+                error: Some(format!("vst host process unavailable: {e}")),
+                scanned_at: now_millis(),
             }
         }
-    }
-
-    let cache = ScanCache {
-        paths: paths.iter().map(|p| path_string(p)).collect(),
-        plugins,
-        skipped,
-        error,
-        scanned_at: now_millis(),
     };
+    cache.scanned_at = now_millis();
 
     if let Ok(mut guard) = SCAN_CACHE.lock() {
         *guard = Some(cache.clone());

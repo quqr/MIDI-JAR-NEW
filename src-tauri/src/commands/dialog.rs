@@ -5,17 +5,49 @@
 
 use tauri::AppHandle;
 
-/// 打开多选文件对话框（MIDI 文件过滤器）；用户取消返回 None。
+/// 对话框文件过滤器（name 为显示名，extensions 为不带点的扩展名）
+#[derive(serde::Deserialize)]
+pub struct DialogFilter {
+    pub name: String,
+    pub extensions: Vec<String>,
+}
+
+impl DialogFilter {
+    fn apply<R: tauri::Runtime>(
+        &self,
+        dialog: tauri_plugin_dialog::FileDialogBuilder<R>,
+    ) -> tauri_plugin_dialog::FileDialogBuilder<R> {
+        let exts: Vec<&str> = self.extensions.iter().map(|s| s.as_str()).collect();
+        dialog.add_filter(&self.name, &exts)
+    }
+}
+
+/// 过滤器缺省值：未从前端传 filters 时保持旧行为（MIDI 文件）
+fn default_filters() -> Vec<DialogFilter> {
+    vec![
+        DialogFilter {
+            name: "MIDI Files".into(),
+            extensions: vec!["mid".into(), "midi".into()],
+        },
+        DialogFilter {
+            name: "All Files".into(),
+            extensions: vec!["*".into()],
+        },
+    ]
+}
+
+/// 打开多选文件对话框（filters 可选，缺省为 MIDI 过滤器）；用户取消返回 None。
 #[tauri::command]
-pub async fn open_file_dialog(app: AppHandle) -> Result<Option<Vec<String>>, String> {
+pub async fn open_file_dialog(
+    app: AppHandle,
+    filters: Option<Vec<DialogFilter>>,
+) -> Result<Option<Vec<String>>, String> {
     use tauri_plugin_dialog::DialogExt;
-    tauri::async_runtime::spawn_blocking(move || {
-        app.dialog()
-            .file()
-            .add_filter("MIDI Files", &["mid", "midi"])
-            .add_filter("All Files", &["*"])
-            .blocking_pick_files()
-    })
+    let mut dialog = app.dialog().file();
+    for f in filters.unwrap_or_else(default_filters) {
+        dialog = f.apply(dialog);
+    }
+    tauri::async_runtime::spawn_blocking(move || dialog.blocking_pick_files())
     .await
     .map_err(|e| format!("dialog task failed: {e}"))?
     .map(|paths| paths.iter().map(|p| p.to_string()).collect::<Vec<_>>())
@@ -38,17 +70,21 @@ pub async fn open_directory_dialog(app: AppHandle) -> Result<Option<String>, Str
     .pipe(Ok)
 }
 
-/// 打开保存文件对话框（默认文件名 untitled.mid）；用户取消返回 None。
+/// 打开保存文件对话框（file_name/filters 可选，缺省 untitled.mid + MIDI 过滤器）；
+/// 用户取消返回 None。
 #[tauri::command]
-pub async fn save_file_dialog(app: AppHandle) -> Result<Option<String>, String> {
+pub async fn save_file_dialog(
+    app: AppHandle,
+    file_name: Option<String>,
+    filters: Option<Vec<DialogFilter>>,
+) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
-    tauri::async_runtime::spawn_blocking(move || {
-        app.dialog()
-            .file()
-            .add_filter("MIDI Files", &["mid", "midi"])
-            .set_file_name("untitled.mid")
-            .blocking_pick_file()
-    })
+    let mut dialog = app.dialog().file();
+    for f in filters.unwrap_or_else(default_filters) {
+        dialog = f.apply(dialog);
+    }
+    dialog = dialog.set_file_name(&file_name.unwrap_or_else(|| "untitled.mid".into()));
+    tauri::async_runtime::spawn_blocking(move || dialog.blocking_save_file())
     .await
     .map_err(|e| format!("dialog task failed: {e}"))?
     .map(|p| p.to_string())

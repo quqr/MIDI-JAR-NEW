@@ -93,6 +93,21 @@ export const useVstStore = defineStore("vst", () => {
   /** 错误提示文案 */
   const errorMessage = computed(() => status.value.message);
 
+  /**
+   * 扫描已完成（非错误）但一个插件都没找到。
+   *
+   * 此时"音源选择 = vst"与"实际可用性"脱节：列表为空、自动加载的持久化
+   * 路径未必有效。UI 据此明确提示空态，并禁用"切到 VST 就自动加载"的入口，
+   * 而不是让用户面对一个显示"运行中"却无法从列表选择的界面。
+   */
+  const hasScannedAndEmpty = computed(
+    () =>
+      scannedAt.value !== null &&
+      !isScanning.value &&
+      scanError.value === null &&
+      plugins.value.length === 0,
+  );
+
   /** 路径 → 插件信息（O(1) 查找，供列表渲染补 vendor 等） */
   const pluginByPath = computed(() => {
     const map = new Map<string, ScannedPlugin>();
@@ -369,6 +384,7 @@ export const useVstStore = defineStore("vst", () => {
     isRunning,
     hasError,
     errorMessage,
+    hasScannedAndEmpty,
     pluginByPath,
     skippedByPath,
     selectedPlugin,
