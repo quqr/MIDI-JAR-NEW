@@ -99,9 +99,7 @@ function onVolume(value: RangeSliderValue): void {
           "
           class="flex h-7 items-center justify-center"
         >
-          <span class="music-glyph text-[26px]">{{
-            MODE_GLYPH[mode]
-          }}</span>
+          <span class="music-glyph text-[26px]">{{ MODE_GLYPH[mode] }}</span>
           <span
             v-if="mode === 'triplet'"
             class="ml-0.5 mt-2 self-start text-[10px] font-bold leading-none"

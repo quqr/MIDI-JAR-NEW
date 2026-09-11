@@ -42,7 +42,7 @@
       <Controls position="top-right">
         <template #top-actions>
           <ControlButton
-            title="Auto Layout"
+            :title="t('settings.routingSettings.autoLayout')"
             @click="handleAutoLayout"
           ></ControlButton>
         </template>
@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, computed, watch, nextTick, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
 import { Controls, ControlButton } from "@vue-flow/controls";
@@ -89,6 +90,7 @@ const props = defineProps<{
 }>();
 
 const routingStore = useMidiRoutingStore();
+const { t } = useI18n();
 const { fitView, getViewport, setViewport } = useVueFlow();
 const { layout } = useLayout();
 const { onNodeDrag } = useHelperLines();

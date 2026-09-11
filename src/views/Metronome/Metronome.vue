@@ -180,7 +180,10 @@ onUnmounted(() => {
       </section>
 
       <!-- ===== 拍号 | 细分 ===== -->
-      <div ref="panelsRef" class="grid gap-3 sm:gap-4 lg:grid-cols-2 lg:items-start">
+      <div
+        ref="panelsRef"
+        class="grid gap-3 sm:gap-4 lg:grid-cols-2 lg:items-start"
+      >
         <section
           class="bg-base-200/40 rounded-2xl border border-base-content/5 p-4 sm:p-5 flex flex-col gap-4"
         >

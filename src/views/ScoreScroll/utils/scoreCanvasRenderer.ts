@@ -274,12 +274,17 @@ const TINT_QUANT = 24;
 const tintCache = new Map<string, string>();
 const TINT_CACHE_MAX = 2048;
 
-/** "#rrggbb" → [r, g, b]；非 6 位 hex 返回 null */
+/** "#rrggbb" / "#rrggbbaa" → [r, g, b]（alpha 忽略）；非 hex 返回 null */
 function parseHex(color: string): [number, number, number] | null {
-  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})(?:[0-9a-f]{2})?$/i.exec(
+    color.trim(),
+  );
   if (!m) return null;
-  const v = parseInt(m[1] as string, 16);
-  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+  return [
+    parseInt(m[1] as string, 16),
+    parseInt(m[2] as string, 16),
+    parseInt(m[3] as string, 16),
+  ];
 }
 
 /**

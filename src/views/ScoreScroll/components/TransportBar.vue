@@ -100,6 +100,8 @@ const props = defineProps<{
   duration: number;
   currentMeasureIndex: number;
   meta: ScoreMetaInfo | null;
+  /** 视频导出进行中：禁用传输控件，避免与离屏导出争抢 CPU（ADR 0026） */
+  exporting?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -113,7 +115,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const isPlaying = computed(() => props.playbackState === "playing");
-const disabled = computed(() => props.duration <= 0);
+const disabled = computed(() => props.duration <= 0 || !!props.exporting);
 
 function onToggle(): void {
   if (isPlaying.value) {

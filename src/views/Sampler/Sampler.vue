@@ -210,6 +210,7 @@ onUnmounted(() => {
             <div v-for="inst in filteredInstruments" :key="inst.id">
               <div class="h-full group">
                 <div
+                  v-magic
                   :class="[
                     'card bg-base-100 border border-base-300 h-full cursor-pointer relative   duration-200 ease-out group-hover:border-primary/50 group-hover:shadow-md',
                     samplerStore.currentInstrumentId === inst.id &&
@@ -284,7 +285,7 @@ onUnmounted(() => {
                       >
                         <span class="badge badge-success badge-xs gap-1">
                           <Icon name="check" :size="10" aria-hidden="true" />
-                          <span class="text-xs">Cached</span>
+                          <span class="text-xs">{{ t("sampler.cached") }}</span>
                         </span>
                         <!-- 缓存大小 + 清除按钮 -->
                         <template v-if="instrumentCacheSizes[inst.id] > 0">

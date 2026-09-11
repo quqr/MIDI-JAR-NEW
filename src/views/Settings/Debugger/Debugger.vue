@@ -58,11 +58,11 @@ const activeFilter = ref<LogType | "all">("all");
 const logContainer = ref<HTMLElement | null>(null);
 
 const filters = [
-  { label: "All", value: "all" as const },
-  { label: "Info", value: "info" as const },
-  { label: "Warn", value: "warn" as const },
-  { label: "Error", value: "error" as const },
-  { label: "Success", value: "success" as const },
+  { label: t("debugger.filter.all"), value: "all" as const },
+  { label: t("debugger.filter.info"), value: "info" as const },
+  { label: t("debugger.filter.warn"), value: "warn" as const },
+  { label: t("debugger.filter.error"), value: "error" as const },
+  { label: t("debugger.filter.success"), value: "success" as const },
 ];
 
 function logTypeClass(type: LogType): string {

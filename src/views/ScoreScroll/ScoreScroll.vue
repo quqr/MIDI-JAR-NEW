@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef, toRef, watch } from "vue";
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  shallowRef,
+  toRef,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useFilePicker } from "@/composables/useFilePicker";
+import VideoExportOverlay from "@/components/common/VideoExportOverlay.vue";
 import { useThemeStore } from "@/stores/theme";
 import { useOsmd } from "./composables/useOsmd";
 import { useScoreScrollStore } from "./stores/ScoreScroll";
@@ -21,7 +30,7 @@ import {
   clampCameraRect,
   type CameraFrameRect,
 } from "./utils/scoreFrameBuilder";
-import { videoCanvasSizeForRatio } from "./utils/videoExport";
+import { videoCanvasSizeForRatio } from "@/utils/video/videoExport";
 import type { ScoreMetaInfo } from "./types";
 
 const { t } = useI18n();
@@ -107,9 +116,35 @@ function onSeek(seconds: number): void {
 
 const videoExport = useVideoExport();
 
+/** 导出期间前台让路标志（ADR 0026）：传给视口抑制重绘 */
+const exportSuspended = ref(false);
+
 // 挂载时预检各编码可用性（面板只展示当前环境支持的编码）
 onMounted(() => {
   void videoExport.probeCodecs();
+});
+
+/**
+ * 导出期间前台让路（ADR 0026）
+ *
+ * 导出要独占 CPU 逐帧离线渲染 + 编码；前台若仍在播放（每帧 rAF 驱动整张
+ * 谱面重绘 + 音频调度）会与之争抢。因此：
+ * - suspend：暂停播放 + 抑制视口重绘
+ * - resume：解除抑制并补一次重绘（不自动续播）
+ */
+videoExport.bindExportSuspender({
+  suspend: () => {
+    sync.pause();
+    exportSuspended.value = true;
+  },
+  resume: () => {
+    exportSuspended.value = false;
+  },
+});
+
+onUnmounted(() => {
+  // 解绑即恢复（内部保证不留暂停态），避免卸载后前台仍被抑制
+  videoExport.bindExportSuspender(null);
 });
 
 // 乐谱加载/更换时按谱面高度重置取景矩形默认值（谱面全高 + 余量，16:9）
@@ -263,6 +298,7 @@ watch(
           :loading="osmd.loading.value"
           :playhead-x="sync.playheadX.value"
           :playback-state="sync.playbackState.value"
+          :suspended="exportSuspended"
           @update:zoom="onZoomChange"
         />
       </div>
@@ -333,11 +369,20 @@ watch(
       :duration="sync.duration.value"
       :current-measure-index="sync.currentMeasureIndex.value"
       :meta="meta"
+      :exporting="videoExport.isExporting.value"
       @play="sync.play"
       @pause="sync.pause"
       @stop="sync.stop"
       @seek="onSeek"
       @export="onExportVideo"
+    />
+
+    <!-- 导出阻断弹窗：导出期间禁止其他操作，仅展示进度与取消 -->
+    <VideoExportOverlay
+      :open="videoExport.isExporting.value"
+      :progress="videoExport.progress.value"
+      :realtime-factor="videoExport.realtimeFactor.value"
+      @cancel="videoExport.cancel"
     />
   </div>
 </template>

@@ -124,11 +124,12 @@ export const useSamplerStore = defineStore("sampler", () => {
   /** 全局声音开关 — 控制所有页面是否使用采样器发声 */
   const soundEnabled = ref(true);
   /**
-   * 音源来源：内置采样器 / 外部 VST3 插件。
+   * 音源来源：无音源（默认）/ 内置采样器 / 外部 VST3 插件。
    * **单一决策源**——`useSamplerService` 的所有播放入口都按它分流。
    * 放在 sampler store 持久化里（而非 vst store）以保持“采样器状态”聚合。
+   * 出厂默认为 "none"（不出声）；老用户持久化的 sampler/vst 值照常恢复。
    */
-  const toneSource = ref<ToneSource>("sampler");
+  const toneSource = ref<ToneSource>("none");
   /** 动态加载的音色列表 */
   const instrumentCatalog = ref<InstrumentInfo[]>(DEFAULT_INSTRUMENTS);
   /** 是否正在刷新音色列表 */
@@ -152,7 +153,7 @@ export const useSamplerStore = defineStore("sampler", () => {
     defaultValue: {
       currentInstrumentId: null,
       soundEnabled: true,
-      toneSource: "sampler",
+      toneSource: "none",
     },
     // 向前兼容：老版本没有 toneSource 字段，靠浅合并补默认值
     mergeWithDefault: true,
@@ -163,7 +164,11 @@ export const useSamplerStore = defineStore("sampler", () => {
   if (typeof savedState.soundEnabled === "boolean") {
     soundEnabled.value = savedState.soundEnabled;
   }
-  if (savedState.toneSource === "sampler" || savedState.toneSource === "vst") {
+  if (
+    savedState.toneSource === "none" ||
+    savedState.toneSource === "sampler" ||
+    savedState.toneSource === "vst"
+  ) {
     toneSource.value = savedState.toneSource;
   }
 

@@ -40,6 +40,12 @@ export const navItems: GroupedNavItem[] = [
     group: "display",
   },
   {
+    icon: "sparkles",
+    to: "/settings/magic",
+    labelKey: "settings.magic",
+    group: "display",
+  },
+  {
     icon: "music",
     to: "/settings/notation",
     labelKey: "settings.musicNotation",

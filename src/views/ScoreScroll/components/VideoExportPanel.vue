@@ -130,7 +130,7 @@ import {
   VIDEO_FPS,
   VIDEO_RESOLUTIONS,
   type VideoCodecValue,
-} from "../utils/videoExport";
+} from "@/utils/video/videoExport";
 import { useVideoExport } from "../composables/useVideoExport";
 
 defineEmits<{

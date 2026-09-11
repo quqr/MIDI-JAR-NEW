@@ -5,8 +5,12 @@ import {
   isCodecSupported,
   isWebCodecsSupported,
   type VideoCodecValue,
-} from "../utils/videoExport";
+} from "@/utils/video/videoExport";
 import { cameraDefaultRect } from "../utils/scoreFrameBuilder";
+import {
+  ExportSuspension,
+  type ExportSuspender,
+} from "@/utils/video/exportSuspension";
 import type {
   VideoExportHandle,
   VideoExportParams,
@@ -56,6 +60,9 @@ const webCodecsSupported = isWebCodecsSupported();
 
 let handle: VideoExportHandle | null = null;
 
+/** 导出期间的前台让路钩子（ADR 0026，由 ScoreScroll 绑定） */
+const suspension = new ExportSuspension();
+
 /** 文件名时间戳：score_YYYYMMDD_HHmmss */
 function timestampName(): string {
   const d = new Date();
@@ -68,6 +75,16 @@ function isCancelled(e: unknown): boolean {
 }
 
 export function useVideoExport() {
+  /**
+   * 绑定导出期间的前台让路实现（ADR 0026）。
+   *
+   * 导出前 suspend()（暂停播放 + 抑制视口重绘），导出结束——含成功、
+   * 取消、报错——后必定 resume()。传 null 解绑；解绑不会留下暂停态。
+   */
+  function bindExportSuspender(suspender: ExportSuspender | null): void {
+    suspension.bind(suspender);
+  }
+
   /**
    * 按当前乐谱初始化取景矩形默认值（乐谱加载/更换时调用）：
    * 谱面全高 + 上下余量，宽高比 16:9，垂直居中。
@@ -116,6 +133,11 @@ export function useVideoExport() {
     encodingMode.value = null;
     realtimeFactor.value = null;
     const startedAt = performance.now();
+
+    // 谱面数据已由调用方组装传入，现在让前台让路：
+    // 暂停播放并抑制视口重绘，把 CPU 让给逐帧离线渲染 + 编码器（ADR 0026）
+    suspension.suspend();
+
     try {
       // 动态加载：编码管线与 mediabunny 仅在导出时进入 bundle 分包
       const { renderScoreVideo } = await import("../utils/videoEncoder");
@@ -154,6 +176,8 @@ export function useVideoExport() {
       }
     } finally {
       handle = null;
+      // 让路恢复（视口会在恢复时补一次重绘）
+      suspension.resume();
       isExporting.value = false;
     }
   }
@@ -177,6 +201,7 @@ export function useVideoExport() {
     webCodecsSupported,
     initCamera,
     probeCodecs,
+    bindExportSuspender,
     run,
     cancel,
   };

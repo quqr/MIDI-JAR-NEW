@@ -12,9 +12,12 @@ import {
 } from "../constants";
 import type { ScoreScrollSettings } from "../types";
 
-/** hex 颜色校验（#RGB / #RRGGBB） */
+/** hex 颜色校验（#RGB / #RRGGBB / #RRGGBBAA） */
 function isHexColor(v: unknown): v is string {
-  return typeof v === "string" && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+  return (
+    typeof v === "string" &&
+    /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)
+  );
 }
 
 /** 深合并一个配置段：默认值 + 用户存储值 */

@@ -57,7 +57,7 @@ const centsBadgeClass = computed(() => {
       <div class="stat-title">{{ t("tuner.info.cents") }}</div>
       <div class="stat-value">
         <span
-          class="badge badge-lg font-mono"
+          class="badge badge-soft badge-primary font-mono"
           :class="active ? centsBadgeClass : 'badge-ghost'"
         >
           {{ active && cents !== null ? centsText : "—" }}

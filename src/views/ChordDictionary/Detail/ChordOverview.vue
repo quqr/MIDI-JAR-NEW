@@ -47,7 +47,7 @@
         <h3
           class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2"
         >
-          {{ category.label }}
+          {{ t(category.label) }}
         </h3>
         <div
           class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
@@ -99,7 +99,7 @@ interface ChordCategory {
 // Common chord types to show in the overview
 const COMMON_CHORDS: ChordCategory[] = [
   {
-    label: "Major",
+    label: "chordDictionary.categories.major",
     chords: [
       { name: "C", display: "C", intervals: "1-3-5" },
       { name: "D", display: "D", intervals: "1-3-5" },
@@ -111,7 +111,7 @@ const COMMON_CHORDS: ChordCategory[] = [
     ],
   },
   {
-    label: "Minor",
+    label: "chordDictionary.categories.minor",
     chords: [
       { name: "Cm", display: "Cm", intervals: "1-♭3-5" },
       { name: "Dm", display: "Dm", intervals: "1-♭3-5" },
@@ -123,7 +123,7 @@ const COMMON_CHORDS: ChordCategory[] = [
     ],
   },
   {
-    label: "Dominant 7th",
+    label: "chordDictionary.categories.dominant7",
     chords: [
       { name: "C7", display: "C7", intervals: "1-3-5-♭7" },
       { name: "D7", display: "D7", intervals: "1-3-5-♭7" },
@@ -135,7 +135,7 @@ const COMMON_CHORDS: ChordCategory[] = [
     ],
   },
   {
-    label: "Major 7th",
+    label: "chordDictionary.categories.major7",
     chords: [
       { name: "Cmaj7", display: "Cmaj7", intervals: "1-3-5-7" },
       { name: "Dmaj7", display: "Dmaj7", intervals: "1-3-5-7" },
@@ -147,7 +147,7 @@ const COMMON_CHORDS: ChordCategory[] = [
     ],
   },
   {
-    label: "Minor 7th",
+    label: "chordDictionary.categories.minor7",
     chords: [
       { name: "Cm7", display: "Cm7", intervals: "1-♭3-5-♭7" },
       { name: "Dm7", display: "Dm7", intervals: "1-♭3-5-♭7" },
@@ -159,7 +159,7 @@ const COMMON_CHORDS: ChordCategory[] = [
     ],
   },
   {
-    label: "Diminished / Augmented / Suspended",
+    label: "chordDictionary.categories.dimAugSus",
     chords: [
       { name: "Cdim", display: "Cdim", intervals: "1-♭3-♭5" },
       { name: "Caug", display: "Caug", intervals: "1-3-♯5" },

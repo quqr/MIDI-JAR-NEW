@@ -5,6 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { RenderLoop } from "./RenderLoop";
 import type { VisualStrategy } from "./VisualStrategy";
+import { toHex6 } from "@/helpers/color";
 import {
   BLOOM_RADIUS,
   BLOOM_STRENGTH,
@@ -126,7 +127,9 @@ export class Score3dEngine {
 
   /** 设置场景背景色（设置页持久化值透传） */
   setBackground(color: string): void {
-    this.scene.background = new THREE.Color(color);
+    // three.js 的 Color 不支持 8 位 hex（会解析成白色）：先归一化为 #rrggbb
+    // 丢 alpha——Scene.background 本身也无法承载透明度
+    this.scene.background = new THREE.Color(toHex6(color));
   }
 
   /** 替换可视化策略（旧策略立即从场景卸载并释放） */

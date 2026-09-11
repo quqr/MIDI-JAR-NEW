@@ -181,6 +181,11 @@ const props = defineProps<{
    * 揭示编排的激活不以播放状态为条件——已加载乐谱即激活（ADR 0012）
    */
   playbackState: ScorePlaybackState;
+  /**
+   * 导出期间抑制前台重绘（ADR 0026）：视频导出要独占 CPU 逐帧离线渲染，
+   * 前台视口此时不再响应任何重绘请求；恢复时补一次重绘避免残留旧帧。
+   */
+  suspended?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -353,6 +358,8 @@ let renderRaf = 0;
 let dirty = false;
 
 function requestRender(): void {
+  // 导出期间前台让路（ADR 0026）：不排帧，等恢复时统一补一次重绘
+  if (props.suspended) return;
   dirty = true;
   if (!renderRaf) {
     renderRaf = requestAnimationFrame(renderFrame);
@@ -973,6 +980,14 @@ watch(
 watch(
   () => props.primitivesVersion,
   () => requestRender(),
+);
+
+// 导出让路结束：补一次重绘，避免期间被抑制的变更停在旧帧（ADR 0026）
+watch(
+  () => props.suspended,
+  (suspended) => {
+    if (!suspended) requestRender();
+  },
 );
 
 onMounted(() => {

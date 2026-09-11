@@ -4,9 +4,12 @@ import { loadFromStorage, saveToStorage } from "@/helpers/storage";
 import { debounce } from "@/helpers/debounce";
 import { DEFAULT_BACKGROUND, SCORE3D_STORAGE_KEY } from "../constants";
 
-/** hex 颜色校验（#RGB / #RRGGBB） */
+/** hex 颜色校验（#RGB / #RRGGBB / #RRGGBBAA） */
 function isHexColor(v: unknown): v is string {
-  return typeof v === "string" && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+  return (
+    typeof v === "string" &&
+    /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)
+  );
 }
 
 function loadBackgroundColor(): string {

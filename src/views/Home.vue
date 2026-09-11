@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <!-- h-full + overflow-y-auto：外层 AppLayout 是固定高度 overflow-hidden 壳，
+       页面内容必须自带滚动容器（同 Vst.vue 先例），否则小窗口下底部卡片被裁掉无法点击 -->
+  <div class="h-full overflow-y-auto">
     <main>
       <section class="space-y-4 p-6">
         <div

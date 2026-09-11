@@ -1,22 +1,56 @@
 <template>
-  <div class="drawer lg:drawer-open h-full">
-    <input
-      id="settings-drawer"
-      v-model="drawerOpen"
-      type="checkbox"
-      class="drawer-toggle"
-    />
-    <div class="drawer-content flex flex-col min-h-0">
-      <div class="navbar w-full flex-none">
-        <label
-          for="settings-drawer"
-          :aria-label="t('common.openSidebar')"
-          class="btn btn-square btn-ghost lg:hidden"
-        >
-          <Icon name="menu" :size="20" aria-hidden="true" />
-        </label>
-        <div class="px-4 text-lg font-semibold">
+  <!-- 侧栏常驻展开：所有宽度下固定左栏（窄屏收窄为图标列），不再使用抽屉/汉堡 -->
+  <div class="flex h-full w-full min-h-0">
+    <aside
+      class="flex flex-col flex-none w-16 sm:w-64 min-h-0 border-r border-base-content/10 bg-base-200/40"
+    >
+      <div
+        class="flex-none px-3 py-2.5 text-sm font-semibold text-base-content/80 max-sm:hidden"
+      >
+        {{ $t("settings.title") }}
+      </div>
+      <!-- 分组导航 -->
+      <ul
+        class="menu w-full grow gap-1 pt-1 overflow-y-auto overflow-x-clip"
+        :aria-label="t('settings.navigation')"
+      >
+        <template v-for="group in groupOrder" :key="group">
+          <li
+            v-if="getItemsForGroup(group).length > 0"
+            class="menu-title max-sm:hidden text-xs font-semibold uppercase tracking-wider text-base-content/70 px-4 pt-3 pb-1"
+          >
+            {{ t(groupLabels[group]) }}
+          </li>
+          <li v-for="item in getItemsForGroup(group)" :key="item.to">
+            <RouterLink :to="item.to" custom v-slot="{ href, navigate }">
+              <a
+                :href="href"
+                class="rounded-lg text-sm font-medium max-sm:tooltip max-sm:tooltip-right"
+                :class="
+                  isActive(item.to)
+                    ? 'active bg-primary/10 text-primary font-semibold'
+                    : 'text-base-content/70 hover:bg-base-300'
+                "
+                :data-tip="t(item.labelKey)"
+                :aria-current="isActive(item.to) ? 'page' : undefined"
+                @click="navigate"
+              >
+                <Icon :name="item.icon" :size="20" aria-hidden="true" />
+                <span class="max-sm:hidden">{{ t(item.labelKey) }}</span>
+              </a>
+            </RouterLink>
+          </li>
+        </template>
+      </ul>
+    </aside>
+
+    <div class="flex flex-col flex-1 min-w-0 min-h-0">
+      <div class="navbar w-full flex-none min-h-10">
+        <div class="px-4 text-lg font-semibold max-sm:hidden">
           {{ $t("settings.title") }}
+        </div>
+        <div class="px-3 text-lg font-semibold sm:hidden">
+          {{ currentSectionLabel }}
         </div>
         <div class="flex-1"></div>
         <button
@@ -38,52 +72,6 @@
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto flex flex-col">
         <RouterView />
-      </div>
-    </div>
-    <div class="drawer-side is-drawer-close:overflow-visible">
-      <label
-        for="settings-drawer"
-        class="drawer-overlay"
-        :aria-label="t('common.closeMenu')"
-      ></label>
-      <div
-        class="flex min-h-full flex-col is-drawer-close:w-14 is-drawer-open:w-64"
-      >
-        <!-- 分组导航 -->
-        <ul
-          class="menu w-full grow gap-1 pt-2 overflow-y-auto"
-          :aria-label="t('settings.navigation')"
-        >
-          <template v-for="group in groupOrder" :key="group">
-            <li
-              v-if="getItemsForGroup(group).length > 0"
-              class="menu-title is-drawer-close:hidden text-xs font-semibold uppercase tracking-wider text-base-content/70 px-4 pt-3 pb-1"
-            >
-              {{ t(groupLabels[group]) }}
-            </li>
-            <li v-for="item in getItemsForGroup(group)" :key="item.to">
-              <RouterLink :to="item.to" custom v-slot="{ href, navigate }">
-                <a
-                  :href="href"
-                  class="rounded-lg text-sm font-medium is-drawer-close:tooltip is-drawer-close:tooltip-right"
-                  :class="
-                    isActive(item.to)
-                      ? 'active bg-primary/10 text-primary font-semibold'
-                      : 'text-base-content/70 hover:bg-base-300'
-                  "
-                  :data-tip="isActive(item.to) ? '' : t(item.labelKey)"
-                  :aria-current="isActive(item.to) ? 'page' : undefined"
-                  @click="navigate"
-                >
-                  <Icon :name="item.icon" :size="20" aria-hidden="true" />
-                  <span class="is-drawer-close:hidden">{{
-                    t(item.labelKey)
-                  }}</span>
-                </a>
-              </RouterLink>
-            </li>
-          </template>
-        </ul>
       </div>
     </div>
 
@@ -109,7 +97,7 @@
         </div>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button :aria-label="t('common.close')"></button>
       </form>
     </dialog>
   </div>
@@ -124,7 +112,7 @@ import { useRoute, RouterLink } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
 import { useWaterfallPianoStore } from "@/views/WaterfallPiano/stores/WaterfallPiano";
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed } from "vue";
 
 const route = useRoute();
 const { t } = useI18n();
@@ -132,11 +120,8 @@ const settingsStore = useSettingsStore();
 const themeStore = useThemeStore();
 const WaterfallPianoStore = useWaterfallPianoStore();
 
-const drawerOpen = ref(false);
 const resetDialog = ref<HTMLDialogElement>();
 const resetTarget = ref<"current" | "all">("current");
-
-let mql: MediaQueryList | null = null;
 
 const routeToSettingKey: Record<string, string> = {
   "/settings/general": "general",
@@ -159,7 +144,7 @@ const currentSettingKey = computed(() => {
 
 const currentSectionLabel = computed(() => {
   const key = currentSettingKey.value;
-  if (!key) return "";
+  if (!key) return t("settings.title");
   const labelMap: Record<string, string> = {
     general: t("settings.general"),
     cursor: t("settings.cursor"),
@@ -217,22 +202,6 @@ function confirmReset() {
   }
   closeDialog();
 }
-
-const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
-  if (e.matches) {
-    drawerOpen.value = true;
-  }
-};
-
-onMounted(() => {
-  mql = window.matchMedia("(min-width: 1024px)");
-  handleMediaChange(mql);
-  mql.addEventListener("change", handleMediaChange);
-});
-
-onUnmounted(() => {
-  mql?.removeEventListener("change", handleMediaChange);
-});
 
 function isActive(to: string): boolean {
   if (to === "/settings/general")
